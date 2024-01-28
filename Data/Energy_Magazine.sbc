@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <AmmoMagazines>
+    <AmmoMagazine>
+      <Id>
+        <TypeId>AmmoMagazine</TypeId>
+        <SubtypeId>Energy</SubtypeId>
+      </Id>
+      <DisplayName>Energy</DisplayName>
+      <Icon>Textures\GUI\Icons\component\BatteryComponent.dds</Icon>
+      <Size>
+        <X>0.25</X>
+        <Y>0.2</Y>
+        <Z>0.2</Z>
+      </Size>
+      <Mass>1</Mass>
+      <Volume>1</Volume>
+      <Model>Models\Components\PowerCellComponent.mwm</Model>
+      <Capacity>1</Capacity>
+      <AmmoDefinitionId Subtype="Blank" />
+	  </AmmoMagazine>
+  </AmmoMagazines>
+</Definitions>

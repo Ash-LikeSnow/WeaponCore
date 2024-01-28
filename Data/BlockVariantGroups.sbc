@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <BlockVariantGroups>
+
+        <BlockVariantGroup>
+            <Id Type="MyObjectBuilder_BlockVariantGroup" Subtype="ShipWeaponStaticGroup" />
+            <Icon>Textures\GUI\Icons\Cubes\missile_launcher.dds</Icon>
+            <DisplayName>DisplayName_BlockGroup_ShipWeaponStaticGroup</DisplayName>
+            <Description>Description_BlockGroup_ShipWeaponStaticGroup</Description>
+            <Blocks>
+                <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="LargeMissileLauncher" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="SmallMissileLauncherWarfare2" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncherReload" Subtype="SmallRocketLauncherReload" />
+                <Block Type="MyObjectBuilder_SmallGatlingGun" Subtype="" />
+                <Block Type="MyObjectBuilder_SmallGatlingGun" Subtype="SmallGatlingGunWarfare2" />
+                <Block Type="MyObjectBuilder_SmallGatlingGun" Subtype="SmallBlockAutocannon" />
+                <Block Type="MyObjectBuilder_ConveyorSorter" Subtype="SmallRailgun" />
+                <Block Type="MyObjectBuilder_ConveyorSorter" Subtype="LargeRailgun" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="LargeBlockLargeCalibreGun" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncherReload" Subtype="SmallBlockMediumCalibreGun" />
+            </Blocks>
+        </BlockVariantGroup>
+
+        <BlockVariantGroup>
+            <Id Type="MyObjectBuilder_BlockVariantGroup" Subtype="TurretGroup" />
+            <Icon>Textures\GUI\Icons\Cubes\gatling_turret.dds</Icon>
+            <DisplayName>DisplayName_BlockGroup_TurretGroup</DisplayName>
+            <Description>Description_BlockGroup_TurretGroup</Description>
+            <Blocks>
+                <Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="" />
+                <Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="SmallGatlingTurret" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="SmallMissileTurret" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="LargeCalibreTurret" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="LargeBlockMediumCalibreTurret" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="SmallBlockMediumCalibreTurret" />
+                <Block Type="MyObjectBuilder_InteriorTurret" Subtype="LargeInteriorTurret" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="AutoCannonTurret" />
+            </Blocks>
+        </BlockVariantGroup>
+
+    </BlockVariantGroups>
+</Definitions>

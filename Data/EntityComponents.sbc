@@ -1,0 +1,16 @@
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <EntityComponents>
+    <EntityComponent xsi:type="MyObjectBuilder_ModStorageComponentDefinition">
+      <Id>
+        <TypeId>ModStorageComponent</TypeId>
+        <SubtypeId>WeaponCore</SubtypeId>
+      </Id>
+      <RegisteredStorageGuids>
+        <guid>75BBB4F5-4FB9-4230-BEEF-BB79C9811501</guid>
+        <guid>75BBB4F5-4FB9-4230-BEEF-BB79C9811502</guid>
+        <guid>75BBB4F5-4FB9-4230-BEEF-BB79C9811503</guid>
+        <guid>75BBB4F5-4FB9-4230-BEEF-BB79C9811504</guid>
+      </RegisteredStorageGuids>
+    </EntityComponent>
+  </EntityComponents>
+</Definitions>

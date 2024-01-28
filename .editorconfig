@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# ProhibitedMemberRuleM: Prohibited Type Or Member(Mod script)
+dotnet_diagnostic.ProhibitedMemberRuleM.severity = warning
