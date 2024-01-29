@@ -16,6 +16,7 @@ namespace CoreSystems.Support
 {
     internal static class SUtils
     {
+        /*
         public static bool ModActivate(IMyModContext context, IMySession session)
         {
             var priority1 = 2734980390ul;
@@ -62,7 +63,7 @@ namespace CoreSystems.Support
             var validP3 = isP3 && (!p0Exists && !p1Exists && !p2Exists);
             return validP3;
         }
-
+          */
         public static void GetFourInt16FromLong(long id, out int w, out int x, out int y, out int z)
         {
 
