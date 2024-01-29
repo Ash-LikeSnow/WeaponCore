@@ -93,8 +93,107 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, MyDefinitionId, bool, bool> _setMagazine;
         private Func<MyEntity, int, bool> _forceReload;
 
+        private Action<MyEntity, float> _setRofMultiplier;
+        private Action<MyEntity, float> _setBaseDmgMultiplier;
+        private Action<MyEntity, float> _setAreaDmgMultiplier;
+        private Action<MyEntity, float> _setAreaRadiusMultiplier;
+        private Action<MyEntity, float> _setVelocityMultiplier;
+        private Action<MyEntity, bool> _setFiringAllowed;
+
+        private Func<MyEntity, float> _getRofMultiplier;
+        private Func<MyEntity, float> _getBaseDmgMultiplier;
+        private Func<MyEntity, float> _getAreaDmgMultiplier;
+        private Func<MyEntity, float> _getAreaRadiusMultiplier;
+        private Func<MyEntity, float> _getVelocityMultiplier;
+        private Func<MyEntity, bool> _getFiringAllowed;
+
+
+        /// <summary>
+        /// Multiplier for <paramref name="block"/>'s base Rate of Fire.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="rof"></param>
+        public void SetRofMultiplier(MyEntity block, float rof) =>
+            _setRofMultiplier?.Invoke(block, rof);
+
+        /// <summary>
+        /// BaseDamage multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public void SetBaseDmgMultiplier(MyEntity block, float multiplier) => _setBaseDmgMultiplier?.Invoke(block, multiplier);
+
+        /// <summary>
+        /// AreaDamage multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public void SetAreaDmgMultiplier(MyEntity block, float multiplier) => _setAreaDmgMultiplier?.Invoke(block, multiplier);
+
+        /// <summary>
+        /// AreaRadius multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public void SetAreaRadiusMultiplier(MyEntity block, float multiplier) => _setAreaRadiusMultiplier?.Invoke(block, multiplier);
+
+        /// <summary>
+        /// Velocity multiplier for all projectiles from <paramref name="block"/>. Avoid setting this to zero.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public void SetVelocityMultiplier(MyEntity block, float multiplier) => _setVelocityMultiplier?.Invoke(block, multiplier);
+
+        /// <summary>
+        /// Toggles whether <paramref name="block"/> is allowed to shoot.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public void SetFiringAllowed(MyEntity block, bool isAllowed) => _setFiringAllowed?.Invoke(block, isAllowed);
+
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
+
+        /// <summary>
+        /// Multiplier for <paramref name="block"/>'s base Rate of Fire.
+        /// </summary>
+        /// <param name="block"></param>
+        public float GetRofMultiplier(MyEntity block) => _getRofMultiplier?.Invoke(block) ?? -2;
+
+        /// <summary>
+        /// BaseDamage multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public float GetBaseDmgMultiplier(MyEntity block) => _getBaseDmgMultiplier?.Invoke(block) ?? -2;
+
+        /// <summary>
+        /// AreaDamage multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public float GetAreaDmgMultiplier(MyEntity block) => _getAreaDmgMultiplier?.Invoke(block) ?? -2;
+
+        /// <summary>
+        /// AreaDamage multiplier for all projectiles from <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public float GetAreaRadiusMultiplier(MyEntity block) => _getAreaRadiusMultiplier?.Invoke(block) ?? -2;
+
+        /// <summary>
+        /// Velocity multiplier for all projectiles from <paramref name="block"/>. Avoid setting this to zero.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public float GetVelocityMultiplier(MyEntity block) => _getVelocityMultiplier?.Invoke(block) ?? -2;
+
+        /// <summary>
+        /// Toggles whether <paramref name="block"/> is allowed to shoot.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="multiplier"></param>
+        public bool GetFiringAllowed(MyEntity block) => _getFiringAllowed?.Invoke(block) ?? false;
 
         public void FireWeaponOnce(MyEntity weapon, bool allWeapons = true, int weaponId = 0) =>
             _fireWeaponOnce?.Invoke(weapon, allWeapons, weaponId);
@@ -527,6 +626,21 @@ namespace CoreSystems.Api
         {
             _apiInit = (delegates != null);
             /// base methods
+
+            AssignMethod(delegates, "SetRofMultiplier", ref _setRofMultiplier);
+            AssignMethod(delegates, "SetBaseDmgMultiplier", ref _setBaseDmgMultiplier);
+            AssignMethod(delegates, "SetAreaDmgMultiplier", ref _setAreaDmgMultiplier);
+            AssignMethod(delegates, "SetAreaRadiusMultiplier", ref _setAreaRadiusMultiplier);
+            AssignMethod(delegates, "SetVelocityMultiplier", ref _setVelocityMultiplier);
+            AssignMethod(delegates, "SetFiringAllowed", ref _setFiringAllowed);
+
+            AssignMethod(delegates, "GetRofMultiplier", ref _getRofMultiplier);
+            AssignMethod(delegates, "GetBaseDmgMultiplier", ref _getBaseDmgMultiplier);
+            AssignMethod(delegates, "GetAreaDmgMultiplier", ref _getAreaDmgMultiplier);
+            AssignMethod(delegates, "GetAreaRadiusMultiplier", ref _getAreaRadiusMultiplier);
+            AssignMethod(delegates, "GetVelocityMultiplier", ref _getVelocityMultiplier);
+            AssignMethod(delegates, "GetFiringAllowed", ref _getFiringAllowed);
+
             AssignMethod(delegates, "GetAllWeaponDefinitions", ref _getAllWeaponDefinitions);
             AssignMethod(delegates, "GetCoreWeapons", ref _getCoreWeapons);
             AssignMethod(delegates, "GetNpcSafeWeapons", ref _getNpcSafeWeapons);
@@ -662,7 +776,7 @@ namespace CoreSystems.Api
             /// Don't touch anything below this line
             public void RegisterForDamage(long modId, EventType type)
             {
-                _wcApi.RegisterDamageEvent(modId, (int) type, DefaultCallBack);
+                _wcApi.RegisterDamageEvent(modId, (int)type, DefaultCallBack);
             }
 
             private void DefaultCallBack(ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> listReader)

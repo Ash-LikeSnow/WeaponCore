@@ -159,6 +159,11 @@ namespace CoreSystems.Platform
         internal int ShootCount;
         internal int FireCounter;
         internal int RateOfFire;
+        internal float BaseDamageMult = 1;
+        internal float AreaDamageMult = 1;
+        internal float AreaRadiusMult = 1;
+        internal float VelocityMult = 1;
+        internal bool FiringAllowed = true;
         internal int BarrelSpinRate;
         internal int EnergyPriority;
         internal int LastBlockCount;

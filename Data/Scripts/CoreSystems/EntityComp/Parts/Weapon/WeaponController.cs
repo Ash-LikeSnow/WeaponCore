@@ -346,6 +346,23 @@ namespace CoreSystems.Platform
             if (System.HasBarrelRotation) UpdateBarrelRotation();
         }
 
+        internal void UpdateDmg()
+        {
+            BaseDamageMult = Comp.Data.Repo.Values.Set.BaseDamageMultiplier;
+            AreaDamageMult = Comp.Data.Repo.Values.Set.AreaDamageMultiplier;
+            AreaRadiusMult = Comp.Data.Repo.Values.Set.AreaRadiusMultiplier;
+        }
+
+        internal void UpdateVel()
+        {
+            VelocityMult = Comp.Data.Repo.Values.Set.VelocityMultiplier;
+        }
+
+        internal void UpdateFiringAllowed()
+        {
+            FiringAllowed = Comp.Data.Repo.Values.Set.FiringAllowed;
+        }
+
         internal void TurnOnAV(object o)
         {
             if (Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;

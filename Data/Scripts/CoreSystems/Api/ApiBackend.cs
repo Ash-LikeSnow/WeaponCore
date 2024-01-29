@@ -142,6 +142,21 @@ namespace CoreSystems.Api
                 ["GetConstructEffectiveDpsBase"] = new Func<MyEntity, float>(GetConstructEffectiveDps),
                 ["GetConstructEffectiveDps"] = new Func<IMyEntity, float>(GetConstructEffectiveDpsLegacy),
 
+                // New Additions
+                ["SetRofMultiplier"] = new Action<MyEntity, float>(SetRofMultiplier),
+                ["SetBaseDmgMultiplier"] = new Action<MyEntity, float>(SetBaseDmgMultiplier),
+                ["SetAreaDmgMultiplier"] = new Action<MyEntity, float>(SetAreaDmgMultiplier),
+                ["SetAreaRadiusMultiplier"] = new Action<MyEntity, float>(SetAreaRadiusMultiplier),
+                ["SetVelocityMultiplier"] = new Action<MyEntity, float>(SetVelocityMultiplier),
+                ["SetFiringAllowed"] = new Action<MyEntity, bool>(SetFiringAllowed),
+
+                ["GetRofMultiplier"] = new Func<MyEntity, float>(GetRofMultiplier),
+                ["GetBaseDmgMultiplier"] = new Func<MyEntity, float>(GetBaseDmgMultiplier),
+                ["GetAreaDmgMultiplier"] = new Func<MyEntity, float>(GetAreaDmgMultiplier),
+                ["GetAreaRadiusMultiplier"] = new Func<MyEntity, float>(GetAreaRadiusMultiplier),
+                ["GetVelocityMultiplier"] = new Func<MyEntity, float>(GetVelocityMultiplier),
+                ["GetFiringAllowed"] = new Func<MyEntity, bool>(GetFiringAllowed),
+
                 // Phantoms
                 ["GetTargetAssessment"] = new Func<MyEntity, MyEntity, int, bool, bool, MyTuple<bool, bool, Vector3D?>>(GetPhantomTargetAssessment),
                 //["GetPhantomInfo"] = new Action<string, ICollection<MyTuple<MyEntity, long, int, float, uint, long>>>(GetPhantomInfo),
@@ -225,6 +240,168 @@ namespace CoreSystems.Api
             pb.Getter = b => _safeDictionary;
             MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyProgrammableBlock>(pb);
             Session.I.PbApiInited = true;
+        }
+
+        private void SetRofMultiplier(MyEntity blockEntity, float newRofModifier)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.RofModifier = newRofModifier;
+            Weapon.WeaponComponent.SetRof(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private float GetRofMultiplier(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return -1;
+
+            return comp.Data.Repo.Values.Set.RofModifier;
+        }
+
+        private void SetBaseDmgMultiplier(MyEntity blockEntity, float newDmgModifier)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.BaseDamageMultiplier = newDmgModifier;
+            Weapon.WeaponComponent.SetDmg(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private float GetBaseDmgMultiplier(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return -1;
+
+            return comp.Data.Repo.Values.Set.BaseDamageMultiplier;
+        }
+
+        private void SetAreaDmgMultiplier(MyEntity blockEntity, float newDmgModifier)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.AreaDamageMultiplier = newDmgModifier;
+            Weapon.WeaponComponent.SetDmg(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private void SetAreaRadiusMultiplier(MyEntity blockEntity, float newRadiusModifier)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.AreaRadiusMultiplier = newRadiusModifier;
+            Weapon.WeaponComponent.SetDmg(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private float GetAreaDmgMultiplier(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return -1;
+
+            return comp.Data.Repo.Values.Set.AreaDamageMultiplier;
+        }
+
+        private float GetAreaRadiusMultiplier(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return -1;
+
+            return comp.Data.Repo.Values.Set.AreaRadiusMultiplier;
+        }
+
+        private void SetVelocityMultiplier(MyEntity blockEntity, float newVelocityModifier)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.VelocityMultiplier = newVelocityModifier;
+            Weapon.WeaponComponent.SetVel(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private float GetVelocityMultiplier(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return -1;
+
+            return comp.Data.Repo.Values.Set.VelocityMultiplier;
+        }
+
+        private void SetFiringAllowed(MyEntity blockEntity, bool isFiringAllowed)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            comp.Data.Repo.Values.Set.FiringAllowed = isFiringAllowed;
+            Weapon.WeaponComponent.SetVel(comp);
+            if (Session.I.MpActive)
+                Session.I.SendComp(comp);
+        }
+
+        private bool GetFiringAllowed(MyEntity blockEntity)
+        {
+            IMyCubeBlock block = blockEntity as IMyCubeBlock;
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return false;
+
+            return comp.Data.Repo.Values.Set.FiringAllowed;
         }
 
         private void GetObstructionsLegacy(IMyEntity shooter, ICollection<IMyEntity> collection) => GetObstructions((MyEntity) shooter, (ICollection<MyEntity>) collection);

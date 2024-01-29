@@ -478,9 +478,8 @@ namespace CoreSystems.Platform
         public void StartHardPointSound()
         {
 
-            if (HardPointEmitter == null || Comp == null || Comp.Cube.MarkedForClose)//Guess at squishing an NRE if a block is destroyed before a queued sound plays
+            if (HardPointEmitter == null)
                 return;
-
             if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this});
@@ -494,7 +493,8 @@ namespace CoreSystems.Platform
 
         public void StopHardPointSound(object o = null)
         {
-            if (HardPointEmitter == null || Comp == null || Comp.Cube.MarkedForClose)//Guess at squishing an NRE if a block is destroyed before a queued sound plays
+            
+            if (HardPointEmitter == null)
                 return;
 
             if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
