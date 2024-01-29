@@ -44,6 +44,10 @@ namespace CoreSystems.Platform
                 if (System.HasBarrelRotation && !SpinBarrel() || notReadyToShoot)
                     return;
 
+                // Added for new API calls
+                if (!FiringAllowed)
+                    return;
+
                 if (PosChangedTick != Session.I.SimulationCount)
                     UpdatePivotPos();
 

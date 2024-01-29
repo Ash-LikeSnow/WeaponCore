@@ -268,7 +268,7 @@ namespace CoreSystems.Support
                     {
 
                         var validEstimate = true;
-                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos, out validEstimate, true) : targetCenter;
+                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed * w.VelocityMult > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos, out validEstimate, true) : targetCenter;
                         var targetSphere = info.Target.PositionComp.WorldVolume;
                         targetSphere.Center = newCenter;
 
@@ -454,7 +454,7 @@ namespace CoreSystems.Support
                     {
 
                         var validEstimate = true;
-                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos,  out validEstimate, true) : targetCenter;
+                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed * w.VelocityMult > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos,  out validEstimate, true) : targetCenter;
                         var targetSphere = info.Target.PositionComp.WorldVolume;
                         targetSphere.Center = newCenter;
 
@@ -1798,7 +1798,7 @@ namespace CoreSystems.Support
                     {
 
                         var validEstimate = true;
-                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos, out validEstimate, true) : targetCenter;
+                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed * w.VelocityMult > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, weaponPos, out validEstimate, true) : targetCenter;
                         var targetSphere = info.Target.PositionComp.WorldVolume;
                         targetSphere.Center = newCenter;
                         if (!validEstimate || !aConst.SkipAimChecks && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) continue;

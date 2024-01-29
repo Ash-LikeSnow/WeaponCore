@@ -301,7 +301,11 @@ namespace CoreSystems
         [ProtoMember(4), DefaultValue(1)] public float RofModifier = 1;
         [ProtoMember(5), DefaultValue(100)] public float Range = 100;
         [ProtoMember(6)] public ProtoWeaponOverrides Overrides;
-
+        [ProtoMember(7), DefaultValue(1)] public float BaseDamageMultiplier = 1;
+        [ProtoMember(8), DefaultValue(1)] public float AreaDamageMultiplier = 1;
+        [ProtoMember(9), DefaultValue(1)] public float AreaRadiusMultiplier = 1;
+        [ProtoMember(10), DefaultValue(1)] public float VelocityMultiplier = 1;
+        [ProtoMember(11), DefaultValue(true)] public bool FiringAllowed = true;
 
         public ProtoWeaponSettings()
         {
@@ -329,6 +333,28 @@ namespace CoreSystems
                 Overload = sync.Overload;
                 RofModifier = sync.RofModifier;
                 if (rofChange) SetRof(comp);
+            }
+
+            var dmgChange = ((BaseDamageMultiplier - sync.BaseDamageMultiplier) + (AreaDamageMultiplier - sync.AreaDamageMultiplier) + (AreaRadiusMultiplier - sync.AreaRadiusMultiplier)) != 0;
+
+            if (dmgChange)
+            {
+                BaseDamageMultiplier = sync.BaseDamageMultiplier;
+                AreaDamageMultiplier = sync.AreaDamageMultiplier;
+                AreaRadiusMultiplier = sync.AreaRadiusMultiplier;
+                SetDmg(comp);
+            }
+
+            if (VelocityMultiplier != sync.VelocityMultiplier)
+            {
+                VelocityMultiplier = sync.VelocityMultiplier;
+                SetVel(comp);
+            }
+
+            if (FiringAllowed != sync.FiringAllowed)
+            {
+                FiringAllowed = sync.FiringAllowed;
+                SetFiringAllowed(comp);
             }
 
             var wValues = comp.Data.Repo.Values;

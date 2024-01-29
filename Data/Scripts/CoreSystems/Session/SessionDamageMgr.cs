@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -184,20 +185,20 @@ namespace CoreSystems
             var energy = info.AmmoDef.Const.EnergyShieldDmg;
             var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime && !info.ShieldBypassed;
             var areaDamage = info.AmmoDef.AreaOfDamage.ByBlockHit.Enable;
-            var scaledBaseDamage = info.BaseDamagePool * damageScale;
+            var scaledBaseDamage = info.BaseDamagePool * damageScale * info.Weapon.BaseDamageMult;
             var priDamage = (scaledBaseDamage) * info.AmmoDef.Const.ShieldModifier * shieldDmgGlobal* info.ShieldResistMod * info.ShieldBypassMod;
             var logDamage = info.Weapon.System.WConst.DebugMode;
 
             var areafalloff = info.AmmoDef.AreaOfDamage.ByBlockHit.Falloff;
             var aoeMaxAbsorb = info.AmmoDef.Const.AoeMaxAbsorb;
-            var unscaledAoeDmg = info.AmmoDef.Const.ByBlockHitDamage;
-            var aoeRadius = (float)info.AmmoDef.Const.ByBlockHitRadius;
+            var unscaledAoeDmg = info.AmmoDef.Const.ByBlockHitDamage * info.Weapon.AreaDamageMult;
+            var aoeRadius = (float)info.AmmoDef.Const.ByBlockHitRadius * info.Weapon.AreaRadiusMult;
 
             //Detonation info
             var detfalloff = info.AmmoDef.AreaOfDamage.EndOfLife.Falloff;
             var detmaxabsorb = info.AmmoDef.Const.DetMaxAbsorb;
-            var unscaledDetDmg = info.AmmoDef.Const.EndOfLifeDamage;
-            var detradius = info.AmmoDef.Const.EndOfLifeRadius;
+            var unscaledDetDmg = info.AmmoDef.Const.EndOfLifeDamage * info.Weapon.AreaDamageMult;
+            var detradius = info.AmmoDef.Const.EndOfLifeRadius * info.Weapon.AreaRadiusMult;
 
             if (fallOff)
             {
@@ -336,7 +337,7 @@ namespace CoreSystems
 
                 if (info.AmmoDef.Const.Mass <= 0) return;
 
-                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
+                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed * info.Weapon.VelocityMult > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed * info.Weapon.VelocityMult : 1;
                 if (Session.IsServer && !shield.CubeGrid.IsStatic && !SApi.IsFortified(shield))
                     ApplyProjectileForce((MyEntity)shield.CubeGrid, hitEnt.HitPos.Value, hitEnt.Intersection.Direction, info.AmmoDef.Const.Mass * speed);
             }
@@ -367,7 +368,7 @@ namespace CoreSystems
             //Global & modifiers
             var canDamage = t.DoDamage;
 
-            var directDmgGlobal = Settings.Enforcement.DirectDamageModifer * hitEnt.DamageMulti;
+            var directDmgGlobal = Settings.Enforcement.DirectDamageModifer * hitEnt.DamageMulti * t.Weapon.BaseDamageMult;
             var areaDmgGlobal = Settings.Enforcement.AreaDamageModifer * hitEnt.DamageMulti;
             var sync = DedicatedServer;
             float gridDamageModifier = grid.GridGeneralDamageModifier;
@@ -455,8 +456,8 @@ namespace CoreSystems
 
                 if (hasAoe && !detRequested)//load in AOE vars
                 {
-                    aoeDamage = aConst.ByBlockHitDamage;
-                    aoeRadius = aConst.ByBlockHitRadius; //fix type in definitions to float?
+                    aoeDamage = aConst.ByBlockHitDamage * t.Weapon.AreaDamageMult;
+                    aoeRadius = aConst.ByBlockHitRadius * t.Weapon.AreaRadiusMult; //fix type in definitions to float?
                     aoeFalloff = t.AmmoDef.AreaOfDamage.ByBlockHit.Falloff;
                     aoeAbsorb = aConst.AoeMaxAbsorb;
                     aoeDepth = aConst.ByBlockHitDepth;
@@ -465,8 +466,8 @@ namespace CoreSystems
                 }
                 else if (hasDet && detRequested)//load in Detonation vars
                 {
-                    aoeDamage = aConst.EndOfLifeDamage;
-                    aoeRadius = aConst.EndOfLifeRadius;
+                    aoeDamage = aConst.EndOfLifeDamage * t.Weapon.AreaDamageMult;
+                    aoeRadius = aConst.EndOfLifeRadius * t.Weapon.AreaRadiusMult;
                     aoeFalloff = t.AmmoDef.AreaOfDamage.EndOfLife.Falloff;
                     aoeAbsorb = aConst.DetMaxAbsorb;
                     aoeDepth = aConst.EndOfLifeDepth;
@@ -767,7 +768,7 @@ namespace CoreSystems
                                 if (Session.IsServer && !appliedImpulse && primaryDamage && hitMass > 0 )
                                 {
                                     appliedImpulse = true;
-                                    var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed : 1;
+                                    var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed * t.Weapon.VelocityMult > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed * t.Weapon.VelocityMult : 1;
                                     ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed));
                                 }
 
@@ -972,7 +973,7 @@ namespace CoreSystems
 
             if (info.AmmoDef.Const.Mass > 0)
             {
-                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
+                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed * info.Weapon.VelocityMult > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed * info.Weapon.VelocityMult : 1;
                 if (Session.IsServer) ApplyProjectileForce(entity, entity.PositionComp.WorldAABB.Center, hitEnt.Intersection.Direction, (info.AmmoDef.Const.Mass * speed));
             }
         }

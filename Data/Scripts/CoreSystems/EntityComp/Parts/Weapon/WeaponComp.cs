@@ -333,6 +333,38 @@ namespace CoreSystems.Platform
                 SetDps(comp);
             }
 
+            internal static void SetDmg(WeaponComponent comp)
+            {
+                for (int i = 0; i < comp.Collection.Count; i++)
+                {
+                    var w = comp.Collection[i];
+
+                    w.UpdateDmg();
+                }
+
+                SetDps(comp);
+            }
+
+            internal static void SetVel(WeaponComponent comp)
+            {
+                for (int i = 0; i < comp.Collection.Count; i++)
+                {
+                    var w = comp.Collection[i];
+
+                    w.UpdateVel();
+                }
+            }
+
+            internal static void SetFiringAllowed(WeaponComponent comp)
+            {
+                for (int i = 0; i < comp.Collection.Count; i++)
+                {
+                    var w = comp.Collection[i];
+
+                    w.UpdateFiringAllowed();
+                }
+            }
+
             internal static void SetDps(WeaponComponent comp, bool change = false)
             {
                 if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using CoreSystems.Platform;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
@@ -235,7 +237,7 @@ namespace CoreSystems.Projectiles
                 {
                     Vector3D targetDir;
                     Vector3D targetPos;
-                    if (TrajectoryEstimation(Info.AmmoDef, ref Position, out targetDir, out targetPos))
+                    if (TrajectoryEstimation(Info.AmmoDef, w, ref Position, out targetDir, out targetPos))
                         TargetPosition = targetPos;
 
                     TargetPosition -= (Direction * variance);
@@ -246,7 +248,7 @@ namespace CoreSystems.Projectiles
 
             PrevTargetVel = Vector3D.Zero;
 
-            var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);
+            var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed * w.VelocityMult : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);
 
             if (aConst.SpeedVariance && !aConst.IsBeamWeapon)
             {
@@ -3062,7 +3064,7 @@ namespace CoreSystems.Projectiles
             Info.Storage.PickTarget = false;
         }
 
-        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition)
+        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, Weapon weapon, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition)
         {
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
@@ -3087,7 +3089,7 @@ namespace CoreSystems.Projectiles
             var targetVel = eTarget != null ? eTarget.GetTopMostParent().Physics.LinearVelocity : (Vector3)pTarget.Velocity;
             var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
 
-            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
+            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed * (weapon == null ? 1 : weapon.VelocityMult);
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
             Vector3D deltaPosNorm;
@@ -3532,7 +3534,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     Vector3D estimatedTargetPos;
-                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir, out estimatedTargetPos))
+                    if (!TrajectoryEstimation(fragAmmoDef, null, ref newOrigin, out pointDir, out estimatedTargetPos))
                         continue;
                 }
 

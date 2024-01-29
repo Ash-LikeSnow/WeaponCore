@@ -201,7 +201,7 @@ namespace CoreSystems.Projectiles
                                 {
                                     var deltaPos = targetSphere.Center - info.Origin;
                                     var deltaVel = targetAi.TopEntityVel - ai.TopEntityVel;
-                                    var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, ammoDef.Const.DesiredProjectileSpeed);
+                                    var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, ammoDef.Const.DesiredProjectileSpeed * info.Weapon.VelocityMult);
                                     var predictedPos = targetSphere.Center + (float)timeToIntercept * deltaVel;
                                     targetSphere.Center = predictedPos;
                                 }
