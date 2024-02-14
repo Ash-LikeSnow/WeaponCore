@@ -286,7 +286,8 @@ namespace CoreSystems.Projectiles
                         }
                     }
                 }
-
+                else if (p.EndState == EndStates.AtMaxEarly) //Prevents projectiles that are AtMaxEarly from hanging infinitely
+                    p.State = ProjectileState.Destroy;
 
                 if (aConst.Ewar)
                     p.RunEwar();
