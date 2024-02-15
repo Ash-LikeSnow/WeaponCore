@@ -2367,7 +2367,7 @@ namespace CoreSystems.Projectiles
                         parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
                         if (parentPos != Vector3D.Zero && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return)
                         {
-                            var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.1d;//added multiplier to ensure final docking time?
+                            var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 + 1800;//added reserve time for docking
                             if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
                             {
                                 var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
