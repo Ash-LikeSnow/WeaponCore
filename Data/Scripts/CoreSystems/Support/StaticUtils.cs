@@ -18,7 +18,7 @@ namespace CoreSystems.Support
     {
         public static bool ModActivate(IMyModContext context, IMySession session)
         {
-            var priority1 = 1918681825ul;
+            var priority1 = 3154371364ul;
             var priority2 = 2189703321ul;
             var isP0 = context.ModName == "WeaponCore" || context.ModName == "CoreSystems";
             if (isP0) return true;
@@ -51,7 +51,7 @@ namespace CoreSystems.Support
                     {
                         isP2 = true;
                     }
-                    else if (mod.PublishedFileId == 1918681825 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 3154371364)
+                    else if (mod.PublishedFileId == 1918681825 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161)
                     {
                         isP3 = true;
                     }
