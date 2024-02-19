@@ -18,8 +18,8 @@ namespace CoreSystems.Support
     {
         public static bool ModActivate(IMyModContext context, IMySession session)
         {
-            var priority1 = 3154371364ul;
-            var priority2 = 2189703321ul;
+            var priority1 = 3149625043ul; //Starcore
+            //var priority2 = 3154371364ul;
             var isP0 = context.ModName == "WeaponCore" || context.ModName == "CoreSystems";
             if (isP0) return true;
 
@@ -38,8 +38,8 @@ namespace CoreSystems.Support
                 if (mod.PublishedFileId == priority1)
                     p1Exists = true;
 
-                if (mod.PublishedFileId == priority2)
-                    p2Exists = true;
+                //if (mod.PublishedFileId == priority2)
+                //    p2Exists = true;
 
                 if (mod.Name == context.ModId)
                 {
@@ -47,11 +47,11 @@ namespace CoreSystems.Support
                     {
                         isP1 = true;
                     }
-                    else if (mod.PublishedFileId == priority2)
-                    {
-                        isP2 = true;
-                    }
-                    else if (mod.PublishedFileId == 1918681825 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161)
+                    //else if (mod.PublishedFileId == priority2)
+                    //{
+                    //    isP2 = true;
+                    //}
+                    else if (mod.PublishedFileId == 3154371364ul)
                     {
                         isP3 = true;
                     }
