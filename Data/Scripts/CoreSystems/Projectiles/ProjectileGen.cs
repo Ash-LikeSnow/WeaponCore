@@ -185,7 +185,7 @@ namespace CoreSystems.Projectiles
                         var targetSphereReal = targetAi.TopEntity.PositionComp.WorldVolume;
 
                         var targetSphere = targetSphereReal;
-                        targetSphere.Radius = targetSphere.Radius * 3 < 300 ? 300 : targetSphere.Radius * 3;
+                        targetSphere.Radius = targetAi.MaxTargetingRange;
 
                         var dumbAdd = false;
 
@@ -230,40 +230,6 @@ namespace CoreSystems.Projectiles
                             p.Watchers.Add(targetAi);
                         }
                     }
-                }
-                //temp "PD Ghost" debug stuff
-                if (Session.I.IsServer && Session.I.Settings.Enforcement.Debug == 1)
-                {
-                    Ai checkAi = null;
-                    var cubeTarget = target?.TargetObject as MyCubeBlock;
-                    string msg = "DEBUG Projectile-" + reAdd==null? "" : "READD" + p.Info.Id + "-" + p.Info.AmmoDef.AmmoRound + "-gridTarg:" + cubeTarget?.CubeGrid?.DisplayName + "-" + cubeTarget?.CubeGrid?.EntityId;
-
-                    if (cubeTarget != null && Session.I.EntityToMasterAi.TryGetValue(cubeTarget.CubeGrid, out checkAi))
-                    {
-                        msg += "\nShooter-" + ai.TopEntity.DisplayName + "-TargetAI" + checkAi.TopEntity.DisplayName + "-" + checkAi.TopEntity.EntityId + "\n";
-                        if (!checkAi.LiveProjectile.Contains(p))
-                        {
-                            if (checkAi.PointDefense)
-                            {
-                                msg += " was NOT added to the targets LiveProjectile list\n";
-                            }
-                            else
-                                msg += " was not registered - target did not have PD";
-                        }
-                        else if (checkAi.PointDefense)
-                        {
-                            msg += " was added to the targets LiveProjectile list\n";
-                        }
-                    }
-                    if (ai.TargetAis.Contains(checkAi))
-                        msg += " AI of target was in shooters ai.TargetAi list\n";
-                    if (cubeTarget == null)
-                        msg += " CubeTarget was null\n";
-                    else if (Session.I.EntityAIs.TryGetValue(cubeTarget.CubeGrid, out checkAi))
-                        msg += " gridAi found - Root: " + checkAi.Construct?.RootAi?.GridEntity?.DisplayName;
-                    if (cubeTarget != null && checkAi == null)
-                        msg += " targeted cube grid did not have an entity AI\n";
-                    Log.Line(msg);
                 }
             }
             AddTargets.Clear();
