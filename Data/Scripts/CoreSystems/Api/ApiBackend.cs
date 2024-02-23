@@ -805,7 +805,12 @@ namespace CoreSystems.Api
             MyTuple<bool, int, int> tuple;
             if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
             {
-                var count = ai.LiveProjectile.Count;
+                int count = 0;
+                foreach (var proj in ai.LiveProjectile)
+                {
+                    if (proj.Info.Target.TopEntityId == grid.EntityId)
+                        count++;
+                }
                 tuple = count > 0 ? new MyTuple<bool, int, int>(true, count, (int) (Session.I.Tick - ai.LiveProjectileTick)) : new MyTuple<bool, int, int>(false, 0, -1);
             }
             else tuple = new MyTuple<bool, int, int>(false, 0, -1);
@@ -820,10 +825,10 @@ namespace CoreSystems.Api
             collection.Clear();
             if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
             {
-                var count = ai.LiveProjectile.Count;
                 foreach (var proj in ai.LiveProjectile)
                 {
-                    collection.Add(proj.Position);
+                    if(proj.Info.Target.TopEntityId == grid.EntityId)
+                        collection.Add(proj.Position);
                 }
             }
             return;
