@@ -511,6 +511,10 @@ namespace CoreSystems.Support
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
+            BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
+            WaterData water = null;
+            if (Session.I.WaterApiLoaded && !w.ActiveAmmoDef.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var collection = ai.GetProCache(w);
 
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
@@ -577,6 +581,8 @@ namespace CoreSystems.Support
                 var card = index < -1 ? deck[x] : index;
                 var lp = collection[card];
 
+                if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
+                    continue;
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
