@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CoreSystems;
 using CoreSystems.Settings;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using VRage.Utils;
+using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
     internal class VersionControl
     {
         public CoreSettings Core;
-        private readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string,string>> _tmpAmmoModiferMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
-        private readonly Dictionary<WeaponDefinition, Dictionary<string, string>> _tmpWeaponModiferMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
+        private readonly Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride> _tmpAmmoModiferMap = new Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride>();
+        private readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> _tmpWeaponModiferMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         public bool VersionChange;
         public VersionControl(CoreSettings core)
         {
@@ -140,9 +143,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
         private void RebuildConfig(CoreSettings.ServerSettings oldSettings)
         {
-            var oldModifers = oldSettings.ServerModifiers;
             var oldBlockModifers = oldSettings.BlockModifers;
             var oldShipSizes = oldSettings.ShipSizes;
+            var oldOverrides = oldSettings.DefinitionOverrides;
+
             var oldSleep = oldSettings.ServerSleepSupport;
             var oldBaseOptimize = oldSettings.BaseOptimizations;
             var oldAdvancedOptimize = oldSettings.AdvancedOptimizations;
@@ -158,14 +162,20 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             var oldDisableSmallVsLargeBuff = oldSettings.DisableSmallVsLargeBuff;
             Core.Enforcement = new CoreSettings.ServerSettings { Version = Session.ModVersion };
 
-            if (oldModifers != null)
-                Core.Enforcement.ServerModifiers = oldModifers;
+            if (oldSettings.ServerModifiers?.Weapons != null)
+                RemapLegacyWeaponValues(oldSettings.ServerModifiers.Weapons);
+
+            if (oldSettings.ServerModifiers?.Ammos != null)
+                RemapLegacyAmmoValues(oldSettings.ServerModifiers.Ammos);
 
             if (oldBlockModifers != null)
                 Core.Enforcement.BlockModifers = oldBlockModifers;
 
             if (oldShipSizes != null)
                 Core.Enforcement.ShipSizes = oldShipSizes;
+
+            if (oldOverrides != null)
+                Core.Enforcement.DefinitionOverrides = oldOverrides;
 
             Core.Enforcement.ServerSleepSupport = oldSleep;
 
@@ -208,21 +218,25 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 };
             }
 
-            if (Core.Enforcement.ServerModifiers == null)
+            if (Core.Enforcement.DefinitionOverrides == null)
             {
-                Core.Enforcement.ServerModifiers = new CoreSettings.ServerSettings.Modifiers
+                Core.Enforcement.DefinitionOverrides = new CoreSettings.ServerSettings.Overrides
                 {
-                    Ammos = new[] {
-                    new CoreSettings.ServerSettings.AmmoMod { AmmoName = "AmmoRound1", Variable = "BaseDamage", Value = "1" },
-                    new CoreSettings.ServerSettings.AmmoMod { AmmoName = "AmmoRound1", Variable = "AreaDamageType", Value = "Kinetic" },
-                    new CoreSettings.ServerSettings.AmmoMod { AmmoName = "AmmoRound2", Variable = "DesiredSpeed", Value = "750" } 
-                    },
-                    Weapons = new[]
+                    AmmoOverrides = new[]
                     {
-                    new CoreSettings.ServerSettings.WeaponMod {PartName = "PartName1", Variable = "MaxTargetDistance", Value = "1500"},
-                    new CoreSettings.ServerSettings.WeaponMod {PartName = "PartName2", Variable = "DeviateShotAngle", Value = "0.25"},
-                    new CoreSettings.ServerSettings.WeaponMod {PartName = "PartName2", Variable = "AimingTolerance", Value = "0.1"},
+                        new CoreSettings.ServerSettings.AmmoOverride { AmmoName = "AmmoRound1", BaseDamage = 1f, EnergyBaseDamage = true },
+                        new CoreSettings.ServerSettings.AmmoOverride { AmmoName = "AmmoRound2", AreaEffectDamage = 100f, AreaEffectRadius = 2.5, EnergyAreaEffectDamage = false },
                     },
+                    WeaponOverrides = new[]
+                    {
+                        new CoreSettings.ServerSettings.WeaponOverride { PartName = "PartName1", RateOfFire = 600 },
+                        new CoreSettings.ServerSettings.WeaponOverride { PartName = "PartName2", AimingTolerance = 10, DeviateShotAngle = 5f },
+                    },
+                    ArmorOverrides = new[]
+                    {
+                        new CoreSettings.ServerSettings.ArmorOverride { SubtypeIds = new[] { "Subtype1", "Subtype2" }, EnergeticResistance = 0.35f, KineticResistance = 1f },
+                        new CoreSettings.ServerSettings.ArmorOverride { SubtypeIds = new[] { "Subtype3" }, KineticResistance = 0.9f },
+                    }
                 };
             }
 
@@ -251,44 +265,238 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
         private void GenerateWeaponValuesMap()
         {
-            if (Core.Enforcement.ServerModifiers.Weapons == null)
+            if (Core.Enforcement.DefinitionOverrides?.WeaponOverrides == null)
                 return;
 
-            foreach (var mod in Core.Enforcement.ServerModifiers.Weapons)
-                foreach (var pair in Core.Session.WeaponValuesMap)
-                    if (mod.PartName == pair.Key.HardPoint.PartName)
-                    {
-                        if (_tmpWeaponModiferMap.ContainsKey(pair.Key))
-                            _tmpWeaponModiferMap[pair.Key].Add(mod.Variable, mod.Value);
-                        else
-                            _tmpWeaponModiferMap[pair.Key] = new Dictionary<string, string>() { { mod.Variable, mod.Value } };
-                    }
+            foreach (var wepOverride in Core.Enforcement.DefinitionOverrides.WeaponOverrides)
+            {
+                foreach (var wepDef in Core.Session.WeaponValuesMap.Keys)
+                {
+                    if (!wepOverride.PartName.Equals(wepDef.HardPoint.PartName))
+                        continue;
 
-            foreach (var t in _tmpWeaponModiferMap)
-                Core.Session.WeaponValuesMap[t.Key] = t.Value;
+                    if (!_tmpWeaponModiferMap.ContainsKey(wepDef))
+                        _tmpWeaponModiferMap[wepDef] = wepOverride;
+                }
+            }
 
+            foreach (var pair in _tmpWeaponModiferMap)
+            {
+                Core.Session.WeaponValuesMap[pair.Key] = pair.Value;
+            }
             _tmpWeaponModiferMap.Clear();
         }
 
         private void GenerateAmmoValuesMap()
         {
-            if (Core.Enforcement.ServerModifiers.Ammos == null)
+            if (Core.Enforcement.DefinitionOverrides?.AmmoOverrides == null)
                 return;
 
-            foreach (var mod in Core.Enforcement.ServerModifiers.Ammos)
-                foreach (var pair in Core.Session.AmmoValuesMap)
-                    if (mod.AmmoName == pair.Key.AmmoRound)
-                    {
-                        if (_tmpAmmoModiferMap.ContainsKey(pair.Key))
-                            _tmpAmmoModiferMap[pair.Key].Add(mod.Variable, mod.Value);
-                        else
-                            _tmpAmmoModiferMap[pair.Key] = new Dictionary<string, string>() { { mod.Variable, mod.Value } };
-                    }
+            foreach (var ammoOverride in Core.Enforcement.DefinitionOverrides.AmmoOverrides)
+            {
+                foreach (var ammoDef in Core.Session.AmmoValuesMap.Keys)
+                {
+                    if (!ammoOverride.AmmoName.Equals(ammoDef.AmmoRound))
+                        continue;
 
-            foreach (var t in _tmpAmmoModiferMap)
-                Core.Session.AmmoValuesMap[t.Key] = t.Value;
+                    if (!_tmpAmmoModiferMap.ContainsKey(ammoDef))
+                        _tmpAmmoModiferMap[ammoDef] = ammoOverride;
+                }
+            }
 
+            foreach (var pair in _tmpAmmoModiferMap)
+            {
+                Core.Session.AmmoValuesMap[pair.Key] = pair.Value;
+            }
             _tmpAmmoModiferMap.Clear();
+        }
+
+        private void RemapLegacyAmmoValues(CoreSettings.ServerSettings.AmmoMod[] modifiers)
+        {
+            var overrides = new Dictionary<string, CoreSettings.ServerSettings.AmmoOverride>();
+            foreach (var modifier in modifiers)
+            {
+                CoreSettings.ServerSettings.AmmoOverride ammoOverride;
+                if (!overrides.TryGetValue(modifier.AmmoName, out ammoOverride))
+                {
+                    ammoOverride = new CoreSettings.ServerSettings.AmmoOverride();
+                    ammoOverride.AmmoName = modifier.AmmoName;
+                    overrides.Add(modifier.AmmoName, ammoOverride);
+                }
+
+                float floatValue;
+                int intValue;
+                bool boolValue;
+                switch (modifier.Variable)
+                {
+                    case "BaseDamage":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.BaseDamage = floatValue;
+                        break;
+                    case "AreaEffectDamage":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.AreaEffectDamage = floatValue;
+                        break;
+                    case "AreaEffectRadius":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.AreaEffectRadius = (double)floatValue;
+                        break;
+                    case "DetonationDamage":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.DetonationDamage = floatValue;
+                        break;
+                    case "DetonationRadius":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.DetonationRadius = floatValue;
+                        break;
+                    case "Health":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.Health = floatValue;
+                        break;
+                    case "MaxTrajectory":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.MaxTrajectory = floatValue;
+                        break;
+                    case "DesiredSpeed":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.DesiredSpeed = floatValue;
+                        break;
+                    case "EnergyCost":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.EnergyCost = floatValue;
+                        break;
+                    case "GravityMultiplier":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.GravityMultiplier = floatValue;
+                        break;
+                    case "ShieldModifier":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ShieldModifier = (double)floatValue;
+                        break;
+                    case "EnergyBaseDamage":
+                        if (bool.TryParse(modifier.Value, out boolValue))
+                            ammoOverride.EnergyBaseDamage = boolValue;
+                        break;
+                    case "EnergyAreaEffectDamage":
+                        if (bool.TryParse(modifier.Value, out boolValue))
+                            ammoOverride.EnergyAreaEffectDamage = boolValue;
+                        break;
+                    case "EnergyDetonationDamage":
+                        if (bool.TryParse(modifier.Value, out boolValue))
+                            ammoOverride.EnergyDetonationDamage = boolValue;
+                        break;
+                    case "EnergyShieldDamage":
+                        if (bool.TryParse(modifier.Value, out boolValue))
+                            ammoOverride.EnergyShieldDamage = boolValue;
+                        break;
+                    case "DisableClientPredictedAmmo":
+                        if (bool.TryParse(modifier.Value, out boolValue))
+                            ammoOverride.DisableClientPredictedAmmo = boolValue;
+                        break;
+                    case "FallOffDistance":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.FallOffDistance = floatValue;
+                        break;
+                    case "FallOffMinMultipler":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.FallOffMinMultipler = floatValue;
+                        break;
+                    case "ShieldBypass":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ShieldBypass = floatValue;
+                        break;
+                    case "Mass":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.Mass = floatValue;
+                        break;
+                    case "HealthHitModifier":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.HealthHitModifier = (double)floatValue;
+                        break;
+                    case "ByBlockHitMaxAbsorb":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ByBlockHitMaxAbsorb = floatValue;
+                        break;
+                    case "EndOfLifeMaxAbsorb":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.EndOfLifeMaxAbsorb = floatValue;
+                        break;
+                    case "BackKickForce":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.BackKickForce = floatValue;
+                        break;
+                }
+            }
+
+            if (Core.Enforcement.DefinitionOverrides == null)
+                Core.Enforcement.DefinitionOverrides = new CoreSettings.ServerSettings.Overrides();
+
+            Core.Enforcement.DefinitionOverrides.AmmoOverrides = overrides.Values.ToArray();
+        }
+
+        private void RemapLegacyWeaponValues(CoreSettings.ServerSettings.WeaponMod[] modifiers)
+        {
+            var overrides = new Dictionary<string, CoreSettings.ServerSettings.WeaponOverride>();
+            foreach (var modifier in modifiers)
+            {
+                CoreSettings.ServerSettings.WeaponOverride wepOverride;
+                if (!overrides.TryGetValue(modifier.PartName, out wepOverride))
+                {
+                    wepOverride = new CoreSettings.ServerSettings.WeaponOverride();
+                    wepOverride.PartName = modifier.PartName;
+                    overrides.Add(modifier.PartName, wepOverride);
+                }
+
+                float floatValue;
+                int intValue;
+                switch (modifier.Variable)
+                {
+                    case "MaxTargetDistance":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.MaxTargetDistance = floatValue;
+                        break;
+                    case "MinTargetDistance":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.MinTargetDistance = floatValue;
+                        break;
+                    case "RateOfFire":
+                        if (int.TryParse(modifier.Value, out intValue))
+                            wepOverride.RateOfFire = intValue;
+                        break;
+                    case "ReloadTime":
+                        if (int.TryParse(modifier.Value, out intValue))
+                            wepOverride.ReloadTime = intValue;
+                        break;
+                    case "DeviateShotAngle":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.DeviateShotAngle = floatValue;
+                        break;
+                    case "AimingTolerance":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.AimingTolerance = (double)floatValue;
+                        break;
+                    case "HeatPerShot":
+                        if (int.TryParse(modifier.Value, out intValue))
+                            wepOverride.HeatPerShot = intValue;
+                        break;
+                    case "HeatSinkRate":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.HeatSinkRate = floatValue;
+                        break;
+                    case "IdlePower":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            wepOverride.IdlePower = floatValue;
+                        break;
+                    default:
+                        break;
+                }
+
+            }
+
+            if (Core.Enforcement.DefinitionOverrides == null)
+                Core.Enforcement.DefinitionOverrides = new CoreSettings.ServerSettings.Overrides();
+
+            Core.Enforcement.DefinitionOverrides.WeaponOverrides = overrides.Values.ToArray();
         }
 
     }

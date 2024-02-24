@@ -46,7 +46,7 @@ namespace CoreSystems
         internal const int VersionControl = 34;
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
-        internal const int ModVersion = 27;
+        internal const int ModVersion = 28;
         internal const int ClientCfgVersion = 9;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
@@ -185,8 +185,8 @@ namespace CoreSystems
         internal readonly Dictionary<uint, MyPhysicalInventoryItem> AmmoItems = new Dictionary<uint, MyPhysicalInventoryItem>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
         internal readonly Dictionary<string, MyMouseButtonsEnum> MouseMap = new Dictionary<string, MyMouseButtonsEnum>();
-        internal readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
-        internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
+        internal readonly Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride>();
+        internal readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> WeaponValuesMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
         internal readonly Dictionary<uint, ProtoProTargetSync> GlobalProTargetSyncs = new Dictionary<uint, ProtoProTargetSync>();
