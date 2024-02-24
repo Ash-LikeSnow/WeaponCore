@@ -657,14 +657,7 @@ namespace CoreSystems.Support
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)
-                {
                     session.Projectiles.AddTargets.Add(p);
-                    //temp "PD Ghost" debug stuff
-                    if (Session.I.IsServer && Session.I.Settings.Enforcement.Debug == 1)
-                    {
-                        Log.Line($"DEBUG Projectile {p.Info.Id} - {p.Info.AmmoDef.AmmoRound} - {p.Info.Target?.TopEntityId} added to AddTargets");
-                    }
-                }
 
                 session.Projectiles.FragmentPool.Push(frag);
             }
