@@ -435,17 +435,20 @@ namespace CoreSystems.Support
                     FgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.IconColor).HSVtoColor().ToVector4().ToLinearRGB();
                     FgFactionColor *= 100;
                     FgFactionColor.W *= 0.01f;
+                    AiOwnerFactionId = aiFaction.FactionId;
                 }
                 else
                 {
                     BgFactionColor = Vector4.Zero;
                     FgFactionColor = Vector4.Zero;
+                    AiOwnerFactionId = 0;
                 }
             }
             else
             {
                 BgFactionColor = Vector4.Zero;
                 FgFactionColor = Vector4.Zero;
+                AiOwnerFactionId = 0;
             }
         }
 
@@ -510,6 +513,7 @@ namespace CoreSystems.Support
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
+            AiOwnerFactionId = 0;
             LastAddToRotorTick = 0;
             ProjectileTicker = 0;
             NearByEntities = 0;
