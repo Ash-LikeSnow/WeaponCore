@@ -746,10 +746,10 @@ namespace CoreSystems.Support
             MinRateOfFire = values.HardPoint.Ui.RateOfFireMin > 1 || values.HardPoint.Ui.RateOfFireMin < 0 ? 0 : values.HardPoint.Ui.RateOfFireMin;
 
 
-            MaxTargetDistance = values.Targeting.MaxTargetDistance;
-            MinTargetDistance = values.Targeting.MinTargetDistance;
-            RateOfFire = values.HardPoint.Loading.RateOfFire;
-            ReloadTime = values.HardPoint.Loading.ReloadTime;
+            MaxTargetDistance = values.Targeting.MaxTargetDistance > 0 ? values.Targeting.MaxTargetDistance : double.MaxValue;
+            MinTargetDistance = Math.Max(values.Targeting.MinTargetDistance, 0f);
+            RateOfFire = Math.Max(values.HardPoint.Loading.RateOfFire, 0);
+            ReloadTime = Math.Max(values.HardPoint.Loading.ReloadTime, 0);
 
             DeviateShotAngleRads = MathHelper.ToRadians(values.HardPoint.DeviateShotAngle);
             AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
