@@ -23,8 +23,11 @@ namespace CoreSystems.Support
                     return;
 
                 if (AiType == AiTypes.Grid) {
+                    var oldOwner = AiOwner;
                     var bigOwners = GridEntity.BigOwners;
                     AiOwner = bigOwners.Count > 0 ? bigOwners[0] : 0;
+                    if (oldOwner != AiOwner)
+                        UpdateFactionColors();
                 }
             }
 

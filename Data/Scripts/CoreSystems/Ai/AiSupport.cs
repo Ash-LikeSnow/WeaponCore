@@ -54,10 +54,14 @@ namespace CoreSystems.Support
                                 return;
                             }
 
+                            var wCompMaxWepRange = wComp.MaxDetectDistance;
                             WeaponComps.RemoveAtFast(weaponIdx);
                             if (weaponIdx < WeaponComps.Count)
                                 WeaponIdx[WeaponComps[weaponIdx]] = weaponIdx;
                             WeaponIdx.Remove(wComp);
+
+                            if (wCompMaxWepRange >= (MaxTargetingRange - TopEntity.PositionComp.LocalVolume.Radius) * 0.95) //Filter so that only the longest ranged weps force a recalc
+                                UpdateMaxTargetingRange();
 
                             if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                                 CompWeaponGroups.Remove(wComp);
@@ -190,6 +194,23 @@ namespace CoreSystems.Support
                     }
                     break;
             }
+        }
+
+        private void UpdateMaxTargetingRange()
+        {
+            var longestRange = 0d;
+            foreach(var wComp in WeaponComps)
+            {
+                if (wComp.MaxDetectDistance > longestRange)
+                {
+                    longestRange = wComp.MaxDetectDistance;
+                    if (longestRange >= Session.I.Settings.Enforcement.MaxHudFocusDistance)
+                        break;
+                }
+            }
+            var expandedMaxTrajectory = longestRange + TopEntity.PositionComp.LocalVolume.Radius;
+            MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory, Session.I.Settings.Enforcement.MaxHudFocusDistance);
+            MaxTargetingRangeSqr = MaxTargetingRange * MaxTargetingRange;            
         }
 
         private static int[] GetDeck(ref int[] deck, int firstCard, int cardsToSort, int cardsToShuffle, ref XorShiftRandomStruct rng)
@@ -435,17 +456,20 @@ namespace CoreSystems.Support
                     FgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.IconColor).HSVtoColor().ToVector4().ToLinearRGB();
                     FgFactionColor *= 100;
                     FgFactionColor.W *= 0.01f;
+                    AiOwnerFactionId = aiFaction.FactionId;
                 }
                 else
                 {
                     BgFactionColor = Vector4.Zero;
                     FgFactionColor = Vector4.Zero;
+                    AiOwnerFactionId = 0;
                 }
             }
             else
             {
                 BgFactionColor = Vector4.Zero;
                 FgFactionColor = Vector4.Zero;
+                AiOwnerFactionId = 0;
             }
         }
 
@@ -510,6 +534,7 @@ namespace CoreSystems.Support
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
+            AiOwnerFactionId = 0;
             LastAddToRotorTick = 0;
             ProjectileTicker = 0;
             NearByEntities = 0;

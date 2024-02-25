@@ -120,6 +120,7 @@ namespace CoreSystems.Support
         internal BoundingBox BlockChangeArea = BoundingBox.CreateInvalid();
         internal AiTypes AiType;
         internal long AiOwner;
+        internal long AiOwnerFactionId;
         internal bool IsBot;
         internal bool EnemyProjectiles;
         internal bool EnemyEntities;

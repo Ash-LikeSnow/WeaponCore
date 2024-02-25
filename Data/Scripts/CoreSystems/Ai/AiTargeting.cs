@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using Sandbox.ModAPI;
 
 namespace CoreSystems.Support
 {
@@ -517,6 +518,7 @@ namespace CoreSystems.Support
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var collection = ai.GetProCache(w);
 
+            var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
             var comp = w.Comp;
@@ -582,6 +584,9 @@ namespace CoreSystems.Support
                 var lp = collection[card];
 
                 if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
+                    continue;
+                var lpAiOwnerFactionId = lp.Info.Weapon.Comp.MasterAi.AiOwnerFactionId;
+                if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 && lpAiOwnerFactionId > 0 && MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
                     continue;
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;

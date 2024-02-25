@@ -252,9 +252,7 @@ namespace CoreSystems.Platform
                     weapon.Comp.DetDps += ammo.Const.DetDps;
                 }
 
-                maxTrajectory = 0;
-                if (weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory > maxTrajectory)
-                    maxTrajectory = weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory;
+                maxTrajectory = weapon.MaxTargetDistance;
 
                 if (weapon.System.TrackProjectile)
                     Ai.PointDefense = true;
