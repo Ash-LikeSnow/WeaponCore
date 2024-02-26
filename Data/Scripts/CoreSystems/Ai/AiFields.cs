@@ -53,7 +53,7 @@ namespace CoreSystems.Support
         internal readonly HashSet<MyEntity> ValidGrids = new HashSet<MyEntity>();
         internal readonly HashSet<MyBatteryBlock> Batteries = new HashSet<MyBatteryBlock>();
         internal readonly HashSet<MyCubeGrid> SubGridCache = new HashSet<MyCubeGrid>();
-        internal readonly HashSet<Projectile> LiveProjectile = new HashSet<Projectile>();
+        internal readonly Dictionary<Projectile, bool> LiveProjectile = new Dictionary<Projectile, bool>();
         internal readonly HashSet<IMyMotorStator> Stators = new HashSet<IMyMotorStator>();
         internal readonly HashSet<IMyOffensiveCombatBlock> AiOffense = new HashSet<IMyOffensiveCombatBlock>();
         internal readonly HashSet<IMyFlightMovementBlock> AiFlight = new HashSet<IMyFlightMovementBlock>();

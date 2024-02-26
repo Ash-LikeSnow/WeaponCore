@@ -252,7 +252,7 @@ namespace CoreSystems.Support
                 if (LiveProjectileTick > _pCacheTick)
                 {
                     ProjetileCache.Clear();
-                    ProjetileCache.AddRange(LiveProjectile);
+                    ProjetileCache.AddRange(LiveProjectile.Keys);
                     _pCacheTick = LiveProjectileTick;
                 }
             }

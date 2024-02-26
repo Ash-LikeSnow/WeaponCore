@@ -222,10 +222,13 @@ namespace CoreSystems.Projectiles
                         var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
                         var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition5);
 
-                        if ((dumbAdd || validAi) && (reAdd == null || !targetAi.LiveProjectile.Contains(p)))
+                        if ((dumbAdd || validAi))// && (reAdd == null || !targetAi.LiveProjectile.ContainsKey(p)))
                         {
                             targetAi.DeadProjectiles.Remove(p);
-                            targetAi.LiveProjectile.Add(p);
+                            if (targetAi.LiveProjectile.ContainsKey(p))
+                                targetAi.LiveProjectile[p] = condition1 || condition2;
+                            else
+                                targetAi.LiveProjectile.Add(p, (condition1 || condition2));
                             targetAi.LiveProjectileTick = Session.I.Tick;
                             targetAi.NewProjectileTick = Session.I.Tick;
                             p.Watchers.Add(targetAi);
