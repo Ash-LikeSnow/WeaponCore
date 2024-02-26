@@ -72,12 +72,15 @@ namespace CoreSystems.Platform
                 if (cube != null) 
                 {
                     var turret = coreEntity as IMyLargeTurretBase;
+                    var search = coreEntity as IMySearchlight;
                     if (turret != null)
                     {
                         VanillaTurretBase = turret;
                         VanillaTurretBase.EnableIdleRotation = false;
                         VanillaTurretBase.SetManualAzimuthAndElevation(0, 0);
                     }
+                    else if (search != null)
+                        search.EnableIdleMovement = false;
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {

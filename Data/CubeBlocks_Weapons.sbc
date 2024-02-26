@@ -158,7 +158,7 @@
 			<MaxElevationDegrees>90</MaxElevationDegrees>
 			<MinAzimuthDegrees>-180</MinAzimuthDegrees>
 			<MaxAzimuthDegrees>180</MaxAzimuthDegrees>
-			<IdleRotation>true</IdleRotation>
+			<IdleRotation>false</IdleRotation>
 			<MaxRangeMeters>800</MaxRangeMeters>
 			<RotationSpeed>0.0005</RotationSpeed>
 			<ElevationSpeed>0.0005</ElevationSpeed>
@@ -254,7 +254,7 @@
             <MaxAzimuthDegrees>180</MaxAzimuthDegrees>
             <RotationSpeed>0.001</RotationSpeed>
             <ElevationSpeed>0.001 </ElevationSpeed>
-            <IdleRotation>true</IdleRotation>
+            <IdleRotation>false</IdleRotation>
             <MaxRangeMeters>600</MaxRangeMeters>
             <MinFov>0.1</MinFov>
             <MaxFov>1.04719755</MaxFov>
@@ -356,7 +356,7 @@
             <MaxAzimuthDegrees>180</MaxAzimuthDegrees>
             <RotationSpeed>0.001</RotationSpeed>
             <ElevationSpeed>0.001 </ElevationSpeed>
-            <IdleRotation>true</IdleRotation>
+            <IdleRotation>false</IdleRotation>
             <MaxRangeMeters>600</MaxRangeMeters>
             <MinFov>0.1</MinFov>
             <MaxFov>1.04719755</MaxFov>

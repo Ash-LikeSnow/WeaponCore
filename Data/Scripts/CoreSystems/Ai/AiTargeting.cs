@@ -585,7 +585,7 @@ namespace CoreSystems.Support
 
                 if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
                     continue;
-                var lpAiOwnerFactionId = lp.Info.Weapon.Comp.MasterAi.AiOwnerFactionId;
+                var lpAiOwnerFactionId = lp.Info.FactionId;
                 if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 && lpAiOwnerFactionId > 0 && MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
                     continue;
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
