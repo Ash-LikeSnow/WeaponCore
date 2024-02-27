@@ -64,6 +64,7 @@ namespace CoreSystems.Platform
             internal bool HasRequireTarget;
             internal bool HasDrone;
             internal bool ShootRequestDirty;
+            internal bool DisableSupportingPD;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {
@@ -631,6 +632,10 @@ namespace CoreSystems.Platform
                         break;
                     case "SmallGrid":
                         o.SmallGrid = enabled;
+                        clearTargets = true;
+                        break;
+                    case "SupportingPD":
+                        o.SupportingPD = enabled;
                         clearTargets = true;
                         break;
                 }

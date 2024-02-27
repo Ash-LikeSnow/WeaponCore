@@ -528,6 +528,7 @@ namespace CoreSystems.Support
                 [ProtoMember(5)] internal bool AlternateUi;
                 [ProtoMember(6)] internal bool DisableStatus;
                 [ProtoMember(7)] internal float RateOfFireMin;
+                [ProtoMember(8)] internal bool DisableSupportingPD;
             }
 
 

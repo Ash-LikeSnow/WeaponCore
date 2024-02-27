@@ -625,7 +625,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (pTarget != null && (!ai.LiveProjectile.Contains(pTarget) || w.Target.TargetState == TargetStates.IsProjectile && pTarget.State != Projectile.ProjectileState.Alive))
+                                else if (pTarget != null && (!ai.LiveProjectile.ContainsKey(pTarget) || w.Target.TargetState == TargetStates.IsProjectile && pTarget.State != Projectile.ProjectileState.Alive))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                     w.FastTargetResetTick = Tick + 6;

@@ -516,13 +516,13 @@ namespace CoreSystems.Support
             WaterData water = null;
             if (Session.I.WaterApiLoaded && !w.ActiveAmmoDef.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
-            var collection = ai.GetProCache(w);
 
             var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
             var comp = w.Comp;
             var mOverrides = comp.MasterOverrides;
+            var collection = ai.GetProCache(w, mOverrides.SupportingPD);
             var minRadius = mOverrides.MinSize * 0.5f;
             var maxRadius = mOverrides.MaxSize * 0.5f;
             var minTargetRadius = minRadius > 0 ? minRadius : system.MinTargetRadius;
@@ -854,7 +854,7 @@ namespace CoreSystems.Support
             var physics = Session.I.Physics;
             var weaponPos = p.Position;
             var aConst = p.Info.AmmoDef.Const;
-            var collection = ai.GetProCache(w);
+            var collection = ai.GetProCache(w, overRides.SupportingPD);
             var numOfTargets = collection.Count;
             var lockedOnly = s.Values.Targeting.LockedSmartOnly;
             var smartOnly = s.Values.Targeting.IgnoreDumbProjectiles;
