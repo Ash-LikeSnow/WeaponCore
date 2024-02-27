@@ -1100,8 +1100,6 @@ namespace CoreSystems
                     shipWeapons.ItemIds.Remove(item);
                 }
             }
-
-            CounterKeenLogMessage(false);
         }
 
         private void PracticalJokes(ulong playerSteamUserId)
