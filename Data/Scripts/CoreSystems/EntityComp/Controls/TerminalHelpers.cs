@@ -59,6 +59,8 @@ namespace CoreSystems.Control
             AddOnOffSwitchNoAction<T>(session, "Biologicals", Localization.GetText("TerminalBiologicalsTitle"), Localization.GetText("TerminalBiologicalsTooltip"), BlockUi.GetBiologicals, BlockUi.RequestSetBiologicals, true, TrackBiologicals);
 
             AddOnOffSwitchNoAction<T>(session,  "Projectiles", Localization.GetText("TerminalProjectilesTitle"), Localization.GetText("TerminalProjectilesTooltip"), BlockUi.GetProjectiles, BlockUi.RequestSetProjectiles, true, TrackProjectiles);
+            
+            AddOnOffSwitchNoAction<T>(session, "Supporting PD", Localization.GetText("TerminalSupportingPDTitle"), Localization.GetText("TerminalSupportingPDTooltip"), BlockUi.GetSupportingPD, BlockUi.RequestSetSupportingPD, true, TrackProjectiles);
 
             AddOnOffSwitchNoAction<T>(session, "Meteors", Localization.GetText("TerminalMeteorsTitle"), Localization.GetText("TerminalMeteorsTooltip"), BlockUi.GetMeteors, BlockUi.RequestSetMeteors, true, TrackMeteors);
 
@@ -118,6 +120,8 @@ namespace CoreSystems.Control
             CtcAddOnOffSwitchNoAction<T>(session, "Biologicals", Localization.GetText("TerminalBiologicalsTitle"), Localization.GetText("TerminalBiologicalsTooltip"), BlockUi.GetBiologicalsControl, BlockUi.RequestSetBiologicalsControl, true, CtcIsReady);
 
             CtcAddOnOffSwitchNoAction<T>(session, "Projectiles", Localization.GetText("TerminalProjectilesTitle"), Localization.GetText("TerminalProjectilesTooltip"), BlockUi.GetProjectilesControl, BlockUi.RequestSetProjectilesControl, true, CtcIsReady);
+
+            CtcAddOnOffSwitchNoAction<T>(session, "Supporting PD", Localization.GetText("TerminalSupportingPDTitle"), Localization.GetText("TerminalSupportingPDTooltip"), BlockUi.GetSupportingPDControl, BlockUi.RequestSetSupportingPDControl, true, CtcIsReady);
 
             CtcAddOnOffSwitchNoAction<T>(session, "Meteors", Localization.GetText("TerminalMeteorsTitle"), Localization.GetText("TerminalMeteorsTooltip"), BlockUi.GetMeteorsControl, BlockUi.RequestSetMeteorsControl, true, CtcIsReady);
 

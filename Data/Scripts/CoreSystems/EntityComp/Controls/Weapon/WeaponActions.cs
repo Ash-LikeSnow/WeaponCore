@@ -207,7 +207,18 @@ namespace CoreSystems.Control
 
             Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", newValue, Session.I.PlayerId);
         }
+        
+        internal static void TerminalActionToggleSupportingPD(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
 
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.SupportingPD;
+            var newValue = newBool ? 1 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "SupportingPD", newValue, Session.I.PlayerId);
+        }
         internal static void TerminalActionToggleBiologicals(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -498,12 +509,20 @@ namespace CoreSystems.Control
             else
                 sb.Append(Localization.GetText("ActionStateOff"));
         }
-
         internal static void ProjectilesWriter(IMyTerminalBlock blk, StringBuilder sb)
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Projectiles)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+        internal static void SupportingPDWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.SupportingPD)
                 sb.Append(Localization.GetText("ActionStateOn"));
             else
                 sb.Append(Localization.GetText("ActionStateOff"));

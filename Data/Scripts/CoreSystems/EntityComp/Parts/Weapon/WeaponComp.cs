@@ -633,6 +633,10 @@ namespace CoreSystems.Platform
                         o.SmallGrid = enabled;
                         clearTargets = true;
                         break;
+                    case "SupportingPD":
+                        o.SupportingPD = enabled;
+                        clearTargets = true;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);

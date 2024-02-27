@@ -79,7 +79,8 @@ namespace CoreSystems.Support
         internal readonly List<DetectInfo> ObstructionsTmp = new List<DetectInfo>();
         internal readonly List<DetectInfo> Obstructions = new List<DetectInfo>();
         internal readonly List<MyEntity> StaticsInRangeTmp = new List<MyEntity>();
-        internal readonly List<Projectile> ProjetileCache = new List<Projectile>();
+        internal readonly List<Projectile> ProjectileCache = new List<Projectile>();
+        internal readonly List<Projectile> ProjectileLockedCache = new List<Projectile>();
         internal readonly List<Ai> TargetAis = new List<Ai>(32);
         internal readonly List<TargetInfo> SortedTargets = new List<TargetInfo>();
         internal readonly List<DetectInfo> NewEntities = new List<DetectInfo>();

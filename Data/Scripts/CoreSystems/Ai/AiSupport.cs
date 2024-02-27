@@ -244,15 +244,21 @@ namespace CoreSystems.Support
             return deck;
         }
 
-        internal List<Projectile> GetProCache(Weapon w)
+        internal List<Projectile> GetProCache(Weapon w, bool supportingPD)
         {
-            var collection = !w.System.TargetSlaving ? ProjetileCache : ProjectileCollection;
+            var collection = !w.System.TargetSlaving ? supportingPD ? ProjectileCache : ProjectileLockedCache : ProjectileCollection;
             if (!w.System.TargetSlaving)
             {
                 if (LiveProjectileTick > _pCacheTick)
                 {
-                    ProjetileCache.Clear();
-                    ProjetileCache.AddRange(LiveProjectile.Keys);
+                    ProjectileCache.Clear();
+                    ProjectileLockedCache.Clear();
+                    ProjectileCache.AddRange(LiveProjectile.Keys);
+                    foreach(var proj in LiveProjectile)
+                    {
+                        if (proj.Value)
+                            ProjectileLockedCache.Add(proj.Key);
+                    }
                     _pCacheTick = LiveProjectileTick;
                 }
             }
@@ -515,7 +521,8 @@ namespace CoreSystems.Support
             AiOffense.Clear();
             AiFlight.Clear();
             QueuedSounds.Clear();
-            ProjetileCache.Clear();
+            ProjectileCache.Clear();
+            ProjectileLockedCache.Clear();
             CompWeaponGroups.Clear();
             SortedTargets.Clear();
             LiveProjectile.Clear();
