@@ -266,7 +266,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionSupportingPD"));
             action.Action = CustomActions.TerminalActionToggleSupportingPD;
             action.Writer = CustomActions.SupportingPDWriter;
-            action.Enabled = TerminalHelpers.TrackProjectiles;
+            action.Enabled = TerminalHelpers.UiDisableSupportingPD;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

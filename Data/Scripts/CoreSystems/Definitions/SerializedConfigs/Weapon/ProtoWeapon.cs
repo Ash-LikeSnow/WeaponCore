@@ -38,6 +38,9 @@ namespace CoreSystems
             if (!comp.PrimaryWeapon.System.TrackGrids)
                 Values.Set.Overrides.Grids = false;
 
+            if (comp.DisableSupportingPD)
+                Values.Set.Overrides.SupportingPD = false;
+
             if (comp.Ai.AiType == Ai.AiTypes.Player)
             {
                 Values.State.PlayerId = comp.Rifle.OwnerIdentityId;
