@@ -5,6 +5,7 @@ using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRage.Noise.Patterns;
 using VRage.Utils;
 using VRageMath;
@@ -144,12 +145,23 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;
             MyEntity rootEntity = null;
+            if (ai.MyPlanet != null && Session.I.Tick90 && s.UiInput.AltPressed)
+            {
+                var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > 14999 ? AimPosition + AimDirection * 14999 : end); //Prefetch will return nothing if dist >= 15000
+                ai.MyPlanet.PrefetchShapeOnRay(ref rayLine);
+            }
             Session.I.Physics.CastRay(AimPosition, end, _hitInfo);
 
             for (int i = 0; i < _hitInfo.Count; i++)
             {
 
                 var hit = _hitInfo[i];
+                var hitVoxel = hit.HitEntity is IMyVoxelBase;
+                if(hitVoxel)
+                {
+                    end = hit.Position;
+                    break;
+                }
                 closestEnt = hit.HitEntity.GetTopMostParent() as MyEntity;
                 if (closestEnt == null)
                     continue;
