@@ -805,13 +805,10 @@ namespace CoreSystems.Api
             MyTuple<bool, int, int> tuple;
             if (grid != null && Session.I.EntityToMasterAi.TryGetValue(grid, out ai))
             {
-                var subGridIds = new List<long>();
-                foreach(var subGrid in ai.SubGridCache)
-                    subGridIds.Add(subGrid.EntityId);
                 int count = 0;
                 foreach (var proj in ai.LiveProjectile)
                 {
-                    if (subGridIds.Contains(proj.Info.Target.TopEntityId))
+                    if (proj.Value)
                         count++;
                 }
                 tuple = count > 0 ? new MyTuple<bool, int, int>(true, count, (int) (Session.I.Tick - ai.LiveProjectileTick)) : new MyTuple<bool, int, int>(false, 0, -1);
@@ -828,13 +825,10 @@ namespace CoreSystems.Api
             collection.Clear();
             if (grid != null && Session.I.EntityToMasterAi.TryGetValue(grid, out ai))
             {
-                var subGridIds = new List<long>();
-                foreach (var subGrid in ai.SubGridCache)
-                    subGridIds.Add(subGrid.EntityId);
                 foreach (var proj in ai.LiveProjectile)
                 {
-                    if(subGridIds.Contains(proj.Info.Target.TopEntityId))
-                        collection.Add(proj.Position);
+                    if(proj.Value)
+                        collection.Add(proj.Key.Position);
                 }
             }
             return;

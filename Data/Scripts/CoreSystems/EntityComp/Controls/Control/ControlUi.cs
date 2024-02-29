@@ -257,6 +257,21 @@ namespace CoreSystems
             var value = newValue ? 1 : 0;
             ControlSys.ControlComponent.RequestSetValue(comp, "Projectiles", value, Session.I.PlayerId);
         }
+        internal static bool GetSupportingPDControl(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.SupportingPD;
+        }
+
+        internal static void RequestSetSupportingPDControl(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            ControlSys.ControlComponent.RequestSetValue(comp, "SupportingPD", value, Session.I.PlayerId);
+        }
 
         internal static bool GetMeteorsControl(IMyTerminalBlock block)
         {

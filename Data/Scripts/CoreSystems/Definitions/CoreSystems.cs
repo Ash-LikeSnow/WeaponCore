@@ -177,6 +177,7 @@ namespace CoreSystems.Support
         public readonly bool ClosestFirst;
         public readonly bool DegRof;
         public readonly bool TrackProjectile;
+        public readonly bool DisableSupportingPD;
         public readonly bool ScanTrackOnly;
         public readonly bool AlternateUi;
         public readonly bool NonThreatsOnly;

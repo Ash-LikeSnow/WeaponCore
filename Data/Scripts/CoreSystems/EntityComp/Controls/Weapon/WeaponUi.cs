@@ -459,6 +459,21 @@ namespace CoreSystems
             var value = newValue ? 1 : 0;
             Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", value, Session.I.PlayerId);
         }
+        internal static bool GetSupportingPD(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.SupportingPD;
+        }
+
+        internal static void RequestSetSupportingPD(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            Weapon.WeaponComponent.RequestSetValue(comp, "SupportingPD", value, Session.I.PlayerId);
+        }
 
         internal static bool GetMeteors(IMyTerminalBlock block)
         {

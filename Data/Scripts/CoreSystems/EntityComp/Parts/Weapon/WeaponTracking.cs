@@ -1255,7 +1255,7 @@ namespace CoreSystems.Platform
 
             if (Target.TargetState == Target.TargetStates.IsProjectile)
             {
-                if (pTarget != null && !Comp.Ai.LiveProjectile.Contains(pTarget))
+                if (pTarget != null && !Comp.Ai.LiveProjectile.ContainsKey(pTarget))
                 {
                     masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckProjectile);
                     if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckProjectile);

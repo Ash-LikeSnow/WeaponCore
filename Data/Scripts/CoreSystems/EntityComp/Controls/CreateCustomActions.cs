@@ -259,6 +259,19 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddAction<T>(action);
             session.CustomActions.Add(action);
         }
+        public static void CreateSupportingPD(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("SupportingPD");
+            action.Icon = @"Textures\GUI\Icons\Actions\MissileToggle.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionSupportingPD"));
+            action.Action = CustomActions.TerminalActionToggleSupportingPD;
+            action.Writer = CustomActions.SupportingPDWriter;
+            action.Enabled = TerminalHelpers.UiDisableSupportingPD;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
 
         public static void CreateBiologicals(Session session)
         {
@@ -748,6 +761,19 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionProjectiles"));
             action.Action = CustomActions.TerminalActionToggleProjectilesControl;
             action.Writer = CustomActions.ProjectilesWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+        public static void CreateSupportingPDControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("SupportingPD");
+            action.Icon = @"Textures\GUI\Icons\Actions\MissileToggle.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionSupportingPD"));
+            action.Action = CustomActions.TerminalActionToggleSupportingPDControl;
+            action.Writer = CustomActions.SupportingPDWriterControl;
             action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 

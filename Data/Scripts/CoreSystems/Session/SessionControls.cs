@@ -225,6 +225,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateFriendly(session);
             CreateCustomActions<T>.CreateUnowned(session);
             CreateCustomActions<T>.CreateProjectiles(session);
+            CreateCustomActions<T>.CreateSupportingPD(session);
             CreateCustomActions<T>.CreateBiologicals(session);
             CreateCustomActions<T>.CreateMeteors(session);
             CreateCustomActions<T>.CreateWeaponCameraChannels(session);
@@ -253,6 +254,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateSubSystemsControl(session);
             CreateCustomActions<T>.CreateControlModesControl(session);
             CreateCustomActions<T>.CreateProjectilesControl(session);
+            CreateCustomActions<T>.CreateSupportingPDControl(session);
             CreateCustomActions<T>.CreateBiologicalsControl(session);
             CreateCustomActions<T>.CreateMeteorsControl(session);
             CreateCustomActions<T>.CreateGridsControl(session);

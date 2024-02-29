@@ -811,7 +811,7 @@ namespace CoreSystems.Support
             groupDelay = ammo.AmmoDef.Fragment.TimedSpawns.GroupDelay;
             hasGroup = groupSize > 0 && groupDelay > 0;
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
-            useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0;
+            useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0 && pointType == PointTypes.Direct;
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
         }
 
