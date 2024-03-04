@@ -1100,8 +1100,6 @@ namespace CoreSystems
                     shipWeapons.ItemIds.Remove(item);
                 }
             }
-
-            CounterKeenLogMessage(false);
         }
 
         private void PracticalJokes(ulong playerSteamUserId)
@@ -1806,8 +1804,8 @@ namespace CoreSystems
                 {
                     var part = (WeaponSystem)system.Value;
 
-                    Dictionary<string, string> weaponModifer;
-                    if (WeaponValuesMap.TryGetValue(part.Values, out weaponModifer) && weaponModifer != null)
+                    CoreSettings.ServerSettings.WeaponOverride wepOverride;
+                    if (WeaponValuesMap.TryGetValue(part.Values, out wepOverride) && wepOverride != null)
                     {
                         part.WConst = new WeaponConstants(part.Values);
                     }
@@ -1816,12 +1814,34 @@ namespace CoreSystems
                     {
                         var ammo = part.AmmoTypes[i];
 
-                        Dictionary<string, string> ammoModifer;
-                        if (AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoModifer) && ammoModifer != null)
+                        CoreSettings.ServerSettings.AmmoOverride ammoOverride;
+                        if (AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoOverride) && ammoOverride != null)
                         {
                             ammo.AmmoDef.Const = new AmmoConstants(ammo, part.Values, part, i);
                             part.WConst.HasServerOverrides = true;
                         }
+                    }
+                }
+            }
+
+            var armors = Settings.Enforcement.DefinitionOverrides?.ArmorOverrides;
+            if (ArmorCoreActive && armors != null && armors.Length > 0)
+            {
+                for (int j = 0; j < armors.Length; j++)
+                {
+                    var armor = armors[j];
+                    for (int k = 0; k < armor.SubtypeIds.Length; k++)
+                    {
+                        var subtype = MyStringHash.GetOrCompute(armor.SubtypeIds[k]);
+                        
+                        ResistanceValues values;
+                        if (!ArmorCoreBlockMap.TryGetValue(subtype, out values))
+                            continue;
+
+                        if (armor.KineticResistance.HasValue) values.KineticResistance = armor.KineticResistance.Value;
+                        if (armor.EnergeticResistance.HasValue) values.EnergeticResistance = armor.EnergeticResistance.Value;
+
+                        ArmorCoreBlockMap[subtype] = values;
                     }
                 }
             }

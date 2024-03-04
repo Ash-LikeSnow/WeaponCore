@@ -356,7 +356,7 @@ namespace CoreSystems.Projectiles
 
                         if (info.Weapon.System.TrackProjectile)
                         {
-                            foreach (var lp in ai.LiveProjectile)
+                            foreach (var lp in ai.LiveProjectile.Keys)
                             {
                                 if (p.PruneSphere.Contains(lp.Position) != ContainmentType.Disjoint && lp != info.Target.TargetObject)
                                 {

@@ -190,6 +190,21 @@ namespace CoreSystems
                 {
                     var particleEvent = Av.ParticlesToProcess[i];
                     var playedFull = Tick - particleEvent.PlayTick > particleEvent.MaxPlayTime;
+                    if (particleEvent.MyDummy.NullEntity)
+                    { 
+                        if (particleEvent.Effect != null)
+                        {
+                            particleEvent.Effect.Stop();
+                            MyParticlesManager.RemoveParticleEffect(particleEvent.Effect);
+                        }
+
+                        particleEvent.Effect = null;
+                        particleEvent.Playing = false;
+                        particleEvent.Stop = false;
+                        Av.ParticlesToProcess.RemoveAtFast(i);
+                        continue;
+                    }
+
                     var obb = particleEvent.MyDummy.Entity.PositionComp.WorldAABB;
                     var playable = Vector3D.DistanceSquared(CameraPos, obb.Center) <= particleEvent.Distance;
                     if (particleEvent.PlayTick <= Tick && !playedFull && !particleEvent.Stop && playable)

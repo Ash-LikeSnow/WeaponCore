@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using Sandbox.ModAPI;
 
 namespace CoreSystems.Support
 {
@@ -511,12 +512,17 @@ namespace CoreSystems.Support
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
-            var collection = ai.GetProCache(w);
+            BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
+            WaterData water = null;
+            if (Session.I.WaterApiLoaded && !w.ActiveAmmoDef.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
+            var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
             var comp = w.Comp;
             var mOverrides = comp.MasterOverrides;
+            var collection = ai.GetProCache(w, mOverrides.SupportingPD);
             var minRadius = mOverrides.MinSize * 0.5f;
             var maxRadius = mOverrides.MaxSize * 0.5f;
             var minTargetRadius = minRadius > 0 ? minRadius : system.MinTargetRadius;
@@ -577,6 +583,11 @@ namespace CoreSystems.Support
                 var card = index < -1 ? deck[x] : index;
                 var lp = collection[card];
 
+                if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
+                    continue;
+                var lpAiOwnerFactionId = lp.Info.FactionId;
+                if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 && lpAiOwnerFactionId > 0 && MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
+                    continue;
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
@@ -843,7 +854,7 @@ namespace CoreSystems.Support
             var physics = Session.I.Physics;
             var weaponPos = p.Position;
             var aConst = p.Info.AmmoDef.Const;
-            var collection = ai.GetProCache(w);
+            var collection = ai.GetProCache(w, overRides.SupportingPD);
             var numOfTargets = collection.Count;
             var lockedOnly = s.Values.Targeting.LockedSmartOnly;
             var smartOnly = s.Values.Targeting.IgnoreDumbProjectiles;

@@ -38,6 +38,9 @@ namespace CoreSystems
             if (!comp.PrimaryWeapon.System.TrackGrids)
                 Values.Set.Overrides.Grids = false;
 
+            if (comp.DisableSupportingPD)
+                Values.Set.Overrides.SupportingPD = false;
+
             if (comp.Ai.AiType == Ai.AiTypes.Player)
             {
                 Values.State.PlayerId = comp.Rifle.OwnerIdentityId;
@@ -662,6 +665,8 @@ namespace CoreSystems
         [ProtoMember(32), DefaultValue(true)] public bool LargeGrid = true;
         [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
         [ProtoMember(34)] public bool AngularTracking;
+        [ProtoMember(35), DefaultValue(true)] public bool SupportingPD = true;
+
 
 
         public void Sync(ProtoWeaponOverrides syncFrom)
@@ -696,6 +701,7 @@ namespace CoreSystems
             ShareFireControl = syncFrom.ShareFireControl;
             LargeGrid = syncFrom.LargeGrid;
             SmallGrid = syncFrom.SmallGrid;
+            SupportingPD = syncFrom.SupportingPD;
 
         }
     }

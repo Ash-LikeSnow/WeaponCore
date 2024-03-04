@@ -118,6 +118,17 @@ namespace CoreSystems.Control
 
             ControlSys.ControlComponent.RequestSetValue(comp, "Projectiles", newValue, Session.I.PlayerId);
         }
+        internal static void TerminalActionToggleSupportingPDControl(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.SupportingPD;
+            var newValue = newBool ? 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "SupportingPD", newValue, Session.I.PlayerId);
+        }
 
         internal static void TerminalActionToggleBiologicalsControl(IMyTerminalBlock blk)
         {
@@ -326,6 +337,15 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Projectiles)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+        internal static void SupportingPDWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.SupportingPD)
                 sb.Append(Localization.GetText("ActionStateOn"));
             else
                 sb.Append(Localization.GetText("ActionStateOff"));

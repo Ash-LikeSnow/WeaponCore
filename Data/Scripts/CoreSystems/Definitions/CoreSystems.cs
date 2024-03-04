@@ -1,18 +1,16 @@
-﻿using System;
+﻿using Sandbox.Game.Entities;
+using System;
 using System.Collections.Generic;
-using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Comms;
+using static CoreSystems.Settings.CoreSettings.ServerSettings;
 using static CoreSystems.Support.PartAnimation;
-using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.CommunicationDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
 
 namespace CoreSystems.Support
@@ -179,6 +177,7 @@ namespace CoreSystems.Support
         public readonly bool ClosestFirst;
         public readonly bool DegRof;
         public readonly bool TrackProjectile;
+        public readonly bool DisableSupportingPD;
         public readonly bool ScanTrackOnly;
         public readonly bool AlternateUi;
         public readonly bool NonThreatsOnly;
@@ -715,45 +714,6 @@ namespace CoreSystems.Support
 
     internal class WeaponConstants
     {
-        private const string MaxTargetStr = "MaxTargetDistance";
-        private const string MinTargetStr = "MinTargetDistance";
-        private const string ROFStr = "RateOfFire";
-        private const string ReloadStr = "ReloadTime";
-        private const string DeviateStr = "DeviateShotAngle";
-        private const string AimTolStr = "AimingTolerance";
-        private const string InvSizeStr = "InventorySize";
-        private const string HeatPerStr = "HeatPerShot";
-        private const string MaxHeatStr = "MaxHeat";
-        private const string HeatSinkStr = "HeatSinkRate";
-        private const string HeatCDStr = "Cooldown";
-        private const string PartCapStr = "ConstructPartCap";
-        private const string RestrictRadStr = "RestrictionRadius";
-        private const string CheckBoxStr = "CheckInflatedBox";
-        private const string CheckAnyStr = "CheckForAnyWeapon";
-        private const string MuzzleCheckStr = "MuzzleCheck";
-        private const string IdlePowerStr = "IdlePower";
-
-        private readonly Dictionary<string, BaseProcessor> modifierMap = new Dictionary<string, BaseProcessor>()
-        {
-            {MaxTargetStr, new FloatProcessor() },
-            {MinTargetStr, new FloatProcessor() },
-            {ROFStr, new IntProcessor() },
-            {ReloadStr, new IntProcessor() },
-            {DeviateStr, new FloatProcessor() },
-            {AimTolStr, new DoubleProcessor() },
-            {InvSizeStr, new NonZeroFloatProcessor() },
-            {HeatPerStr, new IntProcessor() },
-            {MaxHeatStr, new IntProcessor() },
-            {HeatSinkStr, new FloatProcessor() },
-            {HeatCDStr, new FloatProcessor() },
-            {PartCapStr, new NonZeroIntProcessor() },
-            {RestrictRadStr, new DoubleProcessor() },
-            {CheckBoxStr, new BoolProcessor() },
-            {CheckAnyStr, new BoolProcessor() },
-            {MuzzleCheckStr, new BoolProcessor() },
-            {IdlePowerStr, new FloatProcessor() },
-        };
-
         internal readonly double MaxTargetDistance;
         internal readonly double AimingToleranceRads;
 
@@ -785,51 +745,49 @@ namespace CoreSystems.Support
 
             SpinFree = values.HardPoint.Loading.SpinFree;
             MinRateOfFire = values.HardPoint.Ui.RateOfFireMin > 1 || values.HardPoint.Ui.RateOfFireMin < 0 ? 0 : values.HardPoint.Ui.RateOfFireMin;
-            LoadModifiers(values, out HasServerOverrides);
-            GetModifiableValues(values, out MaxTargetDistance, out MinTargetDistance, out RateOfFire, out ReloadTime, out DeviateShotAngleRads, out AimingToleranceRads, out IdlePower, out HeatSinkRate, out HeatPerShot, out DebugMode);
-        }
 
-        private void LoadModifiers(WeaponDefinition weaponDef, out bool modsFound)
-        {
-            modsFound = false;
-            Dictionary<string, string> weaponMods;
-            if (Session.I.WeaponValuesMap.TryGetValue(weaponDef, out weaponMods) && weaponMods != null)
-            {
-                foreach (var mod in weaponMods)
-                {
-                    BaseProcessor processor;
-                    if (modifierMap.TryGetValue(mod.Key, out processor))
-                        processor.WriteData(mod.Value);
-                }
-                modsFound = true;
-            }
-        }
 
-        private void GetModifiableValues(WeaponDefinition weaponDef, out double maxTargetDistance, out float minTargetDistance, out int rateOfFire, out int reloadTime, out float deviateShotAngleRads, out double aimingToleranceRads, out float idlePower, out float heatSinkRate, out int heatPerShot, out bool debugMode)
-        {
-            var givenMaxDist = HasServerOverrides && modifierMap[MaxTargetStr].HasData() ? modifierMap[MaxTargetStr].GetAsFloat : weaponDef.Targeting.MaxTargetDistance;
-            maxTargetDistance = givenMaxDist > 0 ? givenMaxDist : double.MaxValue;
+            MaxTargetDistance = values.Targeting.MaxTargetDistance > 0 ? values.Targeting.MaxTargetDistance : double.MaxValue;
+            MinTargetDistance = Math.Max(values.Targeting.MinTargetDistance, 0f);
+            RateOfFire = Math.Max(values.HardPoint.Loading.RateOfFire, 0);
+            ReloadTime = Math.Max(values.HardPoint.Loading.ReloadTime, 0);
 
-            debugMode = weaponDef.HardPoint.Other.Debug;
-            
-            minTargetDistance = HasServerOverrides && modifierMap[MinTargetStr].HasData() ? modifierMap[MinTargetStr].GetAsFloat : weaponDef.Targeting.MinTargetDistance;
+            DeviateShotAngleRads = MathHelper.ToRadians(values.HardPoint.DeviateShotAngle);
+            AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
 
-            rateOfFire = HasServerOverrides && modifierMap[ROFStr].HasData() ? modifierMap[ROFStr].GetAsInt : weaponDef.HardPoint.Loading.RateOfFire;
+            HeatPerShot = values.HardPoint.Loading.HeatPerShot;
+            HeatSinkRate = values.HardPoint.Loading.HeatSinkRate;
 
-            reloadTime = HasServerOverrides && modifierMap[ReloadStr].HasData() ? modifierMap[ReloadStr].GetAsInt : weaponDef.HardPoint.Loading.ReloadTime;
+            IdlePower = Math.Max(values.HardPoint.HardWare.IdlePower, 0.001f);
+            DebugMode = values.HardPoint.Other.Debug;
 
-            var givenShotAngle = HasServerOverrides && modifierMap[DeviateStr].HasData() ? modifierMap[DeviateStr].GetAsFloat : weaponDef.HardPoint.DeviateShotAngle;
-            deviateShotAngleRads = MathHelper.ToRadians(givenShotAngle);
+            WeaponOverride wO;
+            if (!Session.I.WeaponValuesMap.TryGetValue(values, out wO) || wO == null)
+                return;
 
-            var givenAimingTolerance = HasServerOverrides && modifierMap[AimTolStr].HasData() ? modifierMap[AimTolStr].GetAsDouble : weaponDef.HardPoint.AimingTolerance;
-            aimingToleranceRads = MathHelperD.ToRadians(givenAimingTolerance <= 0 ? 180 : givenAimingTolerance);
+            HasServerOverrides = true;
 
-            var givenIdlePower = HasServerOverrides && modifierMap[IdlePowerStr].HasData() ? modifierMap[IdlePowerStr].GetAsFloat : weaponDef.HardPoint.HardWare.IdlePower;
-            idlePower = givenIdlePower > 0 ? givenIdlePower : 0.001f;
+            if (wO.MaxTargetDistance.HasValue) MaxTargetDistance = wO.MaxTargetDistance.Value > 0 ? wO.MaxTargetDistance.Value : double.MaxValue;
+            if (wO.MinTargetDistance.HasValue) MinTargetDistance = Math.Max(wO.MinTargetDistance.Value, 0f);
+            if (wO.RateOfFire.HasValue) RateOfFire = Math.Max(wO.RateOfFire.Value, 0);
+            if (wO.ReloadTime.HasValue) ReloadTime = Math.Max(wO.ReloadTime.Value, 0);
 
-            heatSinkRate = HasServerOverrides && modifierMap[HeatSinkStr].HasData() ? modifierMap[HeatSinkStr].GetAsFloat : weaponDef.HardPoint.Loading.HeatSinkRate;
+            if (wO.DeviateShotAngle.HasValue) DeviateShotAngleRads = MathHelper.ToRadians(Math.Max(wO.DeviateShotAngle.Value, 0f));
+            if (wO.AimingTolerance.HasValue) AimingToleranceRads = MathHelperD.ToRadians(wO.AimingTolerance.Value <= 0 ? 180 : wO.AimingTolerance.Value);
+            //if (wO.InventorySize.HasValue) 
 
-            heatPerShot = HasServerOverrides && modifierMap[HeatPerStr].HasData() ? modifierMap[HeatPerStr].GetAsInt : weaponDef.HardPoint.Loading.HeatPerShot;
+            if (wO.HeatPerShot.HasValue) HeatPerShot = Math.Max(wO.HeatPerShot.Value, 0);
+            //if (wO.MaxHeat.HasValue) 
+            if (wO.HeatSinkRate.HasValue) HeatSinkRate = Math.Max(wO.HeatSinkRate.Value, 0);
+            //if (wO.Cooldown.HasValue) 
+
+            //if (wO.ConstructPartCap.HasValue) 
+            //if (wO.RestrictionRadius.HasValue) 
+            //if (wO.CheckInflatedBox.HasValue) 
+            //if (wO.CheckForAnyWeapon.HasValue) 
+            //if (wO.MuzzleCheck.HasValue) 
+
+            if (wO.IdlePower.HasValue) IdlePower = Math.Max(wO.IdlePower.Value, 0.001f);
         }
     }
 }

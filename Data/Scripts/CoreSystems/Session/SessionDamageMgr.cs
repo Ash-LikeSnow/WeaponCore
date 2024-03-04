@@ -1047,7 +1047,7 @@ namespace CoreSystems
             if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
             {
                 var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
-                foreach (var sTarget in attacker.Ai.LiveProjectile)
+                foreach (var sTarget in attacker.Ai.LiveProjectile.Keys)
                 {
                     if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint && sTarget.State == Projectile.ProjectileState.Alive)
                     {

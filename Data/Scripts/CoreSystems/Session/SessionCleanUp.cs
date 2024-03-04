@@ -164,14 +164,8 @@ namespace CoreSystems
             GridMapPool.Clean();
 
             DirtyGridsTmp.Clear();
-
-            foreach (var wMap in WeaponValuesMap)
-                wMap.Value?.Clear();
             
             WeaponValuesMap.Clear();
-            foreach (var aMap in AmmoValuesMap)
-                aMap.Value?.Clear();
-
             AmmoValuesMap.Clear();
 
             foreach (var structure in PartPlatforms.Values) {

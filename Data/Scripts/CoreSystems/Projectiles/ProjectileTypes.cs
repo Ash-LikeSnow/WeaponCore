@@ -59,6 +59,7 @@ namespace CoreSystems.Support
         internal long DamageDoneShld;
         internal long DamageDoneProj;
         internal long LastTopTargetId;
+        internal long FactionId;
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;
@@ -159,6 +160,7 @@ namespace CoreSystems.Support
             Frags = 0;
             MuzzleId = 0;
             LastTopTargetId = 0;
+            FactionId = 0;
             Age = -1;
             RelativeAge = -1;
             PrevRelativeAge = -1;
@@ -560,6 +562,7 @@ namespace CoreSystems.Support
 
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
 
+                frag.FactionId = info.FactionId;
                 frag.TargetState = targetState;
                 frag.TargetEntity = info.LastTarget;
                 frag.TopEntityId = info.LastTopTargetId;
@@ -619,6 +622,7 @@ namespace CoreSystems.Support
                 target.TopEntityId = frag.TopEntityId;
                 target.TargetPos = frag.TargetPos;
 
+                info.FactionId = frag.FactionId;
                 info.ShotFade = 0;
                 info.IsFragment = true;
                 info.Target.TargetPos = frag.PrevTargetPos;
@@ -657,14 +661,7 @@ namespace CoreSystems.Support
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)
-                {
                     session.Projectiles.AddTargets.Add(p);
-                    //temp "PD Ghost" debug stuff
-                    if (Session.I.IsServer && Session.I.Settings.Enforcement.Debug == 1)
-                    {
-                        Log.Line($"DEBUG Projectile {p.Info.Id} - {p.Info.AmmoDef.AmmoRound} - {p.Info.Target?.TopEntityId} added to AddTargets");
-                    }
-                }
 
                 session.Projectiles.FragmentPool.Push(frag);
             }
@@ -689,6 +686,7 @@ namespace CoreSystems.Support
         public Vector3 Gravity;
         public int MuzzleId;
         public ushort Depth;
+        public long FactionId;
 
         public XorShiftRandomStruct Random;
         public bool DoDamage;

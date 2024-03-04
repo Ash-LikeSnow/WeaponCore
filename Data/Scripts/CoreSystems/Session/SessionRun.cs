@@ -359,7 +359,6 @@ namespace CoreSystems
 
             TriggerEntityModel = ModContext.ModPath + "\\Models\\Environment\\JumpNullField.mwm";
             TriggerEntityPool = new MyConcurrentPool<MyEntity>(0, TriggerEntityClear, 10000, TriggerEntityActivator);
-            ReallyStupidKeenShit();
         }
 
         protected override void UnloadData()

@@ -53,7 +53,7 @@ namespace CoreSystems.Support
         internal readonly HashSet<MyEntity> ValidGrids = new HashSet<MyEntity>();
         internal readonly HashSet<MyBatteryBlock> Batteries = new HashSet<MyBatteryBlock>();
         internal readonly HashSet<MyCubeGrid> SubGridCache = new HashSet<MyCubeGrid>();
-        internal readonly HashSet<Projectile> LiveProjectile = new HashSet<Projectile>();
+        internal readonly Dictionary<Projectile, bool> LiveProjectile = new Dictionary<Projectile, bool>();
         internal readonly HashSet<IMyMotorStator> Stators = new HashSet<IMyMotorStator>();
         internal readonly HashSet<IMyOffensiveCombatBlock> AiOffense = new HashSet<IMyOffensiveCombatBlock>();
         internal readonly HashSet<IMyFlightMovementBlock> AiFlight = new HashSet<IMyFlightMovementBlock>();
@@ -79,7 +79,8 @@ namespace CoreSystems.Support
         internal readonly List<DetectInfo> ObstructionsTmp = new List<DetectInfo>();
         internal readonly List<DetectInfo> Obstructions = new List<DetectInfo>();
         internal readonly List<MyEntity> StaticsInRangeTmp = new List<MyEntity>();
-        internal readonly List<Projectile> ProjetileCache = new List<Projectile>();
+        internal readonly List<Projectile> ProjectileCache = new List<Projectile>();
+        internal readonly List<Projectile> ProjectileLockedCache = new List<Projectile>();
         internal readonly List<Ai> TargetAis = new List<Ai>(32);
         internal readonly List<TargetInfo> SortedTargets = new List<TargetInfo>();
         internal readonly List<DetectInfo> NewEntities = new List<DetectInfo>();
@@ -120,6 +121,7 @@ namespace CoreSystems.Support
         internal BoundingBox BlockChangeArea = BoundingBox.CreateInvalid();
         internal AiTypes AiType;
         internal long AiOwner;
+        internal long AiOwnerFactionId;
         internal bool IsBot;
         internal bool EnemyProjectiles;
         internal bool EnemyEntities;

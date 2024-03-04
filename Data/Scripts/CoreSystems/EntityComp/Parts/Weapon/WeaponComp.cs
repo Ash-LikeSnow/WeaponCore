@@ -64,6 +64,7 @@ namespace CoreSystems.Platform
             internal bool HasRequireTarget;
             internal bool HasDrone;
             internal bool ShootRequestDirty;
+            internal bool DisableSupportingPD;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {
@@ -72,12 +73,15 @@ namespace CoreSystems.Platform
                 if (cube != null) 
                 {
                     var turret = coreEntity as IMyLargeTurretBase;
+                    var search = coreEntity as IMySearchlight;
                     if (turret != null)
                     {
                         VanillaTurretBase = turret;
                         VanillaTurretBase.EnableIdleRotation = false;
                         VanillaTurretBase.SetManualAzimuthAndElevation(0, 0);
                     }
+                    else if (search != null)
+                        search.EnableIdleMovement = false;
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {
@@ -252,9 +256,7 @@ namespace CoreSystems.Platform
                     weapon.Comp.DetDps += ammo.Const.DetDps;
                 }
 
-                maxTrajectory = 0;
-                if (weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory > maxTrajectory)
-                    maxTrajectory = weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory;
+                maxTrajectory = weapon.MaxTargetDistance;
 
                 if (weapon.System.TrackProjectile)
                     Ai.PointDefense = true;
@@ -662,6 +664,10 @@ namespace CoreSystems.Platform
                         break;
                     case "SmallGrid":
                         o.SmallGrid = enabled;
+                        clearTargets = true;
+                        break;
+                    case "SupportingPD":
+                        o.SupportingPD = enabled;
                         clearTargets = true;
                         break;
                 }

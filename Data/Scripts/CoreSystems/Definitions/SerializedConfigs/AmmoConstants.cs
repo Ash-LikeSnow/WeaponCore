@@ -15,9 +15,9 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.ShapeDef.Shapes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
-using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
+using static CoreSystems.Settings.CoreSettings.ServerSettings;
 
 namespace CoreSystems.Support
 {
@@ -34,59 +34,6 @@ namespace CoreSystems.Support
 
         private const string Arc = "Arc";
         private const string BackSlash = "\\";
-        private const string BaseDmgStr = "BaseDamage";
-        private const string AreaDmgStr = "AreaEffectDamage";
-        private const string AreaRadStr = "AreaEffectRadius";
-        private const string DetDmgStr = "DetonationDamage";
-        private const string DetRadStr = "DetonationRadius";
-        private const string HealthStr = "Health";
-        private const string MaxTrajStr = "MaxTrajectory";
-        private const string SpeedStr = "DesiredSpeed";
-        private const string EnergyCostStr = "EnergyCost";
-        private const string GravityStr = "GravityMultiplier";
-        private const string ShieldModStr = "ShieldModifier";
-        private const string EnergyBaseDmgStr = "EnergyBaseDamage";
-        private const string EnergyAreaDmgStr = "EnergyAreaEffectDamage";
-        private const string EnergyDetDmgStr = "EnergyDetonationDamage";
-        private const string EnergyShieldDmgStr = "EnergyShieldDamage";
-        private const string ClientPredAmmoStr = "DisableClientPredictedAmmo";
-        private const string FallOffDistanceStr = "FallOffDistance";
-        private const string FallOffMinMultStr = "FallOffMinMultipler";
-        private const string ShieldBypassStr = "ShieldBypass";
-        private const string MassStr = "Mass";
-        private const string HealthHitModStr = "HealthHitModifier";
-        private const string ByBlockHitMaxAbsorbStr = "ByBlockHitMaxAbsorb";
-        private const string EndOfLifeMaxAbsorbStr = "EndOfLifeMaxAbsorb";
-        private const string BackKickForceStr = "BackKickForce";
-
-        private readonly Dictionary<string, BaseProcessor> _modifierMap = new Dictionary<string, BaseProcessor>()
-        {
-            {BaseDmgStr, new NonZeroFloatProcessor() },
-            {AreaDmgStr, new FloatProcessor() },
-            {AreaRadStr, new DoubleProcessor() },
-            {DetDmgStr, new FloatProcessor() },
-            {DetRadStr, new FloatProcessor() },
-            {HealthStr, new FloatProcessor() },
-            {MaxTrajStr, new FloatProcessor() },
-            {SpeedStr, new FloatProcessor() },
-            {EnergyCostStr, new FloatProcessor() },
-            {GravityStr, new FloatProcessor() },
-            {ShieldModStr, new DoubleProcessor() },
-            {EnergyBaseDmgStr, new BoolProcessor() },
-            {EnergyAreaDmgStr, new BoolProcessor() },
-            {EnergyDetDmgStr, new BoolProcessor() },
-            {EnergyShieldDmgStr, new BoolProcessor() },
-            {ClientPredAmmoStr, new BoolProcessor() },
-            {FallOffDistanceStr, new FloatProcessor() },
-            {FallOffMinMultStr, new FloatProcessor() },
-            {ShieldBypassStr, new FloatProcessor() },
-            {MassStr, new FloatProcessor() },
-            {HealthHitModStr, new DoubleProcessor() },
-            {ByBlockHitMaxAbsorbStr, new FloatProcessor() },
-            {EndOfLifeMaxAbsorbStr, new FloatProcessor() },
-            {BackKickForceStr, new FloatProcessor() },
-
-        };
 
         public readonly Stack<ApproachInfo> ApproachInfoPool;
         public readonly MyConcurrentPool<MyEntity> PrimeEntityPool;
@@ -106,6 +53,7 @@ namespace CoreSystems.Support
         public readonly ApproachConstants[] Approaches;
         public readonly AmmoDef[] AmmoPattern;
         public readonly XorShiftRandom Random;
+        public readonly AmmoOverride Overrides;
 
         public readonly MyStringId[] TracerTextures;
         public readonly MyStringId[] TrailTextures;
@@ -435,10 +383,11 @@ namespace CoreSystems.Support
 
             HasFragment = FragmentId > -1;
 
-            LoadModifiers(ammo, out AmmoModsFound);
             float shieldBypassRaw;
-            GetModifiableValues(ammo.AmmoDef, out BaseDamage, out Health, out GravityMultiplier, out MaxTrajectory, out MaxTrajectorySqr, out EnergyBaseDmg, out EnergyAreaDmg, out EnergyDetDmg, out EnergyShieldDmg, out ShieldModifier, out FallOffDistance, out FallOffMinMultiplier, out Mass, out shieldBypassRaw);
-
+            LoadModifiers(ammo.AmmoDef, out Overrides, out AmmoModsFound, out BaseDamage, out Health, out GravityMultiplier, out MaxTrajectory, 
+                out MaxTrajectorySqr, out EnergyBaseDmg, out EnergyAreaDmg, out EnergyDetDmg, out EnergyShieldDmg, 
+                out ShieldModifier, out FallOffDistance, out FallOffMinMultiplier, out Mass, out shieldBypassRaw);
+            
             FixedFireAmmo = system.TurretMovement == WeaponSystem.TurretType.Fixed && ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
             IsMine = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectTravelTo;
             IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
@@ -495,15 +444,13 @@ namespace CoreSystems.Support
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmedWhenHit, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
             TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone);
 
-            FallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammo.AmmoDef.DamageScales.FallOff.Distance;
-
             ArmorCoreActive = Session.I.ArmorCoreActive;
 
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
             FeelsGravity = GravityMultiplier > 0;
             StoreGravity = FeelsGravity || fragHasGravity;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
-            BackKickForce = _modifierMap[BackKickForceStr].HasData() ? _modifierMap[BackKickForceStr].GetAsFloat : ammo.AmmoDef.BackKickForce;
+            BackKickForce = AmmoModsFound && Overrides.BackKickForce.HasValue ? Math.Max(Overrides.BackKickForce.Value, 0f) : ammo.AmmoDef.BackKickForce;
             HasBackKickForce = !MathHelper.IsZero(BackKickForce);
             MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust >= 1 ? double.MaxValue : ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.0001, double.MaxValue);
 
@@ -517,7 +464,7 @@ namespace CoreSystems.Support
             AreaEffects(ammo.AmmoDef, out ByBlockHitDepth, out EndOfLifeDepth, out EwarType, out ByBlockHitDamage, out ByBlockHitRadius, out EndOfLifeDamage, out EndOfLifeRadius, out EwarStrength, out LargestHitSize, out EwarRadius, out Ewar, out NonAntiSmartEwar, out EwarFieldTrigger, out MinArmingTime, out AoeMaxAbsorb, out DetMaxAbsorb, out EndOfLifeAoe);
             Beams(ammo.AmmoDef, out IsBeamWeapon, out VirtualBeams, out RotateRealBeam, out ConvergeBeams, out OneHitParticle, out OffsetEffect, out FakeVoxelHitTicks);
 
-            var givenSpeed = AmmoModsFound && _modifierMap[SpeedStr].HasData() ? _modifierMap[SpeedStr].GetAsFloat : ammo.AmmoDef.Trajectory.DesiredSpeed;
+            var givenSpeed = AmmoModsFound && Overrides.DesiredSpeed.HasValue ? Math.Max(Overrides.DesiredSpeed.Value, 0f) : ammo.AmmoDef.Trajectory.DesiredSpeed;
             DesiredProjectileSpeed = !IsBeamWeapon ? givenSpeed : MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND;
             HeatModifier = ammo.AmmoDef.HeatModifier > 0 ? ammo.AmmoDef.HeatModifier : 1;
             ShieldHeatScaler = MyUtils.IsZero(ammo.AmmoDef.DamageScales.Shields.HeatModifier) ? 1 : ammo.AmmoDef.DamageScales.Shields.HeatModifier;
@@ -544,7 +491,7 @@ namespace CoreSystems.Support
             MaxAmmo = MagsToLoad * MagazineSize;
 
             GetPeakDps(ammo, system, wDef, out PeakDps, out EffectiveDps, out PerfectDps, out ShotsPerSec, out RealShotsPerSec, out BaseDps, out AreaDps, out DetDps, out RealShotsPerMin);
-            var clientPredictedAmmoDisabled = AmmoModsFound && _modifierMap[ClientPredAmmoStr].HasData() && _modifierMap[ClientPredAmmoStr].GetAsBool;
+            var clientPredictedAmmoDisabled = AmmoModsFound && Overrides.DisableClientPredictedAmmo.HasValue && Overrides.DisableClientPredictedAmmo.Value;
             var predictionEligible = Session.I.IsClient || Session.I.DedicatedServer;
 
 
@@ -619,7 +566,6 @@ namespace CoreSystems.Support
 
             CustomBlockDefinitionBasesToScales?.Clear();
             PrimeEntityPool?.Clean();
-            _modifierMap.Clear();
 
             if (Approaches != null)
             {
@@ -865,7 +811,7 @@ namespace CoreSystems.Support
             groupDelay = ammo.AmmoDef.Fragment.TimedSpawns.GroupDelay;
             hasGroup = groupSize > 0 && groupDelay > 0;
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
-            useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0;
+            useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0 && pointType == PointTypes.Direct;
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
         }
 
@@ -976,33 +922,33 @@ namespace CoreSystems.Support
         {
             ewarType = ammoDef.Ewar.Type;
 
-            if (AmmoModsFound && _modifierMap[AreaDmgStr].HasData())
-                byBlockHitDamage = _modifierMap[AreaDmgStr].GetAsFloat;
+            if (AmmoModsFound && Overrides.AreaEffectDamage.HasValue)
+                byBlockHitDamage = Math.Max(Overrides.AreaEffectDamage.Value, 0f);
             else
                 byBlockHitDamage = ammoDef.AreaOfDamage.ByBlockHit.Damage;
 
-            if (AmmoModsFound && _modifierMap[AreaRadStr].HasData())
-                byBlockHitRadius = _modifierMap[AreaRadStr].GetAsDouble;
+            if (AmmoModsFound && Overrides.AreaEffectRadius.HasValue)
+                byBlockHitRadius = Math.Max(Overrides.AreaEffectRadius.Value, 0);
             else
                 byBlockHitRadius = ammoDef.AreaOfDamage.ByBlockHit.Enable ? ammoDef.AreaOfDamage.ByBlockHit.Radius : 0;
 
-            if (AmmoModsFound && _modifierMap[DetDmgStr].HasData())
-                endOfLifeDamage = _modifierMap[DetDmgStr].GetAsFloat;
+            if (AmmoModsFound && Overrides.DetonationDamage.HasValue)
+                endOfLifeDamage = Math.Max(Overrides.DetonationDamage.Value, 0f);
             else
                 endOfLifeDamage = ammoDef.AreaOfDamage.EndOfLife.Damage;
 
-            if (AmmoModsFound && _modifierMap[DetRadStr].HasData())
-                endOfLifeRadius = _modifierMap[DetRadStr].GetAsFloat;
+            if (AmmoModsFound && Overrides.DetonationRadius.HasValue)
+                endOfLifeRadius = Math.Max(Overrides.DetonationRadius.Value, 0f);
             else
                 endOfLifeRadius = ammoDef.AreaOfDamage.EndOfLife.Enable ? (float)ammoDef.AreaOfDamage.EndOfLife.Radius : 0;
 
-            if (AmmoModsFound && _modifierMap[ByBlockHitMaxAbsorbStr].HasData())
-                aoeMaxAbsorb = _modifierMap[ByBlockHitMaxAbsorbStr].GetAsFloat;
+            if (AmmoModsFound && Overrides.ByBlockHitMaxAbsorb.HasValue)
+                aoeMaxAbsorb = Math.Max(Overrides.ByBlockHitMaxAbsorb.Value, 0f);
             else
                 aoeMaxAbsorb = ammoDef.AreaOfDamage.ByBlockHit.MaxAbsorb > 0 ? ammoDef.AreaOfDamage.ByBlockHit.MaxAbsorb : 0;
 
-            if (AmmoModsFound && _modifierMap[EndOfLifeMaxAbsorbStr].HasData())
-                detMaxAbsorb = _modifierMap[EndOfLifeMaxAbsorbStr].GetAsFloat;
+            if (AmmoModsFound && Overrides.EndOfLifeMaxAbsorb.HasValue)
+                detMaxAbsorb = Math.Max(Overrides.EndOfLifeMaxAbsorb.Value, 0f);
             else
                 detMaxAbsorb = ammoDef.AreaOfDamage.EndOfLife.MaxAbsorb > 0 ? ammoDef.AreaOfDamage.EndOfLife.MaxAbsorb : 0;
 
@@ -1097,7 +1043,7 @@ namespace CoreSystems.Support
             }
             selfDamage = d.SelfDamage;
             voxelDamage = d.DamageVoxels;
-            var healthHitModiferRaw = AmmoModsFound && _modifierMap[HealthHitModStr].HasData() ? _modifierMap[HealthHitModStr].GetAsDouble : d.HealthHitModifier;
+            var healthHitModiferRaw = AmmoModsFound && Overrides.HealthHitModifier.HasValue ? Math.Max(Overrides.HealthHitModifier.Value, 0) : d.HealthHitModifier;
             healthHitModifer = healthHitModiferRaw > 0 ? healthHitModiferRaw : 1;
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
 
@@ -1118,7 +1064,7 @@ namespace CoreSystems.Support
             if (mustCharge)
             {
                 var ewar = ammoPair.AmmoDef.Ewar.Enable;
-                energyCost = AmmoModsFound && _modifierMap[EnergyCostStr].HasData() ? _modifierMap[EnergyCostStr].GetAsFloat : ammoPair.AmmoDef.EnergyCost;
+                energyCost = AmmoModsFound && Overrides.EnergyCost.HasValue ? Math.Max(Overrides.EnergyCost.Value, 0f) : ammoPair.AmmoDef.EnergyCost;
                 var shotEnergyCost = ewar ? energyCost * ammoPair.AmmoDef.Ewar.Strength : energyCost * BaseDamage;
                 var shotsPerTick = system.WConst.RateOfFire / MyEngineConstants.UPDATE_STEPS_PER_MINUTE;
                 var energyPerTick = shotEnergyCost * shotsPerTick;
@@ -1237,48 +1183,84 @@ namespace CoreSystems.Support
             myEntity.Render.RemoveRenderObjects();
         }
 
-        private void LoadModifiers( WeaponSystem.AmmoType ammo, out bool modsFound)
+        private void LoadModifiers(AmmoDef ammoDef, out AmmoOverride overrides, out bool modsFound, out float baseDamage, out float health, 
+            out float gravityMultiplier, out float maxTrajectory, out float maxTrajectorySqr, out bool energyBaseDmg, 
+            out bool energyAreaDmg, out bool energyDetDmg, out bool energyShieldDmg, out double shieldModifier, 
+            out float fallOffDistance, out float fallOffMinMult, out float mass, out float shieldBypassRaw)
         {
+            overrides = null;
             modsFound = false;
-            Dictionary<string, string> ammoMods;
-            if (Session.I.AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoMods) && ammoMods != null)
-            {
-                foreach (var mod in ammoMods)
-                {
-                    BaseProcessor processor;
-                    if (_modifierMap.TryGetValue(mod.Key, out processor))
-                        processor.WriteData(mod.Value);
-                }
-                modsFound = true;
-            }
-        }
 
-        private void GetModifiableValues(AmmoDef ammoDef, out float baseDamage, out float health, out float gravityMultiplier, out float maxTrajectory, out float maxTrajectorySqr, out bool energyBaseDmg, out bool energyAreaDmg, out bool energyDetDmg, out bool energyShieldDmg, out double shieldModifier, out float fallOffDistance, out float fallOffMinMult, out float mass, out float shieldBypassRaw)
-        {
-            baseDamage = AmmoModsFound && _modifierMap[BaseDmgStr].HasData() ? _modifierMap[BaseDmgStr].GetAsFloat : ammoDef.BaseDamage;
-
-            if (baseDamage < 0.000001)
-                baseDamage = 0.000001f;
-
-            health = AmmoModsFound && _modifierMap[HealthStr].HasData() ? _modifierMap[HealthStr].GetAsFloat : ammoDef.Health;
-            gravityMultiplier = AmmoModsFound && _modifierMap[GravityStr].HasData() ? _modifierMap[GravityStr].GetAsFloat : ammoDef.Trajectory.GravityMultiplier;
-            maxTrajectory = AmmoModsFound && _modifierMap[MaxTrajStr].HasData() ? _modifierMap[MaxTrajStr].GetAsFloat : ammoDef.Trajectory.MaxTrajectory;
+            baseDamage = Math.Max(ammoDef.BaseDamage, 0.000001f);
+            health = ammoDef.Health;
+            gravityMultiplier = ammoDef.Trajectory.GravityMultiplier;
+            maxTrajectory = ammoDef.Trajectory.MaxTrajectory;
             maxTrajectorySqr = maxTrajectory * maxTrajectory;
-            energyBaseDmg = AmmoModsFound && _modifierMap[EnergyBaseDmgStr].HasData() ? _modifierMap[EnergyBaseDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Base != DamageTypes.Damage.Kinetic;
-            energyAreaDmg = AmmoModsFound && _modifierMap[EnergyAreaDmgStr].HasData() ? _modifierMap[EnergyAreaDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.AreaEffect != DamageTypes.Damage.Kinetic;
-            energyDetDmg = AmmoModsFound && _modifierMap[EnergyDetDmgStr].HasData() ? _modifierMap[EnergyDetDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Detonation != DamageTypes.Damage.Kinetic;
-            energyShieldDmg = AmmoModsFound && _modifierMap[EnergyShieldDmgStr].HasData() ? _modifierMap[EnergyShieldDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Shield != DamageTypes.Damage.Kinetic;
 
-            var givenShieldModifier = AmmoModsFound && _modifierMap[ShieldModStr].HasData() ? _modifierMap[ShieldModStr].GetAsDouble : ammoDef.DamageScales.Shields.Modifier;
-            shieldModifier = givenShieldModifier < 0 ? 1 : givenShieldModifier;
+            energyBaseDmg = ammoDef.DamageScales.DamageType.Base != DamageTypes.Damage.Kinetic;
+            energyAreaDmg = ammoDef.DamageScales.DamageType.AreaEffect != DamageTypes.Damage.Kinetic;
+            energyDetDmg = ammoDef.DamageScales.DamageType.Detonation != DamageTypes.Damage.Kinetic;
+            energyShieldDmg = ammoDef.DamageScales.DamageType.Shield != DamageTypes.Damage.Kinetic;
+            shieldModifier = ammoDef.DamageScales.Shields.Modifier < 0 ? 1 : ammoDef.DamageScales.Shields.Modifier;
 
-            fallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammoDef.DamageScales.FallOff.Distance;
-            fallOffMinMult = AmmoModsFound && _modifierMap[FallOffMinMultStr].HasData() ? _modifierMap[FallOffMinMultStr].GetAsFloat : ammoDef.DamageScales.FallOff.MinMultipler;
+            fallOffDistance = ammoDef.DamageScales.FallOff.Distance;
+            fallOffMinMult = ammoDef.DamageScales.FallOff.MinMultipler;
+            mass = ammoDef.Mass;
+            shieldBypassRaw = ammoDef.DamageScales.Shields.BypassModifier;
 
-            mass = AmmoModsFound && _modifierMap[MassStr].HasData() ? _modifierMap[MassStr].GetAsFloat : ammoDef.Mass;
+            if (!Session.I.AmmoValuesMap.TryGetValue(ammoDef, out overrides) || overrides == null)
+                return;
 
-            shieldBypassRaw = AmmoModsFound && _modifierMap[ShieldBypassStr].HasData() ? _modifierMap[ShieldBypassStr].GetAsFloat : ammoDef.DamageScales.Shields.BypassModifier;
+            modsFound = true;
+
+            if (overrides.BaseDamage.HasValue) baseDamage = Math.Max(overrides.BaseDamage.Value, 0.000001f);
+            if (overrides.Health.HasValue) health = Math.Max(overrides.Health.Value, 0);
+            if (overrides.GravityMultiplier.HasValue) gravityMultiplier = Math.Max(overrides.GravityMultiplier.Value, 0f);
+            if (overrides.MaxTrajectory.HasValue)
+            {
+                maxTrajectory = Math.Max(overrides.MaxTrajectory.Value, 0f);
+                maxTrajectorySqr = maxTrajectory * maxTrajectory;
+            }
+
+            if (overrides.EnergyBaseDamage.HasValue) energyBaseDmg = overrides.EnergyBaseDamage.Value;
+            if (overrides.EnergyAreaEffectDamage.HasValue) energyAreaDmg = overrides.EnergyAreaEffectDamage.Value;
+            if (overrides.EnergyDetonationDamage.HasValue) energyDetDmg = overrides.EnergyDetonationDamage.Value;
+            if (overrides.EnergyShieldDamage.HasValue) energyShieldDmg = overrides.EnergyShieldDamage.Value;
+            if (overrides.ShieldModifier.HasValue) shieldModifier = overrides.ShieldModifier.Value < 0 ? 1 : overrides.ShieldModifier.Value;
+
+            if (overrides.FallOffDistance.HasValue) fallOffDistance = Math.Max(overrides.FallOffDistance.Value, 0f);
+            if (overrides.FallOffMinMultipler.HasValue) fallOffMinMult = Math.Max(overrides.FallOffMinMultipler.Value, 0f);
+            if (overrides.Mass.HasValue) mass = Math.Max(overrides.Mass.Value, 0f);
+            if (overrides.ShieldBypass.HasValue) shieldBypassRaw = Math.Max(overrides.ShieldBypass.Value, 0f);
+
         }
+
+        //private void GetModifiableValues(AmmoDef ammoDef, out float baseDamage, out float health, out float gravityMultiplier, out float maxTrajectory, out float maxTrajectorySqr, out bool energyBaseDmg, out bool energyAreaDmg, out bool energyDetDmg, out bool energyShieldDmg, out double shieldModifier, out float fallOffDistance, out float fallOffMinMult, out float mass, out float shieldBypassRaw)
+        //{
+        //    baseDamage = AmmoModsFound && _modifierMap[BaseDmgStr].HasData() ? _modifierMap[BaseDmgStr].GetAsFloat : ammoDef.BaseDamage;
+
+        //    if (baseDamage < 0.000001)
+        //        baseDamage = 0.000001f;
+
+        //    health = AmmoModsFound && _modifierMap[HealthStr].HasData() ? _modifierMap[HealthStr].GetAsFloat : ammoDef.Health;
+        //    gravityMultiplier = AmmoModsFound && _modifierMap[GravityStr].HasData() ? _modifierMap[GravityStr].GetAsFloat : ammoDef.Trajectory.GravityMultiplier;
+        //    maxTrajectory = AmmoModsFound && _modifierMap[MaxTrajStr].HasData() ? _modifierMap[MaxTrajStr].GetAsFloat : ammoDef.Trajectory.MaxTrajectory;
+        //    maxTrajectorySqr = maxTrajectory * maxTrajectory;
+        //    energyBaseDmg = AmmoModsFound && _modifierMap[EnergyBaseDmgStr].HasData() ? _modifierMap[EnergyBaseDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Base != DamageTypes.Damage.Kinetic;
+        //    energyAreaDmg = AmmoModsFound && _modifierMap[EnergyAreaDmgStr].HasData() ? _modifierMap[EnergyAreaDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.AreaEffect != DamageTypes.Damage.Kinetic;
+        //    energyDetDmg = AmmoModsFound && _modifierMap[EnergyDetDmgStr].HasData() ? _modifierMap[EnergyDetDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Detonation != DamageTypes.Damage.Kinetic;
+        //    energyShieldDmg = AmmoModsFound && _modifierMap[EnergyShieldDmgStr].HasData() ? _modifierMap[EnergyShieldDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Shield != DamageTypes.Damage.Kinetic;
+
+        //    var givenShieldModifier = AmmoModsFound && _modifierMap[ShieldModStr].HasData() ? _modifierMap[ShieldModStr].GetAsDouble : ammoDef.DamageScales.Shields.Modifier;
+        //    shieldModifier = givenShieldModifier < 0 ? 1 : givenShieldModifier;
+
+        //    fallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammoDef.DamageScales.FallOff.Distance;
+        //    fallOffMinMult = AmmoModsFound && _modifierMap[FallOffMinMultStr].HasData() ? _modifierMap[FallOffMinMultStr].GetAsFloat : ammoDef.DamageScales.FallOff.MinMultipler;
+
+        //    mass = AmmoModsFound && _modifierMap[MassStr].HasData() ? _modifierMap[MassStr].GetAsFloat : ammoDef.Mass;
+
+        //    shieldBypassRaw = AmmoModsFound && _modifierMap[ShieldBypassStr].HasData() ? _modifierMap[ShieldBypassStr].GetAsFloat : ammoDef.DamageScales.Shields.BypassModifier;
+        //}
 
 
         private int mexLogLevel = 0;
@@ -2024,122 +2006,4 @@ namespace CoreSystems.Support
         }
     }
 
-    internal class ValueProcessors
-    {
-
-        internal abstract class BaseProcessor
-        {
-            protected object StoredValue;
-            protected ValueType Type;
-            public bool HasData() => StoredValue != null;
-            public ValueType GetType() => Type;
-            public float GetAsFloat => (float)StoredValue;
-            public double GetAsDouble => (double)StoredValue;
-            public int GetAsInt => (int)StoredValue;
-            public bool GetAsBool => (bool)StoredValue;
-            public abstract bool WriteData(string value);
-
-            public enum ValueType
-            {
-                Invalid,
-                Float,
-                Double,
-                Int,
-                Bool,
-                Enum,
-                String
-            }
-        }
-
-        internal class FloatProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                float floatValue;
-                if (float.TryParse(value, out floatValue) && floatValue >= 0)
-                {
-                    StoredValue = floatValue;
-                    Type = ValueType.Float;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        internal class NonZeroFloatProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                float floatValue;
-                if (float.TryParse(value, out floatValue) && floatValue > 0)
-                {
-                    StoredValue = floatValue;
-                    Type = ValueType.Float;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        internal class DoubleProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                double doubleValue;
-                if (double.TryParse(value, out doubleValue) && doubleValue >= 0)
-                {
-                    StoredValue = doubleValue;
-                    Type = ValueType.Double;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        internal class IntProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                int intValue;
-                if (int.TryParse(value, out intValue) && intValue >= 0)
-                {
-                    StoredValue = intValue;
-                    Type = ValueType.Int;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        internal class NonZeroIntProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                int intValue;
-                if (int.TryParse(value, out intValue) && intValue > 0)
-                {
-                    StoredValue = intValue;
-                    Type = ValueType.Int;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        internal class BoolProcessor : BaseProcessor
-        {
-            public override bool WriteData(string value)
-            {
-                bool boolValue;
-                if (bool.TryParse(value, out boolValue))
-                {
-                    StoredValue = boolValue;
-                    Type = ValueType.Bool;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-    }
 }
