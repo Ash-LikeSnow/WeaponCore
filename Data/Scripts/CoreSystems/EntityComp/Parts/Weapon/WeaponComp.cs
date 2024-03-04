@@ -138,10 +138,12 @@ namespace CoreSystems.Platform
                         }
                     }
 
-                    if (w.TurretAttached) {
+                    if (w.TurretAttached) 
+                    {
                         w.Azimuth = 0;
                         w.Elevation = 0;
-                        w.AimBarrel();
+                        if (w.Comp.TypeSpecific != CompTypeSpecific.SearchLight)
+                            w.AimBarrel();
                     }
                 }
             }
