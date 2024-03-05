@@ -64,6 +64,7 @@ namespace CoreSystems.Support
         internal readonly List<QueuedSoundEvent> QueuedSounds = new List<QueuedSoundEvent>();
         internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
         internal readonly List<WeaponComponent> WeaponComps = new List<WeaponComponent>(32);
+        internal readonly List<WeaponComponent> CriticalComps = new List<WeaponComponent>();
         internal readonly List<Upgrade.UpgradeComponent> UpgradeComps = new List<Upgrade.UpgradeComponent>(32);
         internal readonly List<SupportSys.SupportComponent> SupportComps = new List<SupportSys.SupportComponent>(32);
         internal readonly List<ControlSys.ControlComponent> ControlComps = new List<ControlSys.ControlComponent>(32);

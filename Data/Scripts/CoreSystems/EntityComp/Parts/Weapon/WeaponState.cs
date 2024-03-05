@@ -224,7 +224,7 @@ namespace CoreSystems.Platform
             {
                 if (--cSet.Overrides.ArmedTimer == 0)
                 {
-                    CriticalOnDestruction();
+                    CriticalOnDestruction(true);
                 }
             }
         }

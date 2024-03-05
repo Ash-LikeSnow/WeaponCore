@@ -99,7 +99,7 @@ namespace CoreSystems.Platform
             internal void WeaponInit()
             {
                 var wValues = Data.Repo.Values;
-                var triggered = wValues.State.Trigger == Trigger.On;
+                var triggered = wValues.State.Trigger == Trigger.On || wValues.State.Trigger == Trigger.Once;
                 for (int i = 0; i < Collection.Count; i++)
                 {
                     var w = Collection[i];
@@ -129,6 +129,8 @@ namespace CoreSystems.Platform
                     }
                     else if (TypeSpecific == CompTypeSpecific.Phantom)
                     {
+                        if(triggered) 
+                            w.ProtoWeaponAmmo.CurrentAmmo = 1;
                         Ai.OnlyWeaponComp = w.Comp;
                         var maxRange = w.Comp.PrimaryWeapon.GetMaxWeaponRange();
                         if (maxRange > w.Comp.Ai.MaxTargetingRange)

@@ -29,7 +29,7 @@ namespace CoreSystems.Control
             AddWeaponCrticalTimeSliderRange<T>(session, "Detonation", Localization.GetText("TerminalDetonationTitle"), Localization.GetText("TerminalDetonationTooltip"), BlockUi.GetArmedTimer, BlockUi.RequestSetArmedTimer, NotCounting, CanBeArmed, BlockUi.GetMinCriticalTime, BlockUi.GetMaxCriticalTime, true);
             AddButtonNoAction<T>(session, "StartCount", Localization.GetText("TerminalStartCountTitle"), Localization.GetText("TerminalStartCountTooltip"), BlockUi.StartCountDown, NotCounting, CanBeArmed);
             AddButtonNoAction<T>(session, "StopCount", Localization.GetText("TerminalStopCountTitle"), Localization.GetText("TerminalStopCountTooltip"), BlockUi.StopCountDown, IsCounting, CanBeArmed);
-            AddCheckboxNoAction<T>(session, "Arm", Localization.GetText("TerminalArmTitle"), Localization.GetText("TerminalArmTooltip"), BlockUi.GetArmed, BlockUi.RequestSetArmed, true, CanBeArmed);
+            AddCheckboxWarhead<T>(session, "Arm", Localization.GetText("TerminalArmTitle"), Localization.GetText("TerminalArmTooltip"), BlockUi.GetArmed, BlockUi.RequestSetArmed, true, CanBeArmed);
             AddButtonNoAction<T>(session, "Trigger", Localization.GetText("TerminalTriggerTitle"), Localization.GetText("TerminalTriggerTooltip"), BlockUi.TriggerCriticalReaction, IsArmed, CanBeArmed);
         }
 
@@ -239,7 +239,7 @@ namespace CoreSystems.Control
         {
             var comp = block.Components.Get<CoreComponent>();
 
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && !comp.HasArming;
         }
 
         internal static bool UiRofSlider(IMyTerminalBlock block)
@@ -394,7 +394,7 @@ namespace CoreSystems.Control
         internal static bool WeaponIsReadyAndSorter(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.TypeSpecific == CoreComponent.CompTypeSpecific.SorterWeapon && comp.Data?.Repo != null;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.TypeSpecific == CoreComponent.CompTypeSpecific.SorterWeapon && comp.Data?.Repo != null && !comp.HasArming;
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
@@ -405,7 +405,7 @@ namespace CoreSystems.Control
         internal static bool IsReady(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null && !comp.HasArming;
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
@@ -978,6 +978,22 @@ namespace CoreSystems.Control
             c.Setter = setter;
             c.Visible = visibleGetter;
             c.Enabled = IsReady;
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
+        internal static IMyTerminalControlCheckbox AddCheckboxWarhead<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, bool> getter, Action<IMyTerminalBlock, bool> setter, bool allowGroup, Func<IMyTerminalBlock, bool> visibleGetter = null, bool forceEnable = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlCheckbox, T>("WC_" + name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Visible = visibleGetter;
+            c.Enabled = CanBeArmed;
 
             MyAPIGateway.TerminalControls.AddControl<T>(c);
             session.CustomControls.Add(c);

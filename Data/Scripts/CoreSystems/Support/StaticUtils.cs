@@ -162,6 +162,25 @@ namespace CoreSystems.Support
             */
         }
 
+        public static void UpdateTerminalWarhead(this MyCubeBlock block)
+        {
+            ((IMyTerminalBlock)block).SetDetailedInfoDirty();
+            try
+            {
+                if (block == RefreshToggleCube && RefreshToggle != null)
+                {
+                    RefreshTerminalControls((IMyTerminalBlock)block);
+                    return;
+                }
+
+                if (!GetRefreshToggle())
+                    return;
+
+                RefreshToggleCube = block;
+                RefreshTerminalControls((IMyTerminalBlock)block);
+            }
+            catch (Exception ex) { Log.Line($"Exception in UpdateTerminal: {ex}"); }
+        }
         public static bool GetRefreshToggle()
         {
 
