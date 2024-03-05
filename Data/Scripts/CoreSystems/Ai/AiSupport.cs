@@ -33,6 +33,9 @@ namespace CoreSystems.Support
                             WeaponIdx.Add(wComp,  WeaponComps.Count);
                             WeaponComps.Add(wComp);
                             
+                            if (wComp.HasArming || wComp.IsBomb)
+                                CriticalComps.Add(wComp);
+
                             if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                                 CompWeaponGroups[wComp] = wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId;
 
@@ -56,6 +59,10 @@ namespace CoreSystems.Support
 
                             var wCompMaxWepRange = wComp.MaxDetectDistance;
                             WeaponComps.RemoveAtFast(weaponIdx);
+
+                            if (wComp.HasArming || wComp.IsBomb)
+                                CriticalComps.Remove(wComp);
+
                             if (weaponIdx < WeaponComps.Count)
                                 WeaponIdx[WeaponComps[weaponIdx]] = weaponIdx;
                             WeaponIdx.Remove(wComp);
@@ -505,6 +512,7 @@ namespace CoreSystems.Support
             TrackingComps.Clear();
             PlayerControl.Clear();
             WeaponComps.Clear();
+            CriticalComps.Clear();
             UpgradeComps.Clear();
             SupportComps.Clear();
             ControlComps.Clear();
