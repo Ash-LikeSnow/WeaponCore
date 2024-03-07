@@ -149,6 +149,7 @@ namespace CoreSystems.Api
                 ["SetAreaRadiusMultiplier"] = new Action<MyEntity, float>(SetAreaRadiusMultiplier),
                 ["SetVelocityMultiplier"] = new Action<MyEntity, float>(SetVelocityMultiplier),
                 ["SetFiringAllowed"] = new Action<MyEntity, bool>(SetFiringAllowed),
+                ["RegisterTerminalControl"] = new Action<string>(RegisterTerminalControl),
 
                 ["GetRofMultiplier"] = new Func<MyEntity, float>(GetRofMultiplier),
                 ["GetBaseDmgMultiplier"] = new Func<MyEntity, float>(GetBaseDmgMultiplier),
@@ -402,6 +403,12 @@ namespace CoreSystems.Api
                 return false;
 
             return comp.Data.Repo.Values.Set.FiringAllowed;
+        }
+
+        private void RegisterTerminalControl(string controlId)
+        {
+            if (!Session.VisibleControls.Contains(controlId))
+                Session.VisibleControls.Add(controlId);
         }
 
         private void GetObstructionsLegacy(IMyEntity shooter, ICollection<IMyEntity> collection) => GetObstructions((MyEntity) shooter, (ICollection<MyEntity>) collection);

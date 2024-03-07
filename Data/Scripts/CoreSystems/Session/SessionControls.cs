@@ -463,7 +463,7 @@ namespace CoreSystems
             }
         }
 
-        private static HashSet<string> _visibleControls = new HashSet<string> 
+        public static HashSet<string> VisibleControls = new HashSet<string> 
         {
                 "OnOff",
                 //"Shoot",
@@ -596,7 +596,7 @@ namespace CoreSystems
                 var c = controls[i];
                 if (session.AlteredControls.Contains(c)) continue;
 
-                if (!_visibleControls.Contains(c.Id)) {
+                if (!VisibleControls.Contains(c.Id)) {
                     c.Visible = TerminalHelpers.NotWcBlock;
                     session.AlteredControls.Add(c);
                     continue;
@@ -726,8 +726,8 @@ namespace CoreSystems
                 c.Visible = null;
             }
             session.AlteredControls.Clear();
-            _visibleControls.Clear();
-            _visibleControls = null;
+            VisibleControls.Clear();
+            VisibleControls = null;
         }
 
         private static void EmptyAction(IMyTerminalBlock obj)
