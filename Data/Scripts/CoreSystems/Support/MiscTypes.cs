@@ -319,6 +319,26 @@ namespace CoreSystems.Support
         }
     }
 
+    public class HitParticleEvent
+    {
+        public readonly MyParticleEffect Effect;
+        public readonly Vector3D Velocity;
+        public bool MarkedForClose = false;
+
+        public HitParticleEvent(MyParticleEffect effect, Vector3D velocity)
+        {
+            Effect = effect;
+            Velocity = velocity;
+            Effect.OnDelete += Effect_OnDelete;
+        }
+
+        private void Effect_OnDelete(MyParticleEffect obj)
+        {
+            MarkedForClose = true;
+            Effect.OnDelete -= Effect_OnDelete;
+        }
+    }
+
     public class ParticleEvent
     {
         private readonly Guid _uid;
