@@ -13,9 +13,22 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("Arm");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Arm Critical Reaction");
+            action.Name = new StringBuilder("Arm Warhead");
             action.Action = CustomActions.RequestSetArmed;
             action.Writer = CustomActions.ArmWriter;
+            action.Enabled = TerminalHelpers.CanBeArmed;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+        public static void CreateTriggerNow(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("Detonate");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder("Detonate Now");
+            action.Action = CustomActions.TriggerCriticalReaction;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
             action.Enabled = TerminalHelpers.CanBeArmed;
             action.ValidForGroups = true;
 

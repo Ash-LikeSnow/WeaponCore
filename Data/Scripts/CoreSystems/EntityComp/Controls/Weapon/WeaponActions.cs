@@ -24,6 +24,15 @@ namespace CoreSystems.Control
             Weapon.WeaponComponent.RequestSetValue(comp, "Armed", newValue, Session.I.PlayerId);
         }
 
+        internal static void TriggerCriticalReaction(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            Weapon.WeaponComponent.RequestCriticalReaction(comp);
+        }
+
         internal static void TerminalActionToggleShoot(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -485,9 +494,9 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Armed)
-                sb.Append(Localization.GetText("ActionStateOn"));
+                sb.Append("Armed");
             else
-                sb.Append(Localization.GetText("ActionStateOff"));
+                sb.Append("Disarmed");
         }
 
         internal static void ShootStateWriter(IMyTerminalBlock blk, StringBuilder sb)

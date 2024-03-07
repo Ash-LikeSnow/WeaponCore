@@ -14,6 +14,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
+using VRage.Game;
 
 namespace CoreSystems
 {
@@ -62,6 +63,122 @@ namespace CoreSystems
 
                 if (ai.QueuedSounds.Count > 0)
                     ai.ProcessQueuedSounds();
+
+                ///
+                /// Critical/warhead update section
+                ///
+                for (int i = 0; i < ai.CriticalComps.Count; i++)
+                {
+                    var wComp = ai.CriticalComps[i];
+                    if (wComp.CloseCondition)
+                    {
+                        if (wComp.Slim != null && !wComp.Slim.IsDestroyed)
+                            wComp.Slim.DoDamage(float.MaxValue, MyDamageType.Explosion, false);
+                    }
+                    var wValues = wComp.Data.Repo.Values;
+                    var overrides = wValues.Set.Overrides;
+                    for (int j = 0; j < wComp.Platform.Weapons.Count; j++)
+                    {
+                        var w = wComp.Platform.Weapons[j];
+                        if (w.CriticalReaction && !wComp.CloseCondition && (overrides.Armed || wValues.State.CountingDown || wValues.State.CriticalReaction))
+                            w.CriticalMonitor();
+                    }
+                }
+
+                ///
+                /// Phantom update section
+                ///
+                for (int i = 0; i < ai.PhantomComps.Count; i++)
+                {
+                    var pComp = ai.PhantomComps[i];
+
+                    if (pComp.CloseCondition || pComp.HasCloseConsition && pComp.AllWeaponsOutOfAmmo())
+                    {
+                        if (!pComp.CloseCondition)
+                            pComp.ForceClose(pComp.SubtypeName);
+                        continue;
+                    }
+                    if (pComp.Status != Started)
+                        pComp.HealthCheck();
+                    if (pComp.Platform.State != CorePlatform.PlatformState.Ready || pComp.IsDisabled || pComp.IsAsleep || pComp.CoreEntity.MarkedForClose || pComp.LazyUpdate && !ai.DbUpdated && Tick > pComp.NextLazyUpdateStart)
+                        continue;
+
+                    if (ai.DbUpdated || !pComp.UpdatedState)
+                    {
+                        pComp.DetectStateChanges(false);
+                    }
+
+                    switch (pComp.Data.Repo.Values.State.Trigger)
+                    {
+                        case Once:
+                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
+                            break;
+                        case On:
+                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                            break;
+                    }
+
+                    var pValues = pComp.Data.Repo.Values;
+                    var overrides = pValues.Set.Overrides;
+                    var cMode = overrides.Control;
+                    var sMode = overrides.ShootMode;
+
+                    var onConfrimed = pValues.State.Trigger == On && !pComp.ShootManager.FreezeClientShoot && !pComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || pComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                    var noShootDelay = pComp.ShootManager.ShootDelay == 0 || pComp.ShootManager.ShootDelay != 0 && pComp.ShootManager.ShootDelay-- == 0;
+
+                    ///
+                    /// Phantom update section
+                    /// 
+                    for (int j = 0; j < pComp.Platform.Phantoms.Count; j++)
+                    {
+                        var p = pComp.Platform.Phantoms[j];
+                        if (p.ActiveAmmoDef.AmmoDef.Const.Reloadable && !p.Loading)
+                        {
+
+                            if (IsServer && (p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.CheckInventorySystem))
+                                p.ComputeServerStorage();
+                            else if (IsClient)
+                            {
+
+                                if (p.ClientReloading && p.Reload.EndId > p.ClientEndId && p.Reload.StartId == p.ClientStartId)
+                                    p.Reloaded();
+                                else
+                                    p.ClientReload();
+                            }
+                        }
+                        else if (p.Loading && Tick >= p.ReloadEndTick)
+                            p.Reloaded(1);
+
+                        var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
+                        var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
+                        var canShoot = !overHeat && !reloading;
+
+                        var autoShot = pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
+                        var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
+
+                        var delayedFire = p.System.DelayCeaseFire && !p.Target.IsAligned && Tick - p.CeaseFireDelayTick <= p.System.CeaseFireDelay;
+                        var shoot = (anyShot || p.FinishShots || delayedFire);
+                        var shotReady = canShoot && shoot;
+
+                        if (shotReady)
+                        {
+                            p.Shoot();
+                        }
+                        else
+                        {
+
+                            if (p.IsShooting)
+                                p.StopShooting();
+
+                            if (p.BarrelSpinning)
+                            {
+
+                                var spinDown = !(shotReady && ai.CanShoot && p.System.Values.HardPoint.Loading.SpinFree);
+                                p.SpinBarrel(spinDown);
+                            }
+                        }
+                    }
+                }
 
                 if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
                     continue;
@@ -157,94 +274,6 @@ namespace CoreSystems
 
                         if (s.Active)
                             s.Charge();
-                    }
-                }
-
-                ///
-                /// Phantom update section
-                ///
-                for (int i = 0; i < ai.PhantomComps.Count; i++)
-                {
-                    var pComp = ai.PhantomComps[i];
-
-                    if (pComp.CloseCondition || pComp.HasCloseConsition && pComp.AllWeaponsOutOfAmmo()) {
-                        if (!pComp.CloseCondition) 
-                            pComp.ForceClose(pComp.SubtypeName);
-                        continue;
-                    }
-                    if (pComp.Status != Started)
-                        pComp.HealthCheck();
-                    if (pComp.Platform.State != CorePlatform.PlatformState.Ready || pComp.IsDisabled || pComp.IsAsleep || pComp.CoreEntity.MarkedForClose || pComp.LazyUpdate && !ai.DbUpdated && Tick > pComp.NextLazyUpdateStart)
-                        continue;
-
-                    if (ai.DbUpdated || !pComp.UpdatedState) {
-                        pComp.DetectStateChanges(false);
-                    }
-
-                    switch (pComp.Data.Repo.Values.State.Trigger)
-                    {
-                        case Once:
-                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
-                            break;
-                        case On:
-                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
-                            break;
-                    }
-
-                    var pValues = pComp.Data.Repo.Values;
-                    var overrides = pValues.Set.Overrides;
-                    var cMode = overrides.Control;
-                    var sMode = overrides.ShootMode;
-
-                    var onConfrimed = pValues.State.Trigger == On && !pComp.ShootManager.FreezeClientShoot && !pComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || pComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
-                    var noShootDelay = pComp.ShootManager.ShootDelay == 0 || pComp.ShootManager.ShootDelay != 0 && pComp.ShootManager.ShootDelay-- == 0;
-
-                    ///
-                    /// Phantom update section
-                    /// 
-                    for (int j = 0; j < pComp.Platform.Phantoms.Count; j++)
-                    {
-                        var p = pComp.Platform.Phantoms[j];
-                        if (p.ActiveAmmoDef.AmmoDef.Const.Reloadable && !p.Loading) { 
-
-                            if (IsServer && (p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.CheckInventorySystem))
-                                p.ComputeServerStorage();
-                            else if (IsClient) {
-
-                                if (p.ClientReloading && p.Reload.EndId > p.ClientEndId && p.Reload.StartId == p.ClientStartId)
-                                    p.Reloaded();
-                                else
-                                    p.ClientReload();
-                            }
-                        }
-                        else if (p.Loading && Tick >= p.ReloadEndTick)
-                            p.Reloaded(1);
-
-                        var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
-                        var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
-                        var canShoot = !overHeat && !reloading;
-
-                        var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
-                        var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
-
-                        var delayedFire = p.System.DelayCeaseFire && !p.Target.IsAligned && Tick - p.CeaseFireDelayTick <= p.System.CeaseFireDelay;
-                        var shoot = (anyShot || p.FinishShots || delayedFire);
-                        var shotReady = canShoot && shoot;
-
-                        if (shotReady) {
-                            p.Shoot();
-                        }
-                        else {
-
-                            if (p.IsShooting)
-                                p.StopShooting();
-
-                            if (p.BarrelSpinning) {
-
-                                var spinDown = !(shotReady && ai.CanShoot && p.System.Values.HardPoint.Loading.SpinFree);
-                                p.SpinBarrel(spinDown);
-                            }
-                        }
                     }
                 }
 
@@ -585,9 +614,6 @@ namespace CoreSystems
                             HudUi.TexturesToAdd++;
                             HudUi.WeaponsToDisplay.Add(w);
                         }
-
-                        if (w.CriticalReaction && !wComp.CloseCondition && (overrides.Armed || wValues.State.CountingDown || wValues.State.CriticalReaction))
-                            w.CriticalMonitor();
 
                         if (w.Target.ClientDirty)
                             w.Target.ClientUpdate(w, w.TargetData);
