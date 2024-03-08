@@ -37,6 +37,7 @@ namespace CoreSystems.Support
         internal readonly List<AvEffect> Effects2 = new List<AvEffect>(128);
         internal readonly List<ParticleEvent> ParticlesToProcess = new List<ParticleEvent>(128);
         internal readonly List<AvShot> AvShots = new List<AvShot>(1024);
+        internal readonly List<HitParticleEvent> HitParticles = new List<HitParticleEvent>(128);
 
         internal readonly List<QuadPersistentCache> PreAddPersistent = new List<QuadPersistentCache>();
         internal readonly List<QuadPersistentCache> ActiveBillBoards = new List<QuadPersistentCache>();
@@ -83,6 +84,7 @@ namespace CoreSystems.Support
             if (Effects1.Count > 0) RunAvEffects1();
             if (Effects2.Count > 0) RunAvEffects2();
             if (ParticlesToProcess.Count > 0) Session.I.ProcessParticles();
+            if (HitParticles.Count > 0) RunAvHitEffects();
 
             for (int i = AvShots.Count - 1; i >= 0; i--)
             {
@@ -150,8 +152,8 @@ namespace CoreSystems.Support
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
                             {
                                 hitEffect.UserScale = av.AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
-                                hitEffect.Velocity = av.Hit.HitVelocity;
-
+                                var tickVelo = av.Hit.HitVelocity / 60;
+                                HitParticles.Add(new HitParticleEvent(hitEffect, tickVelo));
                                 if (hitEffect.Loop)
                                     hitEffect.Stop();
                             }
@@ -941,6 +943,20 @@ namespace CoreSystems.Support
             }
         }
 
+        internal void RunAvHitEffects()
+        {
+            for (int i = HitParticles.Count - 1; i >= 0; i--)
+            {
+                var av = HitParticles[i];
+                if (av.MarkedForClose)
+                {
+                    HitParticles.RemoveAtFast(i);
+                    continue;
+                }
+                var position = av.Effect.WorldMatrix.Translation + av.Velocity;
+                av.Effect.SetTranslation(ref position);
+            }
+        }
 
         internal void AvShotCleanUp()
         {
@@ -965,6 +981,7 @@ namespace CoreSystems.Support
             foreach (var av in AvShots)
                 av.Close();
             AvShots.Clear();
+            HitParticles.Clear();
 
             BeamEffects.Clear();
             AvShotPool.Clear();
