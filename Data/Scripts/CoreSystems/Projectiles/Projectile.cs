@@ -2221,6 +2221,14 @@ namespace CoreSystems.Projectiles
                         SpawnShrapnel();
                     }
                 }
+                else if (Info.Target.TargetState == Target.TargetStates.IsFake)
+                {
+                    var fakePos = Info.Target.TargetPos;
+                    if (Vector3D.DistanceSquared(fakePos, Position) <= aConst.FragProximity * aConst.FragProximity)
+                    {
+                        SpawnShrapnel();
+                    }
+                }
             }
         }
 
@@ -3067,6 +3075,13 @@ namespace CoreSystems.Projectiles
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
             var pTarget = Info.Target.TargetObject as Projectile;
+
+            if(Info.Target.TargetState == Target.TargetStates.IsFake)
+            {
+                targetDirection = Vector3D.Normalize(Info.Target.TargetPos - Position);
+                estimatedPosition = Info.Target.TargetPos;
+                return true;
+            }
 
             if (eTarget?.GetTopMostParent()?.Physics?.LinearVelocity == null && pTarget == null)
             {
