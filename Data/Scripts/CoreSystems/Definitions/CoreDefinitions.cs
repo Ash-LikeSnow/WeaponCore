@@ -529,6 +529,8 @@ namespace CoreSystems.Support
                 [ProtoMember(6)] internal bool DisableStatus;
                 [ProtoMember(7)] internal float RateOfFireMin;
                 [ProtoMember(8)] internal bool DisableSupportingPD;
+                [ProtoMember(9)] internal bool ProhibitShotDelay;
+                [ProtoMember(10)] internal bool ProhibitBurstCount;
             }
 
 
