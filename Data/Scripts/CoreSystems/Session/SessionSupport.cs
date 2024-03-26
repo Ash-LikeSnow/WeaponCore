@@ -839,13 +839,9 @@ namespace CoreSystems
                                 Settings.VersionControl.UpdateClientCfgFile();
                                 break;
                             case "debug":
-                                if (DebugVersion)
-                                {
-                                    somethingUpdated = true;
-                                    DebugMod = !DebugMod;
-                                    MyAPIGateway.Utilities.ShowNotification($"Debug has been toggled: {DebugMod}", 10000);
-                                }
-
+                                somethingUpdated = true;
+                                DebugMod = !DebugMod;
+                                MyAPIGateway.Utilities.ShowNotification($"Debug has been toggled: {DebugMod}", 10000);
                                 break;
                             case "unsupportedmode":
                                 if (HandlesInput)
@@ -1194,7 +1190,7 @@ namespace CoreSystems
 
         private void ModChecker()
         {
-            LocalVersion = ModContext.ModId == "CoreSystems";
+            LocalVersion = ModContext.ModId == "CoreSystems" || ModContext.ModId == "WeaponCore";
 
             if (LocalVersion)
             {
