@@ -407,7 +407,7 @@ namespace CoreSystems
             var partialShield = t.ShieldInLine && !t.ShieldBypassed && SApi.MatchEntToShieldFast(grid, true) != null;
             var objectsHit = t.ObjectsHit;
             var blockCount = hitEnt.Blocks.Count;
-            var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks && !t.AmmoDef.ObjectsHit.SkipBlocksForAOE;
+            var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks;
 
 
             //General damage data
@@ -443,6 +443,8 @@ namespace CoreSystems
                     basePool = 0;
                     break;
                 }
+                else if(hasDet && objectsHit >= maxObjects && t.AmmoDef.ObjectsHit.SkipBlocksForAOE)
+                    basePool = 0;
 
                 var aoeAbsorb = 0d;
                 var aoeDepth = 0d;
@@ -684,8 +686,6 @@ namespace CoreSystems
                             basePool = 0;
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
-                            if (countBlocksAsObjects)
-                                objectsHit++;
                         }
                         else if (primaryDamage)
                         {
@@ -693,9 +693,12 @@ namespace CoreSystems
                             deadBlock = true;
                             var scale = baseScale == 0d ? 0.0000001 : baseScale;
                             basePool -= (float)(blockHp / scale);
-                            if (countBlocksAsObjects)
-                                objectsHit++;
                         }
+
+                        if (countBlocksAsObjects && (primaryDamage || !primaryDamage && countBlocksAsObjects && !t.AmmoDef.ObjectsHit.SkipBlocksForAOE))
+                            objectsHit++;
+                        if(objectsHit >= maxObjects && primaryDamage)
+                            detRequested = hasDet;
 
                         //AOE damage logic applied to aoeDamageFall
                         if (!rootStep && (hasAoe || hasDet) && aoeDamage >= 0 && aoeDamageFall >= 0 && !deadBlock)
@@ -734,7 +737,7 @@ namespace CoreSystems
                                     //Log.Line($"Aoedmgpool {aoeDamage}  scaleddmg {aoeScaledDmg}");
                                 }
                             }
-                            aoeDmgTally += aoeScaledDmg;
+                            aoeDmgTally += aoeScaledDmg > (float)blockHp ? (float)blockHp : aoeScaledDmg;
                             scaledDamage = aoeScaledDmg;
 
                             if (!aoeIsPool && scaledDamage > blockHp)
@@ -839,7 +842,8 @@ namespace CoreSystems
                             }
                             else if (block.Integrity - realDmg > 0) _slimHealthClient[block] = (float)(blockHp - realDmg);
                         }
-                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit > maxObjects;
+
+                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 && !aoeIsPool || aoeDamage <= 0.5d)) || (!t.AmmoDef.ObjectsHit.SkipBlocksForAOE && objectsHit >= maxObjects) || t.AmmoDef.ObjectsHit.SkipBlocksForAOE && rootStep;
                         if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
 
                         //doneskies
