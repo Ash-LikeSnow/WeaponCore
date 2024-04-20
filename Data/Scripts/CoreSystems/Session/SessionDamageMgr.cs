@@ -407,7 +407,7 @@ namespace CoreSystems
             var partialShield = t.ShieldInLine && !t.ShieldBypassed && SApi.MatchEntToShieldFast(grid, true) != null;
             var objectsHit = t.ObjectsHit;
             var blockCount = hitEnt.Blocks.Count;
-            var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks;
+            var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks && !t.AmmoDef.ObjectsHit.SkipBlocksForAOE;
 
 
             //General damage data
