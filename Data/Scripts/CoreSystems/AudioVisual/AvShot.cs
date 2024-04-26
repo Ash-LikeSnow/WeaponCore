@@ -659,8 +659,9 @@ namespace CoreSystems.Support
 
             var color = skipTracerFactionColor ? aConst.LinearTracerColor : aConst.TracerFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
             var segmentColor = skipSegFactionColor ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
-            if (aConst.LineColorVariance)
+            if (aConst.LineColorVariance && skipTracerFactionColor)
             {
+                MyAPIGateway.Utilities.ShowNotification("Here", 200);
                 var tracerStart = aConst.LinearTracerColorStart;
                 var tracerEnd = aConst.LinearTracerColorEnd;
                 // gross inlined random
@@ -682,7 +683,7 @@ namespace CoreSystems.Support
                 }
             }
 
-            if (aConst.SegmentColorVariance)
+            if (aConst.SegmentColorVariance && skipSegFactionColor)
             {
                 // gross inlined random
                 var tempX = rnd.Y;
