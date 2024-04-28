@@ -177,7 +177,7 @@ namespace CoreSystems.Support
                         { "WeaponTotalEffect", "Damage" },
                         { "WeaponTotalEffectAvgDps", "AvgDps" },
                         { "TerminalOverrideTitle", "Override" },
-                        { "TerminalOverrideTooltip", "Allow dumb firing weapons that otherwise require a target, for target practice only" },
+                        { "TerminalOverrideTooltip", "Turns off targeting and tracking so you can forcibly fire the weapon- for practice use only" },
                         { "TerminalAngularTitle", "Track Angular Motion" },
                         { "TerminalAngularTooltip", "Adjust aim to account for angular motion of the target" },
                         { "WeaponInfoHasTarget", "HasTarget" },
