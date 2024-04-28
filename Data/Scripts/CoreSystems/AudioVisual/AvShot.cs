@@ -661,7 +661,6 @@ namespace CoreSystems.Support
             var segmentColor = skipSegFactionColor ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
             if (aConst.LineColorVariance && skipTracerFactionColor)
             {
-                MyAPIGateway.Utilities.ShowNotification("Here", 200);
                 var tracerStart = aConst.LinearTracerColorStart;
                 var tracerEnd = aConst.LinearTracerColorEnd;
                 // gross inlined random
