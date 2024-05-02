@@ -344,9 +344,6 @@ namespace CoreSystems.Support
             else if (ammo.AmmoDef.Ejection.Type == AmmoDef.EjectionDef.SpawnType.Particle && !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Eject.Name))
                 HasEjectEffect = true;
 
-            if (AmmoItem.Content != null && !Session.I.AmmoItems.ContainsKey(AmmoItem.ItemId))
-                Session.I.AmmoItems[AmmoItem.ItemId] = AmmoItem;
-
             var fragGuidedAmmo = false;
             var fragAntiSmart = false;
             var fragTargetOverride = false;

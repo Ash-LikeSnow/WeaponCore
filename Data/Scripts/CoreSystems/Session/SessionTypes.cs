@@ -960,7 +960,6 @@ namespace CoreSystems
         public long PlayerId;
         public MyTargetFocusComponent TargetFocus;
         public MyTargetLockingComponent TargetLock;
-        public bool Blessed;
     }
 
     public class GridGroupMap
