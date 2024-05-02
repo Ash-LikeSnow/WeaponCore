@@ -182,7 +182,6 @@ namespace CoreSystems
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
-        internal readonly Dictionary<uint, MyPhysicalInventoryItem> AmmoItems = new Dictionary<uint, MyPhysicalInventoryItem>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
         internal readonly Dictionary<string, MyMouseButtonsEnum> MouseMap = new Dictionary<string, MyMouseButtonsEnum>();
         internal readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
@@ -501,16 +500,6 @@ namespace CoreSystems
         internal bool DirtyGrid;
         internal bool AuthorConnected;
 
-        internal readonly HashSet<ulong> BlessedPlayers = new HashSet<ulong>()
-        {
-            //76561198339035377 -- Most cherished of humanity
-        };
-
-        internal readonly HashSet<ulong> JokePlayerList = new HashSet<ulong>()
-        {
-        };
-
-
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {
             "LargeProductivityModule", "LargeEffectivenessModule", "LargeEnergyModule",
@@ -525,7 +514,9 @@ namespace CoreSystems
 
         internal readonly HashSet<string> VanillaWeaponCompatible = new HashSet<string>()
         {
-            "Large_SC_LaserDrillTurret", 
+            "Large_SC_LaserDrillTurret",
+            "LargeFlareLauncher",
+            "SmallFlareLauncher",
         };
 
         internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()

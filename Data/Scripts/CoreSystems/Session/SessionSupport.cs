@@ -1100,20 +1100,6 @@ namespace CoreSystems
             CounterKeenLogMessage(false);
         }
 
-        private void PracticalJokes(ulong playerSteamUserId)
-        {
-            string[] jokeArray;
-            if (JokeCollection.TryGetValue(playerSteamUserId, out jokeArray))
-            {
-                var messageIndex = MyUtils.GetRandomInt(0, jokeArray.Length);
-                MyAPIGateway.Utilities.ShowNotification(jokeArray[messageIndex], 10000, "Red");
-            }
-        }
-
-        internal Dictionary<ulong, string[]> JokeCollection = new Dictionary<ulong, string[]>
-        {
-        };
-
         internal void CheckToolbarForVanilla(MyCubeBlock cube)
         {
             string message = null;
