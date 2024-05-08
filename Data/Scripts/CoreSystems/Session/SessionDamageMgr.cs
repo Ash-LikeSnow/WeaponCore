@@ -769,7 +769,7 @@ namespace CoreSystems
                                 {
                                     appliedImpulse = true;
                                     var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed * t.Weapon.VelocityMult > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed * t.Weapon.VelocityMult : 1;
-                                    ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed));
+                                    //ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed)); //nothin personnel kid
                                 }
 
                                 if (!deadBlock || gridBlockCount < 2500)
