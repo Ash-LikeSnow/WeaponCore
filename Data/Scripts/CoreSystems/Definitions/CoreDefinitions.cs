@@ -1088,6 +1088,7 @@ namespace CoreSystems.Support
                     Push,
                     Pull,
                     Tractor,
+                    AntiSmartv2,
                 }
 
                 public enum EwarMode
