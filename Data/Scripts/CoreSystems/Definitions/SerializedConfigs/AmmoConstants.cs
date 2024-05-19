@@ -368,7 +368,7 @@ namespace CoreSystems.Support
                     if (hasTimed)
                         fragHasTimedSpawn = true;
 
-                    if (ammoType.Ewar.Type == EwarType.AntiSmart)
+                    if (ammoType.Ewar.Type == EwarType.AntiSmart || ammoType.Ewar.Type == EwarType.AntiSmartv2)
                         fragAntiSmart = true;
 
                     if (hasGuidance && ammoType.Trajectory.Smarts.OverideTarget)
@@ -887,7 +887,7 @@ namespace CoreSystems.Support
                             if (!patternGuidedAmmo && hasGuidance)
                                 patternGuidedAmmo = true;
 
-                            if (!patternAntiSmart && ammoDef.Ewar.Type == EwarType.AntiSmart)
+                            if (!patternAntiSmart && (ammoDef.Ewar.Type == EwarType.AntiSmart || ammoDef.Ewar.Type == EwarType.AntiSmartv2))
                                 patternAntiSmart = true;
                             if (hasGuidance && ammoDef.Trajectory.Smarts.OverideTarget)
                                 patternTargetOverride = true;
@@ -902,7 +902,7 @@ namespace CoreSystems.Support
             }
 
             hasGuidedAmmo = fragGuidedAmmo || patternGuidedAmmo || ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None;
-            hasAntiSmart = fragAntiSmart || patternAntiSmart || ammo.AmmoDef.Ewar.Type == EwarType.AntiSmart;
+            hasAntiSmart = fragAntiSmart || patternAntiSmart || ammo.AmmoDef.Ewar.Type == EwarType.AntiSmart || ammo.AmmoDef.Ewar.Type == EwarType.AntiSmartv2;
             hasTargetOverride = fragTargetOverride || patternTargetOverride || OverrideTarget;
         }
 
@@ -954,7 +954,7 @@ namespace CoreSystems.Support
             largestHitSize = Math.Max(byBlockHitRadius, Math.Max(endOfLifeRadius, ewarEffectSize));
 
             eWar = ammoDef.Ewar.Enable;
-            nonAntiSmart = !eWar || ewarType != EwarType.AntiSmart;
+            nonAntiSmart = !eWar || !(ewarType == EwarType.AntiSmart || ewarType == EwarType.AntiSmartv2);
             eWarFieldTrigger = eWar && EwarField && ammoDef.Ewar.Field.TriggerRange > 0;
             minArmingTime = ammoDef.AreaOfDamage.EndOfLife.MinArmingTime;
             if (ammoDef.AreaOfDamage.ByBlockHit.Enable) byBlockHitDepth = ammoDef.AreaOfDamage.ByBlockHit.Depth <= 0 ? (float)ammoDef.AreaOfDamage.ByBlockHit.Radius : ammoDef.AreaOfDamage.ByBlockHit.Depth;

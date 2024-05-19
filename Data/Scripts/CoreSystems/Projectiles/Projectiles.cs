@@ -339,7 +339,7 @@ namespace CoreSystems.Projectiles
                     ++_beamCount;
 
                 var ewarTriggered = aConst.EwarFieldTrigger && info.ExpandingEwarField;
-                var useEwarFieldSphere = (ewarTriggered || info.EwarActive) && aConst.EwarField && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
+                var useEwarFieldSphere = (ewarTriggered || info.EwarActive) && aConst.EwarField && !(aConst.EwarType == WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart || aConst.EwarType == WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmartv2);
                 var ewarRadius = !info.ExpandingEwarField ? aConst.EwarRadius : info.TriggerGrowthSteps < aConst.FieldGrowTime ? info.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
                 p.Beam = useEwarFieldSphere ? new LineD(p.Position + (-p.Direction * ewarRadius), p.Position + (p.Direction * ewarRadius)) : new LineD(p.LastPosition, p.Position);
                 var checkBeam = aConst.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;

@@ -157,7 +157,7 @@ namespace CoreSystems.Projectiles
             ai.ProjectileTicker = Session.I.Tick;
             Info.ObjectsHit = 0;
             Info.BaseHealthPool = aConst.Health;
-            Info.BaseEwarPool = aConst.Health;
+            Info.BaseEwarPool = (float)(aConst.EwarType == AntiSmartv2 ? aConst.EwarStrength : aConst.Health);
 
             if (aConst.IsSmart || aConst.IsDrone)
             {
@@ -3413,6 +3413,40 @@ namespace CoreSystems.Projectiles
                         }
                     }
                     s.EwaredProjectiles.Clear();
+                    return;
+                case AntiSmartv2:
+                    if (Info.BaseEwarPool > 0)
+                    {
+                        var eWarSphere2 = new BoundingSphereD(Position, aConst.EwarRadius);
+                        var s2 = Session.I;
+                        DynTrees.GetAllProjectilesInSphere(Session.I, ref eWarSphere2, s2.EwaredProjectiles, false);
+                        for (int j = 0; j < s2.EwaredProjectiles.Count; j++)
+                        {
+                            var netted = s2.EwaredProjectiles[j];
+
+                            if (!netted.Info.Ai.MarkedForClose && eWarSphere2.Intersects(new BoundingSphereD(netted.Position, netted.Info.AmmoDef.Const.CollisionSize)))
+                            {
+                                if (netted.Info.Ai.TopEntityMap.GroupMap.Construct.ContainsKey(Info.Weapon.Comp.TopEntity) || netted.Info.Target.TargetState == Target.TargetStates.IsProjectile || netted.State != ProjectileState.Alive) continue;
+
+                                var nStorage = netted.Info.Storage;
+                                var nAconst = netted.Info.AmmoDef.Const;
+                                if (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart)
+                                    continue;
+                                if (Info.Random.NextDouble() * 100f < aConst.PulseChance || !aConst.EwarField)
+                                {
+                                    if (Info.BaseEwarPool - netted.Info.AmmoDef.Const.Health >= 0)
+                                    {
+                                        Info.BaseEwarPool -= netted.Info.AmmoDef.Const.Health;
+                                        Info.EwarActive = true;
+                                        netted.Info.Target.TargetObject = this;
+                                        netted.Info.Target.TargetState = Target.TargetStates.IsProjectile;
+                                        Seekers.Add(netted);
+                                    }
+                                }
+                            }
+                        }
+                        s2.EwaredProjectiles.Clear();
+                    }
                     return;
                 case Push:
                     if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
