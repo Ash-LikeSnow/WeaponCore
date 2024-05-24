@@ -59,19 +59,25 @@ namespace CoreSystems.Support
             grid.OnFatBlockAdded += FatBlockAdded;
             grid.OnFatBlockRemoved += FatBlockRemoved;
 
-            SubGridsRegistered[grid] = byte.MaxValue;
-
-            foreach (var cube in grid.GetFatBlocks()) {
-
-                var battery = cube as MyBatteryBlock;
-                var stator = cube as IMyMotorStator;
-                var tool = cube as IMyShipToolBase;
-                var offense = cube as IMyOffensiveCombatBlock;
-
-                if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
+            try
+            {
+                foreach (var cube in grid.GetFatBlocks())
                 {
-                    FatBlockAdded(cube);
+                    var battery = cube as MyBatteryBlock;
+                    var stator = cube as IMyMotorStator;
+                    var tool = cube as IMyShipToolBase;
+                    var offense = cube as IMyOffensiveCombatBlock;
+
+                    if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
+                    {
+                        FatBlockAdded(cube);
+                    }
                 }
+                SubGridsRegistered[grid] = byte.MaxValue;
+            }
+            catch (Exception e)
+            {
+                Log.Line("Exception in RegisterSubGrid, delaying until next update " + e);
             }
         }
 
