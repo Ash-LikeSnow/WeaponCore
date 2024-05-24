@@ -65,7 +65,7 @@ namespace CoreSystems.Support
                         { "TerminalSubSystemsTitle", "Target SubSystems" },
                         { "TerminalSubSystemsTooltip", "Target specific SubSystems of a target" },
                         { "TerminalRepelTitle", "Repel Mode" },
-                        { "TerminalRepelTooltip", "Aggressively focus and repel small threats" },
+                        { "TerminalRepelTooltip", "Aggressively focus on and repel small threats (not projectiles)" },
                         { "TerminalPickAmmoTitle", "Pick Ammo" },
                         { "TerminalPickAmmoTooltip", "Select the ammo type to use" },
                         { "TerminalPickSubSystemTitle", "Pick SubSystem" },
