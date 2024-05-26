@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -58,27 +59,17 @@ namespace CoreSystems.Support
             grid.Flags |= (EntityFlags)(1 << 31);
             grid.OnFatBlockAdded += FatBlockAdded;
             grid.OnFatBlockRemoved += FatBlockRemoved;
-
-            try
+            foreach (var cube in grid.GetFatBlocks().ToArray())
             {
-                foreach (var cube in grid.GetFatBlocks())
-                {
-                    var battery = cube as MyBatteryBlock;
-                    var stator = cube as IMyMotorStator;
-                    var tool = cube as IMyShipToolBase;
-                    var offense = cube as IMyOffensiveCombatBlock;
+                var battery = cube as MyBatteryBlock;
+                var stator = cube as IMyMotorStator;
+                var tool = cube as IMyShipToolBase;
+                var offense = cube as IMyOffensiveCombatBlock;
 
-                    if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
-                    {
-                        FatBlockAdded(cube);
-                    }
-                }
-                SubGridsRegistered[grid] = byte.MaxValue;
+                if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
+                    FatBlockAdded(cube);
             }
-            catch (Exception e)
-            {
-                Log.Line("Exception in RegisterSubGrid, delaying until next update " + e);
-            }
+            SubGridsRegistered[grid] = byte.MaxValue;
         }
 
         public void UnRegisterSubGrid(MyCubeGrid grid)
