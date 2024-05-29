@@ -59,15 +59,39 @@ namespace CoreSystems.Support
             grid.Flags |= (EntityFlags)(1 << 31);
             grid.OnFatBlockAdded += FatBlockAdded;
             grid.OnFatBlockRemoved += FatBlockRemoved;
-            foreach (var cube in grid.GetFatBlocks().ToArray())
-            {
-                var battery = cube as MyBatteryBlock;
-                var stator = cube as IMyMotorStator;
-                var tool = cube as IMyShipToolBase;
-                var offense = cube as IMyOffensiveCombatBlock;
 
-                if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
-                    FatBlockAdded(cube);
+            //BDC Temp debugging
+            var tempBlockArray = grid.GetFatBlocks().ToArray();
+            try
+            {
+                foreach (var cube in grid.GetFatBlocks())
+                {
+                    var battery = cube as MyBatteryBlock;
+                    var stator = cube as IMyMotorStator;
+                    var tool = cube as IMyShipToolBase;
+                    var offense = cube as IMyOffensiveCombatBlock;
+
+                    if (battery != null || cube.HasInventory || stator != null || tool != null || offense != null)
+                        FatBlockAdded(cube);
+                }
+            }
+            catch (Exception ex)
+            {
+                var modifiedBlockArray = grid.GetFatBlocks();
+                var msg = $"Original GetFatBlocks contained {tempBlockArray.Length} items, modified contains {modifiedBlockArray.Count}";
+                foreach (var original in tempBlockArray)
+                {
+                    if(!modifiedBlockArray.Contains(original))
+                        msg += $"Block {original.DisplayName} was removed \n";
+                }
+                foreach (var modified in modifiedBlockArray)
+                {
+                    if (!tempBlockArray.Contains(modified))
+                        msg += $"Block {modified.DisplayName} was added \n";
+                }
+                Log.Line(msg);
+                MyLog.Default.WriteLine(msg);
+                throw ex;
             }
             SubGridsRegistered[grid] = byte.MaxValue;
         }
