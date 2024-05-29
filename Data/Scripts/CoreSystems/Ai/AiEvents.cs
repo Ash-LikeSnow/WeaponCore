@@ -186,14 +186,18 @@ namespace CoreSystems.Support
                 {
                     if (Session.I.IsServer)
                     {
-                        cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-                        //BDC Temp debugging
-                        var msg = $"WeaponCore Removed {cube.BlockDefinition.Id.SubtypeId} block due to placement violations";
-                        Log.Line(msg);
-                        MyLog.Default.WriteLine(msg);
+                        Session.I.FutureEvents.Schedule(QueuedBlockRemoval, cube, 10);
+                        //cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
                     }
                 }
             }
+        }
+
+        private void QueuedBlockRemoval(object o)
+        {
+            var cube = o as MyCubeBlock;
+            if (cube != null)
+                cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
         }
 
         private void FatBlockRemoved(MyCubeBlock cube)
