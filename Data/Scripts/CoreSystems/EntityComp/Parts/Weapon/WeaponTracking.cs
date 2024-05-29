@@ -916,17 +916,21 @@ namespace CoreSystems.Platform
         {
             valid = false;
             Vector3D aimPoint;
+
+            if (weapon == null || weapon.Comp == null || weapon.ActiveAmmoDef == null || weapon.ActiveAmmoDef.AmmoDef == null)
+                return Vector3D.Zero;
+
             var comp = weapon.Comp;
             var ai = comp.Ai;
             var session = Session.I;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
-            var shooterVel = (Vector3D)weapon.Comp.Ai.TopEntityVel;
+            var shooterVel = ai != null ? (Vector3D)ai.TopEntityVel : Vector3D.Zero;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed * weapon.VelocityMult;
-            var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
+            var updateGravity = ammoDef.Const.FeelsGravity && ai != null && ai.InPlanetGravity;
             var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5; //equal to approx 1.58 m/s
 
             #region Must Have Updates
-            if (ai.VelocityUpdateTick != session.Tick)
+            if (ai != null && comp.TopEntity != null && comp.TopEntity.PositionComp != null && ai.VelocityUpdateTick != session.Tick)
             {
                 ai.TopEntityVolume.Center = comp.TopEntity.PositionComp.WorldVolume.Center;
                 ai.TopEntityVel = comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
@@ -954,11 +958,11 @@ namespace CoreSystems.Platform
             Vector3D deltaPos = targetPos - shooterPos;
             if (Vector3D.IsZero(deltaPos))
                 return targetPos;
-            
+
             Vector3D deltaPosNorm;
 
-            var targCube = weapon.Target.TargetObject as MyCubeBlock;
-            if (!basicPrediction && trackAngular && targCube?.CubeGrid.Physics != null && targCube.CubeGrid.Physics.AngularVelocity.LengthSquared() > 0.0014)
+            var targCube = weapon.Target?.TargetObject as MyCubeBlock;
+            if (!basicPrediction && trackAngular && targCube?.CubeGrid?.Physics != null && targCube.CubeGrid.Physics.AngularVelocity.LengthSquared() > 0.0014)
             {
                 if (!ComputeAngular(targCube.CubeGrid, ai, weapon, ammoDef, ref targetPos, ref shooterPos, ref targetAcc, ref deltaVel, projectileMaxSpeed, out deltaLength, out initialTti, out deltaPos, out deltaPosNorm))
                     return targetPos;
@@ -1000,7 +1004,7 @@ namespace CoreSystems.Platform
             {
                 var advTti = initialTti;
                 var projAccelTime = ammoDef.Const.DesiredProjectileSpeed / ammoDef.Const.AccelInMetersPerSec;
-                var usedTti = QuarticSolver(ref advTti, deltaPos, deltaVel, targetAcc, ammoDef.Const.DesiredProjectileSpeed * weapon.VelocityMult, ai.QuadraticCoefficientsStorage) ? advTti : initialTti;
+                var usedTti = QuarticSolver(ref advTti, deltaPos, deltaVel, targetAcc, ammoDef.Const.DesiredProjectileSpeed * weapon.VelocityMult, ai?.QuadraticCoefficientsStorage) ? advTti : initialTti;
                 aimPoint = targetPos + (usedTti + (ammoDef.Const.AmmoSkipAccel ? 0 : (projAccelTime / usedTti))) * (targetVel - shooterVel);
             }
             Vector3D gravityOffset = Vector3D.Zero;
@@ -1045,12 +1049,12 @@ namespace CoreSystems.Platform
                         var targetDirection = targetAimPoint - shooterPos;
 
                         bool isTracking;
-                        if (!weapon.RotorTurretTracking && weapon.TurretController && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
+                        if (!weapon.RotorTurretTracking && weapon.TurretController != null && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
                         {
                             verticalDistance = Math.Tan(angle1) * horizontalDistance;
                             gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                         }
-                        else if (weapon.RotorTurretTracking && weapon.Comp.Ai.ControlComp != null && !RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
+                        else if (weapon.RotorTurretTracking && weapon.Comp?.Ai?.ControlComp?.Platform?.Control != null && !RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
                         {
                             verticalDistance = Math.Tan(angle1) * horizontalDistance;
                             gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
@@ -1064,7 +1068,6 @@ namespace CoreSystems.Platform
 
             return aimPoint + gravityOffset;
         }
-
 
         private static bool ComputeAngular(MyCubeGrid grid, Ai ai, Weapon weapon, WeaponDefinition.AmmoDef ammoDef, ref Vector3D targetPos, ref Vector3D shooterPos, ref Vector3D targetAcc, ref Vector3D deltaVel, double projectileMaxSpeed, out double deltaLength, out double initialTti, out Vector3D deltaPos, out Vector3D deltaPosNorm)
         {
