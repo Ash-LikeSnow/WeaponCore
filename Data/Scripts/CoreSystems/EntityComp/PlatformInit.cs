@@ -470,7 +470,7 @@ namespace CoreSystems.Platform
                     var muzzleName = weaponSystem.Muzzles[i];
                     if (weapon.Muzzles[i] == null)
                     {
-                        weapon.Dummies[i] = new Dummy(weapon.MuzzlePart.Entity, weapon, muzzleName);
+                        weapon.Dummies[i] = new Dummy(weapon.MuzzlePart.Entity, weapon, false, muzzleName);
                         var muzzle = new Weapon.Muzzle(weapon, i); 
                         weapon.Muzzles[i] = muzzle;
                         weapon.MuzzleIdToName.Add(i, muzzleName);

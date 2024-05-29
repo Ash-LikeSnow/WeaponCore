@@ -39,6 +39,8 @@ namespace CoreSystems.Support
         internal Vector3D CachedPos;
         internal Vector3D CachedDir;
         internal Vector3D CachedUpDir;
+        internal bool Ejector;
+        
 
         private readonly string[] _path;
         private readonly Dictionary<string, IMyModelDummy> _tmp1 = new Dictionary<string, IMyModelDummy>();
@@ -46,11 +48,12 @@ namespace CoreSystems.Support
         private readonly Part _part;
         private readonly DummyInfo _info = new DummyInfo();
         private MyEntity _entity;
-        public Dummy(MyEntity e, Part w, params string[] path)
+        public Dummy(MyEntity e, Part w, bool ejector, params string[] path)
         {
             _part = w;
             Entity = e;
             _path = path;
+            Ejector = ejector;
         }
 
         private bool _failed = true;
@@ -133,7 +136,10 @@ namespace CoreSystems.Support
                     var offset = !wComp.Rifle.GunBase.HasIronSightsActive;
                     partWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix(offset);
                     Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
-                    CachedDir = Vector3D.Normalize(wComp.CharacterPosComp.LogicalCrosshairPoint - CachedPos);
+                    if (Ejector)
+                        Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
+                    else
+                        CachedDir = Vector3D.Normalize(wComp.CharacterPosComp.LogicalCrosshairPoint - CachedPos);
                     CachedUpDir = partWorldMatrix.Up;
                 }
                 else
@@ -146,7 +152,7 @@ namespace CoreSystems.Support
                     if (rifle) // I lack the words to describe the level of my disgust
                     {
                         var wComp = (Weapon.WeaponComponent)_part.BaseComp;
-                        clientRifleOffset = !wComp.Rifle.GunBase.HasIronSightsActive;
+                        clientRifleOffset = !wComp.Rifle.GunBase.HasIronSightsActive && !Ejector;
                         var keenWhyPartWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix(clientRifleOffset);
                         CachedUpDir = keenWhyPartWorldMatrix.Up;
                         if (clientRifleOffset)
