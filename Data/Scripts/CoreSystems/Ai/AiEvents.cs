@@ -8,6 +8,7 @@ using VRage;
 using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Utils;
 using VRageMath;
 
 namespace CoreSystems.Support
@@ -186,6 +187,10 @@ namespace CoreSystems.Support
                     if (Session.I.IsServer)
                     {
                         cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
+                        //BDC Temp debugging
+                        var msg = $"WeaponCore Removed {cube.BlockDefinition.Id.SubtypeId} block due to placement violations";
+                        Log.Line(msg);
+                        MyLog.Default.WriteLine(msg);
                     }
                 }
             }
