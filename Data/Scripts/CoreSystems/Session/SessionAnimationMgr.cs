@@ -821,7 +821,7 @@ namespace CoreSystems
 
             if (dummyPart != null)
             {
-                particleDummy = new Dummy(dummyPart, null, emptyName);
+                particleDummy = new Dummy(dummyPart, null, false, emptyName);
                 partName = nameLookup[dummyPart];
                 return true;
             }
