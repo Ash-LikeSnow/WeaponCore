@@ -176,6 +176,7 @@ namespace CoreSystems.Support
         public readonly bool OnlySubSystems;
         public readonly bool ClosestFirst;
         public readonly bool DegRof;
+        public readonly bool ProhibitCoolingWhenOff;
         public readonly bool TrackProjectile;
         public readonly bool DisableSupportingPD;
         public readonly bool ScanTrackOnly;
@@ -357,7 +358,7 @@ namespace CoreSystems.Support
             HasScope = !string.IsNullOrEmpty(Values.Assignments.Scope);
             AltScopeName = HasScope ? "subpart_" + Values.Assignments.Scope : string.Empty;
             TurretMovements(out AzStep, out ElStep, out MinAzimuth, out MaxAzimuth, out MinElevation, out MaxElevation, out HomeAzimuth, out HomeElevation, out TurretMovement);
-            Heat(out DegRof, out MaxHeat, out WepCoolDown);
+            Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
             Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
@@ -482,8 +483,9 @@ namespace CoreSystems.Support
             projectilesOnly = projectilesFirst && Values.Targeting.Threats.Length == 1;
         }
 
-        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown)
+        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown, out bool coolWhenOff)
         {
+            coolWhenOff = Values.HardPoint.Loading.ProhibitCoolingWhenOff;
             degRof = Values.HardPoint.Loading.DegradeRof;
             maxHeat = Values.HardPoint.Loading.MaxHeat;
             wepCoolDown = Values.HardPoint.Loading.Cooldown;

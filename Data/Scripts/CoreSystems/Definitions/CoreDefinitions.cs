@@ -514,6 +514,7 @@ namespace CoreSystems.Support
                 [ProtoMember(22)] internal int MaxReloads;
                 [ProtoMember(23)] internal bool GoHomeToReload;
                 [ProtoMember(24)] internal bool DropTargetUntilLoaded;
+                [ProtoMember(25)] internal bool ProhibitCoolingWhenOff;
 
             }
 
@@ -529,6 +530,8 @@ namespace CoreSystems.Support
                 [ProtoMember(6)] internal bool DisableStatus;
                 [ProtoMember(7)] internal float RateOfFireMin;
                 [ProtoMember(8)] internal bool DisableSupportingPD;
+                [ProtoMember(9)] internal bool ProhibitShotDelay;
+                [ProtoMember(10)] internal bool ProhibitBurstCount;
             }
 
 
@@ -784,6 +787,7 @@ namespace CoreSystems.Support
             {
                 [ProtoMember(1)] internal int MaxObjectsHit;
                 [ProtoMember(2)] internal bool CountBlocks;
+                [ProtoMember(3)] internal bool SkipBlocksForAOE;
             }
 
 
@@ -1084,6 +1088,7 @@ namespace CoreSystems.Support
                     Push,
                     Pull,
                     Tractor,
+                    AntiSmartv2,
                 }
 
                 public enum EwarMode

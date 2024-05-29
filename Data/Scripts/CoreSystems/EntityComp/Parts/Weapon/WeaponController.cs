@@ -259,10 +259,13 @@ namespace CoreSystems.Platform
         {
             try
             {
-                var hsRateMod = HsRate + (float)Comp.HeatLoss;
-                Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
-                PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
-                Comp.HeatLoss = 0;
+                if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
+                {
+                    var hsRateMod = HsRate + (float)Comp.HeatLoss;
+                    Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
+                    PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
+                    Comp.HeatLoss = 0;
+                }
 
                 var set = PartState.Heat - LastHeat > 0.001 || PartState.Heat - LastHeat < 0.001;
 

@@ -839,13 +839,9 @@ namespace CoreSystems
                                 Settings.VersionControl.UpdateClientCfgFile();
                                 break;
                             case "debug":
-                                if (DebugVersion)
-                                {
-                                    somethingUpdated = true;
-                                    DebugMod = !DebugMod;
-                                    MyAPIGateway.Utilities.ShowNotification($"Debug has been toggled: {DebugMod}", 10000);
-                                }
-
+                                somethingUpdated = true;
+                                DebugMod = !DebugMod;
+                                MyAPIGateway.Utilities.ShowNotification($"Debug has been toggled: {DebugMod}", 10000);
                                 break;
                             case "unsupportedmode":
                                 if (HandlesInput)
@@ -868,7 +864,7 @@ namespace CoreSystems
                 if (!somethingUpdated)
                 {
                     if (message.Length <= 3)
-                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc advanced -- Toggle advanced UI features'\n'/wc remap -- Remap keys'\n'/wc avlimit 5' -- Hard limits visual effects (valid range: 0 - 20, 0 is unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
+                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/Ash-LikeSnow/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc advanced -- Toggle advanced UI features'\n'/wc remap -- Remap keys'\n'/wc avlimit 5' -- Hard limits visual effects (valid range: 0 - 20, 0 is unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
                     else if (message.StartsWith("/wc remap"))
                         MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap next' -- Remaps the Cycle Next Target key (default Page Down)\n'/wc remap prev' -- Remaps the Cycle Previous Target key (default Page Up)\n", 10000, "White");
                 }
@@ -1102,20 +1098,6 @@ namespace CoreSystems
             }
         }
 
-        private void PracticalJokes(ulong playerSteamUserId)
-        {
-            string[] jokeArray;
-            if (JokeCollection.TryGetValue(playerSteamUserId, out jokeArray))
-            {
-                var messageIndex = MyUtils.GetRandomInt(0, jokeArray.Length);
-                MyAPIGateway.Utilities.ShowNotification(jokeArray[messageIndex], 10000, "Red");
-            }
-        }
-
-        internal Dictionary<ulong, string[]> JokeCollection = new Dictionary<ulong, string[]>
-        {
-        };
-
         internal void CheckToolbarForVanilla(MyCubeBlock cube)
         {
             string message = null;
@@ -1194,7 +1176,7 @@ namespace CoreSystems
 
         private void ModChecker()
         {
-            LocalVersion = ModContext.ModId == "CoreSystems";
+            LocalVersion = ModContext.ModId == "CoreSystems" || ModContext.ModId == "WeaponCore";
 
             if (LocalVersion)
             {

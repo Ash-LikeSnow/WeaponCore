@@ -659,7 +659,7 @@ namespace CoreSystems.Support
 
             var color = skipTracerFactionColor ? aConst.LinearTracerColor : aConst.TracerFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
             var segmentColor = skipSegFactionColor ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
-            if (aConst.LineColorVariance)
+            if (aConst.LineColorVariance && skipTracerFactionColor)
             {
                 var tracerStart = aConst.LinearTracerColorStart;
                 var tracerEnd = aConst.LinearTracerColorEnd;
@@ -682,7 +682,7 @@ namespace CoreSystems.Support
                 }
             }
 
-            if (aConst.SegmentColorVariance)
+            if (aConst.SegmentColorVariance && skipSegFactionColor)
             {
                 // gross inlined random
                 var tempX = rnd.Y;
@@ -1030,21 +1030,30 @@ namespace CoreSystems.Support
 
             if (AmmoDef.Const.ShotSound)
             {
-                if (distanceFromCameraSqr <= AmmoDef.Const.ShotSoundDistSqr && (IsFragment || Weapon.System.FiringSound == WeaponSystem.FiringSoundState.None))
+                try //SharpDX bughunting
                 {
-                    FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
-                    FireEmitter.CanPlayLoopSounds = true;
-                    FireEmitter.Entity = null;
-                    FireEmitter.SetPosition(Origin);
-                    FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, true);
+                    if (distanceFromCameraSqr <= AmmoDef.Const.ShotSoundDistSqr && (IsFragment || Weapon.System.FiringSound == WeaponSystem.FiringSoundState.None))
+                    {
+                        FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        FireEmitter.CanPlayLoopSounds = true;
+                        FireEmitter.Entity = null;
+                        FireEmitter.SetPosition(Origin);
+                        FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, true);
+                    }
+                    else if (Weapon.System.FiringSound == WeaponSystem.FiringSoundState.PerShot && distanceFromCameraSqr <= Weapon.System.FiringSoundDistSqr)
+                    {
+                        FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        FireEmitter.CanPlayLoopSounds = true;
+                        FireEmitter.Entity = Weapon.Comp.CoreEntity;
+                        FireEmitter.SetPosition(Origin);
+                        FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, true);
+                    }
                 }
-                else if (Weapon.System.FiringSound == WeaponSystem.FiringSoundState.PerShot && distanceFromCameraSqr <= Weapon.System.FiringSoundDistSqr)
+                catch (Exception e)
                 {
-                    FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
-                    FireEmitter.CanPlayLoopSounds = true;
-                    FireEmitter.Entity = Weapon.Comp.CoreEntity;
-                    FireEmitter.SetPosition(Origin);
-                    FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, true);
+                    MyLog.Default.Error($"Sound error with ammo: {AmmoDef.AmmoRound} from {Weapon.Comp.TerminalBlock.DisplayName} soundID {AmmoDef.Const.ShotSoundPair.SoundId} cuename {AmmoDef.Const.ShotSoundPair.GetCueName()}" +
+                        $"FireEmitter.Entity null? {FireEmitter?.Entity == null} \n Origin: {Origin}");
+                    throw e;
                 }
             }
         }

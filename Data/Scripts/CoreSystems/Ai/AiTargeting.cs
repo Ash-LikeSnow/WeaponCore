@@ -324,7 +324,11 @@ namespace CoreSystems.Support
                 if (w.LastHitInfo?.HitEntity != null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                 {
                     TargetInfo hitInfo;
-                    if (w.LastHitInfo.HitEntity == info.Target || ai.Targets.TryGetValue((MyEntity)w.LastHitInfo.HitEntity, out hitInfo) && (hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership))
+                    var targMatch = w.LastHitInfo.HitEntity == info.Target;
+                    var targOther = !targMatch && ai.Targets.TryGetValue((MyEntity)w.LastHitInfo.HitEntity, out hitInfo) && (hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
+                    var targChar = !targMatch && character != null && !ai.ObstructionLookup.ContainsKey((MyEntity)w.LastHitInfo.HitEntity);
+
+                    if (targMatch || targOther || targChar)
                     {
                         double rayDist;
                         Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);

@@ -621,8 +621,6 @@ namespace CoreSystems
                     SendPlayerConnectionUpdate(id, true);
                     SendServerStartup(player.SteamUserId);
                 }
-                else if (MpActive && MultiplayerId == player.SteamUserId && JokePlayerList.Contains(player.SteamUserId))
-                    PracticalJokes(player.SteamUserId);
             }
             return false;
         }
@@ -636,7 +634,7 @@ namespace CoreSystems
                 player.Character.Components.TryGet(out targetLock);
             }
 
-            Players[id] = new PlayerMap { Player = player, PlayerId = id, TargetFocus = targetFocus, TargetLock = targetLock, Blessed = BlessedPlayers.Contains(player.SteamUserId)};
+            Players[id] = new PlayerMap { Player = player, PlayerId = id, TargetFocus = targetFocus, TargetLock = targetLock};
         }
 
         internal void OnPlayerControl(MyEntity exitEntity, MyEntity enterEntity)

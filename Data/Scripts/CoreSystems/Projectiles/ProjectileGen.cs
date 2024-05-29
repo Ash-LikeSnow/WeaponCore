@@ -190,7 +190,7 @@ namespace CoreSystems.Projectiles
 
                         var dumbAdd = false;
 
-                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
+                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
                             if (Vector3.Dot(p.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)

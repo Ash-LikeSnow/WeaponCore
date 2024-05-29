@@ -65,6 +65,8 @@ namespace CoreSystems.Platform
             internal bool HasDrone;
             internal bool ShootRequestDirty;
             internal bool DisableSupportingPD;
+            internal bool ProhibitShotDelay;
+            internal bool ProhibitBurstCount;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {

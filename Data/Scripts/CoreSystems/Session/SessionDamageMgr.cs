@@ -444,6 +444,8 @@ namespace CoreSystems
                     basePool = 0;
                     break;
                 }
+                else if(hasDet && objectsHit >= maxObjects && t.AmmoDef.ObjectsHit.SkipBlocksForAOE)
+                    basePool = 0;
 
                 var aoeAbsorb = 0d;
                 var aoeDepth = 0d;
@@ -685,8 +687,6 @@ namespace CoreSystems
                             basePool = 0;
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
-                            if (countBlocksAsObjects)
-                                objectsHit++;
                         }
                         else if (primaryDamage)
                         {
@@ -694,9 +694,12 @@ namespace CoreSystems
                             deadBlock = true;
                             var scale = baseScale == 0d ? 0.0000001 : baseScale;
                             basePool -= (float)(blockHp / scale);
-                            if (countBlocksAsObjects)
-                                objectsHit++;
                         }
+
+                        if (countBlocksAsObjects && (primaryDamage || !primaryDamage && countBlocksAsObjects && !t.AmmoDef.ObjectsHit.SkipBlocksForAOE))
+                            objectsHit++;
+                        if(objectsHit >= maxObjects && primaryDamage)
+                            detRequested = hasDet;
 
                         //AOE damage logic applied to aoeDamageFall
                         if (!rootStep && (hasAoe || hasDet) && aoeDamage >= 0 && aoeDamageFall >= 0 && !deadBlock)
@@ -735,7 +738,7 @@ namespace CoreSystems
                                     //Log.Line($"Aoedmgpool {aoeDamage}  scaleddmg {aoeScaledDmg}");
                                 }
                             }
-                            aoeDmgTally += aoeScaledDmg;
+                            aoeDmgTally += aoeScaledDmg > (float)blockHp ? (float)blockHp : aoeScaledDmg;
                             scaledDamage = aoeScaledDmg;
 
                             if (!aoeIsPool && scaledDamage > blockHp)
@@ -840,7 +843,8 @@ namespace CoreSystems
                             }
                             else if (block.Integrity - realDmg > 0) _slimHealthClient[block] = (float)(blockHp - realDmg);
                         }
-                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit > maxObjects;
+
+                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 && !aoeIsPool || aoeDamage <= 0.5d)) || (!t.AmmoDef.ObjectsHit.SkipBlocksForAOE && objectsHit >= maxObjects) || t.AmmoDef.ObjectsHit.SkipBlocksForAOE && rootStep;
                         if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
 
                         //doneskies
@@ -1005,15 +1009,26 @@ namespace CoreSystems
                 scaledDamage *= fallOffMultipler;
             }
 
+            //Rework of projectile on projectile damage calcs, as previously you could end up with a high primary damage projectile
+            //unintentionally surviving multiple hits and doing nearly infinite damage against other projectiles.  This was more apparent
+            //with smarts that would select and chase a new target.  Projectiles with EOL detonations could also pop multiple times without dying.
+            //If your attacking projectile has a health > 0, it will deduct the HealthHitModifier damage done to the target from its own health.  It will die once health hits zero or less
+            //If your attacking projectile has a health = 0, the HealthHitModifier damage it does will be deducted from the primary damage field.  It will die once damage hits zero or less
+            //In either case, a projectile with EOL will detonate on hitting another projectile and die
+
+            var deductFromAttackerHealth = attacker.AmmoDef.Health > 0;
             if (scaledDamage >= objHp)
             {
-
-                var safeObjHp = objHp <= 0 ? 0.0000001f : objHp;
-                var remaining = (scaledDamage / safeObjHp) / damageScale;
+                attacker.DamageDoneProj += (long)objHp;
+                if (deductFromAttackerHealth)
+                {
+                    attacker.BaseHealthPool -= objHp;
+                    if (attacker.BaseHealthPool <= 0)
+                        attacker.BaseDamagePool = 0;
+                }
+                else
+                    attacker.BaseDamagePool -= objHp;                
                 
-                attacker.DamageDoneProj += (long)remaining;
-                attacker.BaseDamagePool -= remaining;
-
                 pTarget.Info.BaseHealthPool = 0;
                 
                 var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
@@ -1025,17 +1040,17 @@ namespace CoreSystems
                     pTarget.Info.Storage.SyncId = ulong.MaxValue;
                 }
                 */
-
-                if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
-                    DetonateProjectile(hitEnt, attacker);
             }
             else
             {
                 attacker.BaseDamagePool = 0;
                 attacker.DamageDoneProj += (long)scaledDamage;
                 pTarget.Info.BaseHealthPool -= scaledDamage;
-                DetonateProjectile(hitEnt, attacker);
             }
+
+            if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
+                DetonateProjectile(hitEnt, attacker);
+
             if (GlobalDamageHandlerActive) {
                 attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                 attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, pTarget.Info.Id, scaledDamage));
@@ -1044,52 +1059,50 @@ namespace CoreSystems
 
         private void DetonateProjectile(HitEntity hitEnt, ProInfo attacker)
         {
-            if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
+            var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
+            foreach (var sTarget in attacker.Ai.LiveProjectile.Keys)
             {
-                var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
-                foreach (var sTarget in attacker.Ai.LiveProjectile.Keys)
+                if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint && sTarget.State == Projectile.ProjectileState.Alive)
                 {
-                    if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint && sTarget.State == Projectile.ProjectileState.Alive)
+
+                    var objHp = sTarget.Info.BaseHealthPool;
+                    var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
+                    if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) continue;
+
+                    if (sTarget.Info.AmmoDef.Const.ArmedWhenHit)
+                        sTarget.Info.ObjectsHit++;
+
+                    var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
+                    if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;
+                    var scaledDamage = 1 * damageScale;
+
+                    if (scaledDamage >= objHp)
                     {
-
-                        var objHp = sTarget.Info.BaseHealthPool;
-                        var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
-                        if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) continue;
-
-                        if (sTarget.Info.AmmoDef.Const.ArmedWhenHit)
-                            sTarget.Info.ObjectsHit++;
-
-                        var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
-                        if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;
-                        var scaledDamage = 1 * damageScale;
-
-                        if (scaledDamage >= objHp)
+                        attacker.DamageDoneProj += (long)objHp;
+                        sTarget.Info.BaseHealthPool = 0;
+                        var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
+                        sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+                        /*
+                        if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
                         {
-                            attacker.DamageDoneProj += (long)objHp;
-                            sTarget.Info.BaseHealthPool = 0;
-                            var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
-                            sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
-                            /*
-                            if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
-                            {
-                                ProtoPdSyncMonitor.Collection.Add(sTarget.Info.Storage.SyncId);
-                                sTarget.Info.Storage.SyncId = ulong.MaxValue;
-                            }
-                            */
+                            ProtoPdSyncMonitor.Collection.Add(sTarget.Info.Storage.SyncId);
+                            sTarget.Info.Storage.SyncId = ulong.MaxValue;
                         }
-                        else
-                        {
-                            sTarget.Info.BaseHealthPool -= scaledDamage;
-                            attacker.DamageDoneProj += (long)scaledDamage;
-                        }
+                        */
+                    }
+                    else
+                    {
+                        sTarget.Info.BaseHealthPool -= scaledDamage;
+                        attacker.DamageDoneProj += (long)scaledDamage;
+                    }
 
-                        if (GlobalDamageHandlerActive) {
-                            attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
-                            attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Projectile.Info.Id, scaledDamage));
-                        }
+                    if (GlobalDamageHandlerActive) {
+                        attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                        attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Projectile.Info.Id, scaledDamage));
                     }
                 }
             }
+            attacker.BaseDamagePool = 0;
         }
 
         private void DamageVoxel(HitEntity hitEnt, ProInfo info, HitEntity.Type type)
