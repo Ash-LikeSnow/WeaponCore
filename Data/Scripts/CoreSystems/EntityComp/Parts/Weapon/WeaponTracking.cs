@@ -122,7 +122,7 @@ namespace CoreSystems.Platform
             var validEstimate = true;
 
             if (!weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
-                targetPos = TrajectoryEstimation(weapon, obb.Center, vel, accel, weapon.MyPivotPos,  out validEstimate, false, weapon.Comp.Data.Repo.Values.Set.Overrides.AngularTracking);
+                targetPos = TrajectoryEstimation(weapon, obb.Center, vel, accel, weapon.MyPivotPos, out validEstimate, false, weapon.Comp.Data.Repo.Values.Set.Overrides.AngularTracking);
             else
                 targetPos = obb.Center;
 
@@ -919,20 +919,19 @@ namespace CoreSystems.Platform
             var comp = weapon.Comp;
             var ai = comp.Ai;
             var session = Session.I;
-            var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
-            var shooterVel = (Vector3D)weapon.Comp.Ai.TopEntityVel;
-            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
-            var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
-            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5; //equal to approx 1.58 m/s
-
             #region Must Have Updates
             if (ai.VelocityUpdateTick != session.Tick)
             {
                 ai.TopEntityVolume.Center = comp.TopEntity.PositionComp.WorldVolume.Center;
-                ai.TopEntityVel = comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                ai.TopEntityVel = comp.TopEntity.Physics?.LinearVelocity ?? Vector3.Zero;
                 ai.IsStatic = comp.TopEntity.Physics?.IsStatic ?? false;
                 ai.VelocityUpdateTick = session.Tick;
             }
+            var shooterVel = (Vector3D)weapon.Comp.Ai.TopEntityVel;
+            var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
+            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
+            var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
+            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5; //equal to approx 1.58 m/s
 
             if (updateGravity && session.Tick - weapon.GravityTick > 119)
             {
@@ -957,8 +956,8 @@ namespace CoreSystems.Platform
             
             Vector3D deltaPosNorm;
 
-            var targCube = weapon.Target.TargetObject as MyCubeBlock;
-            if (!basicPrediction && trackAngular && targCube?.CubeGrid.Physics != null && targCube.CubeGrid.Physics.AngularVelocity.LengthSquared() > 0.0014)
+            var targCube = weapon.Target?.TargetObject as MyCubeBlock;
+            if (!basicPrediction && trackAngular && targCube != null && targCube.CubeGrid.Physics != null && targCube.CubeGrid.Physics.AngularVelocity.LengthSquared() > 0.0014)
             {
                 if (!ComputeAngular(targCube.CubeGrid, ai, ammoDef, ref targetPos, ref shooterPos, ref targetAcc, ref deltaVel, projectileMaxSpeed, out deltaLength, out initialTti, out deltaPos, out deltaPosNorm))
                     return targetPos;
