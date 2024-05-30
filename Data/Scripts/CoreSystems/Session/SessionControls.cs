@@ -8,7 +8,6 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
-using VRage.ModAPI;
 using VRage.Utils;
 using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -355,112 +354,142 @@ namespace CoreSystems
 
         internal static void AlterActions<T>(Session session)
         {
+            try
+            { 
             List<IMyTerminalAction> actions;
             MyAPIGateway.TerminalControls.GetActions<T>(out actions);
-            for (int i = 0; i < actions.Count; i++) {
-
-                var a = actions[i];
-
-                if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
-                {
-                    a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive
-                    session.AlteredActions.Add(a);
-                }
-                else if (a.Id.Equals("Control")) {
-
-                    a.Enabled = TerminalHelpers.NotWcOrIsTurret;
-                    session.AlteredActions.Add(a);
-                }
-                else if (a.Id.Equals("Shoot")) {
-
-                    var oldAction = a.Action;
-                    a.Action = blk => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            if (comp?.Data?.Repo == null)
-                                oldAction(blk);
-                            return;
-                        }
-
-                        var on = comp.Data.Repo.Values.State.Trigger == On;
-                        comp.ShootManager.RequestShootSync(I.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
-                    };
-
-                    var oldWriter = a.Writer;
-                    a.Writer = (blk, sb) => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            oldWriter(blk, sb);
-                            return;
-                        }
-                        if (comp.Data.Repo.Values.State.Trigger == On)
-                            sb.Append("On");
-                        else
-                            sb.Append("Off");
-                    };
-                    session.AlteredActions.Add(a);
-                }
-                else if (a.Id.Equals("Shoot_On")) {
-
-                    var oldAction = a.Action;
-                    a.Action = blk => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            if (comp?.Data?.Repo == null) oldAction(blk);
-                            return;
-                        }
-                        if (comp.Data.Repo.Values.State.Trigger != On)
-                            comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
-                    };
-
-                    var oldWriter = a.Writer;
-                    a.Writer = (blk, sb) =>
+            for (int i = 0; i < actions.Count; i++)
+                {                    
+                    var a = actions[i];
+                    try
                     {
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+
+                        if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
                         {
-                            oldWriter(blk, sb);
-                            return;
+                            a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive
+                            session.AlteredActions.Add(a);
                         }
-                        if (comp.Data.Repo.Values.State.Trigger == On)
-                            sb.Append("On");
-                        else
-                            sb.Append("Off");
-                    };
-                    session.AlteredActions.Add(a);
+                        else if (a.Id.Equals("Control"))
+                        {
+
+                            a.Enabled = TerminalHelpers.NotWcOrIsTurret;
+                            session.AlteredActions.Add(a);
+                        }
+                        else if (a.Id.Equals("Shoot"))
+                        {
+
+                            var oldAction = a.Action;
+                            a.Action = blk =>
+                            {
+
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    if (comp?.Data?.Repo == null)
+                                        oldAction(blk);
+                                    return;
+                                }
+
+                                var on = comp.Data.Repo.Values.State.Trigger == On;
+                                comp.ShootManager.RequestShootSync(I.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                            };
+
+                            var oldWriter = a.Writer;
+                            a.Writer = (blk, sb) =>
+                            {
+
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    oldWriter(blk, sb);
+                                    return;
+                                }
+                                if (comp.Data.Repo.Values.State.Trigger == On)
+                                    sb.Append("On");
+                                else
+                                    sb.Append("Off");
+                            };
+                            session.AlteredActions.Add(a);
+                        }
+                        else if (a.Id.Equals("Shoot_On"))
+                        {
+
+                            var oldAction = a.Action;
+                            a.Action = blk =>
+                            {
+
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    if (comp?.Data?.Repo == null) oldAction(blk);
+                                    return;
+                                }
+                                if (comp.Data.Repo.Values.State.Trigger != On)
+                                    comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                            };
+
+                            var oldWriter = a.Writer;
+                            a.Writer = (blk, sb) =>
+                            {
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    oldWriter(blk, sb);
+                                    return;
+                                }
+                                if (comp.Data.Repo.Values.State.Trigger == On)
+                                    sb.Append("On");
+                                else
+                                    sb.Append("Off");
+                            };
+                            session.AlteredActions.Add(a);
+                        }
+                        else if (a.Id.Equals("Shoot_Off"))
+                        {
+
+                            var oldAction = a.Action;
+                            a.Action = blk =>
+                            {
+
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    if (comp?.Data?.Repo == null) oldAction(blk);
+                                    return;
+                                }
+                                if (comp.Data.Repo.Values.State.Trigger != Off)
+                                    comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.Off);
+                            };
+
+                            var oldWriter = a.Writer;
+                            a.Writer = (blk, sb) =>
+                            {
+
+                                var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                                if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                                {
+                                    oldWriter(blk, sb);
+                                    return;
+                                }
+                                if (comp.Data.Repo.Values.State.Trigger == On)
+                                    sb.Append("On");
+                                else
+                                    sb.Append("Off");
+                            };
+                            session.AlteredActions.Add(a);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MyLog.Default.WriteLine($"WC:  Alter actions crashed inside For loop on {a.Id}");
+                        throw ex;
+                    }
                 }
-                else if (a.Id.Equals("Shoot_Off")) {
-
-                    var oldAction = a.Action;
-                    a.Action = blk => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            if (comp?.Data?.Repo == null)  oldAction(blk);
-                            return;
-                        }
-                        if (comp.Data.Repo.Values.State.Trigger != Off)
-                            comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.Off);
-                    };
-
-                    var oldWriter = a.Writer;
-                    a.Writer = (blk, sb) => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            oldWriter(blk, sb);
-                            return;
-                        }
-                        if (comp.Data.Repo.Values.State.Trigger == On)
-                            sb.Append("On");
-                        else
-                            sb.Append("Off");
-                    };
-                    session.AlteredActions.Add(a);
-                }
+            }
+            catch (Exception ex)
+            {
+                MyLog.Default.WriteLine($"WC:  Alter actions crashed outside For loop checking {typeof(T).Name}");
+                throw ex;
             }
         }
 
