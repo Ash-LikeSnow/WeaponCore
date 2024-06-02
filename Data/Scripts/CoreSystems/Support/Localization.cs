@@ -61,7 +61,7 @@ namespace CoreSystems.Support
                         { "TerminalGridsTitle", "Target Grids" },
                         { "TerminalGridsTooltip", "Target Grids" },
                         { "TerminalFocusFireTitle", "Target FocusFire" },
-                        { "TerminalFocusFireTooltip", "Focus all fire on the specified target" },
+                        { "TerminalFocusFireTooltip", "Only fire on the hud-selected target" },
                         { "TerminalSubSystemsTitle", "Target SubSystems" },
                         { "TerminalSubSystemsTooltip", "Target specific SubSystems of a target" },
                         { "TerminalRepelTitle", "Repel Mode" },

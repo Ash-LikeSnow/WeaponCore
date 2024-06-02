@@ -515,7 +515,8 @@ namespace CoreSystems.Support
                 [ProtoMember(23)] internal bool GoHomeToReload;
                 [ProtoMember(24)] internal bool DropTargetUntilLoaded;
                 [ProtoMember(25)] internal bool ProhibitCoolingWhenOff;
-
+                [ProtoMember(26)] internal float InventoryFillAmount;
+                [ProtoMember(27)] internal float InventoryLowAmount;
             }
 
 
