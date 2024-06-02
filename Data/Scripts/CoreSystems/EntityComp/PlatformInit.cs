@@ -773,7 +773,10 @@ namespace CoreSystems.Platform
             
             if (Session.I.HandlesInput) {
                 if (suppress)
-                    MyAPIGateway.Utilities.ShowNotification($"CoreSystems hard crashed during block init, shutting down\n Send log files to server admin or submit a bug report to mod author:\n {comp.Platform?.Structure?.ModPath} - {comp.SubtypeName}", 10000);
+                    MyAPIGateway.Utilities.ShowNotification($"CoreSystems hard crashed during block init, shutting down\n" +
+                        $"Ensure you don't have duplicate weapons from different mods.\n" +
+                        $"Send log files to server admin or submit a bug report to mod author.\n" +
+                        $"Crashed mod ID and block name: {comp.Platform?.Structure?.ModId} - {comp.SubtypeName}", 10000);
             }
             Log.Line($"PlatformCrash: {Comp.SubtypeName} - {message}");
 
