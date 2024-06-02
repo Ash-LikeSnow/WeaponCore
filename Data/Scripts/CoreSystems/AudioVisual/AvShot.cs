@@ -1314,7 +1314,7 @@ namespace CoreSystems.Support
                         {
                             matrix = MatrixD.CreateWorld(pos, VisualDir, OriginUp);
                         }
-                        else if (particle.Offset == Vector3D.MinValue && c.FeelsGravity)
+                        else if (particle.Offset == Vector3D.MinValue)
                         {
                             float interference;
                             Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
