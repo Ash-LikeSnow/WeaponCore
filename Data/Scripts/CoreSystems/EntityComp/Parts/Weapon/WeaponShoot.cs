@@ -463,7 +463,13 @@ namespace CoreSystems.Platform
             if (entity?.Physics != null && ActiveAmmoDef?.AmmoDef != null && !entity.MarkedForClose) {
                 
                 var ejectDef = ActiveAmmoDef.AmmoDef.Ejection;
-                entity.Physics.SetSpeeds(Ejector.CachedDir * (ejectDef.Speed), Vector3.Zero);
+                var min = ejectDef.SpeedVariance.Start;
+                var max = ejectDef.SpeedVariance.End;
+                var speedVariance = 0f;
+                if (min != 0f || max != 0f)
+                    speedVariance = (float)new XorShiftRandomStruct((ulong)entity.EntityId).NextDouble() * (max - min) + min;
+
+                entity.Physics.SetSpeeds(Ejector.CachedDir * (ejectDef.Speed + speedVariance), Vector3.Zero);
             }
         }
 
