@@ -461,15 +461,40 @@ namespace CoreSystems.Platform
             var entity = (MyEntity)o;
 
             if (entity?.Physics != null && ActiveAmmoDef?.AmmoDef != null && !entity.MarkedForClose) {
-                
+               
                 var ejectDef = ActiveAmmoDef.AmmoDef.Ejection;
-                var min = ejectDef.SpeedVariance.Start;
-                var max = ejectDef.SpeedVariance.End;
+                var speedMin = ejectDef.SpeedVariance.Start;
+                var speedMax = ejectDef.SpeedVariance.End;
+                var randSpeed = speedMin != 0f || speedMax != 0f;
+                var dirMin = ejectDef.DirectionVariance.Start;
+                var dirMax = ejectDef.DirectionVariance.End;
+                var randDir = dirMin != 0f || dirMax != 0f;
+                var rotMin = ejectDef.RotationVariance.Start;
+                var rotMax = ejectDef.RotationVariance.End;
+                var randRot = rotMin != 0f || rotMax != 0f;
+                var needsRand = randSpeed || randDir || randRot;
+                
                 var speedVariance = 0f;
-                if (min != 0f || max != 0f)
-                    speedVariance = (float)new XorShiftRandomStruct((ulong)entity.EntityId).NextDouble() * (max - min) + min;
+                var rotation = ejectDef.Rotation;
+                var direction = Ejector.CachedDir;
+                var speed = ejectDef.Speed;
 
-                entity.Physics.SetSpeeds(Ejector.CachedDir * (ejectDef.Speed + speedVariance), Vector3.Zero);
+                if (needsRand)
+                {
+                    var rand = new XorShiftRandomStruct((ulong)entity.EntityId);
+                    if (randSpeed)
+                        speedVariance = (float)rand.NextDouble() * (speedMax - speedMin) + speedMin;
+                    if (randDir)
+                    {
+                        direction += new Vector3D(rand.NextDouble() * (dirMax - dirMin) + dirMin, rand.NextDouble() * (dirMax - dirMin) + dirMin, rand.NextDouble() * (dirMax - dirMin) + dirMin);
+                        direction.Normalize();
+                    }
+                    if (randRot)
+                    {
+                        rotation += new Vector3D(rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin);
+                    }
+                }
+                entity.Physics.SetSpeeds(direction * speed, rotation);
             }
         }
 

@@ -1320,7 +1320,7 @@ namespace CoreSystems.Support
                             Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
                             localGrav.Normalize();
                             if(localGrav != Vector3D.Zero)
-                                matrix = MatrixD.CreateWorld(pos, VisualDir, -localGrav);
+                                matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(localGrav), -localGrav);
                         }
                         MyParticleEffect detEffect;
                         if (MyParticlesManager.TryCreateParticleEffect(a.Const.DetParticleStr, ref matrix, ref pos, uint.MaxValue, out detEffect))

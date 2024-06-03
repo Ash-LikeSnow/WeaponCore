@@ -146,7 +146,19 @@ namespace CoreSystems.Support
                             var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
                             var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
                             var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
-                            var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                            MatrixD matrix = MatrixD.CreateTranslation(pos);
+                            if (keenStrikesAgain)
+                            {
+                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                            }
+                            else if (particle.Offset == Vector3D.MinValue)
+                            {
+                                float interference;
+                                Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
+                                localGrav.Normalize();
+                                if (localGrav != Vector3D.Zero)
+                                    matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(localGrav), -localGrav);
+                            }
 
                             MyParticleEffect hitEffect;
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
