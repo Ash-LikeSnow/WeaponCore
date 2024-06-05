@@ -284,7 +284,7 @@ namespace CoreSystems
                     if (newReload)
                     {
                         w.AmmoName = w.System.AmmoTypes[AmmoTypeId].AmmoDef.AmmoRound;
-                        w.AmmoNameTerminal = w.System.AmmoTypes[AmmoTypeId].AmmoDef.TerminalName;
+                        w.AmmoNameTerminal = w.System.AmmoTypes[AmmoTypeId].AmmoDef.Const.TerminalName;
                         w.DelayedCycleId = -1;
                     }
 

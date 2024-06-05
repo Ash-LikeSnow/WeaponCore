@@ -175,7 +175,7 @@ namespace CoreSystems.Platform
                     {
                         w.ChangeActiveAmmoClient();
                         w.AmmoName = w.ActiveAmmoDef.AmmoDef.AmmoRound;
-                        w.AmmoNameTerminal = w.ActiveAmmoDef.AmmoDef.TerminalName;
+                        w.AmmoNameTerminal = w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                     }
 
                     if (w.ActiveAmmoDef.AmmoDef == null || !w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable && w.System.AmmoTypes.Length > 1)
@@ -1210,9 +1210,9 @@ namespace CoreSystems.Platform
                     {
                         var ammo = ammos[j];
                         if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
-                        var ammoStr = ammo.AmmoDef.TerminalName;
+                        var ammoStr = ammo.AmmoDef.Const.TerminalName;
                         if (wep.DelayedCycleId != -1 && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
-                            ammoStr = "*" + ammo.AmmoDef.TerminalName;
+                            ammoStr = "*" + ammo.AmmoDef.Const.TerminalName;
 
                         BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute(ammoStr) });
                     }
