@@ -243,6 +243,7 @@ namespace CoreSystems.Support
         public readonly bool ZeroEffortNav;
         public readonly bool ProjectilesFirst;
         public readonly bool OnHit;
+        public readonly bool OverrideWeaponEffect;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
@@ -410,6 +411,7 @@ namespace CoreSystems.Support
             HitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
             HitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name;
             EndOfLifeAv = !ammo.AmmoDef.AreaOfDamage.EndOfLife.NoVisuals && ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable;
+            OverrideWeaponEffect = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.WeaponEffect1Override.Name);
 
             DrawLine = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Enable;
             
