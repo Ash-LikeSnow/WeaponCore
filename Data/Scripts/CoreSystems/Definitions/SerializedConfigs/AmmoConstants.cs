@@ -394,7 +394,7 @@ namespace CoreSystems.Support
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
-            TerminalName = string.IsNullOrEmpty(ammo.AmmoDef.TerminalName) ? ammo.AmmoDef.TerminalName : ammo.AmmoDef.AmmoRound;
+            TerminalName = string.IsNullOrEmpty(ammo.AmmoDef.TerminalName) ? ammo.AmmoDef.AmmoRound : ammo.AmmoDef.TerminalName;
 
             ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
                 out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ZeroEffortNav, out ScanRange, out OffsetMinRangeSqr,
