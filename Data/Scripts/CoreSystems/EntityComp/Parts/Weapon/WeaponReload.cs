@@ -33,6 +33,7 @@ namespace CoreSystems.Platform
                 Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
 
             AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
+            AmmoNameTerminal = ActiveAmmoDef.AmmoDef.TerminalName;
 
             CheckInventorySystem = true;
 
@@ -79,6 +80,7 @@ namespace CoreSystems.Platform
             {
                 DelayedCycleId = newAmmoId;
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
+                AmmoNameTerminal = "*" + System.AmmoTypes[newAmmoId].AmmoDef.TerminalName;
 
                 if (Session.I.IsClient && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
@@ -386,6 +388,7 @@ namespace CoreSystems.Platform
                     if (DelayedCycleId == ActiveAmmoDef.AmmoDef.Const.AmmoIdxPos)
                     {
                         AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
+                        AmmoNameTerminal = ActiveAmmoDef.AmmoDef.TerminalName;
                         DelayedCycleId = -1;
                     }
 

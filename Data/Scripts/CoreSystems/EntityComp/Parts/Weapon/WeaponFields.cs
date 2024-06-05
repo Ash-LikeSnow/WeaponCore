@@ -125,6 +125,7 @@ namespace CoreSystems.Platform
         internal string FriendlyNameNoSubsystem = string.Empty;
 
         internal string AmmoName = "";
+        internal string AmmoNameTerminal = "";
         internal ProtoWeaponPartState PartState;
         internal ProtoWeaponReload Reload;
         internal ProtoWeaponTransferTarget TargetData;
