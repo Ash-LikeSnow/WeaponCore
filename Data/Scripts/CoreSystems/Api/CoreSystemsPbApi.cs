@@ -9,7 +9,7 @@ using VRageMath;
 namespace CoreSystems.Api
 {
     /// <summary>
-    /// https://github.com/Ash-LikeSnow/WeaponCore/edit/master/Data/Scripts/CoreSystems/Api/CoreSystemsPbApi.cs
+    /// https://github.com/Ash-LikeSnow/WeaponCore/blob/master/Data/Scripts/CoreSystems/Api/CoreSystemsPbApi.cs
     /// </summary>
     public class WcPbApi
     {
@@ -58,7 +58,8 @@ namespace CoreSystems.Api
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<int, bool>> _unmonitorEvents;
 
         // Descriptions made by Aristeas, with Sigmund Froid's https://steamcommunity.com/sharedfiles/filedetails/?id=2178802013 as a reference.
-
+        // PR accepted after prolific begging by Aryx
+        
         /// <summary>
         /// Activates the WcPbAPI using <see cref="IMyTerminalBlock"/> <paramref name="pbBlock"/>.
         /// </summary>
