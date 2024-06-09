@@ -319,7 +319,6 @@ namespace CoreSystems
         internal ControlQuery ControlRequest;
         internal IMyPhysics Physics;
         internal IMyCamera Camera;
-        internal IMyGps TargetGps;
         internal IMyBlockPlacerBase Placer;
         internal IMyTerminalBlock LastTerminal;
         internal IMyCharacter LocalCharacter;
