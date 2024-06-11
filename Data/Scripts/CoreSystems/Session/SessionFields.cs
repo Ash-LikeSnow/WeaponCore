@@ -46,7 +46,7 @@ namespace CoreSystems
         internal const int VersionControl = 34;
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
-        internal const int ModVersion = 28;
+        internal const int ModVersion = 29;
         internal const int ClientCfgVersion = 9;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
@@ -319,7 +319,6 @@ namespace CoreSystems
         internal ControlQuery ControlRequest;
         internal IMyPhysics Physics;
         internal IMyCamera Camera;
-        internal IMyGps TargetGps;
         internal IMyBlockPlacerBase Placer;
         internal IMyTerminalBlock LastTerminal;
         internal IMyCharacter LocalCharacter;

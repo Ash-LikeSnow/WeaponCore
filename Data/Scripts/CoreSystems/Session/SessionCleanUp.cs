@@ -306,7 +306,6 @@ namespace CoreSystems
             UiInput = null;
             TargetUi = null;
             Placer = null;
-            TargetGps = null;
             SApi.Unload();
             if (WaterApiLoaded)
                 WApi.Unregister();

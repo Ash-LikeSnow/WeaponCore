@@ -479,6 +479,12 @@ namespace CoreSystems.Platform
                 var direction = Ejector.CachedDir;
                 var speed = ejectDef.Speed;
 
+                var parentSpeed = Vector3.Zero;
+                if(Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && Comp.GetTopEntity().Physics != null)
+                    parentSpeed = Comp.GetTopEntity().Physics.LinearVelocity;
+                else if (Comp.Cube?.Physics != null)
+                    parentSpeed = Comp.Cube.Physics.LinearVelocity;
+
                 if (needsRand)
                 {
                     var rand = new XorShiftRandomStruct((ulong)entity.EntityId);
@@ -494,7 +500,7 @@ namespace CoreSystems.Platform
                         rotation += new Vector3D(rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin);
                     }
                 }
-                entity.Physics.SetSpeeds(direction * speed, rotation);
+                entity.Physics.SetSpeeds(parentSpeed + direction * (speed + speedVariance), rotation);
             }
         }
 
