@@ -191,6 +191,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Core.Enforcement.AdvancedProjectileSync = oldPointDefenseSyncMonitor;
             Core.Enforcement.UnsupportedMode = oldUnsupportedMode;
             Core.Enforcement.DisableSmallVsLargeBuff = oldDisableSmallVsLargeBuff;
+            Core.Enforcement.LargeGridDamageMultiplier = 1f;
+            Core.Enforcement.SmallGridDamageMultiplier = 1f;
         }
 
         private void CorruptionCheck(bool write = false)
@@ -203,6 +205,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
             if (Core.Enforcement.ShieldDamageModifer < 0)
                 Core.Enforcement.ShieldDamageModifer = 1f;
+
+            if (Core.Enforcement.LargeGridDamageMultiplier < 0)
+                Core.Enforcement.LargeGridDamageMultiplier = 1f;
+
+            if (Core.Enforcement.SmallGridDamageMultiplier < 0)
+                Core.Enforcement.SmallGridDamageMultiplier = 1f;
 
             if (Core.Enforcement.ShipSizes == null)
             {

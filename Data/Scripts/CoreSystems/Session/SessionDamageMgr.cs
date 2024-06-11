@@ -435,6 +435,11 @@ namespace CoreSystems
                         smallVsLargeBuff = 0.25f;
                 }
             }
+            var gridSizeBuff = 1f;
+            if (grid.GridSizeEnum == MyCubeSize.Large)
+                gridSizeBuff = Settings.Enforcement.LargeGridDamageMultiplier;
+            else
+                gridSizeBuff = Settings.Enforcement.SmallGridDamageMultiplier;
 
             for (int i = 0; i < blockCount; i++)
             {
@@ -674,9 +679,9 @@ namespace CoreSystems
                         var rootStep = k == 0 && j == 0 && !detActive;
                         var primaryDamage = rootStep && block == rootBlock && !detActive;//limits application to first run w/AOE, suppresses with detonation
 
-                        var baseScale = damageScale * directDamageScale * smallVsLargeBuff;
+                        var baseScale = damageScale * directDamageScale * smallVsLargeBuff * gridSizeBuff;
                         var scaledDamage = (float)(basePool * baseScale);
-                        var aoeScaledDmg = (float)((aoeDamageFall * (detActive ? detDamageScale : areaDamageScale)) * damageScale);
+                        var aoeScaledDmg = (float)((aoeDamageFall * (detActive ? detDamageScale : areaDamageScale)) * damageScale * gridSizeBuff);
                         bool deadBlock = false;
 
                         //Check for end of primary life
