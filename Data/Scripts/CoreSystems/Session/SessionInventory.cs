@@ -106,7 +106,7 @@ namespace CoreSystems
                         var defId = part.ActiveAmmoDef.AmmoDefinitionId;
                         var freeSpace = part.System.MaxAmmoVolume - part.BaseComp.CurrentInventoryVolume;
                         var spotsFree = (int)(freeSpace / part.ActiveAmmoDef.AmmoDef.Const.MagVolume);
-                        var magsNeeded = (int)((part.System.FullAmmoVolume - part.CurrentAmmoVolume) / part.ActiveAmmoDef.AmmoDef.Const.MagVolume);
+                        var magsNeeded = (int)((part.System.FullAmmoVolume - part.CurrentAmmoVolume) / part.ActiveAmmoDef.AmmoDef.Const.MagVolume + 0.0001f);
                         magsNeeded = magsNeeded > spotsFree ? spotsFree : magsNeeded;
 
                         var consumablePullRequests = InventoryMoveRequestPool.Get();

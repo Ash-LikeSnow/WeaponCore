@@ -209,9 +209,7 @@ namespace CoreSystems.Platform
                     var magsGranted = magsRequested > spotsFree ? spotsFree : magsRequested;
                     var requestedVolume = ActiveAmmoDef.AmmoDef.Const.MagVolume * magsGranted;
                     var spaceAvailable = freeVolume > requestedVolume;
-                    var lowThreshold = System.MaxAmmoVolume * 0.25f;
-
-                    var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < lowThreshold && spaceAvailable;
+                    var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < System.LowAmmoVolume && spaceAvailable;
                     
                     var failSafeTimer = s.Tick - LastInventoryTick > 600;
                     
