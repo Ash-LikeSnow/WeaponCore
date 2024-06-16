@@ -1,4 +1,5 @@
 ﻿using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage.Game;
@@ -278,7 +279,7 @@ namespace CoreSystems.Support
             WeaponId = weaponId;
             PartName = partName;
             AmmoTypes = weaponAmmoTypes;
-            MaxAmmoVolume = Values.HardPoint.HardWare.InventorySize;
+            MaxAmmoVolume = Values.HardPoint.HardWare.InventorySize * (values.HardPoint.Loading.UseWorldInventoryVolumeMultiplier ? MyAPIGateway.Session.BlocksInventorySizeMultiplier : 1);
             FullAmmoVolume = MaxAmmoVolume * (values.HardPoint.Loading.InventoryFillAmount > 0 ? values.HardPoint.Loading.InventoryFillAmount : 0.75f);
             LowAmmoVolume = MaxAmmoVolume * (values.HardPoint.Loading.InventoryLowAmount > 0 ? values.HardPoint.Loading.InventoryLowAmount : 0.25f); 
             CeaseFireDelay = values.HardPoint.DelayCeaseFire;

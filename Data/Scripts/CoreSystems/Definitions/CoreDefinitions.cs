@@ -517,6 +517,7 @@ namespace CoreSystems.Support
                 [ProtoMember(25)] internal bool ProhibitCoolingWhenOff;
                 [ProtoMember(26)] internal float InventoryFillAmount;
                 [ProtoMember(27)] internal float InventoryLowAmount;
+                [ProtoMember(28)] internal bool UseWorldInventoryVolumeMultiplier;
             }
 
 
