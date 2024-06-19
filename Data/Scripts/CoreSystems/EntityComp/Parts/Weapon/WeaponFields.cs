@@ -409,12 +409,12 @@ namespace CoreSystems.Platform
             string ejectorMatch;
             MyEntity ejectorPart;
             if (System.HasEjector && Comp.Platform.Parts.FindFirstDummyByName(System.Values.Assignments.Ejector, System.AltEjectorName, out ejectorPart, out ejectorMatch))
-                Ejector = new Dummy(ejectorPart,this, System.Values.Assignments.Ejector);
+                Ejector = new Dummy(ejectorPart, this, true, System.Values.Assignments.Ejector);
 
             string scopeMatch;
             MyEntity scopePart;
             if (System.HasScope && Comp.Platform.Parts.FindFirstDummyByName(System.Values.Assignments.Scope, System.AltScopeName, out scopePart, out scopeMatch))
-                Scope = new Dummy(scopePart, this, scopeMatch);
+                Scope = new Dummy(scopePart, this, false, scopeMatch);
 
             comp.Platform.SetupWeaponUi(this);
 
