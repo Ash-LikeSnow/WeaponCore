@@ -199,7 +199,7 @@ namespace CoreSystems.Platform
 
                 if (!Parts.NameToEntity.TryGetValue(muzzlePartName, out muzzlePartEntity))
                 {
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid muzzlePart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid muzzlePart, I am crashing now Dave. {muzzlePartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
                 }
 
                 foreach (var part in Parts.NameToEntity)
@@ -210,11 +210,11 @@ namespace CoreSystems.Platform
 
                 MyEntity azimuthPart;
                 if (!Parts.NameToEntity.TryGetValue(azimuthPartName, out azimuthPart))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid azimuthPart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid azimuthPart, I am crashing now Dave. {azimuthPartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
 
                 MyEntity elevationPart;
                 if (!Parts.NameToEntity.TryGetValue(elevationPartName, out elevationPart))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid elevationPart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid elevationPart, I am crashing now Dave. {elevationPartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
                 
                 MyEntity spinPart = null;
                 if (system.HasBarrelRotation)
