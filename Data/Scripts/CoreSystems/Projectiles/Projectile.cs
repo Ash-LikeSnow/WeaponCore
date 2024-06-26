@@ -763,6 +763,12 @@ namespace CoreSystems.Projectiles
                 MaxSpeed = DesiredSpeed;
 
             var speedCap = speedCapMulti * MaxSpeed;
+            if (aConst.AmmoUseDrag)
+            {
+                speedCap -= Info.Age * aConst.DragPerTick;
+                if (speedCap < 0)
+                    speedCap = 0;
+            }
             if (VelocityLengthSqr > speedCap * speedCap) {
                 VelocityLengthSqr = proposedVel.LengthSquared();
                 proposedVel = Direction * speedCap;
