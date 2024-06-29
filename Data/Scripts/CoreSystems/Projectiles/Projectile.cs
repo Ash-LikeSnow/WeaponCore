@@ -3098,7 +3098,7 @@ namespace CoreSystems.Projectiles
 
             var targetPos = eTarget != null ? eTarget.PositionComp.WorldAABB.Center : pTarget.Position;
 
-            if (aConst.FragPointType == PointTypes.Direct)
+            if (aConst.TimedFragments && aConst.FragPointType == PointTypes.Direct)
             {
                 targetDirection = Vector3D.Normalize(targetPos - Position);
                 estimatedPosition = targetPos;
