@@ -1016,6 +1016,7 @@ namespace CoreSystems.Platform
             if (initialTti > interceptThreshold)
             {
                 valid = false;
+                weapon.Target.ImpossibleToHit = true; // Mark target as impossible to hit
                 return targetPos;
             }
 
