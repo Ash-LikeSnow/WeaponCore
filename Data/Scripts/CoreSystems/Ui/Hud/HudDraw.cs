@@ -1,4 +1,5 @@
-﻿using CoreSystems;
+﻿using System.Diagnostics.Eventing.Reader;
+using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using System.Runtime.CompilerServices;
@@ -232,6 +233,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         public const string NoAmmoStr = ": No Ammo";
         public const string NoTargetStr = ": No Target";
         public const string NoSubSystemStr = ": No Subsystem";
+        public const string ImpossibleHitStr = ": No Angle";
 
         private void WeaponsToAdd(bool reset, Vector2D currWeaponDisplayPos, double bgStartPosX)
         {
@@ -261,8 +263,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
                         noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoSubSystems) : weapon.FriendlyNameNoSubsystem;
 
+                    else if (weapon.)
+                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.ImpossibleToHit) : weapon.FriendlyNameImpossibleHit;
+
                     else 
                         noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoTarget) : weapon.FriendlyNameNoTarget;
+
+
                 }
                 else
                 {
