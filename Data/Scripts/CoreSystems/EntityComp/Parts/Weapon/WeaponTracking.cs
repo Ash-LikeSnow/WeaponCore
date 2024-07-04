@@ -912,7 +912,7 @@ namespace CoreSystems.Platform
             return false;
         }
 
-        internal static Vector3D TrajectoryEstimation(Weapon weapon, Vector3D targetPos, Vector3D targetVel, Vector3D targetAcc, Vector3D shooterPos, out bool valid, bool basicPrediction = false, bool trackAngular = false)
+        public static Vector3D TrajectoryEstimation(Weapon weapon, Vector3D targetPos, Vector3D targetVel, Vector3D targetAcc, Vector3D shooterPos, out bool valid, bool basicPrediction = false, bool trackAngular = false)
         {
             valid = false;
             Vector3D aimPoint;
