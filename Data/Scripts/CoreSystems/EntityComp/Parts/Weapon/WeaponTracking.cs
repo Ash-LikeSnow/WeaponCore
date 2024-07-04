@@ -912,7 +912,7 @@ namespace CoreSystems.Platform
             return false;
         }
 
-        internal static Vector3D TrajectoryEstimation(Weapon weapon, Vector3D targetPos, Vector3D targetVel, Vector3D targetAcc, Vector3D shooterPos, out bool valid, bool basicPrediction = false, bool trackAngular = false)
+        public static Vector3D TrajectoryEstimation(Weapon weapon, Vector3D targetPos, Vector3D targetVel, Vector3D targetAcc, Vector3D shooterPos, out bool valid, bool basicPrediction = false, bool trackAngular = false)
         {
             valid = false;
             Vector3D aimPoint;
@@ -927,7 +927,7 @@ namespace CoreSystems.Platform
             var shooterVel = ai != null ? (Vector3D)ai.TopEntityVel : Vector3D.Zero;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed * weapon.VelocityMult;
             var updateGravity = ammoDef.Const.FeelsGravity && ai != null && ai.InPlanetGravity;
-            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5; //equal to approx 1.58 m/s
+            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5;
 
             #region Must Have Updates
             if (ai != null && comp.TopEntity != null && comp.TopEntity.PositionComp != null && ai.VelocityUpdateTick != session.Tick)
@@ -1007,6 +1007,19 @@ namespace CoreSystems.Platform
                 var usedTti = QuarticSolver(ref advTti, deltaPos, deltaVel, targetAcc, ammoDef.Const.DesiredProjectileSpeed * weapon.VelocityMult, ai?.QuadraticCoefficientsStorage) ? advTti : initialTti;
                 aimPoint = targetPos + (usedTti + (ammoDef.Const.AmmoSkipAccel ? 0 : (projAccelTime / usedTti))) * (targetVel - shooterVel);
             }
+
+            // Check if the time-to-intercept is greater than half of the maximum travel time
+            double maxTravelTime = ammoDef.Const.MaxTrajectory / projectileMaxSpeed;
+            double closingSpeedPercentage = Vector3D.Dot(deltaVel, deltaPosNorm) / projectileMaxSpeed;
+            double interceptThreshold = maxTravelTime * 0.5 * (1 - closingSpeedPercentage);
+
+            if (initialTti > interceptThreshold)
+            {
+                valid = false;
+                weapon.Target.ImpossibleToHit = true; // Mark target as impossible to hit
+                return targetPos;
+            }
+
             Vector3D gravityOffset = Vector3D.Zero;
             if (updateGravity && !MyUtils.IsZero(weapon.GravityPoint))
             {

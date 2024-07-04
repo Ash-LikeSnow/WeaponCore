@@ -1,4 +1,5 @@
-﻿using CoreSystems;
+﻿using System.Diagnostics.Eventing.Reader;
+using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using System.Runtime.CompilerServices;
@@ -232,6 +233,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         public const string NoAmmoStr = ": No Ammo";
         public const string NoTargetStr = ": No Target";
         public const string NoSubSystemStr = ": No Subsystem";
+        public const string ImpossibleHitStr = ": No Angle";
 
         private void WeaponsToAdd(bool reset, Vector2D currWeaponDisplayPos, double bgStartPosX)
         {
@@ -248,25 +250,28 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = comp.MasterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                var needsTarget =  (!weapon.Target.HasTarget || Session.I.Tick - weapon.Target.ChangeTick <= 30) && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
+                var needsTarget = (!weapon.Target.HasTarget || Session.I.Tick - weapon.Target.ChangeTick <= 30) && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
-                
-                string noTagetReason;
+
+                string noTargetReason;
                 var needNameUpdate = weapon.LastFriendlyNameTick == 0 || s.Tick - weapon.LastFriendlyNameTick > 600;
                 if (needsTarget)
                 {
                     if (weapon.OutOfAmmo && !showReloadIcon)
-                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoAmmo) : weapon.FriendlyNameNoAmmo;
+                        noTargetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoAmmo) : weapon.FriendlyNameNoAmmo;
 
                     else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
-                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoSubSystems) : weapon.FriendlyNameNoSubsystem;
+                        noTargetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoSubSystems) : weapon.FriendlyNameNoSubsystem;
 
-                    else 
-                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoTarget) : weapon.FriendlyNameNoTarget;
+                    else if (weapon.Target.ImpossibleToHit)
+                        noTargetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.ImpossibleToHit) : weapon.FriendlyNameImpossibleHit;
+
+                    else
+                        noTargetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoTarget) : weapon.FriendlyNameNoTarget;
                 }
                 else
                 {
-                    noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.Normal) : weapon.FriendlyName;
+                    noTargetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.Normal) : weapon.FriendlyName;
                 }
 
                 var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
@@ -274,7 +279,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 
                 var textInfo = _textDrawPool.Count > 0 ? _textDrawPool.Dequeue() :  new TextDrawRequest();
 
-                textInfo.Text = noTagetReason;
+                textInfo.Text = noTargetReason;
                 var color = new Vector4(1, 1, 1, 1);
                 textInfo.Color = color;
                 textInfo.Position.X = textOffset;
@@ -289,7 +294,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
                     textInfo.Text = $"(x{stackedInfo.WeaponStack})";
                     textInfo.Color = new Vector4(0.5f, 0.5f, 1, 1);
-                    textInfo.Position.X = textOffset + (noTagetReason.Length * ((_textSize * s.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
+                    textInfo.Position.X = textOffset + (noTargetReason.Length * ((_textSize * s.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
 
                     textInfo.Position.Y = currWeaponDisplayPos.Y;
                     textInfo.FontSize = _sTextSize;
