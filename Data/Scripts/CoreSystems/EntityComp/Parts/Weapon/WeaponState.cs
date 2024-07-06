@@ -337,7 +337,7 @@ namespace CoreSystems.Platform
                                     Comp.RemoveActiveTarget(this, targetObj);
                             }
                             else
-                                Log.Line($"couldn't remove target to construct database - {System.ShortName} - {System.RadioType}");
+                                Log.Line($"couldn't remove target from construct database - {System.ShortName} - {System.RadioType}");
                         }
                     }
                     else
