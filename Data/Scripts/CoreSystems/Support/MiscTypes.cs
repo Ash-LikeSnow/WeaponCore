@@ -18,7 +18,6 @@ namespace CoreSystems.Support
         internal TargetStates TargetState;
         internal bool HasTarget;
         internal bool IsAligned;
-        public bool ImpossibleToHit;
         internal bool SoftProjetileReset;
         internal bool TargetChanged;
         internal bool ClientDirty;
