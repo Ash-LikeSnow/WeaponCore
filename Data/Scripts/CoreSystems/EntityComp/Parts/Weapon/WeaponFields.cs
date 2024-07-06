@@ -123,7 +123,6 @@ namespace CoreSystems.Platform
         internal string FriendlyNameNoAmmo = string.Empty;
         internal string FriendlyNameNoTarget = string.Empty;
         internal string FriendlyNameNoSubsystem = string.Empty;
-        internal string FriendlyNameImpossibleHit = string.Empty;
 
         internal string AmmoName = "";
         internal ProtoWeaponPartState PartState;
