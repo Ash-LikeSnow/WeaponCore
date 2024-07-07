@@ -517,6 +517,7 @@ namespace CoreSystems
             "Large_SC_LaserDrillTurret",
             "LargeFlareLauncher",
             "SmallFlareLauncher",
+            "GrappleHookTurretLarge",
         };
 
         internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()
