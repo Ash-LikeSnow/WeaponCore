@@ -209,6 +209,8 @@ namespace CoreSystems.Settings
             [ProtoMember(20)] public bool UnsupportedMode;
             [ProtoMember(21)] public bool DisableSmallVsLargeBuff = false;
             [ProtoMember(22)] public Overrides DefinitionOverrides;
+            [ProtoMember(23)] public float LargeGridDamageMultiplier = 1;
+            [ProtoMember(24)] public float SmallGridDamageMultiplier = 1;
         }
 
         [ProtoContract]

@@ -465,9 +465,46 @@ namespace CoreSystems.Platform
             var entity = (MyEntity)o;
 
             if (entity?.Physics != null && ActiveAmmoDef?.AmmoDef != null && !entity.MarkedForClose) {
-                
+               
                 var ejectDef = ActiveAmmoDef.AmmoDef.Ejection;
-                entity.Physics.SetSpeeds(Ejector.CachedDir * (ejectDef.Speed), Vector3.Zero);
+                var speedMin = ejectDef.SpeedVariance.Start;
+                var speedMax = ejectDef.SpeedVariance.End;
+                var randSpeed = speedMin != 0f || speedMax != 0f;
+                var dirMin = ejectDef.DirectionVariance.Start;
+                var dirMax = ejectDef.DirectionVariance.End;
+                var randDir = dirMin != 0f || dirMax != 0f;
+                var rotMin = ejectDef.RotationVariance.Start;
+                var rotMax = ejectDef.RotationVariance.End;
+                var randRot = rotMin != 0f || rotMax != 0f;
+                var needsRand = randSpeed || randDir || randRot;
+                
+                var speedVariance = 0f;
+                var rotation = ejectDef.Rotation;
+                var direction = Ejector.CachedDir;
+                var speed = ejectDef.Speed;
+
+                var parentSpeed = Vector3.Zero;
+                if(Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && Comp.GetTopEntity().Physics != null)
+                    parentSpeed = Comp.GetTopEntity().Physics.LinearVelocity;
+                else if (Comp.Cube?.Physics != null)
+                    parentSpeed = Comp.Cube.Physics.LinearVelocity;
+
+                if (needsRand)
+                {
+                    var rand = new XorShiftRandomStruct((ulong)entity.EntityId);
+                    if (randSpeed)
+                        speedVariance = (float)rand.NextDouble() * (speedMax - speedMin) + speedMin;
+                    if (randDir)
+                    {
+                        direction += new Vector3D(rand.NextDouble() * (dirMax - dirMin) + dirMin, rand.NextDouble() * (dirMax - dirMin) + dirMin, rand.NextDouble() * (dirMax - dirMin) + dirMin);
+                        direction.Normalize();
+                    }
+                    if (randRot)
+                    {
+                        rotation += new Vector3D(rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin);
+                    }
+                }
+                entity.Physics.SetSpeeds(parentSpeed + direction * (speed + speedVariance), rotation);
             }
         }
 

@@ -146,7 +146,19 @@ namespace CoreSystems.Support
                             var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
                             var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
                             var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
-                            var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                            MatrixD matrix = MatrixD.CreateTranslation(pos);
+                            if (keenStrikesAgain)
+                            {
+                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                            }
+                            else if (particle.Offset == Vector3D.MinValue)
+                            {
+                                float interference;
+                                Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
+                                localGrav.Normalize();
+                                if (localGrav != Vector3D.Zero)
+                                    matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(localGrav), -localGrav);
+                            }
 
                             MyParticleEffect hitEffect;
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
@@ -799,7 +811,8 @@ namespace CoreSystems.Support
                 var weapon = avEffect.Weapon;
                 var muzzle = avEffect.Muzzle;
                 var ticksAgo = Session.I.Tick - avEffect.StartTick;
-                var bAv = weapon.System.Values.HardPoint.Graphics.Effect1;
+                var ammoParticleOverride = weapon.ActiveAmmoDef.AmmoDef.Const.OverrideWeaponEffect;
+                var bAv = ammoParticleOverride ? weapon.ActiveAmmoDef.AmmoDef.AmmoGraphics.Particles.WeaponEffect1Override : weapon.System.Values.HardPoint.Graphics.Effect1;
                 var effect = weapon.Effects1[muzzle.MuzzleId];
 
                 var effectExists = effect != null;
@@ -833,18 +846,17 @@ namespace CoreSystems.Support
                 }
 
 
-                var particles = weapon.System.Values.HardPoint.Graphics.Effect1;
                 var renderId = info.Entity.Render.GetRenderObjectID();
                 var matrix = info.DummyMatrix;
                 var pos = info.Position;
-                matrix.Translation = info.LocalPosition + particles.Offset;
+                matrix.Translation = info.LocalPosition + bAv.Offset;
 
                 if (!effectExists && ticksAgo <= 0)
                 {
                     MyParticleEffect newEffect;
-                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
+                    if (MyParticlesManager.TryCreateParticleEffect(bAv.Name, ref matrix, ref pos, renderId, out newEffect))
                     {
-                        newEffect.UserScale = particles.Extras.Scale;
+                        newEffect.UserScale = bAv.Extras.Scale;
                         if (newEffect.Loop)
                         {
                             weapon.Effects1[muzzle.MuzzleId] = newEffect;
@@ -908,18 +920,17 @@ namespace CoreSystems.Support
                     weapon.Comp.Ai.VelocityUpdateTick = Session.I.Tick;
                 }
 
-                var particles = weapon.System.Values.HardPoint.Graphics.Effect2;
                 var renderId = info.Entity.Render.GetRenderObjectID();
                 var matrix = info.DummyMatrix;
                 var pos = info.Position;
-                matrix.Translation = info.LocalPosition + particles.Offset;
+                matrix.Translation = info.LocalPosition + bAv.Offset;
 
                 if (!effectExists && ticksAgo <= 0)
                 {
                     MyParticleEffect newEffect;
-                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
+                    if (MyParticlesManager.TryCreateParticleEffect(bAv.Name, ref matrix, ref pos, renderId, out newEffect))
                     {
-                        newEffect.UserScale = particles.Extras.Scale;
+                        newEffect.UserScale = bAv.Extras.Scale;
 
                         if (newEffect.Loop)
                         {

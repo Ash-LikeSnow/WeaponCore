@@ -223,8 +223,9 @@ namespace CoreSystems.Support
             try
             {
                 var comp = ((Weapon.WeaponComponent)this);
+                var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
 
-                if (comp.Data.Repo.Values.Set.Overrides.LeadGroup == 0 && !comp.IsBomb && (!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads))
+                if (comp.Data.Repo.Values.Set.Overrides.LeadGroup == 0 && !comp.IsBomb && (!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads) && !collection[0].ActiveAmmoDef.AmmoDef.Const.IsSmart)
                     stringBuilder.Append("\nWARNING: fixed weapon detected\n")
                         .Append("  - without a Target Lead Group set!\n\n");
 
@@ -278,7 +279,6 @@ namespace CoreSystems.Support
                 if (!comp.HasAlternateUi)
                     stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoDividerLineWeapon")}");
 
-                var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                 for (int i = 0; i < collection.Count; i++)
                 {
                     var w = collection[i];

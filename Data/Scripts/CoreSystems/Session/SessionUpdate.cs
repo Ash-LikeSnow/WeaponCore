@@ -15,6 +15,7 @@ using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
 using VRage.Game;
+using VRage.Game.ModAPI;
 
 namespace CoreSystems
 {
@@ -627,6 +628,7 @@ namespace CoreSystems
                         var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
                         var eTarget = w.Target.TargetObject as MyEntity;
                         var pTarget = w.Target.TargetObject as Projectile;
+                        var cTarget = w.Target.TargetObject as IMyCharacter;
                         if (!IsClient)
                         {
                             if (w.Target.HasTarget)
@@ -639,7 +641,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
                                 }
-                                else if (eTarget != null && (eTarget.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks && !w.RotorTurretTracking || wComp.UserControlled && !w.System.SuppressFire))
+                                else if (eTarget != null && (eTarget.MarkedForClose || (cTarget!= null && (cTarget.IsDead || cTarget.Integrity <= 0)) || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks && !w.RotorTurretTracking || wComp.UserControlled && !w.System.SuppressFire))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }

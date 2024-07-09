@@ -734,7 +734,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.ConsumableSelectionPartIds.Count == 0) return;
             var w = comp.Collection[comp.ConsumableSelectionPartIds[0]];
-            sb.Append(w.AmmoName);
+            sb.Append(w.AmmoNameTerminal);
         }
 
         internal static void RepelWriter(IMyTerminalBlock blk, StringBuilder sb)

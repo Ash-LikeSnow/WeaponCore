@@ -218,6 +218,14 @@ namespace CoreSystems.Projectiles
                             var accelThisTick = p.Direction * (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio);
 
                             var maxSpeedSqr = p.MaxSpeed * p.MaxSpeed;
+                            var curMaxSpeed = p.MaxSpeed;
+                            if (aConst.AmmoUseDrag)
+                            {
+                                curMaxSpeed -= p.Info.Age * aConst.DragPerTick;
+                                if (curMaxSpeed < 0)
+                                    curMaxSpeed = 0;
+                                maxSpeedSqr = curMaxSpeed * curMaxSpeed;
+                            }
                             if (p.DeaccelRate > 0) {
 
                                 var distToMax = info.MaxTrajectory - info.DistanceTraveled;
@@ -242,7 +250,7 @@ namespace CoreSystems.Projectiles
 
                                 p.VelocityLengthSqr = newVel.LengthSquared();
                                 if (p.VelocityLengthSqr > maxSpeedSqr)
-                                    newVel = p.Direction * p.MaxSpeed;
+                                    newVel = p.Direction * curMaxSpeed;
                                 else
                                     info.TotalAcceleration += (newVel - p.PrevVelocity);
 
@@ -255,6 +263,14 @@ namespace CoreSystems.Projectiles
 
                         if (aConst.AmmoSkipAccel || p.VelocityLengthSqr > 0)
                             p.LastPosition = p.Position;
+
+                        if (aConst.AmmoSkipAccel && aConst.AmmoUseDrag)
+                        {
+                            var dragMaxSpeed = p.MaxSpeed - p.Info.Age * aConst.DragPerTick;
+                            if (dragMaxSpeed < 0)
+                                dragMaxSpeed = 0;
+                            p.Velocity = p.Direction * dragMaxSpeed;
+                        }
 
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;

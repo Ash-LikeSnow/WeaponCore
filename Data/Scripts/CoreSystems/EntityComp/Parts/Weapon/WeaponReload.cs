@@ -33,6 +33,7 @@ namespace CoreSystems.Platform
                 Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
 
             AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
+            AmmoNameTerminal = ActiveAmmoDef.AmmoDef.Const.TerminalName;
 
             CheckInventorySystem = true;
 
@@ -79,6 +80,7 @@ namespace CoreSystems.Platform
             {
                 DelayedCycleId = newAmmoId;
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
+                AmmoNameTerminal = "*" + System.AmmoTypes[newAmmoId].AmmoDef.Const.TerminalName;
 
                 if (Session.I.IsClient && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
@@ -184,6 +186,8 @@ namespace CoreSystems.Platform
             return true;
         }
 
+        //TODO account for float rounding errors to int here and in later inv pulling
+
         internal bool ComputeServerStorage(bool calledFromReload = false)
         {
             var s = Session.I;
@@ -197,17 +201,15 @@ namespace CoreSystems.Platform
                 {
                     Comp.CurrentInventoryVolume = (float)Comp.CoreInventory.CurrentVolume;
                     var freeVolume = System.MaxAmmoVolume - Comp.CurrentInventoryVolume;
-                    var spotsFree = (int)(freeVolume / ActiveAmmoDef.AmmoDef.Const.MagVolume);
+                    var spotsFree = (int)(freeVolume / ActiveAmmoDef.AmmoDef.Const.MagVolume + .0001f);
                     Reload.CurrentMags = Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe();
                     CurrentAmmoVolume = Reload.CurrentMags * ActiveAmmoDef.AmmoDef.Const.MagVolume;
 
-                    var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume);
+                    var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume + .0001f);
                     var magsGranted = magsRequested > spotsFree ? spotsFree : magsRequested;
                     var requestedVolume = ActiveAmmoDef.AmmoDef.Const.MagVolume * magsGranted;
-                    var spaceAvailable = freeVolume > requestedVolume;
-                    var lowThreshold = System.MaxAmmoVolume * 0.25f;
-
-                    var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < lowThreshold && spaceAvailable;
+                    var spaceAvailable = freeVolume >= requestedVolume;
+                    var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < System.LowAmmoVolume && spaceAvailable;
                     
                     var failSafeTimer = s.Tick - LastInventoryTick > 600;
                     
@@ -384,6 +386,7 @@ namespace CoreSystems.Platform
                     if (DelayedCycleId == ActiveAmmoDef.AmmoDef.Const.AmmoIdxPos)
                     {
                         AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
+                        AmmoNameTerminal = ActiveAmmoDef.AmmoDef.Const.TerminalName;
                         DelayedCycleId = -1;
                     }
 

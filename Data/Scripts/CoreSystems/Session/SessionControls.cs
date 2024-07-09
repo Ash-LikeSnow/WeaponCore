@@ -8,7 +8,6 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
-using VRage.ModAPI;
 using VRage.Utils;
 using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -19,6 +18,8 @@ namespace CoreSystems
         #region UI Config
         public static void CreateDecoyTerminalUi<T>(Session session) where T : IMyTerminalBlock
         {
+            if (session.PurgedAll)
+                return;
             session.MainThreadId = Environment.CurrentManagedThreadId;
             if (ControlsAlreadyExist<T>(session))
                 return;
@@ -28,6 +29,8 @@ namespace CoreSystems
 
         public static void CreateCameraTerminalUi<T>(Session session) where T : IMyTerminalBlock
         {
+            if (session.PurgedAll)
+                return;
             session.MainThreadId = Environment.CurrentManagedThreadId;
             if (ControlsAlreadyExist<T>(session))
                 return;
@@ -124,6 +127,8 @@ namespace CoreSystems
 
         public static void CreateTerminalUi<T>(Session session) where T : IMyTerminalBlock
         {
+            if (session.PurgedAll)
+                return;
             session.MainThreadId = Environment.CurrentManagedThreadId;
             if (ControlsAlreadyExist<T>(session))
             {
@@ -164,6 +169,8 @@ namespace CoreSystems
 
         public static void CombatBlockUi<T>(Session session) where T : IMyTerminalBlock
         {
+            if (session.PurgedAll)
+                return;
             session.MainThreadId = Environment.CurrentManagedThreadId;
             if (ControlsAlreadyExist<T>(session))
             {
@@ -357,27 +364,30 @@ namespace CoreSystems
         {
             List<IMyTerminalAction> actions;
             MyAPIGateway.TerminalControls.GetActions<T>(out actions);
-            for (int i = 0; i < actions.Count; i++) {
-
+            for (int i = 0; i < actions.Count; i++)
+            {                    
                 var a = actions[i];
-
                 if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
                 {
                     a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive
                     session.AlteredActions.Add(a);
                 }
-                else if (a.Id.Equals("Control")) {
+                else if (a.Id.Equals("Control"))
+                {
 
                     a.Enabled = TerminalHelpers.NotWcOrIsTurret;
                     session.AlteredActions.Add(a);
                 }
-                else if (a.Id.Equals("Shoot")) {
+                else if (a.Id.Equals("Shoot"))
+                {
 
                     var oldAction = a.Action;
-                    a.Action = blk => {
+                    a.Action = blk =>
+                    {
 
                         var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
+                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
                             if (comp?.Data?.Repo == null)
                                 oldAction(blk);
                             return;
@@ -388,10 +398,12 @@ namespace CoreSystems
                     };
 
                     var oldWriter = a.Writer;
-                    a.Writer = (blk, sb) => {
+                    a.Writer = (blk, sb) =>
+                    {
 
                         var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
+                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
                             oldWriter(blk, sb);
                             return;
                         }
@@ -402,13 +414,16 @@ namespace CoreSystems
                     };
                     session.AlteredActions.Add(a);
                 }
-                else if (a.Id.Equals("Shoot_On")) {
+                else if (a.Id.Equals("Shoot_On"))
+                {
 
                     var oldAction = a.Action;
-                    a.Action = blk => {
+                    a.Action = blk =>
+                    {
 
                         var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
+                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
                             if (comp?.Data?.Repo == null) oldAction(blk);
                             return;
                         }
@@ -432,14 +447,17 @@ namespace CoreSystems
                     };
                     session.AlteredActions.Add(a);
                 }
-                else if (a.Id.Equals("Shoot_Off")) {
+                else if (a.Id.Equals("Shoot_Off"))
+                {
 
                     var oldAction = a.Action;
-                    a.Action = blk => {
+                    a.Action = blk =>
+                    {
 
                         var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            if (comp?.Data?.Repo == null)  oldAction(blk);
+                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
+                            if (comp?.Data?.Repo == null) oldAction(blk);
                             return;
                         }
                         if (comp.Data.Repo.Values.State.Trigger != Off)
@@ -447,10 +465,12 @@ namespace CoreSystems
                     };
 
                     var oldWriter = a.Writer;
-                    a.Writer = (blk, sb) => {
+                    a.Writer = (blk, sb) =>
+                    {
 
                         var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
+                        if (comp?.Data?.Repo == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
                             oldWriter(blk, sb);
                             return;
                         }

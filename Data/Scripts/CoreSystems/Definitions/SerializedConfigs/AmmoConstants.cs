@@ -80,6 +80,7 @@ namespace CoreSystems.Support
         public readonly string DetParticleStr;
         public readonly string DetSoundStr;
         public readonly string ShotSoundStr;
+        public readonly string TerminalName;
         public readonly int ApproachesCount;
         public readonly int MaxObjectsHit;
         public readonly int TargetLossTime;
@@ -138,6 +139,7 @@ namespace CoreSystems.Support
         public readonly bool CustomDetParticle;
         public readonly bool FieldParticle;
         public readonly bool AmmoSkipAccel;
+        public readonly bool AmmoUseDrag;
         public readonly bool LineWidthVariance;
         public readonly bool LineColorVariance;
         public readonly bool SegmentWidthVariance;
@@ -243,6 +245,7 @@ namespace CoreSystems.Support
         public readonly bool ZeroEffortNav;
         public readonly bool ProjectilesFirst;
         public readonly bool OnHit;
+        public readonly bool OverrideWeaponEffect;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
@@ -292,6 +295,7 @@ namespace CoreSystems.Support
         public readonly float ByBlockHitDepth;
         public readonly float DetonationSoundDistSqr;
         public readonly float BackKickForce;
+        public readonly float DragPerTick;
         public readonly double MinTurnSpeedSqr;
         public readonly double Aggressiveness;
         public readonly double NavAcceleration;
@@ -392,6 +396,7 @@ namespace CoreSystems.Support
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
+            TerminalName = string.IsNullOrEmpty(ammo.AmmoDef.TerminalName) ? ammo.AmmoDef.AmmoRound : ammo.AmmoDef.TerminalName;
 
             ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
                 out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ZeroEffortNav, out ScanRange, out OffsetMinRangeSqr,
@@ -410,6 +415,7 @@ namespace CoreSystems.Support
             HitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
             HitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name;
             EndOfLifeAv = !ammo.AmmoDef.AreaOfDamage.EndOfLife.NoVisuals && ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable;
+            OverrideWeaponEffect = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.WeaponEffect1Override.Name);
 
             DrawLine = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Enable;
             
@@ -444,6 +450,9 @@ namespace CoreSystems.Support
             ArmorCoreActive = Session.I.ArmorCoreActive;
 
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
+            AmmoUseDrag = ammo.AmmoDef.Trajectory.DragPerSecond > 0;
+            DragPerTick = AmmoUseDrag ? ammo.AmmoDef.Trajectory.DragPerSecond / 60 : 0;
+
             FeelsGravity = GravityMultiplier > 0;
             StoreGravity = FeelsGravity || fragHasGravity;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;

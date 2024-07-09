@@ -175,20 +175,35 @@ namespace CoreSystems.Platform
                     {
                         w.ChangeActiveAmmoClient();
                         w.AmmoName = w.ActiveAmmoDef.AmmoDef.AmmoRound;
+                        w.AmmoNameTerminal = w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                     }
 
                     if (w.ActiveAmmoDef.AmmoDef == null || !w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable && w.System.AmmoTypes.Length > 1)
                     {
-                        //additional logging formatting
-                        string errorString;
-                        if (w.ActiveAmmoDef.AmmoDef != null)
+                        w.ProposedAmmoId = 0;
+                        if (Session.I.IsServer)
+                            w.ChangeActiveAmmoServer();
+                        else
                         {
-                            errorString = w.ActiveAmmoDef.AmmoDef.AmmoRound + " TurretSelectable:" + w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable + " IsShrapnel:" + w.ActiveAmmoDef.IsShrapnel + " HardPointUsable:" + w.ActiveAmmoDef.AmmoDef.HardPointUsable;                      
+                            w.ChangeActiveAmmoClient();
+                            w.AmmoName = w.ActiveAmmoDef.AmmoDef.AmmoRound;
+                            w.AmmoNameTerminal = w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                         }
-                        else errorString = "ActiveAmmoDef was null";
+                        Log.Line($"Ammo type was invalid, forced {w.System.PartName} back to default");
 
-                        Platform.PlatformCrash(this, false, true, $"[{w.System.PartName}] heyyyyyy sweetie this gun is broken.  Your first ammoType is broken ({errorString}), I am crashing now Dave.");
-                        return;
+                        if (w.ActiveAmmoDef.AmmoDef == null || !w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable && w.System.AmmoTypes.Length > 1)
+                        {
+                            //additional logging formatting
+                            string errorString;
+                            if (w.ActiveAmmoDef.AmmoDef != null)
+                            {
+                                errorString = w.ActiveAmmoDef.AmmoDef.AmmoRound + " TurretSelectable:" + w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable + " IsShrapnel:" + w.ActiveAmmoDef.IsShrapnel + " HardPointUsable:" + w.ActiveAmmoDef.AmmoDef.HardPointUsable;
+                            }
+                            else errorString = "ActiveAmmoDef was null";
+
+                            Platform.PlatformCrash(this, false, true, $"[{w.System.PartName}] heyyyyyy sweetie this gun is broken.  Your active ammoType is broken ({errorString}), I am crashing now Dave.");
+                            return;
+                        }
                     }
 
                     w.UpdateWeaponRange();
@@ -1241,9 +1256,9 @@ namespace CoreSystems.Platform
                     {
                         var ammo = ammos[j];
                         if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
-                        var ammoStr = ammo.AmmoDef.AmmoRound;
+                        var ammoStr = ammo.AmmoDef.Const.TerminalName;
                         if (wep.DelayedCycleId != -1 && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
-                            ammoStr = wep.AmmoName;
+                            ammoStr = "*" + ammo.AmmoDef.Const.TerminalName;
 
                         BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute(ammoStr) });
                     }

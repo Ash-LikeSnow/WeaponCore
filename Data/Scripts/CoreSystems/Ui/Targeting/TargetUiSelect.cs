@@ -147,7 +147,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             MyEntity rootEntity = null;
             if (ai.MyPlanet != null && Session.I.Tick90 && s.UiInput.AltPressed)
             {
-                var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > 14999 ? AimPosition + AimDirection * 14999 : end); //Prefetch will return nothing if dist >= 15000
+                var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > s.PreFetchMaxDist ? AimPosition + AimDirection * s.PreFetchMaxDist : end);
                 ai.MyPlanet.PrefetchShapeOnRay(ref rayLine);
             }
             Session.I.Physics.CastRay(AimPosition, end, _hitInfo);

@@ -765,6 +765,12 @@ namespace CoreSystems.Projectiles
                 MaxSpeed = DesiredSpeed;
 
             var speedCap = speedCapMulti * MaxSpeed;
+            if (aConst.AmmoUseDrag)
+            {
+                speedCap -= Info.Age * aConst.DragPerTick;
+                if (speedCap < 0)
+                    speedCap = 0;
+            }
             if (VelocityLengthSqr > speedCap * speedCap) {
                 VelocityLengthSqr = proposedVel.LengthSquared();
                 proposedVel = Direction * speedCap;
@@ -3094,7 +3100,7 @@ namespace CoreSystems.Projectiles
 
             var targetPos = eTarget != null ? eTarget.PositionComp.WorldAABB.Center : pTarget.Position;
 
-            if (aConst.FragPointType == PointTypes.Direct)
+            if (aConst.TimedFragments && aConst.FragPointType == PointTypes.Direct)
             {
                 targetDirection = Vector3D.Normalize(targetPos - Position);
                 estimatedPosition = targetPos;

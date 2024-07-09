@@ -65,9 +65,10 @@ namespace CoreSystems
                 SyncBufferedDistSqr = (SyncDist + 500) * (SyncDist + 500);
             }
 
+            PreFetchMaxDist = MyAPIGateway.Session.SessionSettings.PrefetchShapeRayLengthLimit - 1;
+
             Physics = MyAPIGateway.Physics;
             Camera = MyAPIGateway.Session.Camera;
-            TargetGps = MyAPIGateway.Session.GPS.Create("WEAPONCORE", "", Vector3D.MaxValue, true);
             CheckDirtyGridInfos(true);
 
             GenerateButtonMap();

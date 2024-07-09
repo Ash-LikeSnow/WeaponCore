@@ -199,7 +199,7 @@ namespace CoreSystems.Platform
 
                 if (!Parts.NameToEntity.TryGetValue(muzzlePartName, out muzzlePartEntity))
                 {
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid muzzlePart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid muzzlePart, I am crashing now Dave. {muzzlePartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
                 }
 
                 foreach (var part in Parts.NameToEntity)
@@ -210,11 +210,11 @@ namespace CoreSystems.Platform
 
                 MyEntity azimuthPart;
                 if (!Parts.NameToEntity.TryGetValue(azimuthPartName, out azimuthPart))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid azimuthPart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid azimuthPart, I am crashing now Dave. {azimuthPartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
 
                 MyEntity elevationPart;
                 if (!Parts.NameToEntity.TryGetValue(elevationPartName, out elevationPart))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid elevationPart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Weapon: {system.PartName} Invalid elevationPart, I am crashing now Dave. {elevationPartName} was not found.  Ensure you do not include subpart_ in the Id fields in the weapon definition");
                 
                 MyEntity spinPart = null;
                 if (system.HasBarrelRotation)
@@ -773,7 +773,10 @@ namespace CoreSystems.Platform
             
             if (Session.I.HandlesInput) {
                 if (suppress)
-                    MyAPIGateway.Utilities.ShowNotification($"CoreSystems hard crashed during block init, shutting down\n Send log files to server admin or submit a bug report to mod author:\n {comp.Platform?.Structure?.ModPath} - {comp.SubtypeName}", 10000);
+                    MyAPIGateway.Utilities.ShowNotification($"CoreSystems hard crashed during block init, shutting down\n" +
+                        $"Ensure you don't have duplicate weapons from different mods.\n" +
+                        $"Send log files to server admin or submit a bug report to mod author.\n" +
+                        $"Crashed mod ID and block name: {comp.Platform?.Structure?.ModId} - {comp.SubtypeName}", 10000);
             }
             Log.Line($"PlatformCrash: {Comp.SubtypeName} - {message}");
 
