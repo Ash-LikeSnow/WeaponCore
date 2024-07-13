@@ -852,6 +852,7 @@ namespace CoreSystems
                                         ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                                     else
                                         ShowLocalNotify("WeaponCore is now running in [SupportedMode]", 30000, "White");
+                                    if (Inited) Log.Line($"--Unsupported mode active: {Settings.Enforcement.UnsupportedMode}--");
 
                                 }
 
