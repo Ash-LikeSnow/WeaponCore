@@ -575,7 +575,7 @@ namespace CoreSystems.Support
                 frag.OriginUp = info.OriginUp;
                 frag.Random = new XorShiftRandomStruct(info.Random.NextUInt64());
                 frag.DoDamage = info.DoDamage;
-                frag.PrevTargetPos = p.TargetPosition;
+                frag.PrevTargetPos = state == Target.TargetStates.IsFake ? target.TargetPos : p.TargetPosition;
                 frag.Velocity = !aConst.FragDropVelocity ? p.Velocity : Vector3D.Zero;
                 frag.AcquiredEntity = info.AcquiredEntity;
                 frag.IgnoreShield = info.ShieldBypassed && aConst.ShieldDamageBypassMod > 0;
