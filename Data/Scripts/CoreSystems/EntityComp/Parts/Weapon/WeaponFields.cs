@@ -387,7 +387,7 @@ namespace CoreSystems.Platform
                     }
                 }
             }
-            catch (Exception ex) { Log.Line($"Exception in {comp.SubtypeName} AnimationsSet: {ex}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in {comp.SubtypeName} AnimationsSet for {subtype.String}.  Ensure you don't have multiple weapons with different subparts referencing the same AnimationDef: {ex}", null, true); }
 
 
 

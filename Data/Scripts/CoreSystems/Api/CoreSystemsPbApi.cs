@@ -301,7 +301,7 @@ namespace CoreSystems.Api
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
 
         /// <summary>
-        /// Fires <paramref name="weaponId"/> on <paramref name="weapon"/> once.
+        /// (DEPRECATED, use ToggleWeaponFire) Fires <paramref name="weaponId"/> on <paramref name="weapon"/> once.
         /// </summary>
         /// <remarks>
         /// <paramref name="allWeapons"/> uses all weapons on <paramref name="weapon"/>.

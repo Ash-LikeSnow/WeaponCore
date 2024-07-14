@@ -25,7 +25,6 @@ using VRageMath;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.CoreComponent.Trigger;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -853,6 +852,7 @@ namespace CoreSystems
                                         ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                                     else
                                         ShowLocalNotify("WeaponCore is now running in [SupportedMode]", 30000, "White");
+                                    if (Inited) Log.Line($"--Unsupported mode active: {Settings.Enforcement.UnsupportedMode}--");
 
                                 }
 
@@ -1019,17 +1019,17 @@ namespace CoreSystems
         private bool _reportBrokenMods;
         private void ReportBrokenBlocks(object o)
         {
-            string listOfNames = "The following WeaponCore blocks are orphaned by their mod: ";
+            string listOfNames = "The following WeaponCore blocks are orphaned by their mod, check the SE log to see if it failed to compile: ";
+            
             foreach (var cube in _brokenBlocks)
-            {
+            {                
                 if (cube.BlockDefinition?.Id.SubtypeName != null)
-                    listOfNames += $"{cube.BlockDefinition.Id.SubtypeName}, ";
+                    listOfNames += $"{cube.BlockDefinition.Context.ModName} {cube.BlockDefinition.Id.SubtypeName}, ";
             }
 
             if (HandlesInput)
                 ShowLocalNotify(listOfNames, 30000, "White");
-            else
-                Log.Line($"{listOfNames}");
+            Log.Line($"{listOfNames}");
 
             _brokenBlocks.Clear();
         }
@@ -1163,12 +1163,9 @@ namespace CoreSystems
             DsDebugDraw.DrawLine(w.MyAimTestLine, Color.Black, 0.07f);
             DsDebugDraw.DrawSingleVec(w.MyPivotPos, 1f, Color.White);
             DsDebugDraw.DrawLine(w.AzimuthFwdLine.From, w.AzimuthFwdLine.To, Color.Cyan, 0.05f);
-
             //DsDebugDraw.DrawLine(w.MyCenterTestLine, Color.Green, 0.05f);
-
             //DsDebugDraw.DrawBox(w.targetBox, Color.Plum);
             //DsDebugDraw.DrawLine(w.LimitLine.From, w.LimitLine.To, Color.Orange, 0.05f);
-
             //if (w.Target.HasTarget)
             //DsDebugDraw.DrawLine(w.MyShootAlignmentLine, Color.Yellow, 0.05f);
 
@@ -1200,7 +1197,7 @@ namespace CoreSystems
                 {
                     DebugVersion = true;
                 }
-                else if (mod.PublishedFileId == 2200451495)
+                else if (mod.PublishedFileId == 2200451495 || mod.PublishedFileId == 3283226082)
                     WaterMod = true;
             }
 
