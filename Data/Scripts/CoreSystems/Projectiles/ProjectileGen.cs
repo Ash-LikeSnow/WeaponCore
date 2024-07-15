@@ -224,8 +224,7 @@ namespace CoreSystems.Projectiles
 
                         if (dumbAdd || validAi)
                         {
-                            while (targetAi.DeadProjectiles.Contains(p))
-                                targetAi.DeadProjectiles.Remove(p);
+                            targetAi.DeadProjectiles.Remove(p);
                             if (targetAi.LiveProjectile.ContainsKey(p))
                                 targetAi.LiveProjectile[p] = condition1 || condition2;
                             else
