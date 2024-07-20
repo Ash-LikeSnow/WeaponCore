@@ -69,7 +69,7 @@ namespace CoreSystems.Support
         internal readonly List<SupportSys.SupportComponent> SupportComps = new List<SupportSys.SupportComponent>(32);
         internal readonly List<ControlSys.ControlComponent> ControlComps = new List<ControlSys.ControlComponent>(32);
         internal readonly List<WeaponComponent> PhantomComps = new List<WeaponComponent>(32);
-        internal readonly List<Projectile> DeadProjectiles = new List<Projectile>();
+        internal readonly HashSet<Projectile> DeadProjectiles = new HashSet<Projectile>();
         internal readonly List<Ai> TargetAisTmp = new List<Ai>();
         internal readonly List<Shields> NearByShieldsTmp = new List<Shields>();
         internal readonly List<MyEntity> NearByFriendlyShields = new List<MyEntity>();
