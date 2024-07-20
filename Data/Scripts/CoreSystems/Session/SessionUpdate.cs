@@ -46,10 +46,8 @@ namespace CoreSystems
                 if (!ai.ScanInProgress && Tick - ai.TargetsUpdatedTick > 100 && DbTask.IsComplete)
                     ai.RequestDbUpdate();
 
-                if (ai.DeadProjectiles.Count > 0) 
-                {
-                    foreach (var dead in ai.DeadProjectiles)
-                        ai.LiveProjectile.Remove(dead);
+                if (ai.DeadProjectiles.Count > 0) {
+                    for (int i = 0; i < ai.DeadProjectiles.Count; i++) ai.LiveProjectile.Remove(ai.DeadProjectiles[i]);
                     ai.DeadProjectiles.Clear();
                     ai.LiveProjectileTick = Tick;
                 }
