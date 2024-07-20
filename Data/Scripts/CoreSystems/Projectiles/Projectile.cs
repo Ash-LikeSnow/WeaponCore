@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using CoreSystems.Platform;
@@ -237,7 +237,7 @@ namespace CoreSystems.Projectiles
                 {
                     Vector3D targetDir;
                     Vector3D targetPos;
-                    if (TrajectoryEstimation(Info.AmmoDef, w, ref Position, out targetDir, out targetPos))
+                    if (TrajectoryEstimation(Info.AmmoDef, ref Position, out targetDir, out targetPos, false))
                         TargetPosition = targetPos;
 
                     TargetPosition -= (Direction * variance);
@@ -3078,7 +3078,7 @@ namespace CoreSystems.Projectiles
             Info.Storage.PickTarget = false;
         }
 
-        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, Weapon weapon, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition)
+        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition, bool isTimedSpawn)
         {
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
@@ -3108,7 +3108,11 @@ namespace CoreSystems.Projectiles
             }
 
             var targetVel = eTarget != null ? eTarget.GetTopMostParent().Physics.LinearVelocity : (Vector3)pTarget.Velocity;
-            var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
+            Vector3D shooterVel = Vector3D.Zero;
+            if (isTimedSpawn)
+                shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
+            else
+                shooterVel = Info.ShooterVel;
 
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed * (weapon == null ? 1 : weapon.VelocityMult);
             Vector3D deltaPos = targetPos - shooterPos;
@@ -3143,9 +3147,8 @@ namespace CoreSystems.Projectiles
             if (timeToIntercept < 0)
             {
 
-                if (aConst.FragPointType == PointTypes.Lead)
+                if (aConst.TimedFragments && aConst.FragPointType == PointTypes.Lead)
                 {
-
                     estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
                     targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
                     return true;
@@ -3155,7 +3158,6 @@ namespace CoreSystems.Projectiles
                 targetDirection = Direction;
                 return false;
             }
-
             estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
             targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
             return true;
@@ -3589,7 +3591,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     Vector3D estimatedTargetPos;
-                    if (!TrajectoryEstimation(fragAmmoDef, null, ref newOrigin, out pointDir, out estimatedTargetPos))
+                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir, out estimatedTargetPos, true))
                         continue;
                 }
 
