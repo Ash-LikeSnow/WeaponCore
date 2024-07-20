@@ -2213,27 +2213,20 @@ namespace CoreSystems.Projectiles
                     SpawnShrapnel();
                 else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                 {
-                    var topEnt = ((MyEntity)Info.Target.TargetObject).GetTopMostParent();
-                    var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
-                    if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, Position) <= inflatedSize * inflatedSize)
+                    var targEnt = (MyEntity)Info.Target.TargetObject;
+                    if (Vector3D.DistanceSquared(targEnt.PositionComp.WorldAABB.Center, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
                 }
                 else if (Info.Target.TargetObject is Projectile)
                 {
                     var projectile = (Projectile)Info.Target.TargetObject;
-                    var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
-                    if (Vector3D.DistanceSquared(projectile.Position, Position) <= inflatedSize * inflatedSize)
-                    {
+                    if (Vector3D.DistanceSquared(projectile.Position, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
-                    }
                 }
                 else if (Info.Target.TargetState == Target.TargetStates.IsFake)
                 {
-                    var fakePos = Info.Target.TargetPos;
-                    if (Vector3D.DistanceSquared(fakePos, Position) <= aConst.FragProximity * aConst.FragProximity)
-                    {
+                    if (Vector3D.DistanceSquared(Info.Target.TargetPos, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
-                    }
                 }
             }
         }

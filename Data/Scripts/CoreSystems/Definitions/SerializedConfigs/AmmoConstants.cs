@@ -317,6 +317,7 @@ namespace CoreSystems.Support
         public readonly double MinOffsetLength;
         public readonly double MaxOffsetLength;
         public readonly double FragProximity;
+        public readonly double FragProximitySqr;
         public readonly double SmartOffsetSqr;
         public readonly double HeatModifier;
         public readonly double AccelInMetersPerSec;
@@ -445,7 +446,7 @@ namespace CoreSystems.Support
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
 
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmedWhenHit, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
-            TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone);
+            TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone, out FragProximitySqr);
 
             ArmorCoreActive = Session.I.ArmorCoreActive;
 
@@ -803,7 +804,7 @@ namespace CoreSystems.Support
             fragOffset = ammo.AmmoDef.Fragment.AdvOffset;
         }
 
-        private void TimedSpawn(WeaponSystem.AmmoType ammo, out bool timedFragments, out int startTime, out int interval, out int maxSpawns, out int groupSize, out int groupDelay, out double proximity, out bool hasProximity, out bool parentDies, out bool pointAtTarget, out bool hasGroup, out PointTypes pointType, out float directAimCone, out bool useAimCone)
+        private void TimedSpawn(WeaponSystem.AmmoType ammo, out bool timedFragments, out int startTime, out int interval, out int maxSpawns, out int groupSize, out int groupDelay, out double proximity, out bool hasProximity, out bool parentDies, out bool pointAtTarget, out bool hasGroup, out PointTypes pointType, out float directAimCone, out bool useAimCone, out double proximitySqr)
         {
             timedFragments = ammo.AmmoDef.Fragment.TimedSpawns.Enable && HasFragment;
             startTime = ammo.AmmoDef.Fragment.TimedSpawns.StartTime;
@@ -819,6 +820,7 @@ namespace CoreSystems.Support
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
             useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0 && pointType == PointTypes.Direct;
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
+            proximitySqr = proximity * proximity;
         }
 
         private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool, out bool hasApproaches)
