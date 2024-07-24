@@ -259,6 +259,7 @@ namespace CoreSystems.Support
 
             internal FakeWorldTargetInfo GetFakeTargetInfo(Ai ai)
             {
+                var cleared = false;
                 if (TmpEntity != null && EntityId == TmpEntity.EntityId && TmpEntity.Physics != null && !TmpEntity.MarkedForClose && !TmpEntity.Closed)
                 {
                     if (Session.I.Tick != LastInfoTick)
@@ -273,15 +274,17 @@ namespace CoreSystems.Support
                         else if (Type == FakeType.Painted && EntityId != 0)
                         {
                             ClearMark(Session.I.Tick, MarkClearResons.PaintSwitchOrNoTargetInDb);
+                            cleared = true;
                         }
                     }
                 }
                 else if (Type == FakeType.Painted && EntityId != 0)
                 {
                     ClearMark(Session.I.Tick, MarkClearResons.NoTarget);
+                    cleared = true;
                 }
 
-                return FakeInfo;
+                return cleared ? null : FakeInfo;
             }
 
             internal enum MarkClearResons
