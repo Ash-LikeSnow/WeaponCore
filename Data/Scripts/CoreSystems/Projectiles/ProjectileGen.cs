@@ -220,7 +220,6 @@ namespace CoreSystems.Projectiles
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         var condition4 = target.TargetState == Target.TargetStates.IsFake;
                         var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
-                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition5);
                         var condition6 = !notSmart && target.TargetObject is MyCubeGrid && targetSphere.Contains(target.TargetPos) == ContainmentType.Contains; //TargetGridCenter cases for subgrids
                         var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition5 || condition6);
 
