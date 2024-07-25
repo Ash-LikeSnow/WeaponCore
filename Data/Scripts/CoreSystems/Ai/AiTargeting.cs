@@ -244,25 +244,24 @@ namespace CoreSystems.Support
                 Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 Vector3D predictedPos;
-                if (w.System.TargetGridCenter)
-                {
-                    if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
-                    double rayDist;
-                    Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
-                    var shortDist = rayDist;
-                    var origDist = rayDist;
-                    var topEntId = info.Target.GetTopMostParent().EntityId;
-                    target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
-                    target.TransferTo(w.Target, Session.I.Tick);
-
-                    if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        Session.I.NewThreat(w);
-                    return true;
-                }
 
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
+                    if (w.System.TargetGridCenter)
+                    {
+                        if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
+                        double rayDist;
+                        Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
+                        var shortDist = rayDist;
+                        var origDist = rayDist;
+                        var topEntId = info.Target.GetTopMostParent().EntityId;
+                        target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
+                        target.TransferTo(w.Target, Session.I.Tick);
+                        if (w.Target.TargetState == Target.TargetStates.IsEntity)
+                            Session.I.NewThreat(w);
+                        return true;
+                    }
                     session.CanShoot++;
                     Vector3D newCenter;
                     if (!w.TurretController && !w.RotorTurretTracking)
