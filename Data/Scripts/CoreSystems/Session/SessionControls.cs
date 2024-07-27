@@ -288,6 +288,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMinSizeControl(session);
             CreateCustomActions<T>.CreateLargeGridControl(session);
             CreateCustomActions<T>.CreateSmallGridControl(session);
+            CreateCustomActions<T>.CreateWeaponCameraChannels(session);
         }
 
         internal static void CreateCustomActionSetArmorEnhancer<T>(Session session) where T: IMyTerminalBlock
