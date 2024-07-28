@@ -1054,7 +1054,7 @@ namespace CoreSystems.Api
         {
             var topEntity = shooter.GetTopMostParent();
 
-            if (topEntity != null)
+            if (topEntity != null && target != null)
             {
                 Ai ai;
                 if (Session.I.EntityToMasterAi.TryGetValue(topEntity, out ai))

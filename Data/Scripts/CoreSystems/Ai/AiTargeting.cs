@@ -228,7 +228,7 @@ namespace CoreSystems.Support
                 var character = info.Target as IMyCharacter;
 
                 var targetRadius = character != null ? info.TargetRadius * 5 : info.TargetRadius;
-                if (targetRadius < minTargetRadius || info.TargetRadius > maxTargetRadius && maxTargetRadius < 8192 || !focusTarget && info.OffenseRating <= 0) continue;
+                if (targetRadius <= minTargetRadius || info.TargetRadius >= maxTargetRadius && maxTargetRadius < 8192 || !focusTarget && info.OffenseRating <= 0) continue;
                 
                 var targetCenter = info.Target.PositionComp.WorldAABB.Center;
                 var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
@@ -437,7 +437,7 @@ namespace CoreSystems.Support
 
 
                 var targetRadius = character != null ? info.Target.PositionComp.LocalVolume.Radius * 5 : info.Target.PositionComp.LocalVolume.Radius;
-                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
+                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var targetCenter = info.Target.PositionComp.WorldAABB.Center;
                 var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
@@ -604,7 +604,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var targetRadius = lpaConst.CollisionSize;
-                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
+                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
 
@@ -811,7 +811,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var targetRadius = tInfo.Target.PositionComp.LocalVolume.Radius;
-                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192 || topTarget != null && tInfo.Target != topTarget) continue;
+                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192 || topTarget != null && tInfo.Target != topTarget) continue;
                 if (water != null)
                 {
                     if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetPos, targetRadius)) == ContainmentType.Contains)
@@ -916,7 +916,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var targetRadius = lpaConst.CollisionSize;
-                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
+                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var needsCast = false;
 
@@ -1789,7 +1789,7 @@ namespace CoreSystems.Support
 
                 var character = info.Target as IMyCharacter;
                 var targetRadius = character != null ? info.TargetRadius * 5 : info.TargetRadius;
-                if (targetRadius < minTargetRadius || info.TargetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
+                if (targetRadius <= minTargetRadius || info.TargetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var targetCenter = info.Target.PositionComp.WorldAABB.Center;
                 var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
