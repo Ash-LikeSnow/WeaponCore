@@ -496,22 +496,9 @@ namespace CoreSystems.Platform
                 }
 
                 //was run only on weapon first build, needs to run every reset as well
-                try
-                {
-                    foreach (var emissive in weapon.System.PartEmissiveSet)
-                    {
-                        if (emissive.Value.EmissiveParts == null) continue;
-
-                        foreach (var part in emissive.Value.EmissiveParts)
-                        {
-                            Parts.SetEmissiveParts(part, Color.Transparent, 0);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    //cant check for emissives so may be null ref
-                }
+                foreach (var emissive in weapon.System.EmissiveLookup.Values)
+                    foreach (var item in emissive.EmissivePartNames)
+                        Parts.SetEmissiveParts(item, Color.Transparent, 0);               
 
                 if (Comp.IsBlock && weapon.Comp.FunctionalBlock.Enabled)
                     if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
@@ -667,23 +654,9 @@ namespace CoreSystems.Platform
                         }
                     }
 
-                    //was run only on weapon first build, needs to run every reset as well
-                    try
-                    {
-                        foreach (var emissive in weapon.System.PartEmissiveSet)
-                        {
-                            if (emissive.Value.EmissiveParts == null) continue;
-
-                            foreach (var part in emissive.Value.EmissiveParts)
-                            {
-                                Parts.SetEmissiveParts(part, Color.Transparent, 0);
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        //cant check for emissives so may be null ref
-                    }
+                    foreach (var emissive in weapon.System.EmissiveLookup.Values)
+                        foreach (var item in emissive.EmissivePartNames)
+                            Parts.SetEmissiveParts(item, Color.Transparent, 0);
 
                     if (Comp.IsBlock && weapon.Comp.IsWorking)
                         if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
