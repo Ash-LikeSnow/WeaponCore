@@ -63,7 +63,7 @@ namespace CoreSystems.Platform
                             w.TargetData.WeaponRandom.Init(w);
 
                             w.XorRnd = new XorShiftRandomStruct((ulong) w.TargetData.WeaponRandom.CurrentSeed);
-
+                            Log.Line($"WeaponData Load() for {w.FriendlyName} - XorRnd seed: {w.TargetData.WeaponRandom.CurrentSeed}");
                         }
                         else
                         {

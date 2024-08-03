@@ -80,8 +80,12 @@ namespace CoreSystems
         public void Init(Weapon w)
         {
             if (Session.I.IsServer)
+            {
                 CurrentSeed = int.MaxValue - w.UniquePartId;
-            else 
+                Log.Line($"Weapon Init for {w.FriendlyName} - CurrentSeed: {CurrentSeed}");
+            }
+
+            else
                 Session.I.WeaponLookUp[w.PartState.Id] = w;
 
             TurretRandom = new XorShiftRandomStruct((ulong)CurrentSeed);
