@@ -547,6 +547,7 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
             "WC_Shoot",
+            "WC_AngularTracking",
             "WC_Override",
             "WC_ShareFireControlEnabled",
             "WC_ControlModes",
@@ -570,7 +571,7 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>
         {
             "WC_Shoot",
-
+            "AngularTracking",
             "ShootToggle",
             "MinSize Decrease",
             "MinSize Increase",

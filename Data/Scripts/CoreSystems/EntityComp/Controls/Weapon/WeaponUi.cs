@@ -315,7 +315,7 @@ namespace CoreSystems
             s.AdvancedToggleTick = s.Tick;
             s.Settings.ClientConfig.AdvancedMode = !s.Settings.ClientConfig.AdvancedMode;
             s.Settings.VersionControl.UpdateClientCfgFile();
-            comp.Cube.UpdateTerminal();
+            comp.Cube.UpdateTerminalForced();
         }
 
         internal static bool GetDebug(IMyTerminalBlock block)
@@ -936,7 +936,7 @@ namespace CoreSystems
 
             var value = newValue ? 1 : 0;
             Weapon.WeaponComponent.RequestSetValue(comp, "Armed", value, Session.I.PlayerId);
-            comp.Cube.UpdateTerminalWarhead();            
+            comp.Cube.UpdateTerminalForced();            
         }
 
         internal static void TriggerCriticalReaction(IMyTerminalBlock block)
@@ -951,7 +951,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             Weapon.WeaponComponent.RequestCountDown(comp, true);
-            comp.Cube.UpdateTerminalWarhead();
+            comp.Cube.UpdateTerminalForced();
         }
 
         internal static void StopCountDown(IMyTerminalBlock block)
@@ -959,7 +959,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             Weapon.WeaponComponent.RequestCountDown(comp, false);
-            comp.Cube.UpdateTerminalWarhead();
+            comp.Cube.UpdateTerminalForced();
         }
 
         internal static bool ShowCamera(IMyTerminalBlock block)

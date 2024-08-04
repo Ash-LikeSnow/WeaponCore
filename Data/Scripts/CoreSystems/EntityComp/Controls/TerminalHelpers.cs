@@ -356,7 +356,7 @@ namespace CoreSystems.Control
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
-            comp.Cube.UpdateTerminalWarhead();
+            comp.Cube.UpdateTerminalForced();
 
             return !comp.Data.Repo.Values.State.CountingDown;
         }

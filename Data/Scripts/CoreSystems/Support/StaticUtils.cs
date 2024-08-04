@@ -162,7 +162,7 @@ namespace CoreSystems.Support
             */
         }
 
-        public static void UpdateTerminalWarhead(this MyCubeBlock block)
+        public static void UpdateTerminalForced(this MyCubeBlock block)
         {
             ((IMyTerminalBlock)block).SetDetailedInfoDirty();
             try
