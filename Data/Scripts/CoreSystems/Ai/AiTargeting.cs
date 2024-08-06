@@ -244,25 +244,24 @@ namespace CoreSystems.Support
                 Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 Vector3D predictedPos;
-                if (w.System.TargetGridCenter)
-                {
-                    if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
-                    double rayDist;
-                    Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
-                    var shortDist = rayDist;
-                    var origDist = rayDist;
-                    var topEntId = info.Target.GetTopMostParent().EntityId;
-                    target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
-                    target.TransferTo(w.Target, Session.I.Tick);
-
-                    if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        Session.I.NewThreat(w);
-                    return true;
-                }
 
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
+                    if (w.System.TargetGridCenter)
+                    {
+                        if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
+                        double rayDist;
+                        Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
+                        var shortDist = rayDist;
+                        var origDist = rayDist;
+                        var topEntId = info.Target.GetTopMostParent().EntityId;
+                        target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
+                        target.TransferTo(w.Target, Session.I.Tick);
+                        if (w.Target.TargetState == Target.TargetStates.IsEntity)
+                            Session.I.NewThreat(w);
+                        return true;
+                    }
                     session.CanShoot++;
                     Vector3D newCenter;
                     if (!w.TurretController && !w.RotorTurretTracking)
@@ -291,7 +290,7 @@ namespace CoreSystems.Support
                     if (w.FailedAcquires > 9 && !w.DelayedAcquire(info))
                         continue;
                         
-                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, !focusTarget))
+                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, !focusTarget))
                         continue;
 
                     target.TransferTo(w.Target, Session.I.Tick);
@@ -992,16 +991,13 @@ namespace CoreSystems.Support
             if (system.TargetSubSystems)
             {
                 var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
-                var subSystems = system.Values.Targeting.SubSystems;
-                var focusSubSystem = overRides.FocusSubSystem || overRides.FocusSubSystem;
 
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
-                var subSystem = overRides.SubSystem;
 
-                foreach (var blockType in subSystems)
+                foreach (var blockType in system.Values.Targeting.SubSystems)
                 {
-                    var bt = focusSubSystem ? subSystem : blockType;
+                    var bt = overRides.FocusSubSystem ? overRides.SubSystem : blockType;
 
                     ConcurrentDictionary<BlockTypes, ConcurrentCachingList<MyCubeBlock>> blockTypeMap;
                     Session.I.GridToBlockTypeMap.TryGetValue((MyCubeGrid)info.Target, out blockTypeMap);
@@ -1020,10 +1016,10 @@ namespace CoreSystems.Support
                         else if (FindRandomBlock(w, target, info, subSystemList, ref waterSphere, ref xRnd, p, checkPower)) return true;
                     }
 
-                    if (focusSubSystem) break;
+                    if (overRides.FocusSubSystem) break;
                 }
 
-                if (system.OnlySubSystems || focusSubSystem && subSystem != Any) return false;
+                if (system.OnlySubSystems || overRides.FocusSubSystem && overRides.SubSystem != Any) return false;
             }
             TopMap topMap;
             return Session.I.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
@@ -1073,10 +1069,8 @@ namespace CoreSystems.Support
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
 
             int checkSize;
-            if (w.System.CycleBlocks <= 0)
+            if (w.System.CycleBlocks <= 0 || w.System.CycleBlocks >= totalBlocks)
                 checkSize = totalBlocks;
-            else if (w.System.CycleBlocks > totalBlocks)
-                checkSize = w.System.CycleBlocks - totalBlocks;
             else
                 checkSize = w.System.CycleBlocks;
 
@@ -1827,7 +1821,7 @@ namespace CoreSystems.Support
                             continue;
                     }
 
-                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, true)) continue;
+                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, true)) continue;
                     target.TransferTo(w.Target, Session.I.Tick, true);
 
                     var validTarget = w.Target.TargetState == Target.TargetStates.IsEntity;

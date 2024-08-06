@@ -177,6 +177,9 @@ namespace CoreSystems.Control
             AddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
 
             AddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
+
+            AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
+
         }
         internal static void AddDecoyControls<T>(Session session) where T : IMyTerminalBlock
         {
@@ -353,7 +356,7 @@ namespace CoreSystems.Control
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
-            comp.Cube.UpdateTerminalWarhead();
+            comp.Cube.UpdateTerminalForced();
 
             return !comp.Data.Repo.Values.State.CountingDown;
         }

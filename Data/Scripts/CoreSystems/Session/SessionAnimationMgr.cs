@@ -16,7 +16,7 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        internal static void CreateAnimationSets(AnimationDef animations, CoreSystem system, out Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets, out Dictionary<string, EmissiveState> weaponEmissivesSet, out Dictionary<string, Matrix[]> weaponLinearMoveSet, out HashSet<string> animationIdLookup, out Dictionary<EventTriggers, uint> animationLengths, out string[] heatingSubpartNames, out Dictionary<EventTriggers, ParticleEvent[]> particleEvents)
+        internal static void CreateAnimationSets(AnimationDef animations, CoreSystem system, out Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets, out Dictionary<string, EmissiveState> weaponEmissivesSet, out Dictionary<string, Matrix[]> weaponLinearMoveSet, out HashSet<string> animationIdLookup, out Dictionary<EventTriggers, uint> animationLengths, out string[] heatingSubpartNames, out Dictionary<EventTriggers, ParticleEvent[]> particleEvents, out Dictionary<string, PartEmissive> emissiveLookup)
         {
             weaponAnimationSets = new Dictionary<EventTriggers, PartAnimation[]>();
             particleEvents = new Dictionary<EventTriggers, ParticleEvent[]>();
@@ -25,9 +25,7 @@ namespace CoreSystems
             animationLengths = new Dictionary<EventTriggers, uint>();
             weaponLinearMoveSet = new Dictionary<string, Matrix[]>();
 
-            var emissiveLookup = new Dictionary<string, PartEmissive>();
-
-            CompileHeating(animations, emissiveLookup, out heatingSubpartNames);
+            CompileHeating(animations, out emissiveLookup, out heatingSubpartNames);
 
             CompileParticles(animations, particleEvents);
 
@@ -277,8 +275,9 @@ namespace CoreSystems
             }
         }
 
-        private static void CompileHeating(AnimationDef animations, Dictionary<string, PartEmissive> emissiveLookup, out string[] heatingSubpartNames)
+        private static void CompileHeating(AnimationDef animations, out Dictionary<string, PartEmissive> emissiveLookup, out string[] heatingSubpartNames)
         {
+            emissiveLookup = new Dictionary<string, PartEmissive>();
             if (animations.HeatingEmissiveParts != null && animations.HeatingEmissiveParts.Length > 0)
                 heatingSubpartNames = animations.HeatingEmissiveParts;
             else
