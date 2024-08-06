@@ -110,7 +110,7 @@ namespace CoreSystems.Platform
         internal LineD MyAimTestLine;
         internal LineD MyShootAlignmentLine;
         internal LineD AzimuthFwdLine;
-        internal XorShiftRandomStruct XorRnd; //Consider for deletion in favor of w.TargetData.WeaponRandom.AcquireRandom or TurretRandom
+        internal XorShiftRandomStruct XorRnd;
 
         internal MyOrientedBoundingBoxD TargetBox;
         internal LineD LimitLine;
