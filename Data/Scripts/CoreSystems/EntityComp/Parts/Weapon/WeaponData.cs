@@ -1,7 +1,6 @@
 ﻿using System;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -61,9 +60,7 @@ namespace CoreSystems.Platform
                             w.TargetData = Repo.Values.Targets[i];
                             w.TargetData.WeaponRandom = new WeaponRandomGenerator();
                             w.TargetData.WeaponRandom.Init(w);
-
                             w.XorRnd = new XorShiftRandomStruct((ulong) w.TargetData.WeaponRandom.CurrentSeed);
-
                         }
                         else
                         {
@@ -73,13 +70,9 @@ namespace CoreSystems.Platform
                             w.TargetData = Repo.Values.Targets[i];
                             w.TargetData.WeaponRandom.Init(w);
                             w.XorRnd = new XorShiftRandomStruct((ulong)w.TargetData.WeaponRandom.CurrentSeed);
-
-
                             if (w.Reload.AmmoTypeId >= w.System.AmmoTypes.Length)
                                 w.Reload.AmmoTypeId = 0;
                         }
-
-
                     }
                 }
                 else

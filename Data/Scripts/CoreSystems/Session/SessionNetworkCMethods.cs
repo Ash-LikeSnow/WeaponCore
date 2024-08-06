@@ -3,6 +3,7 @@ using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using static CoreSystems.Session;
 using static CoreSystems.Support.Ai;
@@ -350,14 +351,11 @@ namespace CoreSystems
             var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
 
             Ai ai;
-            MyEntity pTarget;
-            if (entity != null && EntityAIs.TryGetValue(entity, out ai) && MyEntities.TryGetEntityById(targetPacket.TargetId, out pTarget, true))
+            if (entity != null && EntityAIs.TryGetValue(entity, out ai))
             {
-
                 long playerId;
                 if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
                 {
-
                     FakeTargets dummyTargets;
                     if (PlayerDummyTargets.TryGetValue(playerId, out dummyTargets))
                     {

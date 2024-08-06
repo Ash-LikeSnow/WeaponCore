@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CoreSystems.Platform;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
@@ -237,7 +235,7 @@ namespace CoreSystems.Projectiles
                 {
                     Vector3D targetDir;
                     Vector3D targetPos;
-                    if (TrajectoryEstimation(Info.AmmoDef, w, ref Position, out targetDir, out targetPos))
+                    if (TrajectoryEstimation(Info.AmmoDef, ref Position, out targetDir, out targetPos, false))
                         TargetPosition = targetPos;
 
                     TargetPosition -= (Direction * variance);
@@ -248,7 +246,7 @@ namespace CoreSystems.Projectiles
 
             PrevTargetVel = Vector3D.Zero;
 
-            var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed * w.VelocityMult : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);
+            var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);
 
             if (aConst.SpeedVariance && !aConst.IsBeamWeapon)
             {
@@ -2215,27 +2213,20 @@ namespace CoreSystems.Projectiles
                     SpawnShrapnel();
                 else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                 {
-                    var topEnt = ((MyEntity)Info.Target.TargetObject).GetTopMostParent();
-                    var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
-                    if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, Position) <= inflatedSize * inflatedSize)
+                    var targEnt = (MyEntity)Info.Target.TargetObject;
+                    if (Vector3D.DistanceSquared(targEnt.PositionComp.WorldAABB.Center, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
                 }
                 else if (Info.Target.TargetObject is Projectile)
                 {
                     var projectile = (Projectile)Info.Target.TargetObject;
-                    var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
-                    if (Vector3D.DistanceSquared(projectile.Position, Position) <= inflatedSize * inflatedSize)
-                    {
+                    if (Vector3D.DistanceSquared(projectile.Position, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
-                    }
                 }
                 else if (Info.Target.TargetState == Target.TargetStates.IsFake)
                 {
-                    var fakePos = Info.Target.TargetPos;
-                    if (Vector3D.DistanceSquared(fakePos, Position) <= aConst.FragProximity * aConst.FragProximity)
-                    {
+                    if (Vector3D.DistanceSquared(Info.Target.TargetPos, Position) <= aConst.FragProximitySqr)
                         SpawnShrapnel();
-                    }
                 }
             }
         }
@@ -3078,7 +3069,7 @@ namespace CoreSystems.Projectiles
             Info.Storage.PickTarget = false;
         }
 
-        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, Weapon weapon, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition)
+        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition, bool isTimedSpawn)
         {
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
@@ -3108,9 +3099,13 @@ namespace CoreSystems.Projectiles
             }
 
             var targetVel = eTarget != null ? eTarget.GetTopMostParent().Physics.LinearVelocity : (Vector3)pTarget.Velocity;
-            var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
+            Vector3D shooterVel = Vector3D.Zero;
+            if (isTimedSpawn)
+                shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
+            else
+                shooterVel = Info.ShooterVel;
 
-            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed * (weapon == null ? 1 : weapon.VelocityMult);
+            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
             Vector3D deltaPosNorm;
@@ -3143,9 +3138,8 @@ namespace CoreSystems.Projectiles
             if (timeToIntercept < 0)
             {
 
-                if (aConst.FragPointType == PointTypes.Lead)
+                if (aConst.TimedFragments && aConst.FragPointType == PointTypes.Lead)
                 {
-
                     estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
                     targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
                     return true;
@@ -3155,7 +3149,6 @@ namespace CoreSystems.Projectiles
                 targetDirection = Direction;
                 return false;
             }
-
             estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
             targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
             return true;
@@ -3589,7 +3582,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     Vector3D estimatedTargetPos;
-                    if (!TrajectoryEstimation(fragAmmoDef, null, ref newOrigin, out pointDir, out estimatedTargetPos))
+                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir, out estimatedTargetPos, true))
                         continue;
                 }
 
