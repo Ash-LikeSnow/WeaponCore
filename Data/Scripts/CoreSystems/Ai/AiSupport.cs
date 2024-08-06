@@ -247,13 +247,6 @@ namespace CoreSystems.Support
                 deck[i] = deck[j];
                 deck[j] = i + firstCard;
             }
-
-            var tempStr = "";
-            for (int k = 0; k < cardsToSort; k++)
-            {
-                tempStr += deck[k] + ", ";
-            }
-            if(cardsToSort>1) Log.CleanLine(tempStr);
             return deck;
         }
 
