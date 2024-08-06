@@ -81,11 +81,12 @@ namespace CoreSystems
         {
             if (Session.I.IsServer)
                 CurrentSeed = int.MaxValue - w.UniquePartId;
-            else 
+            else
                 Session.I.WeaponLookUp[w.PartState.Id] = w;
 
             TurretRandom = new XorShiftRandomStruct((ulong)CurrentSeed);
             AcquireRandom = new XorShiftRandomStruct((ulong)CurrentSeed);
+            AcquireRandom.NextBoolean();
         }
 
         public void Sync(WeaponRandomGenerator syncFrom)
