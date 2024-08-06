@@ -11,6 +11,7 @@ using VRageMath;
 using VRageRender;
 using static VRageRender.MyBillboard;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
+using System;
 namespace CoreSystems.Support
 {
     class RunAv
@@ -171,7 +172,7 @@ namespace CoreSystems.Support
                             }
                         }
                     }
-                    if (av.Hit.Entity != null && av.AmmoDef.AmmoGraphics.Decals.MaxAge > 0 && !Vector3D.IsZero(av.Hit.SurfaceHit) && av.AmmoDef.Const.TextureHitMap.Count > 0 && !av.Hit.Entity.MarkedForClose && av.Hit.Entity.InScene)
+                    if (av.Hit.Entity != null && av.AmmoDef.AmmoGraphics.Decals.MaxAge > 0 && !Vector3D.IsZero(av.Hit.SurfaceHit) && av.AmmoDef.Const.TextureHitMap.Count > 0 && !av.Hit.Entity.MarkedForClose && av.Hit.Entity.InScene && !Vector3D.IsZero(av.Direction))
                     {
                         var shield = av.Hit.Entity as IMyUpgradeModule;
                         var floating = av.Hit.Entity as MyFloatingObject;
@@ -201,7 +202,15 @@ namespace CoreSystems.Support
                                     Normal = av.Direction,
                                 };
 
-                                MyDecals.HandleAddDecal(av.Hit.Entity, hitInfo, Vector3.Zero, materialType, projectileMaterial, null, -1, voxelMaterial, false, MyDecalFlags.IgnoreOffScreenDeletion, MyAPIGateway.Session.GameplayFrameCounter + av.AmmoDef.AmmoGraphics.Decals.MaxAge);
+                                try
+                                {
+                                    MyDecals.HandleAddDecal(av.Hit.Entity, hitInfo, Vector3.Zero, materialType, projectileMaterial, null, -1, voxelMaterial, false, MyDecalFlags.IgnoreOffScreenDeletion, MyAPIGateway.Session.GameplayFrameCounter + av.AmmoDef.AmmoGraphics.Decals.MaxAge);
+                                }
+                                catch (Exception e)
+                                {
+                                    // Log the error or handle it appropriately
+                                    Log.Line($"Error adding decal: {e.Message}");
+                                }
                             }
                         }
                     }
