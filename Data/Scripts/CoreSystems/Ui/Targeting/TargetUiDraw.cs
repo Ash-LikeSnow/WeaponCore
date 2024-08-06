@@ -217,8 +217,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     continue;
 
                 var textColor = new Vector4(repColor.X, repColor.Y, repColor.Z, cMod1 * repColor.W);
-
-                var targetCenter = fakeTarget.GetFakeTargetInfo(s.TrackingAi).WorldPosition;
+                var fakeTargInfo = fakeTarget.GetFakeTargetInfo(s.TrackingAi);
+                if (fakeTargInfo == null)
+                    continue;
+                var targetCenter = fakeTargInfo.WorldPosition;
                 var viewSphere = new BoundingSphereD(targetCenter, 100f);
                 if (!s.Camera.IsInFrustum(ref viewSphere))
                     continue;

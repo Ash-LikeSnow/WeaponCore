@@ -288,6 +288,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMinSizeControl(session);
             CreateCustomActions<T>.CreateLargeGridControl(session);
             CreateCustomActions<T>.CreateSmallGridControl(session);
+            CreateCustomActions<T>.CreateWeaponCameraChannels(session);
         }
 
         internal static void CreateCustomActionSetArmorEnhancer<T>(Session session) where T: IMyTerminalBlock
@@ -546,6 +547,7 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
             "WC_Shoot",
+            "WC_AngularTracking",
             "WC_Override",
             "WC_ShareFireControlEnabled",
             "WC_ControlModes",
@@ -569,7 +571,7 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>
         {
             "WC_Shoot",
-
+            "AngularTracking",
             "ShootToggle",
             "MinSize Decrease",
             "MinSize Increase",

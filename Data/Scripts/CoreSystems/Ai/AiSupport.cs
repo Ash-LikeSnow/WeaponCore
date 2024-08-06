@@ -247,7 +247,6 @@ namespace CoreSystems.Support
                 deck[i] = deck[j];
                 deck[j] = i + firstCard;
             }
-
             return deck;
         }
 
