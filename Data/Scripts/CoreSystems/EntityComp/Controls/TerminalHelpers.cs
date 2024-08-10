@@ -38,6 +38,8 @@ namespace CoreSystems.Control
         {
             AddComboboxNoAction<T>(session, "ControlModes", Localization.GetText("TerminalControlModesTitle"), Localization.GetText("TerminalControlModesTooltip"), BlockUi.GetControlMode, BlockUi.RequestControlMode, BlockUi.ListControlModes, TurretOrGuidedAmmo);
 
+            AddComboboxNoAction<T>(session, "ObjectiveMode", "Objective Mode", "Select when to cease firing at a block", BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, HasTracking);
+
             AddComboboxNoAction<T>(session, "PickAmmo", Localization.GetText("TerminalPickAmmoTitle"), Localization.GetText("TerminalPickAmmoTooltip"), BlockUi.GetAmmos, BlockUi.RequestSetAmmo, BlockUi.ListAmmos, AmmoSelection);
 
             AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystem, BlockUi.RequestSubSystem, BlockUi.ListSubSystems, HasTracking);

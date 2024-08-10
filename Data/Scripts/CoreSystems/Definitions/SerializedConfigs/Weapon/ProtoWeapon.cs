@@ -606,6 +606,13 @@ namespace CoreSystems
             Painter,
         }
 
+        public enum ObjectiveModes
+        {
+            Default,
+            Disabled,
+            Destroyed,
+        }
+
         [ProtoMember(1)] public bool Neutrals;
         [ProtoMember(2)] public bool Unowned;
         [ProtoMember(3)] public bool Friendly;
@@ -641,6 +648,8 @@ namespace CoreSystems
         [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
         [ProtoMember(34)] public bool AngularTracking;
         [ProtoMember(35), DefaultValue(true)] public bool SupportingPD = true;
+        [ProtoMember(36), DefaultValue(ObjectiveModes.Default)] public ObjectiveModes ObjectiveMode = ObjectiveModes.Default;
+
 
 
 

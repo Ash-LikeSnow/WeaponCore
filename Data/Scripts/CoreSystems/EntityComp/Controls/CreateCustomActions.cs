@@ -411,7 +411,21 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
-        
+        internal static void CreateObjectiveMode(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ObjectiveMode");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Cycle Objective Mode");//Need localization input
+            action.Action = CustomActions.TerminActionCycleObjectiveMode;
+            action.Writer = CustomActions.ObjectiveModeWriter;
+            action.Enabled = TerminalHelpers.HasTracking;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+
         public static void CreateFocusTargets(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("FocusTargets");
