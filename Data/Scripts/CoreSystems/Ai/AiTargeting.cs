@@ -290,7 +290,7 @@ namespace CoreSystems.Support
                     if (w.FailedAcquires > 9 && !w.DelayedAcquire(info))
                         continue;
                         
-                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, !focusTarget))
+                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, focusTarget))
                         continue;
 
                     target.TransferTo(w.Target, Session.I.Tick);
@@ -822,7 +822,7 @@ namespace CoreSystems.Support
 
                     if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || !aConst.CheckFutureIntersection && Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
 
-                    if (!AcquireBlock(w, target, tInfo, ref waterSphere, ref info.Random, p, !focusTarget)) continue;
+                    if (!AcquireBlock(w, target, tInfo, ref waterSphere, ref info.Random, p, focusTarget)) continue;
                     acquired = true;
                     break;
                 }
@@ -985,13 +985,15 @@ namespace CoreSystems.Support
 
             return found;
         }
-        private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
+        private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool focusedTarget)
         {
             var system = w.System;
+            var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
+            
+            var checkPower = overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && !focusedTarget || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled; 
             if (system.TargetSubSystems)
             {
-                var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
-
+                
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
 
@@ -1025,7 +1027,7 @@ namespace CoreSystems.Support
             return Session.I.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
         }
 
-        private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
+        private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower)
         {
             var totalBlocks = subSystemList.Count;
             var system = w.System;
@@ -1821,7 +1823,7 @@ namespace CoreSystems.Support
                             continue;
                     }
 
-                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, true)) continue;
+                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.TargetData.WeaponRandom.AcquireRandom, null, false)) continue;
                     target.TransferTo(w.Target, Session.I.Tick, true);
 
                     var validTarget = w.Target.TargetState == Target.TargetStates.IsEntity;

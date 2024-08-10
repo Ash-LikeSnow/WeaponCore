@@ -247,6 +247,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateLargeGrid(session);
             CreateCustomActions<T>.CreateSmallGrid(session);
             CreateCustomActions<T>.CreateAngularTracking(session);
+            CreateCustomActions<T>.CreateObjectiveMode(session);
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock
