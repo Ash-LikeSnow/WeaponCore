@@ -538,11 +538,6 @@ namespace CoreSystems.Support
             DynamicGuidance = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.TravelTo && !IsBeamWeapon;
 
             if (CollisionSize > 5 && !Session.I.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
-            if (FeelsGravity && !IsSmart && system.TrackTargets && (system.Prediction == Prediction.Off || system.Prediction == Prediction.Basic) && ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed > 0.5f)
-            {
-                var flightTime = ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed;
-                Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
-            }
 
             FullSync = ammo.AmmoDef.Sync.Full && Session.I.MpActive && (IsDrone || IsSmart);
             PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && Session.I.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
