@@ -183,7 +183,7 @@ namespace CoreSystems.Control
         internal static void TerminActionCycleObjectiveMode(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || !BlockUi.ShootModeChangeReady(comp))
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.ObjectiveMode;
@@ -700,7 +700,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.ObjectiveMode.ToString());
+            sb.Append(comp.Data.Repo.Values.Set.Overrides.ObjectiveMode);
         }
 
         private const string InActive = "Inactive";

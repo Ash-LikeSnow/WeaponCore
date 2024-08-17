@@ -686,7 +686,7 @@ namespace CoreSystems
             LargeGrid = syncFrom.LargeGrid;
             SmallGrid = syncFrom.SmallGrid;
             SupportingPD = syncFrom.SupportingPD;
-
+            ObjectiveMode = syncFrom.ObjectiveMode;
         }
     }
 }
