@@ -433,12 +433,6 @@ namespace CoreSystems.Projectiles
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
-            //temp "PD Ghost" debug stuff
-            if (dmgTotal > 0 && Session.I.DedicatedServer && Session.I.Settings.Enforcement.Debug == 1 && Info.AmmoDef.Health > 0)
-            {
-                Log.Line($"DEBUG Projectile {Info.Id} - {Info.AmmoDef.AmmoRound} closed after doing damage");
-            }
-
             if (!Info.IsFragment && (aConst.IsDrone || aConst.IsSmart)) 
                 Info.Weapon.LiveSmarts--;
 
@@ -792,6 +786,374 @@ namespace CoreSystems.Projectiles
                     var displacement = 0.1 * Velocity;
                     session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
                 }
+            }
+        }
+
+        internal void RunSmartTry() // Temp for debugging NRE in RunSmart
+        {
+            try
+            {
+                Vector3D proposedVel = Velocity;
+
+                var ammo = Info.AmmoDef;
+                var aConst = ammo.Const;
+                var s = Info.Storage;
+                var w = Info.Weapon;
+                var comp = w.Comp;
+                var coreParent = comp.TopEntity;
+                var startTrack = s.SmartReady || coreParent.MarkedForClose;
+                var ai = Info.Ai;
+                var session = Session.I;
+                var speedCapMulti = 1d;
+
+                if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
+                {
+                    if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
+                        TimedSpawns(aConst);
+                }
+
+                var targetLock = false;
+                var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
+                if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
+                {
+                    var lineCheck = new LineD(Position, TargetPosition);
+                    startTrack = aConst.NoTargetApproach || !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
+                }
+
+                if (startTrack)
+                {
+                    s.SmartReady = true;
+                    var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
+                    var hadTarget = HadTarget != HadTargetState.None;
+                    var clientSync = aConst.FullSync && Session.I.AdvSyncClient;
+
+                    var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
+                    var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
+                    bool validEntity = false;
+                    if (Info.Target.TargetState == Target.TargetStates.IsEntity)
+                    {
+                        var targetEnt = (MyEntity)Info.Target.TargetObject;
+                        validEntity = !targetEnt.MarkedForClose;
+
+                        var targetChange = validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target;
+                        if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target > 0))
+                            validEntity = IsFocusTarget(targetEnt);
+                    }
+
+                    var invalidate = !overMaxTargets || clientSync;
+                    var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && invalidate;
+                    var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
+
+                    var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % checkTime;
+                    var currentSlotAge = (Info.RelativeAge + s.SmartSlot) % checkTime;
+                    var timeSlot = prevSlotAge < 0 || prevSlotAge > currentSlotAge;
+                    var prevZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
+                    var currentZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
+                    var zombieSlot = prevZombieAge < 0 || prevZombieAge > currentZombieAge;
+
+                    var prevCheck = Info.PrevRelativeAge % checkTime;
+                    var currentCheck = Info.RelativeAge % checkTime;
+                    var check = prevCheck < 0 || prevCheck > currentCheck;
+
+                    var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
+                    var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
+                    var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
+                    #region TargetTracking
+                    if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
+                    {
+                        if (s.ZombieLifeTime > 0)
+                        {
+                            s.ZombieLifeTime = 0;
+                            OffSetTarget();
+                        }
+                        var targetPos = Vector3D.Zero;
+
+                        Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
+                        if (fake && s.DummyTargets != null)
+                        {
+                            var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
+                            fakeTargetInfo = fakeTarget.LastInfoTick != session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
+                            targetPos = fakeTargetInfo.WorldPosition;
+                            HadTarget = HadTargetState.Fake;
+                        }
+                        else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
+                        {
+                            targetPos = ((Projectile)Info.Target.TargetObject).Position;
+                            HadTarget = HadTargetState.Projectile;
+                        }
+                        else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
+                        {
+                            targetPos = ((MyEntity)Info.Target.TargetObject).PositionComp.WorldAABB.Center;
+                            HadTarget = HadTargetState.Entity;
+                        }
+                        else
+                            HadTarget = HadTargetState.Other;
+
+                        if (aConst.TargetOffSet)
+                        {
+                            if (Info.RelativeAge - s.LastOffsetTime > 300)
+                            {
+                                double dist;
+                                Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
+                                if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
+                                    OffSetTarget();
+                            }
+                            targetPos += OffsetTarget;
+                        }
+
+                        TargetPosition = targetPos;
+                        targetLock = true;
+                        var eTarget = Info.Target.TargetObject as MyEntity;
+                        var physics = eTarget != null ? eTarget?.Physics ?? eTarget?.Parent?.Physics : null;
+
+                        var tVel = Vector3.Zero;
+                        if (fake && fakeTargetInfo != null) tVel = fakeTargetInfo.LinearVelocity;
+                        else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = ((Projectile)Info.Target.TargetObject).Velocity;
+                        else if (physics != null) tVel = physics.LinearVelocity;
+
+                        if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
+                        {
+                            if (s.WasTracking && Vector3.Dot(Direction, Vector3D.Normalize(targetPos - Position)) < aConst.TargetLossDegree)
+                            {
+                                s.PickTarget = true;
+                            }
+                            else if (!s.WasTracking)
+                                s.WasTracking = true;
+                        }
+
+                        PrevTargetVel = tVel;
+                    }
+                    else
+                    {
+                        var straightAhead = aConst.Roam && TargetPosition != Vector3D.Zero;
+                        TargetPosition = straightAhead ? TargetPosition : Position + (Direction * Info.MaxTrajectory);
+
+                        s.ZombieLifeTime += Session.I.DeltaTimeRatio;
+                        if (s.ZombieLifeTime > aConst.TargetLossTime && !aConst.KeepAliveAfterTargetLoss && (hadTarget || aConst.NoTargetExpire))
+                        {
+                            DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+                            EndState = EndStates.EarlyEnd;
+                        }
+
+                        if (aConst.Roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
+                        {
+
+                            double dist;
+                            Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
+                            if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - TargetPosition) > 0)
+                            {
+                                OffSetTarget(true);
+                                TargetPosition += OffsetTarget;
+                            }
+                        }
+                        else if (aConst.IsMine && s.LastActivatedStage >= 0)
+                        {
+                            ResetMine();
+                            return;
+                        }
+                    }
+                    #endregion
+
+                    var accelMpsMulti = speedLimitPerTick;
+                    bool disableAvoidance = false;
+                    bool zeroEffortNav = aConst.ZeroEffortNav;
+                    if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
+                    {
+                        ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock);
+                        s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
+                    }
+
+                    #region Navigation
+                    Vector3D commandedAccel;
+                    Vector3D missileToTargetNorm = Vector3D.Zero;
+                    var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
+                    if (!aConst.NoSteering && fastEnoughToTurn)
+                    {
+                        Vector3D targetAcceleration = Vector3D.Zero;
+                        if (s.LastVelocity.HasValue)
+                            targetAcceleration = (PrevTargetVel - s.LastVelocity.Value) * 60;
+
+                        s.LastVelocity = PrevTargetVel;
+
+                        Vector3D missileToTarget = TargetPosition - Position;
+                        missileToTargetNorm = Vector3D.Normalize(missileToTarget);
+                        Vector3D relativeVelocity = PrevTargetVel - Velocity;
+                        Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
+
+                        Vector3D lateralAcceleration;
+                        if (!zeroEffortNav)
+                        {
+                            Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+                            lateralAcceleration = aConst.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + aConst.NavAcceleration * lateralTargetAcceleration;
+                        }
+                        else
+                        {
+                            var distToTarget = Vector3D.Dot(missileToTarget, missileToTargetNorm);
+                            var closingSpeed = Vector3D.Dot(relativeVelocity, missileToTargetNorm);
+                            var tau = distToTarget / Math.Max(1, Math.Abs(closingSpeed));
+                            var z = missileToTarget + relativeVelocity * tau;
+                            lateralAcceleration = aConst.Aggressiveness * z / (tau * tau) + aConst.NavAcceleration * lateralTargetAcceleration;
+                        }
+
+                        if (Vector3D.IsZero(lateralAcceleration))
+                        {
+                            commandedAccel = missileToTargetNorm * accelMpsMulti;
+                        }
+                        else
+                        {
+                            var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
+                            commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
+                        }
+                        var gravity = Gravity * aConst.GravityMultiplier;
+
+                        if (aConst.FeelsGravity && gravity.LengthSquared() > 1e-3)
+                        {
+                            if (!Vector3D.IsZero(commandedAccel))
+                            {
+                                var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
+                                Vector3D gravityCompensationVec;
+                                if (Vector3D.IsZero(gravity) || Vector3D.IsZero(commandedAccel))
+                                    gravityCompensationVec = Vector3D.Zero;
+                                else
+                                    gravityCompensationVec = (gravity - gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+
+                                var diffSq = accelMpsMulti * accelMpsMulti - gravityCompensationVec.LengthSquared();
+                                commandedAccel = diffSq < 0 ? commandedAccel - gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                            }
+                        }
+                    }
+                    else
+                        commandedAccel = Direction * accelMpsMulti;
+
+                    var offset = false;
+                    if (aConst.OffsetTime > 0)
+                    {
+                        var prevSmartCheck = Info.PrevRelativeAge % aConst.OffsetTime;
+                        var currentSmartCheck = Info.RelativeAge % aConst.OffsetTime;
+                        var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
+
+                        if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
+                        {
+                            var up = Vector3D.CalculatePerpendicularVector(Direction);
+                            var right = Vector3D.Cross(Direction, up);
+                            var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
+                            s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
+                            s.RandOffsetDir *= aConst.OffsetRatio;
+                        }
+
+                        double distSqr;
+                        Vector3D.DistanceSquared(ref TargetPosition, ref Position, out distSqr);
+                        if (distSqr >= aConst.OffsetMinRangeSqr)
+                        {
+                            commandedAccel += accelMpsMulti * s.RandOffsetDir;
+                            offset = true;
+                        }
+                    }
+
+                    if (accelMpsMulti > 0)
+                    {
+                        var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
+
+                        if (aConst.AdvancedSmartSteering)
+                        {
+                            if (fastEnoughToTurn)
+                            {
+                                bool isNormalized;
+                                var newHeading = ProNavControl(Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
+                                proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * Session.I.DeltaStepConst : commandedAccel * Session.I.DeltaStepConst);
+                            }
+                            else
+                                proposedVel = Velocity + (commandedAccel * Session.I.DeltaStepConst);
+                        }
+                        else
+                        {
+                            if (maxRotationsPerTickInRads < 1 && fastEnoughToTurn)
+                            {
+                                var commandNorm = Vector3D.Normalize(commandedAccel);
+
+                                var dot = Vector3D.Dot(Direction, commandNorm);
+                                if (offset || dot < 0.98)
+                                {
+                                    var radPerTickDelta = Math.Acos(dot);
+                                    if (radPerTickDelta == 0)
+                                        radPerTickDelta = double.Epsilon;
+
+                                    if (radPerTickDelta > maxRotationsPerTickInRads && dot > 0)
+                                        commandedAccel = commandNorm * (accelMpsMulti * Math.Abs(radPerTickDelta / MathHelperD.Pi - 1));
+                                }
+                            }
+                            proposedVel = Velocity + (commandedAccel * Session.I.DeltaStepConst);
+                        }
+
+                        Vector3D moddedAccel;
+                        if (aConst.CheckFutureIntersection && !disableAvoidance && session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
+                            proposedVel = moddedAccel;
+
+                        Vector3D.Normalize(ref proposedVel, out Direction);
+                    }
+                    #endregion
+                }
+                else if (!aConst.AccelClearance || s.SmartReady)
+                {
+                    proposedVel = Velocity + (Direction * (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio));
+                }
+
+                VelocityLengthSqr = proposedVel.LengthSquared();
+                if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
+                    MaxSpeed = DesiredSpeed;
+
+                var speedCap = speedCapMulti * MaxSpeed;
+                if (aConst.AmmoUseDrag)
+                {
+                    speedCap -= Info.Age * aConst.DragPerTick;
+                    if (speedCap < 0)
+                        speedCap = 0;
+                }
+                if (VelocityLengthSqr > speedCap * speedCap)
+                {
+                    VelocityLengthSqr = proposedVel.LengthSquared();
+                    proposedVel = Direction * speedCap;
+                }
+                else
+                    Info.TotalAcceleration += (proposedVel - PrevVelocity);
+
+                PrevVelocity = Velocity;
+                if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+                    proposedVel = Velocity;
+
+                Velocity = proposedVel;
+
+                if (aConst.DynamicGuidance)
+                {
+                    if (PruningProxyId != -1 && session.ActiveAntiSmarts > 0)
+                    {
+                        var sphere = new BoundingSphereD(Position, aConst.LargestHitSize);
+                        BoundingBoxD result;
+                        BoundingBoxD.CreateFromSphere(ref sphere, out result);
+                        var displacement = 0.1 * Velocity;
+                        session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                var msg = $"WC Exception in RunSmart: {e}\n";
+                MyLog.Default.WriteLineAndConsole(msg);
+                Log.Line(msg);
+
+                var ammo = Info.AmmoDef;
+                var aConst = ammo.Const;
+                var w = Info.Weapon;
+                var s = Info.Storage;
+                var comp = w.Comp;
+                var coreParent = comp.TopEntity;
+
+                var msg2 = $"Ammo name: {ammo.AmmoRound} from magazine: {ammo.AmmoMagazine}\n" +
+                    $"Fired from {Info.Weapon.Comp.SubtypeName} with guidance {ammo.Trajectory.Guidance}\n" +
+                    $"aConst.DynamicGuidance? {aConst.DynamicGuidance} aConst.AmmoUseDrag? {aConst.AmmoUseDrag} ";
+                MyLog.Default.WriteLineAndConsole(msg2);
+                Log.Line(msg2);
+                throw e;
             }
         }
 
