@@ -1148,9 +1148,10 @@ namespace CoreSystems.Projectiles
                 var comp = w.Comp;
                 var coreParent = comp.TopEntity;
 
-                var msg2 = $"Ammo name: {ammo.AmmoRound} from magazine: {ammo.AmmoMagazine}\n" +
-                    $"Fired from {Info.Weapon.Comp.SubtypeName} with guidance {ammo.Trajectory.Guidance}\n" +
-                    $"aConst.DynamicGuidance? {aConst.DynamicGuidance} aConst.AmmoUseDrag? {aConst.AmmoUseDrag} ";
+                var msg2 = $"Ammo name: {ammo?.AmmoRound} from magazine: {ammo?.AmmoMagazine}\n" +
+                    $"Fired from {Info.Weapon.Comp?.SubtypeName} with guidance {ammo?.Trajectory.Guidance}\n" +
+                    $"aConst.DynamicGuidance? {aConst?.DynamicGuidance} aConst.AmmoUseDrag? {aConst?.AmmoUseDrag}\n" +
+                    $"Core parent null? {coreParent == null} w null? {w == null} comp null? {comp == null} s null? {s == null} ";
                 MyLog.Default.WriteLineAndConsole(msg2);
                 Log.Line(msg2);
                 throw e;
