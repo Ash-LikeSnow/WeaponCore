@@ -791,6 +791,7 @@ namespace CoreSystems.Projectiles
 
         internal void RunSmartTry() // Temp for debugging NRE in RunSmart
         {
+            var step = 0;
             try
             {
                 Vector3D proposedVel = Velocity;
@@ -805,12 +806,13 @@ namespace CoreSystems.Projectiles
                 var ai = Info.Ai;
                 var session = Session.I;
                 var speedCapMulti = 1d;
-
+                step = 1;
                 if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
                 {
                     if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
                         TimedSpawns(aConst);
                 }
+                step = 2;
 
                 var targetLock = false;
                 var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
@@ -819,9 +821,12 @@ namespace CoreSystems.Projectiles
                     var lineCheck = new LineD(Position, TargetPosition);
                     startTrack = aConst.NoTargetApproach || !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
                 }
+                step = 3;
 
                 if (startTrack)
                 {
+                    step = 4;
+
                     s.SmartReady = true;
                     var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                     var hadTarget = HadTarget != HadTargetState.None;
@@ -832,12 +837,15 @@ namespace CoreSystems.Projectiles
                     bool validEntity = false;
                     if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                     {
+                        step = 5;
+
                         var targetEnt = (MyEntity)Info.Target.TargetObject;
                         validEntity = !targetEnt.MarkedForClose;
 
                         var targetChange = validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target;
                         if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target > 0))
                             validEntity = IsFocusTarget(targetEnt);
+                        step = 6;
                     }
 
                     var invalidate = !overMaxTargets || clientSync;
@@ -861,16 +869,20 @@ namespace CoreSystems.Projectiles
                     #region TargetTracking
                     if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                     {
+                        step = 7;
                         if (s.ZombieLifeTime > 0)
                         {
+                            step = 8;
                             s.ZombieLifeTime = 0;
                             OffSetTarget();
+                            step = 9;
                         }
                         var targetPos = Vector3D.Zero;
 
                         Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
                         if (fake && s.DummyTargets != null)
                         {
+                            step = 10;
                             var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
                             fakeTargetInfo = fakeTarget.LastInfoTick != session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                             targetPos = fakeTargetInfo.WorldPosition;
@@ -878,11 +890,13 @@ namespace CoreSystems.Projectiles
                         }
                         else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
                         {
+                            step = 11;
                             targetPos = ((Projectile)Info.Target.TargetObject).Position;
                             HadTarget = HadTargetState.Projectile;
                         }
                         else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                         {
+                            step = 12;
                             targetPos = ((MyEntity)Info.Target.TargetObject).PositionComp.WorldAABB.Center;
                             HadTarget = HadTargetState.Entity;
                         }
@@ -891,8 +905,12 @@ namespace CoreSystems.Projectiles
 
                         if (aConst.TargetOffSet)
                         {
+                            step = 13;
+
                             if (Info.RelativeAge - s.LastOffsetTime > 300)
                             {
+                                step = 14;
+
                                 double dist;
                                 Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
                                 if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
@@ -910,9 +928,12 @@ namespace CoreSystems.Projectiles
                         if (fake && fakeTargetInfo != null) tVel = fakeTargetInfo.LinearVelocity;
                         else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = ((Projectile)Info.Target.TargetObject).Velocity;
                         else if (physics != null) tVel = physics.LinearVelocity;
+                        step = 15;
 
                         if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                         {
+                            step = 16;
+
                             if (s.WasTracking && Vector3.Dot(Direction, Vector3D.Normalize(targetPos - Position)) < aConst.TargetLossDegree)
                             {
                                 s.PickTarget = true;
@@ -925,18 +946,23 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
+                        step = 17;
+
                         var straightAhead = aConst.Roam && TargetPosition != Vector3D.Zero;
                         TargetPosition = straightAhead ? TargetPosition : Position + (Direction * Info.MaxTrajectory);
 
                         s.ZombieLifeTime += Session.I.DeltaTimeRatio;
                         if (s.ZombieLifeTime > aConst.TargetLossTime && !aConst.KeepAliveAfterTargetLoss && (hadTarget || aConst.NoTargetExpire))
                         {
+                            step = 18;
+
                             DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                             EndState = EndStates.EarlyEnd;
                         }
 
                         if (aConst.Roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
                         {
+                            step = 19;
 
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
@@ -953,15 +979,19 @@ namespace CoreSystems.Projectiles
                         }
                     }
                     #endregion
+                    step = 20;
 
                     var accelMpsMulti = speedLimitPerTick;
                     bool disableAvoidance = false;
                     bool zeroEffortNav = aConst.ZeroEffortNav;
                     if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                     {
+                        step = 21;
+
                         ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock);
                         s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                     }
+                    step = 22;
 
                     #region Navigation
                     Vector3D commandedAccel;
@@ -969,6 +999,8 @@ namespace CoreSystems.Projectiles
                     var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
                     if (!aConst.NoSteering && fastEnoughToTurn)
                     {
+                        step = 23;
+
                         Vector3D targetAcceleration = Vector3D.Zero;
                         if (s.LastVelocity.HasValue)
                             targetAcceleration = (PrevTargetVel - s.LastVelocity.Value) * 60;
@@ -983,11 +1015,15 @@ namespace CoreSystems.Projectiles
                         Vector3D lateralAcceleration;
                         if (!zeroEffortNav)
                         {
+                            step = 24;
+
                             Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
                             lateralAcceleration = aConst.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + aConst.NavAcceleration * lateralTargetAcceleration;
                         }
                         else
                         {
+                            step = 25;
+
                             var distToTarget = Vector3D.Dot(missileToTarget, missileToTargetNorm);
                             var closingSpeed = Vector3D.Dot(relativeVelocity, missileToTargetNorm);
                             var tau = distToTarget / Math.Max(1, Math.Abs(closingSpeed));
@@ -997,10 +1033,14 @@ namespace CoreSystems.Projectiles
 
                         if (Vector3D.IsZero(lateralAcceleration))
                         {
+                            step = 26;
+
                             commandedAccel = missileToTargetNorm * accelMpsMulti;
                         }
                         else
                         {
+                            step = 27;
+
                             var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
                             commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
                         }
@@ -1008,8 +1048,12 @@ namespace CoreSystems.Projectiles
 
                         if (aConst.FeelsGravity && gravity.LengthSquared() > 1e-3)
                         {
+                            step = 28;
+
                             if (!Vector3D.IsZero(commandedAccel))
                             {
+                                step = 29;
+
                                 var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
                                 Vector3D gravityCompensationVec;
                                 if (Vector3D.IsZero(gravity) || Vector3D.IsZero(commandedAccel))
@@ -1024,27 +1068,31 @@ namespace CoreSystems.Projectiles
                     }
                     else
                         commandedAccel = Direction * accelMpsMulti;
+                    step = 30;
 
                     var offset = false;
                     if (aConst.OffsetTime > 0)
                     {
+                        step = 31;
                         var prevSmartCheck = Info.PrevRelativeAge % aConst.OffsetTime;
                         var currentSmartCheck = Info.RelativeAge % aConst.OffsetTime;
                         var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
 
                         if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
                         {
+                            step = 32;
                             var up = Vector3D.CalculatePerpendicularVector(Direction);
                             var right = Vector3D.Cross(Direction, up);
                             var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                             s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                             s.RandOffsetDir *= aConst.OffsetRatio;
                         }
-
+                        step = 32;
                         double distSqr;
                         Vector3D.DistanceSquared(ref TargetPosition, ref Position, out distSqr);
                         if (distSqr >= aConst.OffsetMinRangeSqr)
                         {
+                            step = 34;
                             commandedAccel += accelMpsMulti * s.RandOffsetDir;
                             offset = true;
                         }
@@ -1052,12 +1100,15 @@ namespace CoreSystems.Projectiles
 
                     if (accelMpsMulti > 0)
                     {
+                        step = 35;
                         var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
 
                         if (aConst.AdvancedSmartSteering)
                         {
+                            step = 36;
                             if (fastEnoughToTurn)
                             {
+                                step = 37;
                                 bool isNormalized;
                                 var newHeading = ProNavControl(Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
                                 proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * Session.I.DeltaStepConst : commandedAccel * Session.I.DeltaStepConst);
@@ -1069,11 +1120,13 @@ namespace CoreSystems.Projectiles
                         {
                             if (maxRotationsPerTickInRads < 1 && fastEnoughToTurn)
                             {
+                                step = 38;
                                 var commandNorm = Vector3D.Normalize(commandedAccel);
 
                                 var dot = Vector3D.Dot(Direction, commandNorm);
                                 if (offset || dot < 0.98)
                                 {
+                                    step = 39;
                                     var radPerTickDelta = Math.Acos(dot);
                                     if (radPerTickDelta == 0)
                                         radPerTickDelta = double.Epsilon;
@@ -1084,56 +1137,81 @@ namespace CoreSystems.Projectiles
                             }
                             proposedVel = Velocity + (commandedAccel * Session.I.DeltaStepConst);
                         }
-
+                        step = 40;
                         Vector3D moddedAccel;
                         if (aConst.CheckFutureIntersection && !disableAvoidance && session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
                             proposedVel = moddedAccel;
+                        step = 41;
 
                         Vector3D.Normalize(ref proposedVel, out Direction);
                     }
                     #endregion
+                    step = 42;
+
                 }
                 else if (!aConst.AccelClearance || s.SmartReady)
                 {
+                    step = 43;
+
                     proposedVel = Velocity + (Direction * (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio));
                 }
+                step = 44;
 
                 VelocityLengthSqr = proposedVel.LengthSquared();
                 if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
                     MaxSpeed = DesiredSpeed;
+                step = 45;
 
                 var speedCap = speedCapMulti * MaxSpeed;
                 if (aConst.AmmoUseDrag)
                 {
+                    step = 46;
+
                     speedCap -= Info.Age * aConst.DragPerTick;
                     if (speedCap < 0)
                         speedCap = 0;
                 }
+                step = 47;
+
                 if (VelocityLengthSqr > speedCap * speedCap)
                 {
+                    step = 48;
+
                     VelocityLengthSqr = proposedVel.LengthSquared();
                     proposedVel = Direction * speedCap;
                 }
                 else
                     Info.TotalAcceleration += (proposedVel - PrevVelocity);
+                step = 49;
 
                 PrevVelocity = Velocity;
                 if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                     proposedVel = Velocity;
+                step = 50;
 
                 Velocity = proposedVel;
 
                 if (aConst.DynamicGuidance)
                 {
+                    step = 51;
+
                     if (PruningProxyId != -1 && session.ActiveAntiSmarts > 0)
                     {
+                        step = 52;
+
                         var sphere = new BoundingSphereD(Position, aConst.LargestHitSize);
                         BoundingBoxD result;
                         BoundingBoxD.CreateFromSphere(ref sphere, out result);
                         var displacement = 0.1 * Velocity;
+                        step = 53;
+
                         session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
+                        step = 54;
+
                     }
                 }
+                step = 55;
+
             }
             catch (Exception e)
             {
@@ -1148,10 +1226,8 @@ namespace CoreSystems.Projectiles
                 var comp = w.Comp;
                 var coreParent = comp.TopEntity;
 
-                var msg2 = $"Ammo name: {ammo?.AmmoRound} from magazine: {ammo?.AmmoMagazine}\n" +
-                    $"Fired from {Info.Weapon.Comp?.SubtypeName} with guidance {ammo?.Trajectory.Guidance}\n" +
-                    $"aConst.DynamicGuidance? {aConst?.DynamicGuidance} aConst.AmmoUseDrag? {aConst?.AmmoUseDrag}\n" +
-                    $"Core parent null? {coreParent == null} w null? {w == null} comp null? {comp == null} s null? {s == null} ";
+                var msg2 = $"Ammo name: {ammo?.AmmoRound} Fired from {Info.Weapon.Comp?.SubtypeName}\n";
+                msg2 += $"NRE at {step}";
                 MyLog.Default.WriteLineAndConsole(msg2);
                 Log.Line(msg2);
                 throw e;
