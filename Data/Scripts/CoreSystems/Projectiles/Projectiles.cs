@@ -207,9 +207,7 @@ namespace CoreSystems.Projectiles
                         }
 
                         var runSmart = aConst.IsSmart && (!aConst.IsMine || storage.RequestedStage == 1 && p.DistanceToTravelSqr < double.MaxValue);
-                        if (runSmart && Session.I.DedicatedServer && Session.I.Settings.Enforcement.Debug == 2) //Temp debugging for SI- reported NRE in runsmart
-                            p.RunSmartTry();
-                        else if (runSmart)
+                        if (runSmart)
                             p.RunSmart();
                         else if (aConst.IsDrone)
                             p.RunDrone();
