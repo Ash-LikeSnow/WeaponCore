@@ -211,7 +211,8 @@ namespace CoreSystems.Projectiles
                             p.RunSmart();
                         else if (aConst.IsDrone)
                             p.RunDrone();
-                        else if (!aConst.AmmoSkipAccel && !info.ExpandingEwarField) {
+                        else if (!aConst.AmmoSkipAccel && !info.ExpandingEwarField)
+                        {
 
                             var accel = true;
                             Vector3D newVel;
@@ -226,7 +227,8 @@ namespace CoreSystems.Projectiles
                                     curMaxSpeed = 0;
                                 maxSpeedSqr = curMaxSpeed * curMaxSpeed;
                             }
-                            if (p.DeaccelRate > 0) {
+                            if (p.DeaccelRate > 0)
+                            {
 
                                 var distToMax = info.MaxTrajectory - info.DistanceTraveled;
 
@@ -238,7 +240,8 @@ namespace CoreSystems.Projectiles
                                 p.VelocityLengthSqr = newVel.LengthSquared();
 
                                 if (accel && p.VelocityLengthSqr > maxSpeedSqr) newVel = p.Direction * p.MaxSpeed;
-                                else if (!accel && distToMax <= 0) {
+                                else if (!accel && distToMax <= 0)
+                                {
                                     newVel = Vector3D.Zero;
                                     p.VelocityLengthSqr = 0;
                                 }
