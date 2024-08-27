@@ -441,6 +441,7 @@ namespace CoreSystems
             else
                 gridSizeBuff = Settings.Enforcement.SmallGridDamageMultiplier;
 
+            var appliedImpulse = false;
             for (int i = 0; i < blockCount; i++)
             {
                 if (earlyExit || (basePool <= 0.5d || objectsHit >= maxObjects) && !detRequested)
@@ -526,7 +527,6 @@ namespace CoreSystems
                 }
 
                 var blockStages = maxAoeDistance + 1;
-                var appliedImpulse = false;
                 for (int j = 0; j < blockStages; j++)//Loop through blocks "hit" by damage, in groups by range.  J essentially = dist to root
                 {
                     var dbc = DamageBlockCache[j];
