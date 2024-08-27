@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -548,7 +549,9 @@ namespace CoreSystems
         private void ServerPacketsForClientsClean()
         {
             PacketsToClient.Clear();
-            foreach (var pInfo in PrunedPacketsToClient.Values)
+            var prunedPackets = PrunedPacketsToClient.Values.ToArray();
+            PrunedPacketsToClient.Clear();
+            foreach (var pInfo in prunedPackets)
             {
                 switch (pInfo.Packet.PType)
                 {
@@ -636,7 +639,6 @@ namespace CoreSystems
                     }
                 }
             }
-            PrunedPacketsToClient.Clear();
         }
         #endregion
     }
