@@ -354,7 +354,6 @@ namespace CoreSystems
             if (grid == null || grid.MarkedForClose || !hitEnt.HitPos.HasValue || hitEnt.Blocks == null)
             {
                 hitEnt.Blocks?.Clear();
-                Log.Line($"DamageGrid first null check hit");
                 return;
             }
             
@@ -428,6 +427,8 @@ namespace CoreSystems
             DeferredBlockDestroy dInfo = null;
             var aConst = t.AmmoDef.Const;
             var smallVsLargeBuff = 1f;
+            var cutoff = t.AmmoDef.BaseDamageCutoff;
+            var useBaseCutoff = cutoff > 0;
             if (!Settings.Enforcement.DisableSmallVsLargeBuff && t.Ai.AiType == Ai.AiTypes.Grid && grid.GridSizeEnum != t.Ai.GridEntity.GridSizeEnum)
             {
                 if (t.Ai.GridEntity.GridSizeEnum == MyCubeSize.Large) {
@@ -680,15 +681,17 @@ namespace CoreSystems
                         var primaryDamage = rootStep && block == rootBlock && !detActive;//limits application to first run w/AOE, suppresses with detonation
 
                         var baseScale = damageScale * directDamageScale * smallVsLargeBuff * gridSizeBuff;
-                        var scaledDamage = (float)(basePool * baseScale);
+                        var scaledDamage = (float)(useBaseCutoff ? cutoff : basePool * baseScale);
                         var aoeScaledDmg = (float)((aoeDamageFall * (detActive ? detDamageScale : areaDamageScale)) * damageScale * gridSizeBuff);
                         bool deadBlock = false;
-
                         //Check for end of primary life
                         if (primaryDamage && scaledDamage <= blockHp)
                         {
                             t.DamageDonePri += (long)scaledDamage;
-                            basePool = 0;
+                            if (useBaseCutoff)
+                                basePool -= scaledDamage;
+                            else
+                                basePool = 0;
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
                         }
