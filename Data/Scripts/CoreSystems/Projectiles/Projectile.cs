@@ -461,7 +461,7 @@ namespace CoreSystems.Projectiles
 
 
 
-           // if the projectile has lost its target due to an anti-smart effect
+           // if the projectile has lost its target due to an anti-smart effect and EwarActive is false (TODO: set to false more intelligently) 
            if (Info.Target.TargetState == Target.TargetStates.IsProjectile && Info.Target.TargetObject != null && Info.Target.TargetObject != this && !Info.EwarActive)
            {
         
