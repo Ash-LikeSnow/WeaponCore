@@ -458,6 +458,24 @@ namespace CoreSystems.Projectiles
 
             var ammo = Info.AmmoDef;
             var aConst = ammo.Const;
+
+
+
+           // if the projectile has lost its target due to an anti-smart effect and EwarActive is false (TODO: set to false more intelligently) 
+           if (Info.Target.TargetState == Target.TargetStates.IsProjectile && Info.Target.TargetObject != null && Info.Target.TargetObject != this && !Info.EwarActive)
+           {
+        
+               //do I need this?
+             TargetPosition = ((Projectile)Info.Target.TargetObject).Position;
+        
+               // projectile lost its target due to anti-smart, reset targeting state
+             Info.Target.TargetObject = null;
+             Info.Target.TargetState = Target.TargetStates.None;
+             Info.Storage.PickTarget = true;
+            }
+
+
+
             var s = Info.Storage;
             var w = Info.Weapon;
             var comp = w.Comp;
