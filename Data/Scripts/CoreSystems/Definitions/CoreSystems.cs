@@ -396,7 +396,7 @@ namespace CoreSystems.Support
                     HasGuidedAmmo = true;
 
                 if (aConst.FullSync)
-                    HasProjectileSync = true;
+                    HasProjectileSync = true;  //THIS DOESN'T DO ANYTHING
 
                 if (aConst.AntiSmartDetected)
                     HasAntiSmart = true;
