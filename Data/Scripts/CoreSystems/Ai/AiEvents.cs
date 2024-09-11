@@ -193,7 +193,7 @@ namespace CoreSystems.Support
 
                 //Projected block ammo removal
                 var slim = cube.SlimBlock as IMySlimBlock;
-                if (slim.BuildLevelRatio < 1 && cube.Storage.ContainsKey(Session.I.CompDataGuid) && slim.ComponentStack.GetComponentStackInfo(0).MountedCount == 1)
+                if (slim.BuildLevelRatio < 1 && cube.Storage != null && cube.Storage.ContainsKey(Session.I.CompDataGuid) && slim.ComponentStack.GetComponentStackInfo(0).MountedCount == 1)
                 {
                     ProtoWeaponRepo load = null;
                     string rawData;
