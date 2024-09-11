@@ -37,13 +37,10 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(StringPacketId, StringReceived);
             }
 
-            if (DamageHandler)
-                Session.DamageSystem.RegisterBeforeDamageHandler(int.MinValue, BeforeDamageHandler);
-
             if (IsServer)
             {
                 MyVisualScriptLogicProvider.PlayerDisconnected += PlayerDisconnected;
-                MyVisualScriptLogicProvider.PlayerRespawnRequest += PlayerConnected;
+                MyVisualScriptLogicProvider.PlayerConnected += PlayerConnected;
             }
 
             if (HandlesInput)
