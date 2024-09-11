@@ -41,6 +41,7 @@ namespace CoreSystems
             {
                 MyVisualScriptLogicProvider.PlayerDisconnected += PlayerDisconnected;
                 MyVisualScriptLogicProvider.PlayerConnected += PlayerConnected;
+                MyVisualScriptLogicProvider.PlayerRespawnRequest += PlayerConnected;
             }
 
             if (HandlesInput)

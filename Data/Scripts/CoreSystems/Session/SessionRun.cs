@@ -402,6 +402,8 @@ namespace CoreSystems
 
             MyVisualScriptLogicProvider.PlayerDisconnected -= PlayerDisconnected;
             MyVisualScriptLogicProvider.PlayerConnected -= PlayerConnected;
+            MyVisualScriptLogicProvider.PlayerRespawnRequest -= PlayerConnected;
+
             foreach (var pair in DmgLog)
             {
                 var x = pair.Value;
