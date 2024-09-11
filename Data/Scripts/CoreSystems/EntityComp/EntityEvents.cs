@@ -249,9 +249,9 @@ namespace CoreSystems.Support
                     var timeToLoad = (int)(w.ReloadEndTick - Session.I.Tick) / 60;
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\n" + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s" : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + w.ActiveAmmoDef.AmmoDef.AmmoRound : "No Ammo"))}" +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (!w.PauseShoot && w.Target.HasTarget) : string.Empty)}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : "No Target") : string.Empty)}" +
                         endReturn);
                 }
                 
