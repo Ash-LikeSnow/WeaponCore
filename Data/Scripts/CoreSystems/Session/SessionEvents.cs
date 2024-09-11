@@ -482,33 +482,7 @@ namespace CoreSystems
                     curAi.Construct.ConstructKeenDroneFlightDirty(cubeBlock);
             }
         }
-        internal void BeforeDamageHandler(object o, ref MyDamageInformation info)
-        {
-            var slim = o as IMySlimBlock;
 
-            if (slim != null) {
-
-                var cube = slim.FatBlock as MyCubeBlock;
-                var grid = (MyCubeGrid)slim.CubeGrid;
-
-                if (info.IsDeformation && info.AttackerId > 0 && DeformProtection.Contains(grid)) {
-                    Log.Line("BeforeDamageHandler1");
-                    info.Amount = 0f;
-                    return;
-                }
-
-                CoreComponent comp;
-                if (cube != null && ArmorCubes.TryGetValue(cube, out comp)) {
-
-                    Log.Line("BeforeDamageHandler2");
-                    info.Amount = 0f;
-                    if (info.IsDeformation && info.AttackerId > 0) {
-                        DeformProtection.Add(cube.CubeGrid);
-                        LastDeform = Tick;
-                    }
-                }
-            }
-        }
         public void OnCloseAll()
         {
             var list = new List<IMyGridGroupData>(GridGroupMap.Keys);
@@ -526,10 +500,6 @@ namespace CoreSystems
         {
             InMenu = true;
             MenuDepth++;
-            Ai ai;
-            if (ActiveControlBlock != null && EntityToMasterAi.TryGetValue(ActiveControlBlock.CubeGrid, out ai))  {
-                //Send updates?
-            }
         }
 
         private void MenuClosed(object obj)
@@ -559,8 +529,15 @@ namespace CoreSystems
         
         private void PlayerConnected(long id)
         {
-            if (Players.ContainsKey(id)) return;
+            if (Players.ContainsKey(id) || PlayersToAdd.Contains(id)) return;
+            PlayersToAdd.Add(id);
             MyAPIGateway.Multiplayer.Players.GetPlayers(null, myPlayer => FindPlayer(myPlayer, id));
+        }
+
+        private void CheckPlayersToAdd()
+        {
+            foreach (var id in PlayersToAdd.ToArray())
+                MyAPIGateway.Multiplayer.Players.GetPlayers(null, myPlayer => FindPlayer(myPlayer, id));
         }
 
         private void PlayerDisconnected(long l)
@@ -587,6 +564,8 @@ namespace CoreSystems
                     ConnectedAuthors.Remove(playerId);
                 }
             }
+            if (PlayersToAdd.Contains(l))
+                PlayersToAdd.Remove(l);
         }
 
         private bool FindPlayer(IMyPlayer player, long id)
@@ -621,6 +600,8 @@ namespace CoreSystems
                     SendPlayerConnectionUpdate(id, true);
                     SendServerStartup(player.SteamUserId);
                 }
+                PlayersToAdd.Remove(id);
+                return false;
             }
             return false;
         }
