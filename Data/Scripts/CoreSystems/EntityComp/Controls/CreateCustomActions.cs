@@ -404,7 +404,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder("Predict Targets Angular Motion");
             action.Action = CustomActions.TerminalActionToggleAngularTracking;
             action.Writer = CustomActions.AngularTrackingWriter;
-            action.Enabled = TerminalHelpers.IsNotBomb;
+            action.Enabled = TerminalHelpers.HasTracking;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
