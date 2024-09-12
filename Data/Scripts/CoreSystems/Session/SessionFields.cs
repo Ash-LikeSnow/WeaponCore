@@ -248,7 +248,6 @@ namespace CoreSystems
         internal readonly HashSet<string> VanillaSubtypes = new HashSet<string>();
         internal readonly HashSet<MyStringHash> PerformanceWarning = new HashSet<MyStringHash>();
         internal readonly HashSet<Ai> GridsToUpdateInventories = new HashSet<Ai>();
-        internal readonly List<long> PlayersToAdd = new List<long>();
         internal readonly List<MyCubeGrid> DirtyGridsTmp = new List<MyCubeGrid>(10);
         internal readonly List<DbScan> DbsToUpdate = new List<DbScan>(32);
         internal readonly List<Weapon> ShootingWeapons = new List<Weapon>(128);

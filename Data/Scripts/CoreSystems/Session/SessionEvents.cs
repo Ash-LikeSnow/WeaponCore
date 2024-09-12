@@ -529,15 +529,8 @@ namespace CoreSystems
         
         private void PlayerConnected(long id)
         {
-            if (Players.ContainsKey(id) || PlayersToAdd.Contains(id)) return;
-            PlayersToAdd.Add(id);
+            if (Players.ContainsKey(id)) return;
             MyAPIGateway.Multiplayer.Players.GetPlayers(null, myPlayer => FindPlayer(myPlayer, id));
-        }
-
-        private void CheckPlayersToAdd()
-        {
-            foreach (var id in PlayersToAdd.ToArray())
-                MyAPIGateway.Multiplayer.Players.GetPlayers(null, myPlayer => FindPlayer(myPlayer, id));
         }
 
         private void PlayerDisconnected(long l)
@@ -564,8 +557,6 @@ namespace CoreSystems
                     ConnectedAuthors.Remove(playerId);
                 }
             }
-            if (PlayersToAdd.Contains(l))
-                PlayersToAdd.Remove(l);
         }
 
         private bool FindPlayer(IMyPlayer player, long id)
@@ -600,7 +591,6 @@ namespace CoreSystems
                     SendPlayerConnectionUpdate(id, true);
                     SendServerStartup(player.SteamUserId);
                 }
-                PlayersToAdd.Remove(id);
                 return false;
             }
             return false;
@@ -614,7 +604,6 @@ namespace CoreSystems
                 player.Character.Components.TryGet(out targetFocus);
                 player.Character.Components.TryGet(out targetLock);
             }
-
             Players[id] = new PlayerMap { Player = player, PlayerId = id, TargetFocus = targetFocus, TargetLock = targetLock};
         }
 

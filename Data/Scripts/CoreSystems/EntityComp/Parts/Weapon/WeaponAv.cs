@@ -483,7 +483,8 @@ namespace CoreSystems.Platform
 
             if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
             {
-                Comp.Ai.QueuedSounds.TryAdd(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this}, byte.MinValue);
+                lock (Comp.Ai.QueuedSounds)
+                    Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this });
                 return;
             }
 
@@ -499,7 +500,8 @@ namespace CoreSystems.Platform
 
             if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
             {
-                Comp.Ai.QueuedSounds.TryAdd(new Ai.QueuedSoundEvent { Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStop, Weapon = this }, byte.MinValue);
+                lock (Comp.Ai.QueuedSounds)
+                    Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent { Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStop, Weapon = this });
                 return;
             }
 

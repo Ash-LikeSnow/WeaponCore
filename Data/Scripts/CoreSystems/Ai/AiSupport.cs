@@ -278,22 +278,7 @@ namespace CoreSystems.Support
         internal void ProcessQueuedSounds()
         {
             if (Session.I.HandlesInput && Environment.CurrentManagedThreadId == Session.I.MainThreadId)
-            {
-                foreach (var qs in QueuedSounds.Keys.ToArray())
-                {
-                    switch (qs.Type)
-                    {
-                        case QueuedSoundEvent.SoundTypes.HardPointStart:
-                            qs.Weapon.StartHardPointSound();
-                            break;
-                        case QueuedSoundEvent.SoundTypes.HardPointStop:
-                            qs.Weapon.StopHardPointSound();
-                            break;
-                    }
-                    byte val;
-                    QueuedSounds.TryRemove(qs, out val);
-                }
-                /*
+            {               
                 for (int i = 0; i < QueuedSounds.Count; i++)
                 {
                     var qs = QueuedSounds[i];
@@ -307,10 +292,8 @@ namespace CoreSystems.Support
                             break;
                     }
                 }
-                */
             }
-
-            //QueuedSounds.Clear();
+            QueuedSounds.Clear();
         }
 
         private void WeaponShootOff()
