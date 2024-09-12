@@ -164,7 +164,6 @@ namespace CoreSystems
             GridMapPool.Clean();
 
             DirtyGridsTmp.Clear();
-            PlayersToAdd.Clear();
             WeaponValuesMap.Clear();
             AmmoValuesMap.Clear();
 

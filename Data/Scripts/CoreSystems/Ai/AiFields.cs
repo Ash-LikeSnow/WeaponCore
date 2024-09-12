@@ -61,7 +61,7 @@ namespace CoreSystems.Support
         internal readonly ConcurrentDictionary<MyCubeGrid, byte> SubGridsRegistered = new ConcurrentDictionary<MyCubeGrid, byte>();
         internal readonly double[] QuadraticCoefficientsStorage = new double[5];
 
-        internal readonly ConcurrentDictionary<QueuedSoundEvent, byte> QueuedSounds = new ConcurrentDictionary<QueuedSoundEvent, byte>();
+        internal readonly List<QueuedSoundEvent> QueuedSounds = new List<QueuedSoundEvent>();
         internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
         internal readonly List<WeaponComponent> WeaponComps = new List<WeaponComponent>(32);
         internal readonly List<WeaponComponent> CriticalComps = new List<WeaponComponent>();

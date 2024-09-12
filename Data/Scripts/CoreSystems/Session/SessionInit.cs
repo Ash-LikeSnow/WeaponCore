@@ -40,7 +40,6 @@ namespace CoreSystems
             if (IsServer)
             {
                 MyVisualScriptLogicProvider.PlayerDisconnected += PlayerDisconnected;
-                MyVisualScriptLogicProvider.PlayerConnected += PlayerConnected;
                 MyVisualScriptLogicProvider.PlayerRespawnRequest += PlayerConnected;
             }
 
