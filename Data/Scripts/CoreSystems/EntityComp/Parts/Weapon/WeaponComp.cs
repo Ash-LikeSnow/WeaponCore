@@ -691,6 +691,10 @@ namespace CoreSystems.Platform
                         o.SupportingPD = enabled;
                         clearTargets = true;
                         break;
+                    case "ObjectiveMode":
+                        o.ObjectiveMode = (ProtoWeaponOverrides.ObjectiveModes)v;
+                        clearTargets = true;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);

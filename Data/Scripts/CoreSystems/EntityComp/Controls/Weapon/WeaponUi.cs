@@ -687,6 +687,33 @@ namespace CoreSystems
             new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.MoveModes)3}") },
         };
 
+        internal static long GetObjectiveMode(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+            return (int)comp.Data.Repo.Values.Set.Overrides.ObjectiveMode;
+        }
+
+        internal static void RequestObjectiveMode(IMyTerminalBlock block, long newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "ObjectiveMode", (int)newValue, Session.I.PlayerId);
+        }
+
+        internal static void ListObjectiveModes(List<MyTerminalControlComboBoxItem> moveList)
+        {
+            foreach (var sub in ObjectiveList) moveList.Add(sub);
+        }
+
+        private static readonly List<MyTerminalControlComboBoxItem> ObjectiveList = new List<MyTerminalControlComboBoxItem>
+        {
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)0}") },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)1}") },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)2}") },
+        };
+
         internal static long GetControlMode(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

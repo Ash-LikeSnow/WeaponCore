@@ -190,6 +190,34 @@ namespace CoreSystems.Support
                         //cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
                     }
                 }
+
+                //Projected block ammo removal
+                var slim = cube.SlimBlock as IMySlimBlock;
+                if (slim.BuildLevelRatio < 1 && cube.Storage != null && cube.Storage.ContainsKey(Session.I.CompDataGuid) && slim.ComponentStack.GetComponentStackInfo(0).MountedCount == 1)
+                {
+                    ProtoWeaponRepo load = null;
+                    string rawData;
+                    if (cube.Storage.TryGetValue(Session.I.CompDataGuid, out rawData))
+                    {
+                        try
+                        {
+                            var base64 = Convert.FromBase64String(rawData);
+                            load = MyAPIGateway.Utilities.SerializeFromBinary<ProtoWeaponRepo>(base64);
+                            foreach (var ammo in load.Ammos)
+                            {
+                                ammo.CurrentAmmo = 0;
+                                ammo.CurrentCharge = 0;
+                            }
+                            var save = MyAPIGateway.Utilities.SerializeToBinary<ProtoWeaponRepo>(load);
+                            var base64Out = Convert.ToBase64String(save);
+                            cube.Storage[Session.I.CompDataGuid] = base64Out;
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Line("WeaponCore failed to strip ammo from projector placed block\n" + e);
+                        }
+                    }
+                }
             }
         }
 

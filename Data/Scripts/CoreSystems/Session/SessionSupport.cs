@@ -79,7 +79,6 @@ namespace CoreSystems
                 UiOpacity = MyAPIGateway.Session.Config.UIOpacity;
                 UiHudOpacity = MyAPIGateway.Session.Config.HUDBkOpacity;
                 CheckAdminRights();
-                if (IsServer && MpActive && (AuthLogging || ConnectedAuthors.Count > 0)) AuthorDebug();
                 
                 if (IsServer && PbActivate && !PbApiInited) Api.PbInit();
 

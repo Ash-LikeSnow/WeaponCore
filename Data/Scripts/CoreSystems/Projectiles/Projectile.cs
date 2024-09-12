@@ -433,12 +433,6 @@ namespace CoreSystems.Projectiles
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
-            //temp "PD Ghost" debug stuff
-            if (dmgTotal > 0 && Session.I.DedicatedServer && Session.I.Settings.Enforcement.Debug == 1 && Info.AmmoDef.Health > 0)
-            {
-                Log.Line($"DEBUG Projectile {Info.Id} - {Info.AmmoDef.AmmoRound} closed after doing damage");
-            }
-
             if (!Info.IsFragment && (aConst.IsDrone || aConst.IsSmart)) 
                 Info.Weapon.LiveSmarts--;
 
@@ -551,7 +545,7 @@ namespace CoreSystems.Projectiles
                     {
                         var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
                         fakeTargetInfo = fakeTarget.LastInfoTick != session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
-                        targetPos = fakeTargetInfo.WorldPosition;
+                        targetPos = fakeTargetInfo != null ? fakeTargetInfo.WorldPosition : fakeTarget.FakeInfo.WorldPosition;
                         HadTarget = HadTargetState.Fake;
                     }
                     else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)

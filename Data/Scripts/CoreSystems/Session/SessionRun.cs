@@ -70,6 +70,7 @@ namespace CoreSystems
             if (IsServer) {
                 if (Tick60) AcqManager.Observer();
                 if (Tick600) AcqManager.ReorderSleep();
+                if (Tick10 && PlayersToAdd.Count > 0) CheckPlayersToAdd();
             }
 
             if (!DedicatedServer && TerminalMon.Active)
@@ -400,7 +401,9 @@ namespace CoreSystems
             MyAPIGateway.Gui.GuiControlRemoved -= MenuClosed;
 
             MyVisualScriptLogicProvider.PlayerDisconnected -= PlayerDisconnected;
+            MyVisualScriptLogicProvider.PlayerConnected -= PlayerConnected;
             MyVisualScriptLogicProvider.PlayerRespawnRequest -= PlayerConnected;
+
             foreach (var pair in DmgLog)
             {
                 var x = pair.Value;

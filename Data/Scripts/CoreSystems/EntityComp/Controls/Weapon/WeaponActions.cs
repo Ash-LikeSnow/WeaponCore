@@ -180,6 +180,18 @@ namespace CoreSystems.Control
             Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", value, Session.I.PlayerId);
         }
 
+        internal static void TerminActionCycleObjectiveMode(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var numValue = (int)comp.Data.Repo.Values.Set.Overrides.ObjectiveMode;
+            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "ObjectiveMode", value, Session.I.PlayerId);
+        }
+
 
         internal static void TerminActionCycleMouseControl(IMyTerminalBlock blk)
         {
@@ -681,6 +693,14 @@ namespace CoreSystems.Control
 
             var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? InActive : comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString();
             sb.Append(altAiControlName);
+        }
+
+        internal static void ObjectiveModeWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            sb.Append(comp.Data.Repo.Values.Set.Overrides.ObjectiveMode);
         }
 
         private const string InActive = "Inactive";
