@@ -2297,9 +2297,10 @@ namespace CoreSystems.Projectiles
             {
                 case DroneInfo.DroneMission.Attack:
 
-                    orbitSphere.Radius += fragProx;
-                    orbitSphereFar.Radius += fragProx + speedLimitPerTick + MaxSpeed; //first whack at dynamic setting   
-                    orbitSphereClose.Radius += MaxSpeed * 0.3f + ammo.Shape.Diameter; //Magic number, needs logical work?
+                    orbitSphereClose.Radius = targetSphere.Radius + MaxSpeed * 0.3f + ammo.Shape.Diameter; //Magic number, needs logical work?
+                    orbitSphere.Radius = orbitSphereClose.Radius < fragProx ? fragProx : targetSphere.Radius + fragProx *0.5f;
+                    orbitSphereFar.Radius = orbitSphere.Radius + fragProx + speedLimitPerTick + MaxSpeed; //first whack at dynamic setting   
+
                     if (hasObstacle && orbitSphereClose.Contains(s.Obstacle.Entity.PositionComp.GetPosition()) != ContainmentType.Contains && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Kamikaze)
                     {
                         orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
