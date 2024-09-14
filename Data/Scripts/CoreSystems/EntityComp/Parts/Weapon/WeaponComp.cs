@@ -981,9 +981,11 @@ namespace CoreSystems.Platform
 
             internal void RequestForceReload()
             {
+                var refundMags = !Session.I.IsCreative && TypeSpecific != CompTypeSpecific.Rifle && TypeSpecific != CompTypeSpecific.Phantom && IsWorking && HasInventory;
+
                 foreach (var w in Collection)
                 {
-                    if (Data.Comp.TypeSpecific != CompTypeSpecific.Rifle && Data.Comp.TypeSpecific != CompTypeSpecific.Phantom && !w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && w.Comp.IsWorking && w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Comp.HasInventory)
+                    if (refundMags && !w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && w.ActiveAmmoDef.AmmoDef.Const.Reloadable)
                     {
                         var refundableMags = w.ProtoWeaponAmmo.CurrentAmmo / w.ActiveAmmoDef.AmmoDef.Const.MagazineSize;
                         if (refundableMags > 0 && Session.I.AmmoMaps.ContainsKey(w.Comp.Structure.SubtypeId) && Session.I.AmmoMaps[w.Comp.Structure.SubtypeId].ContainsKey(w.ActiveAmmoDef.AmmoDef.AmmoRound))
