@@ -1,6 +1,6 @@
 ﻿using System;
 using CoreSystems.Support;
-using VRageMath;
+using VRage.Utils;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
@@ -208,11 +208,10 @@ namespace CoreSystems.Platform
                     var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume + .0001f);
                     var magsGranted = magsRequested > spotsFree ? spotsFree : magsRequested;
                     var requestedVolume = ActiveAmmoDef.AmmoDef.Const.MagVolume * magsGranted;
-                    var spaceAvailable = freeVolume >= requestedVolume;
+                    var spaceAvailable = freeVolume >= requestedVolume || MyUtils.IsEqual(freeVolume, requestedVolume);
                     var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < System.LowAmmoVolume && spaceAvailable;
                     
                     var failSafeTimer = s.Tick - LastInventoryTick > 600;
-                    
                     if (pullAmmo && (CheckInventorySystem || failSafeTimer && Comp.Ai.Construct.RootAi.Construct.OutOfAmmoWeapons.Contains(this)) && s.PartToPullConsumable.TryAdd(this, byte.MaxValue)) {
 
                         CheckInventorySystem = false;

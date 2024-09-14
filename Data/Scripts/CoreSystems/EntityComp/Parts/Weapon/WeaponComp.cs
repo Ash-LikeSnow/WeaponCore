@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.Remoting;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -11,10 +9,11 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
+using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -984,6 +983,26 @@ namespace CoreSystems.Platform
             {
                 foreach (var w in Collection)
                 {
+                    if (Data.Comp.TypeSpecific != CompTypeSpecific.Rifle && Data.Comp.TypeSpecific != CompTypeSpecific.Phantom && !w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && w.Comp.IsWorking && w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Comp.HasInventory)
+                    {
+                        var refundableMags = w.ProtoWeaponAmmo.CurrentAmmo / w.ActiveAmmoDef.AmmoDef.Const.MagazineSize;
+                        if (refundableMags > 0 && Session.I.AmmoMaps.ContainsKey(w.Comp.Structure.SubtypeId) && Session.I.AmmoMaps[w.Comp.Structure.SubtypeId].ContainsKey(w.ActiveAmmoDef.AmmoDef.AmmoRound))
+                        {
+                            var ammoType = Session.I.AmmoMaps[w.Comp.Structure.SubtypeId][w.ActiveAmmoDef.AmmoDef.AmmoRound];
+                            MyInventoryBase inventory;
+                            if(w.Comp.Cube.TryGetInventory(out inventory))
+                            {
+                                while (refundableMags > 0)
+                                {
+                                    var successAdd = inventory.AddItems(1, MyObjectBuilderSerializer.CreateNewObject(ammoType.AmmoDefinitionId));
+                                    if (!successAdd)
+                                        refundableMags = 0;
+                                    else
+                                        refundableMags--;
+                                }
+                            }
+                        }
+                    }
                     w.ProtoWeaponAmmo.CurrentAmmo = 0;
                     w.ProtoWeaponAmmo.CurrentCharge = 0;
                     w.ClientMakeUpShots = 0;
