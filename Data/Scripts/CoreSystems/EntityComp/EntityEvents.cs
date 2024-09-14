@@ -247,9 +247,11 @@ namespace CoreSystems.Support
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
                     var timeToLoad = (int)(w.ReloadEndTick - Session.I.Tick) / 60;
+                    var showName = w.ActiveAmmoDef.AmmoDef.AmmoRound != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
+                    var displayName = showName ? w.ActiveAmmoDef.AmmoDef.AmmoRound + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.AmmoRound;
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\n" + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s" : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + w.ActiveAmmoDef.AmmoDef.AmmoRound : "No Ammo"))}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\n" + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s" : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : "No Ammo"))}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : "No Target") : string.Empty)}" +
                         endReturn);
@@ -305,9 +307,9 @@ namespace CoreSystems.Support
                                     continue;
 
                                 if (otherAmmo == null)
-                                    otherAmmo = "\n\nMagazine Types:";
-
-                                otherAmmo += $"\n{ammo.AmmoDef.AmmoRound}";
+                                    otherAmmo = "\n\nAmmo Name (Mag if different)";
+                                var showName =  ammo.AmmoDef.AmmoRound != ammo.AmmoDef.Const.MagazineDef.DisplayNameText;
+                                otherAmmo += $"\n{ammo.AmmoDef.AmmoRound} {(showName ? "(" + ammo.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : "")}";
                             }
 
                             if (otherAmmo != null)
