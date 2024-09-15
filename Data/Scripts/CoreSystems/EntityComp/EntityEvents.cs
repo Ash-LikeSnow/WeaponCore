@@ -12,6 +12,7 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRageMath;
 using static CoreSystems.Platform.CorePlatform;
 using static CoreSystems.Session;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
@@ -223,12 +224,20 @@ namespace CoreSystems.Support
             try
             {
                 var comp = ((Weapon.WeaponComponent)this);
+                /*
+                var r = "[color=#DDFF0000]"; //ARGB in hex values
+                var y = "[color=#DDFFFF00]";
+                var g = "[color=#DD00FF00]";               
+                var e = "[/color]";
+                stringBuilder.Append($"{r}Red{e} {y}Yellow{e} {g}Green{e}");
+                */
+
                 var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
                 var advanced = (I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
                 if (HasServerOverrides)
-                    stringBuilder.Append("\nWeapon modified by server!\n")
-                        .Append("Report issues to server admins.\n");
+                    stringBuilder.Append($"\nWeapon modified by server!\n")
+                        .Append($"Report issues to server admins.\n");
 
                 //Start of new formatting
                 if (IdlePower > 0.01)
@@ -242,7 +251,7 @@ namespace CoreSystems.Support
                     {
                         var chargeTime = w.AssignedPower > 0 ? (int)((w.MaxCharge - w.ProtoWeaponAmmo.CurrentCharge) / w.AssignedPower * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS) : 0;
                         shots += "\nDraw/Max: " + (SinkPower - IdlePower).ToString("0.00") + "/" + w.ActiveAmmoDef.AmmoDef.Const.PowerPerTick.ToString("0.00") + " MW" +
-                        $"\n{(chargeTime == 0 ? "Charged" : "Charged in " + chargeTime + "s")}";
+                        $"\n{(chargeTime == 0 ? "Power: Charged" : "Power: Charged in " + chargeTime + "s")}";
                     }
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
@@ -251,25 +260,28 @@ namespace CoreSystems.Support
                     var displayName = showName ? w.ActiveAmmoDef.AmmoDef.AmmoRound + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.AmmoRound;
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\n" + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s" : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : "No Ammo"))}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\nAmmo: " + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s": w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : "No Ammo"))}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : "No Target") : string.Empty)}" +
                         endReturn);
                 }
                 
                 if (HeatPerSecond > 0)
-                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.} W ({(CurrentHeat / MaxHeat):P})");
+                    stringBuilder.Append($"\nHeat per Sec/Max: {HeatPerSecond}/{MaxHeat}" +
+                        $"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.} W ({(CurrentHeat / MaxHeat):P})");
                 
                 if (advanced)
                 {
-                    stringBuilder.Append($"\n\n--- Stats ---");
+                    stringBuilder.Append($"\n\n--- Stats ---" +
+                        $"\nDPS: {comp.PeakDps:0.}");
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var w = collection[i];
-                        stringBuilder.Append($"" +
+                        stringBuilder.Append($" {(collection.Count > 1 ? "\n{w.FriendlyName}" : string.Empty)}" +
                             $"{(w.MinTargetDistance > 0 ? "\nMin Range: " + w.MinTargetDistance : string.Empty)}" +
                             $"\nMax Range: {w.MaxTargetDistance}" +
-                            $"\nRoF: {w.RateOfFire}/min");
+                            //$"\nRoF: {w.RateOfFire}/min" +
+                            $"\nRoF: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin}/min");
                         if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                         {
                             var targ = "Target: ";
@@ -279,7 +291,7 @@ namespace CoreSystems.Support
                                 var eTarg = w.Target.TargetObject as MyEntity;
                                 if(pTarg != null)
                                 {
-
+                                    targ += "Projectile";
                                 }
                                 else if (eTarg != null)
                                 {
@@ -307,8 +319,8 @@ namespace CoreSystems.Support
                                     continue;
 
                                 if (otherAmmo == null)
-                                    otherAmmo = "\n\nAmmo Name (Mag if different)";
-                                var showName =  ammo.AmmoDef.AmmoRound != ammo.AmmoDef.Const.MagazineDef.DisplayNameText;
+                                    otherAmmo = "\n\nAmmo Types (Mag if different):";
+                                var showName =  ammo.AmmoDef.AmmoRound != ammo.AmmoDef.Const.MagazineDef.DisplayNameText && ammo.AmmoDef.Const.MagazineDef.DisplayNameText != "Energy";
                                 otherAmmo += $"\n{ammo.AmmoDef.AmmoRound} {(showName ? "(" + ammo.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : "")}";
                             }
 
