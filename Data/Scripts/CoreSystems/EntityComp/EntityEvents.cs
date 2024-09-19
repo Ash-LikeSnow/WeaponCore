@@ -256,8 +256,8 @@ namespace CoreSystems.Support
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
                     var timeToLoad = (int)(w.ReloadEndTick - Session.I.Tick) / 60;
-                    var showName = w.ActiveAmmoDef.AmmoDef.AmmoRound != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
-                    var displayName = showName ? w.ActiveAmmoDef.AmmoDef.AmmoRound + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.AmmoRound;
+                    var showName = w.ActiveAmmoDef.AmmoDef.Const.TerminalName != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
+                    var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\nAmmo: " + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s": w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : "No Ammo"))}" +
@@ -278,9 +278,8 @@ namespace CoreSystems.Support
                     {
                         var w = collection[i];
                         stringBuilder.Append($" {(collection.Count > 1 ? "\n{w.FriendlyName}" : string.Empty)}" +
-                            $"{(w.MinTargetDistance > 0 ? "\nMin Range: " + w.MinTargetDistance : string.Empty)}" +
-                            $"\nMax Range: {w.MaxTargetDistance}" +
-                            //$"\nRoF: {w.RateOfFire}/min" +
+                            $"{(w.MinTargetDistance > 0 ? "\nMin Range: " + w.MinTargetDistance + "m" : string.Empty)}" +
+                            $"\nMax Range: {w.MaxTargetDistance}m" +
                             $"\nRoF: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin}/min");
                         if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                         {
@@ -320,8 +319,8 @@ namespace CoreSystems.Support
 
                                 if (otherAmmo == null)
                                     otherAmmo = "\n\nAmmo Types (Mag if different):";
-                                var showName =  ammo.AmmoDef.AmmoRound != ammo.AmmoDef.Const.MagazineDef.DisplayNameText && ammo.AmmoDef.Const.MagazineDef.DisplayNameText != "Energy";
-                                otherAmmo += $"\n{ammo.AmmoDef.AmmoRound} {(showName ? "(" + ammo.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : "")}";
+                                var showName =  ammo.AmmoDef.Const.TerminalName != ammo.AmmoDef.Const.MagazineDef.DisplayNameText && ammo.AmmoDef.Const.MagazineDef.DisplayNameText != "Energy";
+                                otherAmmo += $"\n{ammo.AmmoDef.Const.TerminalName} {(showName ? "(" + ammo.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : "")}";
                             }
 
                             if (otherAmmo != null)
