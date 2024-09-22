@@ -179,6 +179,7 @@ namespace CoreSystems.Support
         public readonly bool ClosestFirst;
         public readonly bool DegRof;
         public readonly bool ProhibitCoolingWhenOff;
+        public readonly bool PainterUseMaxTargeting;
         public readonly bool TrackProjectile;
         public readonly bool DisableSupportingPD;
         public readonly bool ScanTrackOnly;
@@ -361,6 +362,7 @@ namespace CoreSystems.Support
             AltEjectorName = HasEjector ? "subpart_" + Values.Assignments.Ejector : string.Empty;
             HasScope = !string.IsNullOrEmpty(Values.Assignments.Scope);
             AltScopeName = HasScope ? "subpart_" + Values.Assignments.Scope : string.Empty;
+            PainterUseMaxTargeting = Values.HardPoint.Ai.PainterUseMaxTargeting;
             TurretMovements(out AzStep, out ElStep, out MinAzimuth, out MaxAzimuth, out MinElevation, out MaxElevation, out HomeAzimuth, out HomeElevation, out TurretMovement);
             Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);

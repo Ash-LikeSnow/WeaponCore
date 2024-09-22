@@ -120,7 +120,7 @@ namespace CoreSystems.Support
             var forceFoci = focusOnly || w.System.ScanTrackOnly;
             var session = Session.I;
             session.TargetRequests++;
-            var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
+            var weaponPos = w.MyPivotPos;
             var target = w.NewTarget;
             var accelPrediction = (int)s.Values.HardPoint.AimLeadingPrediction > 1;
             var minRadius = overRides.MinSize * 0.5f;
@@ -1042,9 +1042,7 @@ namespace CoreSystems.Support
             }
             else
             {
-                var barrelPos = w.BarrelOrigin;
-                var targetNormDir = Vector3D.Normalize(info.Target.PositionComp.WorldAABB.Center - barrelPos);
-                weaponPos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
+                weaponPos = w.MyPivotPos;
                 aConst = w.ActiveAmmoDef.AmmoDef.Const;
             }
 
