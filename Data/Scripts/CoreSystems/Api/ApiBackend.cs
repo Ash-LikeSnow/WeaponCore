@@ -166,6 +166,7 @@ namespace CoreSystems.Api
                 ["GetBlockWeaponMap"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<string, int>, bool>(PbGetBlockWeaponMap),
                 ["GetProjectilesLockedOn"] = new Func<long, MyTuple<bool, int, int>>(PbGetProjectilesLockedOn),
                 ["GetSortedThreats"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<MyDetectedEntityInfo, float>>(PbGetSortedThreats),
+                ["GetSortedThreatsByID"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<long, MyDetectedEntityInfo>>(PbGetSortedThreatsByID),
                 ["GetObstructions"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<MyDetectedEntityInfo>>(PbGetObstructions),
                 ["GetAiFocus"] = new Func<long, int, MyDetectedEntityInfo>(PbGetAiFocus),
                 ["SetAiFocus"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool>(PbSetAiFocus),
@@ -487,6 +488,20 @@ namespace CoreSystems.Api
             
             foreach (var i in _tmpTargetList)
                 dict[GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false , i.Item1), shooter)] = i.Item2;
+
+            _tmpTargetList.Clear();
+
+        }
+
+        private void PbGetSortedThreatsByID(object arg1, object arg2)
+        {
+            var shooter = (MyEntity)arg1;
+            GetSortedThreats(shooter, _tmpTargetList);
+
+            var dict = (IDictionary<long, MyDetectedEntityInfo>)arg2;
+
+            foreach (var i in _tmpTargetList)
+                dict[i.Item1.EntityId] = GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false, i.Item1), shooter);
 
             _tmpTargetList.Clear();
 

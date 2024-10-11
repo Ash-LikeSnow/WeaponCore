@@ -19,6 +19,7 @@ namespace CoreSystems.Api
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<string, int>, bool> _getBlockWeaponMap;
         private Func<long, MyTuple<bool, int, int>> _getProjectilesLockedOn;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<MyDetectedEntityInfo, float>> _getSortedThreats;
+        private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<long, MyDetectedEntityInfo>> _getSortedThreatsByID;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<Sandbox.ModAPI.Ingame.MyDetectedEntityInfo>> _getObstructions;
         private Func<long, int, MyDetectedEntityInfo> _getAiFocus;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool> _setAiFocus;
@@ -95,6 +96,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetBlockWeaponMap", ref _getBlockWeaponMap);
             AssignMethod(delegates, "GetProjectilesLockedOn", ref _getProjectilesLockedOn);
             AssignMethod(delegates, "GetSortedThreats", ref _getSortedThreats);
+            AssignMethod(delegates, "GetSortedThreatsByID", ref _getSortedThreatsByID);
             AssignMethod(delegates, "GetObstructions", ref _getObstructions);
             AssignMethod(delegates, "GetAiFocus", ref _getAiFocus);
             AssignMethod(delegates, "SetAiFocus", ref _setAiFocus);
@@ -228,6 +230,18 @@ namespace CoreSystems.Api
         /// <param name="collection"></param>
         public void GetSortedThreats(Sandbox.ModAPI.Ingame.IMyTerminalBlock pBlock, IDictionary<MyDetectedEntityInfo, float> collection) =>
             _getSortedThreats?.Invoke(pBlock, collection);
+
+        /// <summary>
+        /// Populates <paramref name="collection"/> with contents:
+        /// <list type="bullet">
+        /// <item>Key: Entity ID</item>
+        /// <item>Value: Hostile <see cref="MyDetectedEntityInfo"/> within targeting range of <paramref name="pBlock"/>'s grid</item>
+        /// </list>
+        /// </summary>
+        /// <param name="pBlock"></param>
+        /// <param name="collection"></param>
+        public void GetSortedThreatsByID(Sandbox.ModAPI.Ingame.IMyTerminalBlock pBlock, IDictionary<long, MyDetectedEntityInfo> collection) =>
+            _getSortedThreatsByID?.Invoke(pBlock, collection);
 
         /// <summary>
         /// Populates <paramref name="collection"/> with contents:
