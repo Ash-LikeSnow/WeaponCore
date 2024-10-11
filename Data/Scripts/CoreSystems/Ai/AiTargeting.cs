@@ -19,6 +19,7 @@ using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Sandbox.ModAPI;
+using VRage.ModAPI;
 
 namespace CoreSystems.Support
 {
@@ -325,7 +326,7 @@ namespace CoreSystems.Support
                     TargetInfo hitInfo;
                     var targMatch = w.LastHitInfo.HitEntity == info.Target;
                     var targOther = !targMatch && ai.Targets.TryGetValue((MyEntity)w.LastHitInfo.HitEntity, out hitInfo) && (hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
-                    var targChar = !targMatch && character != null && !ai.ObstructionLookup.ContainsKey((MyEntity)w.LastHitInfo.HitEntity);
+                    var targChar = !targMatch && character != null && !(w.LastHitInfo.HitEntity is IMyVoxelBase) && !ai.ObstructionLookup.ContainsKey((MyEntity)w.LastHitInfo.HitEntity);
 
                     if (targMatch || targOther || targChar)
                     {
