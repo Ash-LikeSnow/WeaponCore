@@ -1752,12 +1752,35 @@ namespace CoreSystems
             VanillaIds[smallGat2Id] = smallGat2;
             VanillaCoreIds[smallGat2] = smallGat2Id;
 
-            //BDC Add crap here
             var largeSearch = MyStringHash.GetOrCompute("LargeSearchlight");
             var largeSearchId = new MyDefinitionId(typeof(MyObjectBuilder_SearchlightDefinition), "LargeSearchlight");
             VanillaIds[largeSearchId] = largeSearch;
             VanillaCoreIds[largeSearch] = largeSearchId;
 
+            var smallSearch = MyStringHash.GetOrCompute("SmallSearchlight");
+            var smallSearchId = new MyDefinitionId(typeof(MyObjectBuilder_SearchlightDefinition), "SmallSearchlight");
+            VanillaIds[smallSearchId] = smallSearch;
+            VanillaCoreIds[smallSearch] = smallSearchId;
+
+            var largeGatReskin = MyStringHash.GetOrCompute("LargeGatlingTurretReskin");
+            var largeGatReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "LargeGatlingTurretReskin");
+            VanillaIds[largeGatReskinId] = largeGatReskin;
+            VanillaCoreIds[largeGatReskin] = largeGatReskinId;
+
+            var smallGatReskin = MyStringHash.GetOrCompute("SmallGatlingTurretReskin");
+            var smallGatReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "SmallGatlingTurretReskin");
+            VanillaIds[smallGatReskinId] = smallGatReskin;
+            VanillaCoreIds[smallGatReskin] = smallGatReskinId;
+
+            var largeMissileReskin = MyStringHash.GetOrCompute("LargeMissileTurretReskin");
+            var largeMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "LargeMissileTurretReskin");
+            VanillaIds[largeMissileReskinId] = largeMissileReskin;
+            VanillaCoreIds[largeMissileReskin] = largeMissileReskinId;
+
+            var smallMissileReskin = MyStringHash.GetOrCompute("SmallMissileTurretReskin");
+            var smallMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "SmallMissileTurretReskin");
+            VanillaIds[smallMissileReskinId] = smallMissileReskin;
+            VanillaCoreIds[smallMissileReskin] = smallMissileReskinId;
 
             foreach (var pair in VanillaCoreIds)
                 VanillaSubtypes.Add(pair.Key.String);
@@ -1769,8 +1792,9 @@ namespace CoreSystems
             VanillaSubpartNames.Add("GatlingTurretBase1");
             VanillaSubpartNames.Add("GatlingTurretBase2");
             VanillaSubpartNames.Add("GatlingBarrel");
+            VanillaSubpartNames.Add("GatlingTurretReskinBarrel");
         }
-        
+
         internal void UpdateEnforcement()
         {
 

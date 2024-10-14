@@ -609,7 +609,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var showAll = details && shielded;
             var minimal = !details;
             var skipShield = !showAll && !minimal;
-            var skip = minimal && slot != 1 && slot != 2 && slot != 10 || skipShield && slot > 5 && slot != 10;
+            var skip = minimal && slot != 0 && slot != 1 && slot != 10 || skipShield && slot > 5 && slot != 10;
             textStr = string.Empty;
 
             if (skip)
@@ -631,7 +631,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             switch (slot)
             {
                 case 0:
-                    textStr = $"SIZE: {targetState.SizeExtended}";
+                    var speed = MathHelper.Clamp(targetState.Speed, 0, int.MaxValue);
+                    var inKmspeed = speed >= 1000;
+                    var unitspeed = inKmspeed ? "km/s" : "m/s";
+                    var measurespeed = inKmspeed ? speed / 1000 : speed;
+                    textStr = $"SPEED: {measurespeed:#.0} {unitspeed}";
                     textOffset.X -= xOdd * aspectScale;
                     textOffset.Y += yStart;
                     break;
@@ -644,22 +648,20 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     textOffset.Y += yStart;
                     break;
                 case 2:
-                    var threatLvl = targetState.ThreatLvl > 0 ? targetState.ThreatLvl : 0;
-                    textStr = $"THREAT: {threatLvl}";
+                    var inKmsize = targetState.SizeExtended >= 1000;
+                    var unitsize = inKmsize ? "km" : "m";
+                    var measuresize = inKmsize ? targetState.SizeExtended / 1000 : targetState.SizeExtended;
+                    textStr = $"SIZE: {measuresize:#.0} {unitsize}";
                     textOffset.X -= xOdd * aspectScale;
-                    if (minimal)
-                        textOffset.Y += yStart;
-                    else
-                        textOffset.Y += yStart - (yStep * 1);
+                    textOffset.Y += yStart - (yStep * 1);
                     break;
                 case 3:
-
-                    if (targetState.Engagement == 0)
+                    if (targetState.Speed < 1)
+                        textStr = "STATIONARY";
+                    else if (targetState.Engagement == 0)
                         textStr = "INTERCEPT";
                     else if (targetState.Engagement == 1)
                         textStr = "RETREATING";
-                    else if (targetState.Speed < 1)
-                        textStr = "STATIONARY";
                     else
                         textStr = "PARALLEL";
 
@@ -667,13 +669,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     textOffset.Y += yStart - (yStep * 1);
                     break;
                 case 4:
-                    var speed = MathHelper.Clamp(targetState.Speed, 0, int.MaxValue);
-                    textStr = $"SPEED: {speed}";
+                    var threatLvl = targetState.ThreatLvl > 0 ? targetState.ThreatLvl : 0;
+                    textStr = $"THREAT: {threatLvl}";
                     textOffset.X -= xOdd * aspectScale;
                     textOffset.Y += yStart - (yStep * 2);
                     break;
                 case 5:
-                    textStr = targetState.Aware.ToString();
+                    textStr = targetState.Aware;
                     textOffset.X += xEven * aspectScale;
                     textOffset.Y += yStart - (yStep * 2);
                     break;
@@ -862,7 +864,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal bool GetTargetState(Session s)
         {
             var ai = s.TrackingAi;
-            var maxNameLength = 18;
+            var maxNameLength = 21;
 
             if (s.Tick - MasterUpdateTick > 120 || MasterUpdateTick < 120 && _masterTargets.Count == 0)
                 BuildMasterCollections(ai);
@@ -889,11 +891,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var state = ai.TargetState;
 
-            state.Aware = targetAi != null ? AggressionState(ai, targetAi) : TargetStatus.Awareness.WONDERING;
+            state.Aware = targetAi != null ? AggressionState(ai, targetAi) : "UNARMED";
             var displayName = target.DisplayName;
-
-            var combinedName = TargetControllerNames[(int)targetInfo.Item2] + displayName;
-            var name = string.IsNullOrEmpty(combinedName) ? string.Empty : combinedName.Length <= maxNameLength ? combinedName : combinedName.Substring(0, maxNameLength);
+            var name = string.IsNullOrEmpty(displayName) ? string.Empty : displayName.Length <= maxNameLength ? displayName : displayName.Substring(0, maxNameLength);
             var targetVel = target.Physics?.LinearVelocity ?? Vector3.Zero;
             if (MyUtils.IsZero(targetVel, 1E-01F)) targetVel = Vector3.Zero;
             var targetDir = Vector3D.Normalize(targetVel);
@@ -916,7 +916,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             state.RealDistance = distanceFromCenters;
 
-            state.SizeExtended = (float)Math.Round(partCount / (largeGrid ? 100f : 500f), 1);
+            state.SizeExtended = (float)(target.PositionComp.WorldVolume.Radius * 2);
 
             state.Speed = speed;
 
@@ -979,7 +979,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             return true;
         }
 
-        private TargetStatus.Awareness AggressionState(Ai ai, Ai targetAi)
+        private string AggressionState(Ai ai, Ai targetAi)
         {
 
             if (targetAi.Construct.Data.Repo.FocusData.HasFocus)
@@ -988,24 +988,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 foreach (var sub in ai.SubGridCache)
                 {
                     if (sub.EntityId == fd.Target)
-                        return TargetStatus.Awareness.FOCUSFIRE;
+                        return "FOCUSED ON YOU";
                 }
             }
             var tracking = targetAi.Targets.ContainsKey(ai.TopEntity);
-            var hasAggressed = targetAi.Construct.RootAi.Construct.PreviousTargets.Contains(ai.TopEntity);
-            var stalking = tracking && hasAggressed;
-            var seeking = !tracking && hasAggressed;
-
-            if (stalking)
-                return TargetStatus.Awareness.STALKING;
-
-            if (seeking)
-                return TargetStatus.Awareness.SEEKING;
 
             if (tracking)
-                return TargetStatus.Awareness.TRACKING;
+                return "TRACKING YOU";
 
-            return TargetStatus.Awareness.OBLIVIOUS;
+            return "NOT TRACKING YOU";
         }
     }
 }
