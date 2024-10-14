@@ -1,47 +1,62 @@
-<?xml version="1.0"  encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <CategoryClasses>
-    
-        <Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
-            <Id>
-                <TypeId>GuiBlockCategoryDefinition</TypeId>
-                <SubtypeId/>
-            </Id>
-            <DisplayName>DisplayName_Category_LargeBlocks</DisplayName>
-            <Name>LargeBlocks</Name>
-            <StrictSearch>true</StrictSearch>
-            <ItemIds>
-                <string>ConveyorSorter/LargeRailgun</string>
-            </ItemIds>
-        </Category>
+	<CategoryClasses>
 
-        <Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
-            <Id>
-                <TypeId>GuiBlockCategoryDefinition</TypeId>
-                <SubtypeId/>
-            </Id>
-            <DisplayName>DisplayName_Category_SmallBlocks</DisplayName>
-            <Name>SmallBlocks</Name>
-            <StrictSearch>true</StrictSearch>
-            <ItemIds>
-                <string>LargeMissileTurret/AutoCannonTurret</string>
-                <string>ConveyorSorter/SmallRailgun</string>
-            </ItemIds>
-        </Category>
+		<Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
+			<Id>
+				<TypeId>GuiBlockCategoryDefinition</TypeId>
+				<SubtypeId/>
+			</Id>
+			<DisplayName>DisplayName_Category_LargeBlocks</DisplayName>
+			<Name>Section1_Position1_LargeBlocks</Name>
+			<StrictSearch>true</StrictSearch>
+			<ItemIds>
+				<string>ConveyorSorter/LargeRailgun</string>
+			</ItemIds>
+		</Category>
 
-        <Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
-            <Id>
-                <TypeId>GuiBlockCategoryDefinition</TypeId>
-                <SubtypeId/>
-            </Id>
-            <DisplayName>DisplayName_Category_ShipWeapons</DisplayName>
-            <Name>Weapons</Name>
-            <ItemIds>
-                <string>LargeMissileTurret/AutoCannonTurret</string>
-                <string>ConveyorSorter/LargeRailgun</string>
-                <string>ConveyorSorter/SmallRailgun</string>
-            </ItemIds>
-        </Category>
+		<Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
+			<Id>
+				<TypeId>GuiBlockCategoryDefinition</TypeId>
+				<SubtypeId/>
+			</Id>
+			<DisplayName>DisplayName_Category_SmallBlocks</DisplayName>
+			<Name>Section1_Position1_SmallBlocks</Name>
+			<StrictSearch>true</StrictSearch>
+			<ItemIds>
+				<string>LargeMissileTurret/AutoCannonTurret</string>
+				<string>ConveyorSorter/SmallRailgun</string>
+			</ItemIds>
+		</Category>
 
-    </CategoryClasses>
+		<Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
+			<Id>
+				<TypeId>GuiBlockCategoryDefinition</TypeId>
+				<SubtypeId>Nonarmor</SubtypeId>
+			</Id>
+			<DisplayName>DisplayName_Category_Nonarmor</DisplayName>
+			<Name>Section1_Position2_Nonarmor</Name>
+			<StrictSearch>true</StrictSearch>
+			<ItemIds>
+				<string>LargeMissileTurret/AutoCannonTurret</string>
+				<string>ConveyorSorter/LargeRailgun</string>
+				<string>ConveyorSorter/SmallRailgun</string>
+			</ItemIds>
+		</Category>
+		<Category xsi:type="MyObjectBuilder_GuiBlockCategoryDefinition">
+			<Id>
+				<TypeId>GuiBlockCategoryDefinition</TypeId>
+				<SubtypeId>Weapons</SubtypeId>
+			</Id>
+			<DisplayName>DisplayName_Category_Weapons</DisplayName>
+			<Name>Section1_Position3_Weapons</Name>
+			<StrictSearch>true</StrictSearch>
+			<ItemIds>
+				<string>LargeMissileTurret/AutoCannonTurret</string>
+				<string>ConveyorSorter/LargeRailgun</string>
+				<string>ConveyorSorter/SmallRailgun</string>
+			</ItemIds>
+		</Category>
+
+	</CategoryClasses>
 </Definitions>

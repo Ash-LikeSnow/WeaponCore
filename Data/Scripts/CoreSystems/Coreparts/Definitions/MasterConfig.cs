@@ -29,7 +29,9 @@ namespace Scripts
                             LargeBlockRailgun,
                             SmallBlockRailgun,
                             LargeSearchlight,
-                            SmallSearchlight
+                            SmallSearchlight,
+                            LargeGatlingTurretReskin,
+                            SmallGatlingTurretReskin
                             );
         }
     }
