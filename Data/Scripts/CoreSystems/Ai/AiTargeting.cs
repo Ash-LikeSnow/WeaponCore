@@ -305,7 +305,7 @@ namespace CoreSystems.Support
                 if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) 
                     continue;
                 
-                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) 
+                if (character != null && (!w.System.TrackCharacters || !overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) 
                     continue;
 
 
@@ -482,7 +482,7 @@ namespace CoreSystems.Support
                 var meteor = info.Target as MyMeteor;
                 if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
 
-                if (character != null && (false && !overRides.Biologicals || character.IsDead || character.Integrity <= 0)) continue;
+                if (character != null && (!w.System.TrackCharacters || !overRides.Biologicals || character.IsDead || character.Integrity <= 0)) continue;
 
                 Vector3D predictedPos;
                 if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget4)) continue;
