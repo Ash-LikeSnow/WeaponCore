@@ -90,15 +90,10 @@ namespace CoreSystems.Platform
 
                     };
 
-                    if (Session.I.IsServer) {
-
-                        if (Session.I.IsCreative) {
-                            Repo.Values.Set.Overrides.Neutrals = true;
-                            Repo.Values.Set.Overrides.Biologicals = false;
-                        }
-
+                    if (Session.I.IsServer) 
+                    {
+                        Repo.Values.Set.Overrides.Biologicals = Comp.PrimaryWeapon.System.TrackCharacters;
                         Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
-
                     }
 
                     for (int i = 0; i < collection.Count; i++)
