@@ -692,7 +692,7 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if (eTarget != null && eTarget.MarkedForClose || w.Target.HasTarget && w.Target.TargetObject == null && w.TargetData.EntityId >= 0 || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.TargetObject != null)
+                        else if (eTarget != null && eTarget.MarkedForClose || w.Target.HasTarget && w.Target.TargetObject == null && (w.TargetData.EntityId >= 0 || w.TargetData.EntityId <= -3) || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.TargetObject != null)
                         {
                             w.Target.Reset(Tick, States.ServerReset);
                         }

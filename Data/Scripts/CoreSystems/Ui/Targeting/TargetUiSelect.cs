@@ -473,7 +473,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 foreach (var m in Session.I.ActiveMarks)
                 {
                     var grid = m.Item3.TmpEntity as MyCubeGrid;
-                    if ((grid != null || m.Item3.EntityId > 0 && MyEntities.TryGetEntityById(m.Item3.EntityId, out grid) && grid != null) && targetGrid.IsSameConstructAs(grid))
+                    if ((grid != null || (m.Item3.EntityId > 0 || m.Item3.EntityId <= -3)&& MyEntities.TryGetEntityById(m.Item3.EntityId, out grid) && grid != null) && targetGrid.IsSameConstructAs(grid))
                         return true;
                 }
             }

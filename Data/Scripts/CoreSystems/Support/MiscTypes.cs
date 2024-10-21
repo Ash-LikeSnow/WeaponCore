@@ -130,7 +130,7 @@ namespace CoreSystems.Support
             }
 
             MyEntity targetEntity = null;
-            if (tData.EntityId <= 0 || MyEntities.TryGetEntityById(tData.EntityId, out targetEntity, true))
+            if ((tData.EntityId <= 0 && tData.EntityId >= -2) || MyEntities.TryGetEntityById(tData.EntityId, out targetEntity, true))
             {
                 TargetObject = targetEntity;
 
