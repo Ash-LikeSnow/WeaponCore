@@ -224,7 +224,7 @@ namespace CoreSystems
                         rootConstruct.CheckEmptyWeapons();
                 }
 
-                construct.HadFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out rootConstruct.LastFocusEntity);
+                construct.HadFocus = rootConstruct.Data.Repo.FocusData.Target != 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out rootConstruct.LastFocusEntity);
                 var constructResetTick = rootConstruct.TargetResetTick == Tick;
                 ///
                 /// Upgrade update section

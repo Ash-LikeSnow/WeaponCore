@@ -490,7 +490,7 @@ namespace CoreSystems.Projectiles
                     validEntity = !targetEnt.MarkedForClose;
                     
                     var targetChange = validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target;
-                    if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target > 0))
+                    if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target != 0))
                         validEntity = IsFocusTarget(targetEnt);
                 }
 

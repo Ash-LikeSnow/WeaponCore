@@ -740,7 +740,7 @@ namespace CoreSystems.Support
             TargetInfo alphaInfo = null;
             int offset = 0;
             MyEntity fTarget;
-            if (!aConst.OverrideTarget && ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out alphaInfo))
+            if (!aConst.OverrideTarget && ai.Construct.Data.Repo.FocusData.Target != 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out alphaInfo))
                 offset++;
 
             if (aConst.FocusOnly && offset <= 0)
@@ -1060,7 +1060,7 @@ namespace CoreSystems.Support
             {
                 TargetInfo priorityInfo;
                 MyEntity fTarget;
-                if (ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out priorityInfo) && priorityInfo.Target?.GetTopMostParent() == topEnt)
+                if (ai.Construct.Data.Repo.FocusData.Target != 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out priorityInfo) && priorityInfo.Target?.GetTopMostParent() == topEnt)
                 {
                     isPriroity = true;
                     lastBlocks = totalBlocks < 250 ? totalBlocks : 250;
