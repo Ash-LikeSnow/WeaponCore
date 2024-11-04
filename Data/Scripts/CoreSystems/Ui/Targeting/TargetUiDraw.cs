@@ -389,7 +389,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var detailedHud = !s.Settings.ClientConfig.MinimalHud && (s.Settings.ClientConfig.AdvancedMode || s.MinimalHudOverride);
             var element = 0;
 
-            if (focus.Target <= 0) return;
+            if (focus.Target == 0) return;
             var lockMode = focus.Locked;
 
             var targetState = ai.TargetState;
@@ -515,7 +515,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var focus = Session.I.TrackingAi.Construct.Data.Repo.FocusData;
             MyEntity target;
-            if (focus.Target > 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckBlockWeaponEntityHit(target, info))
+            if (focus.Target != 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckBlockWeaponEntityHit(target, info))
                     return;
 
             if (LastSelectedEntity != null)
@@ -871,7 +871,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var targetId = ai.Construct.Data.Repo.FocusData.Target;
             MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> targetInfo;
             MyEntity target;
-            if (targetId <= 0 || !MyEntities.TryGetEntityById(targetId, out target) || !_masterTargets.TryGetValue(target, out targetInfo)) 
+            if (targetId == 0 || !MyEntities.TryGetEntityById(targetId, out target) || !_masterTargets.TryGetValue(target, out targetInfo)) 
                 return false;
 
             if (!s.Tick20) return true;

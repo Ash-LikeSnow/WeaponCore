@@ -944,7 +944,7 @@ namespace CoreSystems.Support
             var forceUpdate = LastUpdateTick == 0 || Session.I.Tick - LastUpdateTick > 600;
             if (forceUpdate || fd.Target != OldTarget || fd.Locked != OldLocked || fd.HasFocus != OldHasFocus || Math.Abs(fd.DistToNearestFocusSqr - OldDistToNearestFocusSqr) > 0)
             {
-                if (fd.Target > 0)
+                if (fd.Target != 0)
                     PrevTarget = fd.Target;
                 
                 OldTarget = fd.Target;
@@ -1031,7 +1031,7 @@ namespace CoreSystems.Support
         {
             var fd = ai.Construct.Data.Repo.FocusData;
 
-            fd.Target = -1;
+            fd.Target = 0;
             fd.Locked = LockModes.None;
 
             ServerIsFocused(ai);
@@ -1052,12 +1052,12 @@ namespace CoreSystems.Support
         {
             var fd = ai.Construct.Data.Repo.FocusData;
 
-            if (fd.Target > 0 && MyEntities.GetEntityById(fd.Target) != null) {
+            if (fd.Target != 0 && MyEntities.GetEntityById(fd.Target) != null) {
                 fd.HasFocus = true;
                 return true;
             }
 
-            fd.Target = -1;
+            fd.Target = 0;
             fd.Locked = LockModes.None;
             fd.HasFocus = false;
 
@@ -1071,14 +1071,14 @@ namespace CoreSystems.Support
             if (Session.I.IsServer)
                 return ServerIsFocused(ai);
 
-            return fd.Target > 0 && MyEntities.GetEntityById(fd.Target) != null;
+            return fd.Target != 0 && MyEntities.GetEntityById(fd.Target) != null;
         }
 
         internal bool GetPriorityTarget(Ai ai, out MyEntity target)
         {
             var fd = ai.Construct.Data.Repo.FocusData;
 
-            if (fd.Target > 0 && MyEntities.TryGetEntityById(fd.Target, out target, true))
+            if (fd.Target != 0 && MyEntities.TryGetEntityById(fd.Target, out target, true))
                 return true;
 
             if (MyEntities.TryGetEntityById(fd.Target, out target, true))
