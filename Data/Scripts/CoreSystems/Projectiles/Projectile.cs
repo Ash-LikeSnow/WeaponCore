@@ -760,6 +760,8 @@ namespace CoreSystems.Projectiles
             if (aConst.AmmoUseDrag)
             {
                 speedCap -= Info.Age * aConst.DragPerTick;
+                if (speedCap < aConst.DragMinSpeed)
+                    speedCap = aConst.DragMinSpeed;
                 if (speedCap < 0)
                     speedCap = 0;
             }
