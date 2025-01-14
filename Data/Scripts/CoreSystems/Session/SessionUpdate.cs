@@ -183,8 +183,12 @@ namespace CoreSystems
                     }
                 }
 
-                if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
+                if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated)
+                {
+                    if (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick) //needs to run even for sleeping/unpowered grids to keep current on players in seats
+                        Ai.Constructs.UpdatePlayerStates(ai.TopEntityMap.GroupMap);
                     continue;
+                }
 
                 var construct = ai.Construct;
 

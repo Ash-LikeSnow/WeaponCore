@@ -470,7 +470,7 @@ namespace CoreSystems.Support
                                 if (comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off || Session.I.Tick30)
                                     comp.ShootManager.RequestShootSync(0, ShootManager.RequestType.On);
                             }
-                            else if ((stopFiring || !alignedShoot) && comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On)
+                            else if ((stopFiring || !alignedShoot || rangeToTarg > comp.PrimaryWeapon.MaxTargetDistance) && comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On)
                             {
                                 comp.PrimaryWeapon.ShootRequest.Type = TargetType.None; //Just in case?
                                 comp.ShootManager.RequestShootSync(0, ShootManager.RequestType.Off);

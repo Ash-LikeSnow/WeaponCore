@@ -494,6 +494,10 @@ namespace CoreSystems.Support
                 out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair);
 
             MagazineSize = EnergyAmmo ? EnergyMagSize : MagazineDef.Capacity;
+
+            if (EnergyAmmo && MagazineSize == 0)
+                Log.Line($"{ammo.AmmoDef.AmmoRound} has a magazine capacity of zero, Girax error detected!  Check your magazine sbc entry for a <capacity> tag");
+
             MagsToLoad = wDef.HardPoint.Loading.MagsToLoad > 0 ? wDef.HardPoint.Loading.MagsToLoad : 1;
             MaxAmmo = MagsToLoad * MagazineSize;
 
