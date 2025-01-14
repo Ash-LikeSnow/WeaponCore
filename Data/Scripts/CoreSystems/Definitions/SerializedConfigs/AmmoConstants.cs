@@ -296,6 +296,7 @@ namespace CoreSystems.Support
         public readonly float DetonationSoundDistSqr;
         public readonly float BackKickForce;
         public readonly float DragPerTick;
+        public readonly float DragMinSpeed;
         public readonly double MinTurnSpeedSqr;
         public readonly double Aggressiveness;
         public readonly double NavAcceleration;
@@ -453,6 +454,7 @@ namespace CoreSystems.Support
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
             AmmoUseDrag = ammo.AmmoDef.Trajectory.DragPerSecond > 0;
             DragPerTick = AmmoUseDrag ? ammo.AmmoDef.Trajectory.DragPerSecond / 60 : 0;
+            DragMinSpeed = AmmoUseDrag ? ammo.AmmoDef.Trajectory.DragMinSpeed : 0;
 
             FeelsGravity = GravityMultiplier > 0;
             StoreGravity = FeelsGravity || fragHasGravity;

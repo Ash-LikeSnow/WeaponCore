@@ -223,7 +223,9 @@ namespace CoreSystems.Projectiles
                             if (aConst.AmmoUseDrag)
                             {
                                 curMaxSpeed -= p.Info.Age * aConst.DragPerTick;
-                                if (curMaxSpeed < 0)
+                                if (curMaxSpeed < aConst.DragMinSpeed)
+                                    curMaxSpeed = aConst.DragMinSpeed;
+                                else if (curMaxSpeed < 0)
                                     curMaxSpeed = 0;
                                 maxSpeedSqr = curMaxSpeed * curMaxSpeed;
                             }
@@ -270,7 +272,9 @@ namespace CoreSystems.Projectiles
                         if (aConst.AmmoSkipAccel && aConst.AmmoUseDrag)
                         {
                             var dragMaxSpeed = p.MaxSpeed - p.Info.Age * aConst.DragPerTick;
-                            if (dragMaxSpeed < 0)
+                            if (dragMaxSpeed < aConst.DragMinSpeed)
+                                dragMaxSpeed = aConst.DragMinSpeed;
+                            else if (dragMaxSpeed < 0)
                                 dragMaxSpeed = 0;
                             p.Velocity = p.Direction * dragMaxSpeed;
                         }
