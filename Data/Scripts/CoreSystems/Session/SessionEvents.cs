@@ -70,8 +70,7 @@ namespace CoreSystems
                     if (validVanilla && cube.BlockDefinition.Id.SubtypeId.String == "AutoCannonTurret" && ((IMyModel)cube.Model).AssetName.StartsWith("Models"))
                         return;
 
-                    var cubeType = cube != null && (validVanilla || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
-                    var validType = cubeType;
+                    var validType = cube != null && (validVanilla || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
 
                     if (!validType)
                     {
