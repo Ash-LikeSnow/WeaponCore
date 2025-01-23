@@ -209,7 +209,7 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session,  "Shoot", Localization.GetText("TerminalShootTitle"), Localization.GetText("TerminalShootTooltip"), BlockUi.GetShoot, BlockUi.RequestSetShoot, true, IsNotBomb);
             AddOnOffSwitchNoAction<T>(session, "Override", Localization.GetText("TerminalOverrideTitle"), Localization.GetText("TerminalOverrideTooltip"), BlockUi.GetOverride, BlockUi.RequestOverride, true, OverrideTarget);
-            AddOnOffSwitchNoAction<T>(session, "AngularTracking", Localization.GetText("TerminalAngularTitle"), Localization.GetText("TerminalAngularTooltip"), BlockUi.GetAngularTracking, BlockUi.RequestAngularTracking, true, IsNotBomb);
+            AddOnOffSwitchNoAction<T>(session, "AngularTracking", Localization.GetText("TerminalAngularTitle"), Localization.GetText("TerminalAngularTooltip"), BlockUi.GetAngularTracking, BlockUi.RequestAngularTracking, true, HasTracking);
         }
 
         internal static void CreateGenericArmor<T>(Session session) where T : IMyTerminalBlock
