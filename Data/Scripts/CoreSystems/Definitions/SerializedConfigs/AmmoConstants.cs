@@ -498,7 +498,7 @@ namespace CoreSystems.Support
             MagazineSize = EnergyAmmo ? EnergyMagSize : MagazineDef.Capacity;
 
             if (EnergyAmmo && MagazineSize == 0)
-                Log.Line($"{ammo.AmmoDef.AmmoRound} has a magazine capacity of zero, Girax error detected!  Check your magazine sbc entry for a <capacity> tag");
+                Log.Line($"{ammo.AmmoDef.AmmoRound} has a magazine capacity of zero, Girax error detected!  Check your magazine sbc entry for a <capacity> tag or ammo for EnergyMagazineSize");
 
             MagsToLoad = wDef.HardPoint.Loading.MagsToLoad > 0 ? wDef.HardPoint.Loading.MagsToLoad : 1;
             MaxAmmo = MagsToLoad * MagazineSize;
