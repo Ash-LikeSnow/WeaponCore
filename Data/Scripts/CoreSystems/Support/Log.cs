@@ -101,7 +101,7 @@ namespace CoreSystems.Support
             {
                 var filename = name + ".log";
                 if (_instances.ContainsKey(name)) return;
-                RenameFileInLocalStorage(filename, name + $"-{DateTime.Now:MM-dd-yy_HH-mm-ss}.log", typeof(LogInstance));
+                RenameFileInLocalStorageLimited(filename, name + $"_1.log", typeof(LogInstance));
 
                 if (defaultInstance) _defaultInstance = name;
                 var instance = _logPool.Get();
@@ -136,6 +136,30 @@ namespace CoreSystems.Support
             {
                 MyAPIGateway.Utilities.ShowNotification(e.Message, 5000);
             }
+        }
+
+        public static void RenameFileInLocalStorageLimited(string oldName, string newName, Type anyObjectInYourMod)
+        {
+            if (!MyAPIGateway.Utilities.FileExistsInLocalStorage(oldName, anyObjectInYourMod))
+                return;
+
+            if (MyAPIGateway.Utilities.FileExistsInLocalStorage(newName, anyObjectInYourMod))
+                MyAPIGateway.Utilities.DeleteFileInLocalStorage(newName, anyObjectInYourMod);
+
+            using (var read = MyAPIGateway.Utilities.ReadFileInLocalStorage(oldName, anyObjectInYourMod))
+            {
+                var sb = new StringBuilder(newName);
+                SUtils.ReplaceAll(sb, Path.GetInvalidFileNameChars(), '_');
+
+                using (var write = MyAPIGateway.Utilities.WriteFileInLocalStorage(sb.ToString(), anyObjectInYourMod))
+                {
+                    write.Write(read.ReadToEnd());
+                    write.Flush();
+                    write.Dispose();
+                }
+            }
+
+            MyAPIGateway.Utilities.DeleteFileInLocalStorage(oldName, anyObjectInYourMod);
         }
 
         public static void RenameFileInLocalStorage(string oldName, string newName, Type anyObjectInYourMod)

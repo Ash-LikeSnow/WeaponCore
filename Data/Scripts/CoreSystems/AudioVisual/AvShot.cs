@@ -1051,8 +1051,8 @@ namespace CoreSystems.Support
                 }
                 catch (Exception e)
                 {
-                    MyLog.Default.Error($"Sound error with ammo: {AmmoDef.AmmoRound} from {Weapon.Comp.TerminalBlock.DisplayName} soundID {AmmoDef.Const.ShotSoundPair.SoundId} cuename {AmmoDef.Const.ShotSoundPair.GetCueName()}" +
-                        $"FireEmitter.Entity null? {FireEmitter?.Entity == null} \n Origin: {Origin}");
+                    MyLog.Default.Error($"Sound error with ammo: {AmmoDef.AmmoRound} from {Weapon.Comp.TerminalBlock.CustomName} soundID {AmmoDef.Const.ShotSoundPair.SoundId} cuename {AmmoDef.Const.ShotSoundPair.GetCueName()}" +
+                        $"\n FireEmitter.Entity null? {FireEmitter?.Entity == null} \n Origin: {Origin} \n Marked for Close? {Weapon.Comp.FunctionalBlock.MarkedForClose}");
                     throw e;
                 }
             }
