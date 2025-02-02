@@ -38,7 +38,7 @@ namespace CoreSystems.Control
         {
             AddComboboxNoAction<T>(session, "ControlModes", Localization.GetText("TerminalControlModesTitle"), Localization.GetText("TerminalControlModesTooltip"), BlockUi.GetControlMode, BlockUi.RequestControlMode, BlockUi.ListControlModes, TurretOrGuidedAmmo);
 
-            AddComboboxNoAction<T>(session, "ObjectiveMode", "Objective Mode", "Select when to cease firing at a block", BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, HasTracking);
+            AddComboboxNoAction<T>(session, "ObjectiveMode", Localization.GetText("TerminalObjectiveTitle"), Localization.GetText("TerminalObjectiveTooltip"), BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, HasTracking);
 
             AddComboboxNoAction<T>(session, "PickAmmo", Localization.GetText("TerminalPickAmmoTitle"), Localization.GetText("TerminalPickAmmoTooltip"), BlockUi.GetAmmos, BlockUi.RequestSetAmmo, BlockUi.ListAmmos, AmmoSelection);
 
@@ -74,9 +74,9 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, HasTracking);
 
-            AddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "LargeGrid", Localization.GetText("TerminalLGTitle"), Localization.GetText("TerminalLGTooltip"), BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
 
-            AddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "SmallGrid", Localization.GetText("TerminalSGTitle"), Localization.GetText("TerminalSGTooltip"), BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
 
 
             Separator<T>(session, "WC_sep3", IsTrue);
@@ -135,9 +135,9 @@ namespace CoreSystems.Control
 
             CtcAddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepelControl, BlockUi.RequestSetRepelControl, true, CtcIsReady);
 
-            CtcAddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGridControl, BlockUi.RequestSetLargeGridControl, true, CtcIsReady);
+            CtcAddOnOffSwitchNoAction<T>(session, "LargeGrid", Localization.GetText("TerminalLGTitle"), Localization.GetText("TerminalLGTooltip"), BlockUi.GetLargeGridControl, BlockUi.RequestSetLargeGridControl, true, CtcIsReady);
 
-            CtcAddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGridControl, BlockUi.RequestSetSmallGridControl, true, CtcIsReady);
+            CtcAddOnOffSwitchNoAction<T>(session, "SmallGrid", Localization.GetText("TerminalSGTitle"), Localization.GetText("TerminalSGTooltip"), BlockUi.GetSmallGridControl, BlockUi.RequestSetSmallGridControl, true, CtcIsReady);
 
             Separator<T>(session, "WC_sep3", IsTrue);
 

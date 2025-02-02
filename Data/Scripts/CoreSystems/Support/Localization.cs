@@ -78,26 +78,18 @@ namespace CoreSystems.Support
                         { "TerminalCameraChannelTooltip", "Assign this weapon to a camera channel" },
                         { "TerminalBurstShotsTitle", "Burst Shot Count" },
                         { "TerminalBurstShotsTooltip", "The number of shots to burst at a time" },
-
                         { "TerminalBurstDelayTitle", "Shot Delay" },
                         { "TerminalBurstDelayTooltip", "The number game ticks (60 per second) to delay between shots" },
-
-
                         { "TerminalSequenceIdTitle", "Weapon Sequence id" },
                         { "TerminalSequenceIdTooltip", "Assign this weapon a unique sequence id per weapon group, used for sequence firing" },
-
                         { "TerminalWeaponGroupIdTitle", "Weapon Group id" },
                         { "TerminalWeaponGroupIdTooltip", "Assign this weapon to a sequence group, used for sequence firing" },
-
                         { "TerminalShootModeTitle", "Shoot Mode" },
                         { "TerminalShootModeTooltip", "Set the weapon's mode, fire once, burst fire, mouse click, key toggle mode" },
-
                         { "TerminalAiEnabledTitle", "Enable AI" },
                         { "TerminalAiEnabledTooltip", "Automatically aim and fire at targets" },
-
                         { "TerminalShareFireControlTitle", "Share Control" },
                         { "TerminalShareFireControlTooltip", "Weapons with manual/painter/mousecontrol enabled will respond when using the Control button above" },
-
                         { "TerminalTargetGroupTitle", "Target Lead Group" },
                         { "TerminalTargetGroupTooltip", "Assign this weapon to target lead group" },
                         { "TerminalDecoyPickSubSystemTitle", "Pick SubSystem" },
@@ -105,7 +97,6 @@ namespace CoreSystems.Support
                         { "TerminalCameraCameraChannelTitle", "Camera Channel" },
                         { "TerminalCameraCameraChannelTooltip", "Assign the camera weapon channel to this camera" },
                         { "TerminalDebugTitle", "Debug" },
-
                         { "TerminalDebugTooltip", "Debug On/Off" },
                         { "TerminalAdvancedTitle", "Advanced Features" },
                         { "TerminalAdvancedTooltip", "This enables more advanced UI features that tend to be confusing to new users" },
@@ -145,10 +136,11 @@ namespace CoreSystems.Support
                         { "ActionWC_Decrease_CameraChannel", "Previous Camera Channel" },
                         { "ActionWC_Increase_LeadGroup", "Next Lead Group" },
                         { "ActionWC_Decrease_LeadGroup", "Previous Lead Group" },
-
+                        { "ActionTargetLargeGrids", "Target Large Grids" },
+                        { "ActionTargetSmallGrids", "Target Small Grids" },
+                        { "ActionCycleObjective", "Cycle Objective Mode" },
                         { "ActionWCAiEnabled", "Enable AI On/Off" },
                         { "ActionShareFireControl", "Share Control On/Off" },
-
                         { "ActionMask", "Select Mask Type" },
                         { "SystemStatusFault", "[Fault]" },
                         { "SystemStatusOffline", "[Offline]" },
@@ -180,6 +172,12 @@ namespace CoreSystems.Support
                         { "TerminalOverrideTooltip", "Turns off targeting and tracking so you can forcibly fire the weapon- for practice use only" },
                         { "TerminalAngularTitle", "Track Angular Motion" },
                         { "TerminalAngularTooltip", "Adjust aim to account for angular motion of the target" },
+                        { "TerminalLGTitle", "Large Grid" },
+                        { "TerminalLGTooltip", "Target large grids" },
+                        { "TerminalSGTitle", "Small Grid" },
+                        { "TerminalSGTooltip", "Target small grids" },
+                        { "TerminalObjectiveTitle", "Objective Mode" },
+                        { "TerminalObjectiveTooltip", "Select when to cease firing at a block" },
                         { "WeaponInfoHasTarget", "HasTarget" },
                         { "WeaponInfoTargetState", "TargetType" },
 
