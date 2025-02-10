@@ -417,7 +417,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoServerModdedLine2", "Проинформируйте администрацию о проблемах" },
                         { "WeaponInfoDrawOverMax", "Потребление: Текущее/Максимальное" },
                         { "WeaponInfoPowerCharged", "Заряд: Готово" },
-                        { "WeaponInfoPowerChargedIn", "Заряд: Зарядка ещё" },
+                        { "WeaponInfoPowerChargedIn", "Заряд: Зарядка ещё " },
                         { "WeaponInfoSeconds", "c" },
                         { "WeaponInfoAmmoLabel", "Боеприпас" },
                         { "WeaponInfoWaitingCharge", "Ожидание зарядки" },
