@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Sandbox.ModAPI;
 using VRage;
 
@@ -245,7 +245,7 @@ namespace CoreSystems.Support
                         { "Overload Off", "Переключить Усиление Выкл" },
                         { "TerminalSwitchOn", "Вкл" },
                         { "TerminalSwitchOff", "Выкл" },
-                        { "TerminalReportTargetTitle", "Включить Наведение" },
+                        { "TerminalReportTargetTitle", "Отображать состояние захвата" },
                         { "TerminalReportTargetTooltip", "Отображать на HUD наличие захваченной цели" },
                         { "TerminalWeaponROFTitle", "Изменить скорострельность" },
                         { "TerminalWeaponROFTooltip", "Изменить скорострельность" },
@@ -412,7 +412,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoPerMin", "/мин" },
                         { "WeaponInfoProjectileLabel", "Боеприпас" },
                         { "WeaponInfoNoneTarget", "Нет" },
-                        { "WeaponInfoAmmoType", "Типы боеприпасов(Боеприпас, если задан)" },
+                        { "WeaponInfoAmmoType", "Типы боеприпасов(Магазин, если задан)" },
                         { "WeaponInfoServerModdedLine1", "Оружие изменено сервером!" },
                         { "WeaponInfoServerModdedLine2", "Проинформируйте администрацию о проблемах" },
                         { "WeaponInfoDrawOverMax", "Потребление/Максимальное" },
