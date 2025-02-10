@@ -320,7 +320,7 @@ namespace CoreSystems.Support
                         { "TerminalDebugTitle", "Отладка" },
                         { "TerminalDebugTooltip", "Отладка Вкл/Выкл" },
                         { "TerminalAdvancedTitle", "Продвинутые настройки" },
-                        { "TerminalAdvancedTooltip", "Включить показ продвинутых опций настройки оружия (может быть сложно для начинающий)" },
+                        { "TerminalAdvancedTooltip", "Включить показ продвинутых опций настройки оружия (может быть сложно для начинающих)" },
                         { "TerminalShootTitle", "Стрелять" },
                         { "TerminalShootTooltip", "Стрелять Вкл/Выкл" },
                         { "ActionStateOn", "Вкл" },
