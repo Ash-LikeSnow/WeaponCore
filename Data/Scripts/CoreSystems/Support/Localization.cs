@@ -180,7 +180,6 @@ namespace CoreSystems.Support
                         { "TerminalObjectiveTooltip", "Select when to cease firing at a block" },
                         { "WeaponInfoHasTarget", "HasTarget" },
                         { "WeaponInfoTargetState", "TargetType" },
-                        //new
                         { "WeaponInfoIdlePower", "Idle Power" },
                         { "WeaponInfoMWLabel", "MW" },
                         { "WeaponInfoStatsHeader", "--- Stats ---" },
@@ -228,6 +227,13 @@ namespace CoreSystems.Support
                         { "MoveAny", "Any" },
                         { "MoveMoving", "Ship" },
                         { "MoveMoored", "Station" },
+                        { "WeaponInfoTrue", "True" },
+                        { "WeaponInfoFalse", "False" },
+                        { "ControlsInactive", "Inactive" },
+                        { "BombArmed", "Armed" },
+                        { "BombDisarmed", "Disarmed" },
+                        { "TrackAngular", "Predict Targets Angular Motion"}
+
                     }
                 },
                {
@@ -388,7 +394,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoLoS", "Прямая видимость" },
                         { "WeaponTotalEffect", "Повреждать" },
                         { "WeaponTotalEffectAvgDps", "Средний урон в секунду" },
-                        { "TerminalOverrideTitle", "Переопределие" },
+                        { "TerminalOverrideTitle", "Усиление" },
                         { "TerminalOverrideTooltip", "Разрешить стрельбу орудиям, иначе требующим цель, только для тестирования!" },
                         { "TerminalAngularTitle", "Отслеживать угловое движение" },
                         { "TerminalAngularTooltip", "Вносить корректировки для учёта углового движения цели" },
@@ -447,6 +453,12 @@ namespace CoreSystems.Support
                         { "MoveAny", "Любой" },
                         { "MoveMoving", "Корабль" },
                         { "MoveMoored", "Станция" },
+                        { "WeaponTargTrue", "Да" },//Contextual to targets
+                        { "WeaponTargFalse", "Нет" },//Contextual to targets, use Правда/Ложь for logic
+                        { "ControlsInactive", "Неактивно" },
+                        { "BombArmed", "Взведено" },
+                        { "BombDisarmed", "Предохранитель" },
+                        { "TrackAngular", "Отслеживать угловое движение"}                        
                     }
                 },
                 {

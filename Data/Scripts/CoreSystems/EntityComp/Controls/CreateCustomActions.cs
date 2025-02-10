@@ -401,7 +401,7 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("AngularTracking");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Predict Targets Angular Motion");
+            action.Name = new StringBuilder(Localization.GetText("TrackAngular"));
             action.Action = CustomActions.TerminalActionToggleAngularTracking;
             action.Writer = CustomActions.AngularTrackingWriter;
             action.Enabled = TerminalHelpers.HasTracking;

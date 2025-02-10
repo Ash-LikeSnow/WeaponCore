@@ -261,7 +261,7 @@ namespace CoreSystems.Support
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + Localization.GetText("WeaponInfoSeconds") : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : Localization.GetText("WeaponInfoNoammo")))}" +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : Localization.GetText("WeaponTargFalse")) : string.Empty)}" +
                         $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}" +
                         endReturn);
                 }

@@ -506,9 +506,9 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Armed)
-                sb.Append("Armed");
+                sb.Append(Localization.GetText("BombArmed"));
             else
-                sb.Append("Disarmed");
+                sb.Append(Localization.GetText("BombDisarmed"));
         }
 
         internal static void ShootStateWriter(IMyTerminalBlock blk, StringBuilder sb)
@@ -667,7 +667,7 @@ namespace CoreSystems.Control
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.Control);
+            sb.Append(Localization.GetText("Control" + comp.Data.Repo.Values.Set.Overrides.Control));
         }
 
         internal static void MovementModeWriter(IMyTerminalBlock blk, StringBuilder sb)
@@ -675,7 +675,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.MoveMode);
+            sb.Append(Localization.GetText("Move" + comp.Data.Repo.Values.Set.Overrides.MoveMode));
         }
 
         internal static void SubSystemWriter(IMyTerminalBlock blk, StringBuilder sb)
@@ -683,7 +683,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.SubSystem);
+            sb.Append(Localization.GetText("Subtype" + comp.Data.Repo.Values.Set.Overrides.SubSystem));
         }
 
         internal static void ShootModeWriter(IMyTerminalBlock blk, StringBuilder sb)
@@ -691,7 +691,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? InActive : comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString();
+            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? Localization.GetText("ControlsInactive") : Localization.GetText("Shoot" + comp.Data.Repo.Values.Set.Overrides.ShootMode);
             sb.Append(altAiControlName);
         }
 
@@ -700,16 +700,15 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.ObjectiveMode);
+            sb.Append(Localization.GetText("Obj" + comp.Data.Repo.Values.Set.Overrides.ObjectiveMode));
         }
 
-        private const string InActive = "Inactive";
         internal static void MouseToggleWriter(IMyTerminalBlock blk, StringBuilder sb)
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            var message = comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.MouseControl ? comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString() : InActive; 
+            var message = comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.MouseControl ? Localization.GetText("ShootMouse") : Localization.GetText("ControlsInactive"); 
 
             sb.Append(message);
         }
@@ -719,7 +718,7 @@ namespace CoreSystems.Control
             long value;
             if (long.TryParse(blk.CustomData, out value))
             {
-                sb.Append(((WeaponDefinition.TargetingDef.BlockTypes)value).ToString());
+                sb.Append(Localization.GetText("Subtype" + (WeaponDefinition.TargetingDef.BlockTypes)value));
             }
         }
 
@@ -728,7 +727,7 @@ namespace CoreSystems.Control
             long value;
             if (long.TryParse(blk.CustomData, out value))
             {
-                var group = $"Camera Channel {value}";
+                var group = $"{Localization.GetText("TerminalCameraCameraChannelTitle")} {value}";
                 sb.Append(group);
             }
         }

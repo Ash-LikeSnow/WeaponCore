@@ -176,9 +176,9 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "Grids", Localization.GetText("TerminalGridsTitle"), Localization.GetText("TerminalGridsTooltip"), BlockUi.GetGrids, BlockUi.RequestSetGrids, true, TrackGrids);
 
-            AddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "LargeGrid", Localization.GetText("TerminalLGTitle"), Localization.GetText("TerminalLGTooltip"), BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
 
-            AddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "SmallGrid", Localization.GetText("TerminalSGTitle"), Localization.GetText("TerminalSGTooltip"), BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
 
             AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
 
