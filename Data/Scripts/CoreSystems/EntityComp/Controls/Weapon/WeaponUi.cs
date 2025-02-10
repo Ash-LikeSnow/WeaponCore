@@ -621,10 +621,10 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> ShootModeList = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)0}") },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)1}") },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)2}") },
-            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)3}") },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("ShootAiShoot")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("ShootMouse")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("ShootKeyToggle")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("ShootKey")) },
         };
 
         internal static long GetSubSystem(IMyTerminalBlock block)
@@ -649,14 +649,14 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> SubList = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)0}") },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)1}") },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)2}") },
-            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)3}") },
-            new MyTerminalControlComboBoxItem { Key = 4, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)4}") },
-            new MyTerminalControlComboBoxItem { Key = 5, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)5}") },
-            new MyTerminalControlComboBoxItem { Key = 6, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)6}") },
-            new MyTerminalControlComboBoxItem { Key = 7, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)7}") },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeAny")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeOffense")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeUtility")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypePower")) },
+            new MyTerminalControlComboBoxItem { Key = 4, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeProduction")) },
+            new MyTerminalControlComboBoxItem { Key = 5, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeThrust")) },
+            new MyTerminalControlComboBoxItem { Key = 6, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeJumping")) },
+            new MyTerminalControlComboBoxItem { Key = 7, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeSteering")) },
         };
 
         internal static long GetMovementMode(IMyTerminalBlock block)
@@ -681,10 +681,9 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> MoveList = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.MoveModes)0}") },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.MoveModes)1}") },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.MoveModes)2}") },
-            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.MoveModes)3}") },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("MoveAny")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoving")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoored")) },
         };
 
         internal static long GetObjectiveMode(IMyTerminalBlock block)
@@ -709,9 +708,9 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> ObjectiveList = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)0}") },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)1}") },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ObjectiveModes)2}") },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("ObjDefault")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("ObjDisabled")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("ObjDestroyed")) },
         };
 
         internal static long GetControlMode(IMyTerminalBlock block)
@@ -1131,9 +1130,9 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> ControlList = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ControlModes)0}") },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ControlModes)1}") },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(ProtoWeaponOverrides.ControlModes)2}") },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("ControlAuto")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("ControlManual")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("ControlPainter")) },
         };
 
         internal static void ListDecoySubSystems(List<MyTerminalControlComboBoxItem> subSystemList)
@@ -1143,13 +1142,13 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> DecoySubList = new List<MyTerminalControlComboBoxItem>()
         {
-            new MyTerminalControlComboBoxItem() { Key = 1, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)1}") },
-            new MyTerminalControlComboBoxItem() { Key = 2, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)2}") },
-            new MyTerminalControlComboBoxItem() { Key = 3, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)3}") },
-            new MyTerminalControlComboBoxItem() { Key = 4, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)4}") },
-            new MyTerminalControlComboBoxItem() { Key = 5, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)5}") },
-            new MyTerminalControlComboBoxItem() { Key = 6, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)6}") },
-            new MyTerminalControlComboBoxItem() { Key = 7, Value = MyStringId.GetOrCompute($"{(WeaponDefinition.TargetingDef.BlockTypes)7}") },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeOffense")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeUtility")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypePower")) },
+            new MyTerminalControlComboBoxItem { Key = 4, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeProduction")) },
+            new MyTerminalControlComboBoxItem { Key = 5, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeThrust")) },
+            new MyTerminalControlComboBoxItem { Key = 6, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeJumping")) },
+            new MyTerminalControlComboBoxItem { Key = 7, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeSteering")) },
         };
     }
 }
