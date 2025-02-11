@@ -874,47 +874,56 @@ namespace CoreSystems
         private uint _lastIncompatibleMessageTick = uint.MaxValue;
         internal void RemoveIncompatibleBlock(object o)
         {
-            var cube = o as MyCubeBlock;
-            if (cube != null)
+            try
             {
-
-                var processCube = !cube.MarkedForClose && !cube.Closed && cube.SlimBlock != null && cube.BlockDefinition != null && cube.CubeGrid != null && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose;
-                if (processCube)
+                var cube = o as MyCubeBlock;
+                if (cube != null)
                 {
-                    if (BrokenMod(cube))
-                        return;
-
-                    if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
+                    var processCube = !cube.MarkedForClose && !cube.Closed && cube.SlimBlock != null && cube.BlockDefinition != null && cube.CubeGrid != null && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose;
+                    if (processCube)
                     {
-                        _lastIncompatibleMessageTick = Tick;
-                        var skipMessage = IsClient && Settings.Enforcement.UnsupportedMode && Tick > 600;
-                        if (!skipMessage)
-                            FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
-                    }
+                        if (BrokenMod(cube))
+                            return;
 
-                    if (cube.BlockDefinition?.Id.SubtypeName != null)
-                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
-
-                    if (DedicatedServer)
-                    {
-                        if (!Settings.Enforcement.UnsupportedMode)
-                            cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-                    }
-                    else if (!Settings.Enforcement.UnsupportedMode)
-                    {
-                        if (!_removeComplete)
-                            _unsupportedBlocks.Add(cube);
-
-                        if (_removeComplete || DedicatedServer)
-                            cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-
-                        if (!_removeScheduled)
+                        if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
                         {
-                            _removeScheduled = true;
-                            FutureEvents.Schedule(RemoveIncompatibleBlocks, null, 3600);
+                            _lastIncompatibleMessageTick = Tick;
+                            var skipMessage = IsClient && Settings.Enforcement.UnsupportedMode && Tick > 600;
+                            if (!skipMessage)
+                                FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
+                        }
+
+                        if (cube.BlockDefinition?.Id.SubtypeName != null)
+                            _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
+
+                        if (DedicatedServer)
+                        {
+                            if (!Settings.Enforcement.UnsupportedMode)
+                                cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
+                        }
+                        else if (!Settings.Enforcement.UnsupportedMode)
+                        {
+                            if (!_removeComplete)
+                                _unsupportedBlocks.Add(cube);
+
+                            if (_removeComplete || DedicatedServer)
+                                cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
+
+                            if (!_removeScheduled)
+                            {
+                                _removeScheduled = true;
+                                FutureEvents.Schedule(RemoveIncompatibleBlocks, null, 3600);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"WC exception in RemoveIncompatibleBlock. Obj null: {o == null} Settings null: {Settings?.Enforcement == null} Unsupported mode: {Settings?.Enforcement.UnsupportedMode} \n{ex}";
+                Log.Line(errorMsg);
+                MyLog.Default.WriteLineAndConsole(errorMsg);
+                throw ex;
             }
         }
 
@@ -1592,6 +1601,9 @@ namespace CoreSystems
             var checkSphere = restriction.RestrictionRadius > 0;
             var querySphere = new BoundingSphereD(cubeBoundingBox.Center, queryRadius);
 
+            if (myGrid.Hierarchy == null)
+                return false;
+
             myGrid.Hierarchy.QuerySphere(ref querySphere, _tmpNearByBlocks);
 
             foreach (var grid in ai.SubGridCache) {
@@ -1700,17 +1712,20 @@ namespace CoreSystems
             VanillaIds[largeMissileMedCalId] = largeMissileMedCal;
             VanillaCoreIds[largeMissileMedCal] = largeMissileMedCalId;
 
-
             var smallLargeMissile = MyStringHash.GetOrCompute("LargeMissileLauncher");
             var smallLargeMissileId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeMissileLauncher");
             VanillaIds[smallLargeMissileId] = smallLargeMissile;
             VanillaCoreIds[smallLargeMissile] = smallLargeMissileId;
 
+            var largeRailgun = MyStringHash.GetOrCompute("LargeRailgun");
+            var largeRailgunId = new MyDefinitionId(typeof(MyObjectBuilder_ConveyorSorter), "LargeRailgun");
+            VanillaIds[largeRailgunId] = largeRailgun;
+            VanillaCoreIds[largeRailgun] = largeRailgunId;
 
-            var smallLargeMissileReload = MyStringHash.GetOrCompute("LargeRailgun");
-            var smallLargeMissileReloadId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "LargeRailgun");
-            VanillaIds[smallLargeMissileReloadId] = smallLargeMissileReload;
-            VanillaCoreIds[smallLargeMissileReload] = smallLargeMissileReloadId;
+            var SmallRailgun = MyStringHash.GetOrCompute("SmallRailgun");
+            var SmallRailgunId = new MyDefinitionId(typeof(MyObjectBuilder_ConveyorSorter), "SmallRailgun");
+            VanillaIds[SmallRailgunId] = SmallRailgun;
+            VanillaCoreIds[SmallRailgun] = SmallRailgunId;
 
             var smallLargeMissileLargeCal = MyStringHash.GetOrCompute("LargeBlockLargeCalibreGun");
             var smallLargeMissileLargeCalId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeBlockLargeCalibreGun");
@@ -1732,15 +1747,30 @@ namespace CoreSystems
             VanillaIds[smallAutoTurretId] = smallAutoTurret;
             VanillaCoreIds[smallAutoTurret] = smallAutoTurretId;
 
+            var smallMissileTurret = MyStringHash.GetOrCompute("SmallMissileTurret");
+            var smallMissileTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallMissileTurret");
+            VanillaIds[smallMissileTurretId] = smallMissileTurret;
+            VanillaCoreIds[smallMissileTurret] = smallMissileTurretId;
+
             var smallMedCalGun = MyStringHash.GetOrCompute("SmallBlockMediumCalibreGun");
             var smallMedCalGunId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "SmallBlockMediumCalibreGun");
             VanillaIds[smallMedCalGunId] = smallMedCalGun;
             VanillaCoreIds[smallMedCalGun] = smallMedCalGunId;
 
+            var smallMedCalTurret = MyStringHash.GetOrCompute("SmallBlockMediumCalibreTurret");
+            var smallMedCalTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallBlockMediumCalibreTurret");
+            VanillaIds[smallMedCalTurretId] = smallMedCalTurret;
+            VanillaCoreIds[smallMedCalTurret] = smallMedCalTurretId;
+
             var smallGatAuto = MyStringHash.GetOrCompute("SmallBlockAutocannon");
             var smallGatAutoId = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallBlockAutocannon");
             VanillaIds[smallGatAutoId] = smallGatAuto;
             VanillaCoreIds[smallGatAuto] = smallGatAutoId;
+
+            var smallGatReskin = MyStringHash.GetOrCompute("SmallGatlingTurretReskin");
+            var smallGatReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "SmallGatlingTurretReskin");
+            VanillaIds[smallGatReskinId] = smallGatReskin;
+            VanillaCoreIds[smallGatReskin] = smallGatReskinId;
 
             var smallRocketReload = MyStringHash.GetOrCompute("SmallRocketLauncherReload");
             var smallRocketReloadId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "SmallRocketLauncherReload");
@@ -1751,6 +1781,11 @@ namespace CoreSystems
             var smallGat2Id = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallGatlingGunWarfare2");
             VanillaIds[smallGat2Id] = smallGat2;
             VanillaCoreIds[smallGat2] = smallGat2Id;
+
+            var smallGatTurret = MyStringHash.GetOrCompute("SmallGatlingTurret");
+            var smallGatTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "SmallGatlingTurret");
+            VanillaIds[smallGatTurretId] = smallGatTurret;
+            VanillaCoreIds[smallGatTurret] = smallGatTurretId;
 
             var largeSearch = MyStringHash.GetOrCompute("LargeSearchlight");
             var largeSearchId = new MyDefinitionId(typeof(MyObjectBuilder_SearchlightDefinition), "LargeSearchlight");
@@ -1767,18 +1802,13 @@ namespace CoreSystems
             VanillaIds[largeGatReskinId] = largeGatReskin;
             VanillaCoreIds[largeGatReskin] = largeGatReskinId;
 
-            var smallGatReskin = MyStringHash.GetOrCompute("SmallGatlingTurretReskin");
-            var smallGatReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "SmallGatlingTurretReskin");
-            VanillaIds[smallGatReskinId] = smallGatReskin;
-            VanillaCoreIds[smallGatReskin] = smallGatReskinId;
-
             var largeMissileReskin = MyStringHash.GetOrCompute("LargeMissileTurretReskin");
-            var largeMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "LargeMissileTurretReskin");
+            var largeMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeMissileTurretReskin");
             VanillaIds[largeMissileReskinId] = largeMissileReskin;
             VanillaCoreIds[largeMissileReskin] = largeMissileReskinId;
 
             var smallMissileReskin = MyStringHash.GetOrCompute("SmallMissileTurretReskin");
-            var smallMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeTurretBaseDefinition), "SmallMissileTurretReskin");
+            var smallMissileReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallMissileTurretReskin");
             VanillaIds[smallMissileReskinId] = smallMissileReskin;
             VanillaCoreIds[smallMissileReskin] = smallMissileReskinId;
 

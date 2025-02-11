@@ -595,7 +595,6 @@ namespace CoreSystems
         {
             Any,
             Moving,
-            Mobile,
             Moored,
         }
 

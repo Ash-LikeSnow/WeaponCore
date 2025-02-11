@@ -236,12 +236,12 @@ namespace CoreSystems.Support
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
                 var advanced = (I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
                 if (HasServerOverrides)
-                    stringBuilder.Append($"\nWeapon modified by server!\n")
-                        .Append($"Report issues to server admins.\n");
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoServerModdedLine1")}\n")
+                        .Append($"\n{Localization.GetText("WeaponInfoServerModdedLine2")}");
 
                 //Start of new formatting
                 if (IdlePower > 0.01)
-                    stringBuilder.Append($"\nIdle Power: " + IdlePower.ToString("0.00") + " MW");
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
 
                 for (int i = 0; i < collection.Count; i++)
                 {
@@ -250,8 +250,8 @@ namespace CoreSystems.Support
                     if ((w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo || w.ActiveAmmoDef.AmmoDef.Const.IsHybrid) && !comp.HasAlternateUi)
                     {
                         var chargeTime = w.AssignedPower > 0 ? (int)((w.MaxCharge - w.ProtoWeaponAmmo.CurrentCharge) / w.AssignedPower * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS) : 0;
-                        shots += "\nDraw/Max: " + (SinkPower - IdlePower).ToString("0.00") + "/" + w.ActiveAmmoDef.AmmoDef.Const.PowerPerTick.ToString("0.00") + " MW" +
-                        $"\n{(chargeTime == 0 ? "Power: Charged" : "Power: Charged in " + chargeTime + "s")}";
+                        shots += $"\n{Localization.GetText("WeaponInfoDrawOverMax")}: {SinkPower - IdlePower:0.00}/ {w.ActiveAmmoDef.AmmoDef.Const.PowerPerTick:0.00} {Localization.GetText("WeaponInfoMWLabel")}" +
+                        $"\n{(chargeTime == 0 ? Localization.GetText("WeaponInfoPowerCharged") : Localization.GetText("WeaponInfoPowerChargedIn") + chargeTime + Localization.GetText("WeaponInfoSeconds"))}";
                     }
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
@@ -260,37 +260,37 @@ namespace CoreSystems.Support
                     var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                     stringBuilder.Append($"\n\n" + w.System.PartName +
                         shots +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : "\nAmmo: " + (w.Loading ? timeToLoad < 0 ? "Waiting on charge" : "Loaded in " + timeToLoad + "s": w.ProtoWeaponAmmo.CurrentAmmo > 0 ? "Loaded " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : "No Ammo"))}" +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + w.Target.HasTarget : string.Empty)}" +
-                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : "No Target") : string.Empty)}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + Localization.GetText("WeaponInfoSeconds") : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : Localization.GetText("WeaponInfoNoammo")))}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : Localization.GetText("WeaponTargFalse")) : string.Empty)}" +
+                        $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}" +
                         endReturn);
                 }
                 
                 if (HeatPerSecond > 0)
-                    stringBuilder.Append($"\nHeat per Sec/Max: {HeatPerSecond}/{MaxHeat}" +
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoHeatPerSecOverMax")}: {HeatPerSecond}/{MaxHeat}" +
                         $"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.} W ({(CurrentHeat / MaxHeat):P})");
                 
                 if (advanced)
                 {
-                    stringBuilder.Append($"\n\n--- Stats ---" +
-                        $"\nDPS: {comp.PeakDps:0.}");
+                    stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoStatsHeader")}" +
+                        $"\n{Localization.GetText("WeaponInfoDPSLabel")}: {comp.PeakDps:0.}");
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var w = collection[i];
                         stringBuilder.Append($" {(collection.Count > 1 ? "\n{w.FriendlyName}" : string.Empty)}" +
-                            $"{(w.MinTargetDistance > 0 ? "\nMin Range: " + w.MinTargetDistance + "m" : string.Empty)}" +
-                            $"\nMax Range: {w.MaxTargetDistance}m" +
-                            $"\nRoF: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin}/min");
+                            $"{(w.MinTargetDistance > 0 ? $"\n{Localization.GetText("WeaponInfoMinRange")}: {w.MinTargetDistance}{Localization.GetText("WeaponInfoMeter")}" : string.Empty)}" +
+                            $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance}{Localization.GetText("WeaponInfoMeter")}" +
+                            $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin}{Localization.GetText("WeaponInfoPerMin")}");
                         if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                         {
-                            var targ = "Target: ";
+                            var targ = $"{Localization.GetText("WeaponInfoTargetLabel")}: ";
                             if (w.Target.HasTarget && w.Target.TargetObject != null)
                             {
                                 var pTarg = w.Target.TargetObject as Projectile;
                                 var eTarg = w.Target.TargetObject as MyEntity;
                                 if(pTarg != null)
                                 {
-                                    targ += "Projectile";
+                                    targ += Localization.GetText("WeaponInfoProjectileLabel");
                                 }
                                 else if (eTarg != null)
                                 {
@@ -304,7 +304,7 @@ namespace CoreSystems.Support
                                 }
                             }
                             else
-                                targ += "none";
+                                targ += Localization.GetText("WeaponInfoNoneTarget");
                             stringBuilder.Append($"\n{targ}");
                         }
 
@@ -318,7 +318,7 @@ namespace CoreSystems.Support
                                     continue;
 
                                 if (otherAmmo == null)
-                                    otherAmmo = "\n\nAmmo Types (Mag if different):";
+                                    otherAmmo = $"\n\n{Localization.GetText("WeaponInfoAmmoType")}:";
                                 var showName =  ammo.AmmoDef.Const.TerminalName != ammo.AmmoDef.Const.MagazineDef.DisplayNameText && ammo.AmmoDef.Const.MagazineDef.DisplayNameText != "Energy";
                                 otherAmmo += $"\n{ammo.AmmoDef.Const.TerminalName} {(showName ? "(" + ammo.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : "")}";
                             }

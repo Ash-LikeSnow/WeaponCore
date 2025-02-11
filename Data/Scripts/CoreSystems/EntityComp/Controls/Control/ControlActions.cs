@@ -3,8 +3,6 @@ using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
-using VRageMath;
-using static CoreSystems.Support.CoreComponent.Trigger;
 
 namespace CoreSystems.Control
 {
@@ -47,16 +45,6 @@ namespace CoreSystems.Control
 
             ControlSys.ControlComponent.RequestSetValue(comp, "ShootMode", value, Session.I.PlayerId);
         }
-        internal static void ShootModeWriterControl(IMyTerminalBlock blk, StringBuilder sb)
-        {
-            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? InActive : comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString();
-            sb.Append(altAiControlName);
-        }
-
-
 
         internal static void TerminalActionMovementModeControl(IMyTerminalBlock blk)
         {
@@ -65,7 +53,7 @@ namespace CoreSystems.Control
                 return;
 
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.MoveMode;
-            var value = numValue + 1 <= 3 ? numValue + 1 : 0;
+            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
 
             ControlSys.ControlComponent.RequestSetValue(comp, "MovementModes", value, Session.I.PlayerId);
         }
@@ -301,6 +289,14 @@ namespace CoreSystems.Control
         #endregion
 
         #region Writters
+        internal static void ShootModeWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? Localization.GetText("ControlsInactive") : Localization.GetText("Shoot" + comp.Data.Repo.Values.Set.Overrides.ShootMode);
+            sb.Append(altAiControlName);
+        }
 
         internal static void ShareFireControlWriterControl(IMyTerminalBlock blk, StringBuilder sb)
         {
@@ -439,7 +435,7 @@ namespace CoreSystems.Control
         {
             var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.Control);
+            sb.Append(Localization.GetText("Control" + comp.Data.Repo.Values.Set.Overrides.Control));
         }
 
         internal static void MovementModeWriterControl(IMyTerminalBlock blk, StringBuilder sb)
@@ -447,7 +443,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.MoveMode);
+            sb.Append(Localization.GetText("Move" + comp.Data.Repo.Values.Set.Overrides.MoveMode));
         }
 
         internal static void SubSystemWriterControl(IMyTerminalBlock blk, StringBuilder sb)
@@ -455,7 +451,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.SubSystem);
+            sb.Append(Localization.GetText("Subtype" + comp.Data.Repo.Values.Set.Overrides.SubSystem));
         }
 
         internal static void RepelWriterControl(IMyTerminalBlock blk, StringBuilder sb)

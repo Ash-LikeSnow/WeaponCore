@@ -374,7 +374,7 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("LargeGrid");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Target Large Grids");
+            action.Name = new StringBuilder(Localization.GetText("ActionTargetLargeGrids"));
             action.Action = CustomActions.TerminalActionToggleLargeGrid;
             action.Writer = CustomActions.LargeGridWriter;
             action.Enabled = TerminalHelpers.HasTracking;
@@ -388,7 +388,7 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("SmallGrid");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Target Small Grids");
+            action.Name = new StringBuilder(Localization.GetText("ActionTargetSmallGrids"));
             action.Action = CustomActions.TerminalActionToggleSmallGrid;
             action.Writer = CustomActions.SmallGridWriter;
             action.Enabled = TerminalHelpers.HasTracking;
@@ -401,7 +401,7 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("AngularTracking");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Predict Targets Angular Motion");
+            action.Name = new StringBuilder(Localization.GetText("TrackAngular"));
             action.Action = CustomActions.TerminalActionToggleAngularTracking;
             action.Writer = CustomActions.AngularTrackingWriter;
             action.Enabled = TerminalHelpers.HasTracking;
@@ -415,7 +415,7 @@ namespace CoreSystems.Control
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("ObjectiveMode");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("Cycle Objective Mode");//Need localization input
+            action.Name = new StringBuilder(Localization.GetText("ActionCycleObjective"));
             action.Action = CustomActions.TerminActionCycleObjectiveMode;
             action.Writer = CustomActions.ObjectiveModeWriter;
             action.Enabled = TerminalHelpers.HasTracking;
