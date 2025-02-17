@@ -225,15 +225,17 @@ namespace CoreSystems.Support
                         { "ControlManual", "Manual" },
                         { "ControlPainter", "Painter" },
                         { "MoveAny", "Any" },
-                        { "MoveMoving", "Ship" },
-                        { "MoveMoored", "Station" },
+                        { "MoveMoving", "Moving ship" },
+                        { "MoveMoored", "Stations" },
                         { "WeaponInfoTrue", "True" },
                         { "WeaponInfoFalse", "False" },
                         { "ControlsInactive", "Inactive" },
                         { "BombArmed", "Armed" },
                         { "BombDisarmed", "Disarmed" },
-                        { "TrackAngular", "Predict Targets Angular Motion"}
-
+                        { "TrackAngular", "Predict Targets Angular Motion"},
+                        //new
+                        { "MoveMobile", "Immobile ship" },
+                        { "MoveShipAny", "Ships" },
                     }
                 },
                {

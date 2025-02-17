@@ -683,7 +683,10 @@ namespace CoreSystems
         {
             new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("MoveAny")) },
             new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoving")) },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoored")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMobile")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoored")) },
+            new MyTerminalControlComboBoxItem { Key = 4, Value = MyStringId.GetOrCompute(Localization.GetText("MoveShipAny")) },
+
         };
 
         internal static long GetObjectiveMode(IMyTerminalBlock block)

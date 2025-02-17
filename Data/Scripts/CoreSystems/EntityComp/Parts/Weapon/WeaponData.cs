@@ -43,10 +43,6 @@ namespace CoreSystems.Platform
                     if (Session.I.IsServer)
                         Repo.Values.Targets = new ProtoWeaponTransferTarget[collection.Count];
                     
-                    //Decrement from prev max move mode to account for removal of an enum option and clarification to Any/Ship/Station
-                    if ((int)Repo.Values.Set.Overrides.MoveMode == 3)
-                        Repo.Values.Set.Overrides.MoveMode = (ProtoWeaponOverrides.MoveModes)2;
-
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var w = collection[i];
