@@ -453,14 +453,16 @@ namespace CoreSystems.Support
                         { "ControlManual", "Ручной" },
                         { "ControlPainter", "Точка" },
                         { "MoveAny", "Любой" },
-                        { "MoveMoving", "Корабль" },
-                        { "MoveMoored", "Станция" },
+                        { "MoveMoving", "Движущиеся корабли" },
+                        { "MoveMoored", "Станции" },
                         { "WeaponTargTrue", "Да" },//Contextual to targets
                         { "WeaponTargFalse", "Нет" },//Contextual to targets, use Правда/Ложь for logic
                         { "ControlsInactive", "Неактивно" },
                         { "BombArmed", "Взведено" },
                         { "BombDisarmed", "Предохранитель" },
-                        { "TrackAngular", "Отслеживать угловое движение"}                        
+                        { "TrackAngular", "Отслеживать угловое движение"},
+                        { "MoveMobile", "Неподвижный корабль" },
+                        { "MoveShipAny", "Любой корабль" },
                     }
                 },
                 {
