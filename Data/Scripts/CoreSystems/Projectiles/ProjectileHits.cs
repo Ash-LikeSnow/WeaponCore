@@ -830,6 +830,11 @@ namespace CoreSystems.Projectiles
                                 {
                                     lastBlockHit = firstBlock;
                                     hitEnt.Blocks.Add(new HitEntity.RootBlocks {Block = firstBlock, QueryPos = posI});
+                                    //
+                                    var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
+                                    info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
+
+
                                     if (closestBlockFound) continue;
                                     MyOrientedBoundingBoxD obb;
                                     var fat = firstBlock.FatBlock;
