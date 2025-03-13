@@ -1029,7 +1029,8 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
 
-            return 300;
+            var priReload = comp.Collection[0].System.WConst.ReloadTime * 3;
+            return priReload < 600 ? 600 : priReload;
         }
 
         internal static float GetMinSequenceId(IMyTerminalBlock block)

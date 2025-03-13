@@ -336,7 +336,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal bool ActivateMarks()
         {
             var s = Session.I;
-            var mark = s.TrackingAi.AiType != Ai.AiTypes.Phantom && s.ActiveMarks.Count > 0;
+            var mark = !s.Settings.Enforcement.ProhibitHUDPainter && s.TrackingAi.AiType != Ai.AiTypes.Phantom && s.ActiveMarks.Count > 0;
             var showAlert = mark && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(s.TrackingAi, s.PlayerId, Hud.Hud.HudMode.PainterMarks));
             return showAlert;
         }
