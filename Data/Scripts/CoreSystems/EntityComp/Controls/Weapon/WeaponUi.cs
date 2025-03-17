@@ -683,7 +683,10 @@ namespace CoreSystems
         {
             new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("MoveAny")) },
             new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoving")) },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoored")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMobile")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("MoveMoored")) },
+            new MyTerminalControlComboBoxItem { Key = 4, Value = MyStringId.GetOrCompute(Localization.GetText("MoveShipAny")) },
+
         };
 
         internal static long GetObjectiveMode(IMyTerminalBlock block)
@@ -1026,7 +1029,8 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
 
-            return 300;
+            var priReload = comp.Collection[0].System.WConst.ReloadTime * 3;
+            return priReload < 600 ? 600 : priReload;
         }
 
         internal static float GetMinSequenceId(IMyTerminalBlock block)

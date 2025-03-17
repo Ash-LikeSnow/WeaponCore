@@ -595,7 +595,9 @@ namespace CoreSystems
         {
             Any,
             Moving,
+            Mobile,
             Moored,
+            ShipAny
         }
 
         public enum ControlModes

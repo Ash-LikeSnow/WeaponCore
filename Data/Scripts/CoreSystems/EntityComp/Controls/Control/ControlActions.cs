@@ -53,7 +53,7 @@ namespace CoreSystems.Control
                 return;
 
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.MoveMode;
-            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
+            var value = numValue + 1 <= 4 ? numValue + 1 : 0;
 
             ControlSys.ControlComponent.RequestSetValue(comp, "MovementModes", value, Session.I.PlayerId);
         }

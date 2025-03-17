@@ -211,6 +211,8 @@ namespace CoreSystems.Settings
             [ProtoMember(22)] public Overrides DefinitionOverrides;
             [ProtoMember(23)] public float LargeGridDamageMultiplier = 1;
             [ProtoMember(24)] public float SmallGridDamageMultiplier = 1;
+            [ProtoMember(25)] public bool ProhibitHUDPainter = false;
+
         }
 
         [ProtoContract]

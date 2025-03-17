@@ -133,6 +133,7 @@ namespace CoreSystems.Support
             var movingMode = moveMode == ProtoWeaponOverrides.MoveModes.Moving;
             var fireOnStation = moveMode == ProtoWeaponOverrides.MoveModes.Any || moveMode == ProtoWeaponOverrides.MoveModes.Moored;
             var stationOnly = moveMode == ProtoWeaponOverrides.MoveModes.Moored;
+            var shipOnly = moveMode == ProtoWeaponOverrides.MoveModes.ShipAny;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
@@ -223,7 +224,7 @@ namespace CoreSystems.Support
                 if (w.System.ScanTrackOnly && !ValidScanEntity(w, info.EntInfo, info.Target, true))
                     continue;
 
-                if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)
+                if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic || shipOnly && info.IsStatic)
                     continue;
 
                 var character = info.Target as IMyCharacter;
