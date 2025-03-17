@@ -236,6 +236,8 @@ namespace CoreSystems.Support
                         //new
                         { "MoveMobile", "Immobile ship" },
                         { "MoveShipAny", "Ships" },
+                        { "WeaponTargTrue", "True" },
+                        { "WeaponTargFalse", "False" },
                     }
                 },
                {
