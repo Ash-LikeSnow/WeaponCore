@@ -53,9 +53,3 @@ Modder documentation is currently in progress, and viewable on the [Wiki](https:
 Thanks to Ash for server override enhancements and quality of life work on v2. Thanks to CriegwareFare for his work on the block animations, heat mechanic and assisting with weapon reloading hud! Thanks to [NukeGuard](https://github.com/nukeguard) for the awesome GUI/HUD design and textures. Thanks to Derek for general bug fixing and weapon area placement limit feature.
 
 Special thanks to the math wizard himself [WhipLash141](https://github.com/Whiplash141) for all of his help with the mind bending math required to pull off the advanced target tracking and smart projectile guidance systems is this mod.
-
-# Patreon
-
-## If you appreciate WeaponCore please consider donating:
-
-[![](https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Patreon_logo_with_wordmark.svg/512px-Patreon_logo_with_wordmark.svg.png)](https://www.patreon.com/user?u=14228932)	
