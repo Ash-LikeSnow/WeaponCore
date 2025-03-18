@@ -243,7 +243,7 @@ namespace CoreSystems
             if (WaterApiLoaded && (Tick3600 || WaterMap.IsEmpty))
                 UpdateWaters();
 
-            if (!Settings.Enforcement.ProhibitHUDPainter && HandlesInput && Tick30)
+            if (HandlesInput && Tick30 && (Settings?.Enforcement?.ProhibitHUDPainter != null ? !Settings.Enforcement.ProhibitHUDPainter : true ))
                 UpdatePlayerPainters();
 
             if (DebugLos && Tick1800) {

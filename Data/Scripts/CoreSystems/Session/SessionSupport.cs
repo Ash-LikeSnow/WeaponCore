@@ -1210,7 +1210,7 @@ namespace CoreSystems
                     WaterMod = true;
             }
 
-            SuppressWc = !SUtils.ModActivate(ModContext, Session);
+            SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);
 
             if (!SuppressWc && !ReplaceVanilla)
             {

@@ -477,8 +477,8 @@ namespace CoreSystems.Support
                             }
                         }
                     }
-                    if (aCB.MarkedForClose) checkAi.Construct.ActiveCombatBlock = null;
-                    if (aFB.MarkedForClose) checkAi.Construct.ActiveFlightBlock = null; //Placed these removals here so we can flip triggers "off" the last time the method runs
+                    if (aCB.MarkedForClose || !aCB.IsWorking) checkAi.Construct.ActiveCombatBlock = null;
+                    if (aFB.MarkedForClose || !aFB.IsWorking) checkAi.Construct.ActiveFlightBlock = null; //Placed these removals here so we can flip triggers "off" the last time the method runs
                 }
             }
 
