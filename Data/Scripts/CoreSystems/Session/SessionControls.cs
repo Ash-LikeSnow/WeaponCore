@@ -215,39 +215,48 @@ namespace CoreSystems
         {
             CreateCustomActions<T>.CreateArmReaction(session);
             CreateCustomActions<T>.CreateTriggerNow(session);
+
+
+            CreateCustomActions<T>.CreateKeyShoot(session);
+            CreateCustomActions<T>.CreateMouseToggle(session);
+
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
             CreateCustomActions<T>.CreateShootMode(session);
-            CreateCustomActions<T>.CreateKeyShoot(session);
-            CreateCustomActions<T>.CreateMouseToggle(session);
-            CreateCustomActions<T>.CreateSubSystems(session);
             CreateCustomActions<T>.CreateControlModes(session);
-            CreateCustomActions<T>.CreateCycleAmmo(session);
+            CreateCustomActions<T>.CreateObjectiveMode(session);
             CreateCustomActions<T>.CreateMovementState(session);
+
+            CreateCustomActions<T>.CreateCycleAmmo(session);
             CreateCustomActions<T>.CreateForceReload(session);
-            CreateCustomActions<T>.CreateFocusTargets(session);
+
+            CreateCustomActions<T>.CreateAngularTracking(session);
+
             CreateCustomActions<T>.CreateFocusSubSystem(session);
-            CreateCustomActions<T>.CreateGrids(session);
-            CreateCustomActions<T>.CreateNeutrals(session);
-            CreateCustomActions<T>.CreateFriendly(session);
-            CreateCustomActions<T>.CreateUnowned(session);
-            CreateCustomActions<T>.CreateProjectiles(session);
-            CreateCustomActions<T>.CreateSupportingPD(session);
-            CreateCustomActions<T>.CreateBiologicals(session);
-            CreateCustomActions<T>.CreateMeteors(session);
-            CreateCustomActions<T>.CreateWeaponCameraChannels(session);
-            CreateCustomActions<T>.CreateLeadGroups(session);
+            CreateCustomActions<T>.CreateSubSystems(session);
+
+            CreateCustomActions<T>.CreateFocusTargets(session);
             CreateCustomActions<T>.CreateRepelMode(session);
-            CreateCustomActions<T>.CreateMaxSize(session);
-            CreateCustomActions<T>.CreateMinSize(session);
-            CreateCustomActions<T>.CreateSelectFriend(session);
-            CreateCustomActions<T>.CreateSelectEnemy(session);
-            //CreateCustomActions<T>.CreateSelectPosition(session); Suppressed for now as it's inop
+
+            CreateCustomActions<T>.CreateNeutrals(session);
+            CreateCustomActions<T>.CreateUnowned(session);
+            CreateCustomActions<T>.CreateGrids(session);
             CreateCustomActions<T>.CreateLargeGrid(session);
             CreateCustomActions<T>.CreateSmallGrid(session);
-            CreateCustomActions<T>.CreateAngularTracking(session);
-            CreateCustomActions<T>.CreateObjectiveMode(session);
+            CreateCustomActions<T>.CreateBiologicals(session);
+            CreateCustomActions<T>.CreateProjectiles(session);
+            CreateCustomActions<T>.CreateSupportingPD(session);
+            CreateCustomActions<T>.CreateMeteors(session);
+
+            CreateCustomActions<T>.CreateLeadGroups(session);
+            CreateCustomActions<T>.CreateWeaponCameraChannels(session);
+            CreateCustomActions<T>.CreateSelectFriend(session);
+            CreateCustomActions<T>.CreateSelectEnemy(session);
+            CreateCustomActions<T>.CreateMinSize(session);
+            CreateCustomActions<T>.CreateMaxSize(session);
+            CreateCustomActions<T>.CreateFriendly(session);
+            //CreateCustomActions<T>.CreateSelectPosition(session); Suppressed for now as it's inop
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock
@@ -281,14 +290,16 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateNeutralsControl(session);
             //CreateCustomActions<T>.CreateFriendlyControl(session); //This even work for a "turret"?
             CreateCustomActions<T>.CreateUnownedControl(session);
-            CreateCustomActions<T>.CreateProjectilesControl(session);
-            CreateCustomActions<T>.CreateBiologicalsControl(session);
-            CreateCustomActions<T>.CreateMeteorsControl(session);
             CreateCustomActions<T>.CreateGridsControl(session);
-            CreateCustomActions<T>.CreateMaxSizeControl(session);
-            CreateCustomActions<T>.CreateMinSizeControl(session);
             CreateCustomActions<T>.CreateLargeGridControl(session);
             CreateCustomActions<T>.CreateSmallGridControl(session);
+            CreateCustomActions<T>.CreateBiologicalsControl(session);
+            CreateCustomActions<T>.CreateProjectilesControl(session);
+            CreateCustomActions<T>.CreateMeteorsControl(session);
+
+            CreateCustomActions<T>.CreateMaxSizeControl(session);
+            CreateCustomActions<T>.CreateMinSizeControl(session);
+
             CreateCustomActions<T>.CreateWeaponCameraChannels(session);
         }
 
@@ -549,13 +560,14 @@ namespace CoreSystems
         {
             "WC_Shoot",
             "WC_AngularTracking",
-            "WC_Override",
+            "WC_Repel",
+            "WC_Unowned",
+            "WC_Supporting PD",
             "WC_ShareFireControlEnabled",
-            "WC_ControlModes",
+            "WC_ObjectiveMode",
             "WC_TrackingMode",
             "WC_ReportTarget",
             "WC_FocusFire",
-            "WC_Repel",
             "Camera Channel",
             "Weapon Group Id",
             "Sequence Id",
@@ -573,21 +585,23 @@ namespace CoreSystems
         {
             "WC_Shoot",
             "AngularTracking",
-            "ShootToggle",
-            "MinSize Decrease",
-            "MinSize Increase",
-            "MaxSize Decrease",
-            "MaxSize Increase",
             "WC_RepelMode",
+            //"ShootToggle",
+            "ObjectiveMode",
+            "SupportingPD",
+            "Friendly",
             "WC_Decrease_LeadGroup",
             "WC_Increase_LeadGroup",
             "WC_Decrease_CameraChannel",
             "WC_Increase_CameraChannel",
-            "FocusSubSystem",
+            //"FocusSubSystem",
             "FocusTargets",
             "TrackingMode",
-            "ControlModes",
-
+            //"ControlModes",
+            "MinSize Decrease",
+            "MinSize Increase",
+            "MaxSize Decrease",
+            "MaxSize Increase",
         };
 
         private static readonly HashSet<string> HideCombatControls = new HashSet<string>()
@@ -596,7 +610,6 @@ namespace CoreSystems
            "OffensiveCombatCircleOrbit_AddSelectedTool",
            "OffensiveCombatCircleOrbit_SelectedToolsList",
            "OffensiveCombatCircleOrbit_AvailableWeapons",
-
 
            "OffensiveCombatStayAtRange_SelectedWeapons",
            "OffensiveCombatStayAtRange_AddSelectedTool",
