@@ -42,6 +42,7 @@ namespace CoreSystems.Control
             AddComboboxNoAction<T>(session, "ObjectiveMode", Localization.GetText("TerminalObjectiveTitle"), Localization.GetText("TerminalObjectiveTooltip"), BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, HasTracking);
             AddComboboxNoAction<T>(session, "TrackingMode", Localization.GetText("TerminalTrackingModeTitle"), Localization.GetText("TerminalTrackingModeTooltip"), BlockUi.GetMovementMode, BlockUi.RequestMovementMode, BlockUi.ListMovementModes, HasTracking);
             AddComboboxNoAction<T>(session, "PickAmmo", Localization.GetText("TerminalPickAmmoTitle"), Localization.GetText("TerminalPickAmmoTooltip"), BlockUi.GetAmmos, BlockUi.RequestSetAmmo, BlockUi.ListAmmos, AmmoSelection);
+            AddButtonNoAction<T>(session, "ForceReload", Localization.GetText("ForceReload"), Localization.GetText("TerminalForceReloadTooltip"), BlockUi.ForceReload, EnableForceReload, AmmoSelection);
             AddWeaponRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRange, BlockUi.RequestSetRange, BlockUi.ShowRange, BlockUi.GetMinRange, BlockUi.GetMaxRange, true, false);
 
             Separator<T>(session, "WC_sep2", HasTracking);
@@ -327,6 +328,24 @@ namespace CoreSystems.Control
                 return false;
 
             return comp.ConsumableSelectionPartIds.Count > 0;
+        }
+
+        internal static bool EnableForceReload(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+            bool enable = false;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var wep = comp.Collection[i];
+                if (!wep.System.HasAmmoSelection)
+                    continue;
+                if (wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId])
+                    enable = true;
+            }
+            return enable;
         }
 
         internal static bool CanBurst(IMyTerminalBlock block)
