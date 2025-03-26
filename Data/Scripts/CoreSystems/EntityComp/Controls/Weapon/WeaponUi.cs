@@ -587,6 +587,17 @@ namespace CoreSystems
 
                 wep.QueueAmmoChange((int)newValue);
             }
+            block.ShowInToolbarConfig = !block.ShowInToolbarConfig; //#keen
+            block.ShowInToolbarConfig = !block.ShowInToolbarConfig;
+        }
+
+        internal static void ForceReload(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            comp.RequestForceReload();
+            block.ShowInToolbarConfig = !block.ShowInToolbarConfig; //#keen
+            block.ShowInToolbarConfig = !block.ShowInToolbarConfig;
         }
 
 
