@@ -235,6 +235,7 @@ namespace CoreSystems.Platform
         internal bool PlayingHardPointSound;
         internal bool VanillaTracking;
         internal bool RotorTurretTracking;
+        internal bool RotorTurretSlaving;
 
         internal bool ShotReady
         {

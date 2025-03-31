@@ -369,7 +369,11 @@ namespace CoreSystems
                     {
                         cComp.ToolsAndWeapons.Clear();
                         foreach (var comp in cPart.TopAi.WeaponComps)
+                        {
                             cComp.ToolsAndWeapons.Add(comp.CoreEntity);
+                            if(comp != cPart.TopAi.RootComp)
+                                comp.PrimaryWeapon.RotorTurretSlaving = true;
+                        }
                         foreach (var tool in cPart.TopAi.Tools)
                             cComp.ToolsAndWeapons.Add((MyEntity)tool);
                     }
@@ -409,12 +413,12 @@ namespace CoreSystems
 
                     var primaryWeapon = cPart.TopAi.RootComp.PrimaryWeapon;
                     primaryWeapon.RotorTurretTracking = true;
+                    primaryWeapon.RotorTurretSlaving = false;
 
                     if (IsServer && cValues.Set.Range < 0 && primaryWeapon.MaxTargetDistance > 0)
                         BlockUi.RequestSetRangeControl(cComp.TerminalBlock, (float) primaryWeapon.MaxTargetDistance);
 
                     var validTarget = primaryWeapon.Target.TargetState == TargetStates.IsEntity || primaryWeapon.Target.TargetState == TargetStates.IsFake || primaryWeapon.Target.TargetState == TargetStates.IsProjectile;
-
                     var noTarget = false;
                     var desiredDirection = Vector3D.Zero;
                     
@@ -438,7 +442,7 @@ namespace CoreSystems
                         continue;
                     }
 
-                    if (!cComp.TrackTarget(cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap,  ref desiredDirection))
+                    if (!cComp.TrackTarget(cComp.Platform.Control.BaseMap, cComp.Platform.Control.OtherMap, ref desiredDirection))
                         continue;
                 }
 
@@ -647,7 +651,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
                                 }
-                                else if (eTarget != null && (eTarget.MarkedForClose || (cTarget!= null && (cTarget.IsDead || cTarget.Integrity <= 0)) || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks && !w.RotorTurretTracking || wComp.UserControlled && !w.System.SuppressFire))
+                                else if (eTarget != null && (eTarget.MarkedForClose || (cTarget!= null && (cTarget.IsDead || cTarget.Integrity <= 0)) || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks && !w.RotorTurretTracking && !w.RotorTurretSlaving || wComp.UserControlled && !w.System.SuppressFire))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -706,6 +710,8 @@ namespace CoreSystems
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
 
+                        //if (w.RotorTurretTracking) MyAPIGateway.Utilities.ShowNotification($"{w.Comp.Cube.DisplayNameText} {weaponAcquires} {w.TargetAcquireTick} {(!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0)} {(!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On)}", 16);
+
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
@@ -723,6 +729,14 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
+                            var syncCTC = ai.ControlComp != null && w.RotorTurretSlaving && (bool)ai.RootComp.PrimaryWeapon?.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
+
+                            if (syncCTC)
+                            {
+                                var ctcPriTarg = ai.RootComp.PrimaryWeapon.Target;
+                                w.Target.Set(ctcPriTarg.TargetObject, ctcPriTarg.TargetPos, ctcPriTarg.HitShortDist, ctcPriTarg.OrigDistance, ctcPriTarg.TopEntityId);
+                                w.Target.TargetChanged = true;
+                            }
 
                             if (seek || fakeRequest)
                             {
@@ -750,7 +764,7 @@ namespace CoreSystems
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var finish = w.FinishShots || delayedFire;
-                        var shootRequest = (anyShot || finish);
+                        var shootRequest = (anyShot || finish) && !w.Casting;
 
                         var shotReady = canShoot && shootRequest;
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
