@@ -64,7 +64,13 @@ namespace CoreSystems.Platform
             var maxRangeSqr = fakeTargetInfo != null && topAi.Construct.RootAi != null ? topAi.Construct.RootAi.MaxTargetingRangeSqr : cValues.Set.Range * cValues.Set.Range;
 
             bool valid;
-            topAi.RotorTargetPosition =  Weapon.TrajectoryEstimation(weapon, targetCenter, targetVel, targetAcc, shooterPos,  out valid, false, cValues.Set.Overrides.AngularTracking);
+            if (weapon.ActiveAmmoDef.AmmoDef.Const.IsSmart || weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon)
+            {
+                valid = true;
+                topAi.RotorTargetPosition = targetCenter;
+            }
+            else
+                topAi.RotorTargetPosition = Weapon.TrajectoryEstimation(weapon, targetCenter, targetVel, targetAcc, shooterPos, out valid, false, cValues.Set.Overrides.AngularTracking);
             targetDirection = Vector3D.Normalize(topAi.RotorTargetPosition - shooterPos);
             return valid && Vector3D.DistanceSquared(topAi.RotorTargetPosition, shooterPos) < maxRangeSqr;
         }

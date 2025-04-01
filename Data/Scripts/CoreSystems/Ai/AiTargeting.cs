@@ -1130,7 +1130,8 @@ namespace CoreSystems.Support
                     w.AcquiredBlock = true;
 
                     var targetDirNorm = Vector3D.Normalize(blockPos - w.BarrelOrigin);
-                    var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
+                    var ctcCam = w.RotorTurretTracking && w.Comp.Ai.ControlComp?.Controller.Camera != null;
+                    var testPos = ctcCam ? w.Comp.Ai.ControlComp.Controller.Camera.GetPosition() : w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
                     var targetDist = Vector3D.Distance(testPos, blockPos);
 
                     var fakeCheck = w.System.NoVoxelLosCheck;
