@@ -41,65 +41,13 @@ namespace CoreSystems
                 var noDamageProjectile = ammoDef.BaseDamage <= 0;
                 var lastIndex = info.HitList.Count - 1;
 
-                //Log.Line($"ProcessHits");
-
-                //var gridList = new List<IMyCubeGrid>();
+                //
                 if (info.HitList.Count > 1 && info.BlockList.Count > 1)
                     info.BlockList.SortNoAlloc((b, a) => b.Value.CompareTo(a.Value));
-                /*
-                //Sort and ID order of grids being hit, incl duplicates
-                if (info.BlockList.Count > 2)
-                    for (int i = 0; i < info.BlockList.Count; i++)
-                    {
-                        if (i == 0)
-                        {
-                            gridList.Add(info.BlockList[i].Key.CubeGrid);
-                            continue;
-                        }
-                        if (info.BlockList[i - 1].Key.CubeGrid != info.BlockList[i].Key.CubeGrid)
-                            gridList.Add(info.BlockList[i].Key.CubeGrid);
-                    }
-                */
-
-                /*
-                var pool = Projectiles.HitEntityArrayPool[Environment.CurrentManagedThreadId];
-                var hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
-                info.HitList.Add(hitEntity);
-
-                if (gridList.Count > 1)
-                {
-                    var blockListPos = 0;
-                    for (int i = 0; i < info.HitList.Count; i++)
-                    {
-                        var hEnt = info.HitList[i];
-                        if (hEnt.EventType != HitEntity.Type.Grid)
-                            continue;
-                        var grid = hEnt.Entity as IMyCubeGrid;
-                        int lastHit = 0;
-                        for (int j = 0; j < hEnt.Blocks.Count; j++)
-                        {
-                            if (hEnt.Blocks[j].Block == info.BlockList[blockListPos].Key)
-                            {
-                                lastHit++;
-                                blockListPos++;
-                            }
-                        }
-                        
-                        hEnt.Blocks.RemoveRange(lastHit, hEnt.Blocks.Count - lastHit);
-                        Log.Line($"Last hit on {grid.DisplayName}: {lastHit}");
-                        break;
-                    }
-                }
-
-                //Logging readout only
-                Log.Line("Grids hit:");
-                for (int i = 0; i < gridList.Count; i++)
-                    Log.Line($"{gridList[i].DisplayName}");
-                */
-
                 Log.Line("Blocks hit:");
                 for (int i = 0; i < info.BlockList.Count; i++)
                     Log.Line($"Blk: {info.BlockList[i].Key.BlockDefinition.DisplayNameText} {info.BlockList[i].Value} {info.BlockList[i].Key.CubeGrid.DisplayName}");
+                //TODO- stop repeats by flushing BlockList after first grid proc or remove other grid hitEnts
                 //
 
 
@@ -961,6 +909,7 @@ namespace CoreSystems
                 t.BaseDamagePool = basePool;
 
             hitEnt.Blocks.Clear();
+            t.BlockList.Clear();
         }
 
 
