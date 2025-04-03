@@ -764,7 +764,7 @@ namespace CoreSystems
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var finish = w.FinishShots || delayedFire;
-                        var pauseForRay = w.Target.TargetState == TargetStates.IsProjectile ? false : w.Casting;
+                        var pauseForRay = w.Target.TargetState != TargetStates.IsProjectile && w.Casting && !w.PreFired && !finish;
                         var shootRequest = (anyShot || finish) && !pauseForRay;
 
                         var shotReady = canShoot && shootRequest;
