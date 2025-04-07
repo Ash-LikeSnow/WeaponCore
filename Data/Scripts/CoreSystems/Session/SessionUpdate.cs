@@ -710,8 +710,6 @@ namespace CoreSystems
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
 
-                        //if (w.RotorTurretTracking) MyAPIGateway.Utilities.ShowNotification($"{w.Comp.Cube.DisplayNameText} {weaponAcquires} {w.TargetAcquireTick} {(!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0)} {(!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On)}", 16);
-
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
@@ -729,7 +727,7 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
-                            var syncCTC = ai.ControlComp != null && w.RotorTurretSlaving && (bool)ai.RootComp.PrimaryWeapon?.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
+                            var syncCTC = w.RotorTurretSlaving && ai.ControlComp != null && ai.RootComp?.PrimaryWeapon != null && (bool)ai.RootComp.PrimaryWeapon.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
 
                             if (syncCTC)
                             {
