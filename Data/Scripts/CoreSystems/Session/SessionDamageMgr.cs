@@ -947,7 +947,7 @@ namespace CoreSystems
             var character = hitEnt.Entity as IMyCharacter;
             float damageScale = 1;
             if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
-            if (character != null && info.AmmoDef.DamageScales.Characters >= 0)
+            if (character != null && info.AmmoDef.DamageScales.Characters > 0)
                 damageScale *= info.AmmoDef.DamageScales.Characters;
 
             var areaEffect = info.AmmoDef.AreaOfDamage;
