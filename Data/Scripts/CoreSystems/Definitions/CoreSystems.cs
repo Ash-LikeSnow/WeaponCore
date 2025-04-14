@@ -222,6 +222,7 @@ namespace CoreSystems.Support
         public readonly bool GoHomeToReload;
         public readonly bool DropTargetUntilLoaded;
         public readonly bool NoVoxelLosCheck;
+        public readonly bool AllowScopeOutsideObb;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -301,6 +302,7 @@ namespace CoreSystems.Support
             GoHomeToReload = Values.HardPoint.Loading.GoHomeToReload;
             DropTargetUntilLoaded = Values.HardPoint.Loading.DropTargetUntilLoaded;
             NoVoxelLosCheck = Values.HardPoint.Other.NoVoxelLosCheck;
+            AllowScopeOutsideObb = Values.HardPoint.Other.AllowScopeOutsideObb;
 
             TopTargets = Values.Targeting.TopTargets;
             CycleTargets = Values.Targeting.CycleTargets;

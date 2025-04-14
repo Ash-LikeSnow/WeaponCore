@@ -1171,6 +1171,9 @@ namespace CoreSystems
             DsDebugDraw.DrawLine(w.MyAimTestLine, Color.Black, 0.07f);
             DsDebugDraw.DrawSingleVec(w.MyPivotPos, 1f, Color.White);
             DsDebugDraw.DrawLine(w.AzimuthFwdLine.From, w.AzimuthFwdLine.To, Color.Cyan, 0.05f);
+            DsDebugDraw.DrawLine(w.GetScope.Info.Position, w.GetScope.Info.Position + w.GetScope.Info.Direction * 10, Color.Yellow, 0.05f);
+            DsDebugDraw.DrawSingleVec(w.GetScope.Info.Position, 0.5f, Color.Yellow);
+
             //DsDebugDraw.DrawLine(w.MyCenterTestLine, Color.Green, 0.05f);
             //DsDebugDraw.DrawBox(w.targetBox, Color.Plum);
             //DsDebugDraw.DrawLine(w.LimitLine.From, w.LimitLine.To, Color.Orange, 0.05f);

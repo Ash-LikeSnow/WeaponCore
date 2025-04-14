@@ -6,6 +6,7 @@ using VRage.Game.Components;
 using VRageMath;
 using static CoreSystems.Session;
 using static CoreSystems.Support.Ai;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -227,7 +228,10 @@ namespace CoreSystems.Support
                     foreach (var weapon in Platform.Weapons)
                     {
                         var scopeInfo = weapon.GetScope.Info;
-                        if (!obb.Contains(ref scopeInfo.Position))
+
+                        if (weapon.Comp.PrimaryWeapon.System.AllowScopeOutsideObb) 
+                            weapon.ScopeDistToCheckPos = 0;
+                        else if (!obb.Contains(ref scopeInfo.Position))
                         {
                             var rayBack = new RayD(scopeInfo.Position, -scopeInfo.Direction);
                             weapon.ScopeDistToCheckPos = obb.Intersects(ref rayBack) ?? 0;

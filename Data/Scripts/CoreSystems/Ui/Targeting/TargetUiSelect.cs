@@ -145,7 +145,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;
             MyEntity rootEntity = null;
-            if (ai.MyPlanet != null && Session.I.Tick90 && s.UiInput.AltPressed)
+            if (ai.MyPlanet != null && s.UiInput.AltPressed && Session.I.Tick10)
             {
                 var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > s.PreFetchMaxDist ? AimPosition + AimDirection * s.PreFetchMaxDist : end);
                 ai.MyPlanet.PrefetchShapeOnRay(ref rayLine);

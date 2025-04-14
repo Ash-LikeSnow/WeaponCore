@@ -23,149 +23,106 @@ namespace CoreSystems.Platform
 
             public void NormalShootRayCallBack(IHitInfo hitInfo)
             {
-                int crumb = 0;
-                try
+                var pTarget = Weapon.Target.TargetObject as Projectile;
+                var eTarget = Weapon.Target.TargetObject as MyEntity;
+                if (pTarget == null && eTarget == null)
+                    return;
+                Weapon.Casting = false;
+                Weapon.PauseShoot = false;
+                var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.PrimaryWeapon;
+                var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetObject is IMyCharacter;
+                var scope = Weapon.GetScope;
+                var trackingCheckPosition = scope.CachedPos;
+                double rayDist = 0;
+
+                if (Session.I.DebugLos)
                 {
-                    var pTarget = Weapon.Target.TargetObject as Projectile;
-                    var eTarget = Weapon.Target.TargetObject as MyEntity;
-                    if (pTarget == null && eTarget == null)
+                    var hitPos = hitInfo.Position;
+                    if (rayDist <= 0) Vector3D.Distance(ref trackingCheckPosition, ref hitPos, out rayDist);
+
+                    Session.I.AddLosCheck(new Session.LosDebug { Part = Weapon, HitTick = Session.I.Tick, Line = new LineD(trackingCheckPosition, hitPos) });
+                }
+
+                if (Weapon.Comp.Ai.ShieldNear)
+                {
+                    var targetPos = pTarget?.Position ?? eTarget.PositionComp.WorldMatrixRef.Translation;
+                    var targetDir = targetPos - trackingCheckPosition;
+                    if (Weapon.HitFriendlyShield(trackingCheckPosition, targetPos, targetDir))
+                    {
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         return;
-                    crumb = 1;
-                    Weapon.Casting = false;
-                    Weapon.PauseShoot = false;
-                    var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.PrimaryWeapon;
-                    var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetObject is IMyCharacter;
-                    var scope = Weapon.GetScope;
-                    var trackingCheckPosition = scope.CachedPos;
-                    double rayDist = 0;
-                    crumb = 2;
-
-                    if (Session.I.DebugLos)
-                    {
-                        var hitPos = hitInfo.Position;
-                        if (rayDist <= 0) Vector3D.Distance(ref trackingCheckPosition, ref hitPos, out rayDist);
-
-                        Session.I.AddLosCheck(new Session.LosDebug { Part = Weapon, HitTick = Session.I.Tick, Line = new LineD(trackingCheckPosition, hitPos) });
-                    }
-                    crumb = 3;
-
-
-                    if (Weapon.Comp.Ai.ShieldNear)
-                    {
-                        crumb = 4;
-
-                        var targetPos = pTarget?.Position ?? eTarget.PositionComp.WorldMatrixRef.Translation;
-                        var targetDir = targetPos - trackingCheckPosition;
-                        if (Weapon.HitFriendlyShield(trackingCheckPosition, targetPos, targetDir))
-                        {
-                            crumb = 51;
-
-                            masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
-                            if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
-                            return;
-                        }
-                        crumb = 6;
-
-                    }
-
-                    var hitTopEnt = (MyEntity)hitInfo?.HitEntity?.GetTopMostParent();
-                    if (hitTopEnt == null)
-                    {
-                        crumb = 7;
-
-                        if (ignoreTargets)
-                            return;
-                        crumb = 8;
-
-                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
-                        crumb = 9;
-
-                        return;
-                    }
-                    crumb = 10;
-
-                    var targetTopEnt = eTarget?.GetTopMostParent();
-                    if (targetTopEnt == null)
-                        return;
-                    crumb = 11;
-
-                    var unexpectedHit = ignoreTargets || targetTopEnt != hitTopEnt;
-                    var topAsGrid = hitTopEnt as MyCubeGrid;
-                    crumb = 12;
-
-                    if (unexpectedHit)
-                    {
-                        crumb = 13;
-
-                        if (hitTopEnt is MyVoxelBase && !Weapon.System.ScanNonThreats)
-                        {
-                            crumb = 14;
-
-                            masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
-                            if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
-                            return;
-                        }
-
-                        if (topAsGrid == null)
-                            return;
-                        if (Weapon.Comp.Ai.AiType == Ai.AiTypes.Grid && topAsGrid.IsSameConstructAs(Weapon.Comp.Ai.GridEntity))
-                        {
-                            crumb = 15;
-
-                            masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
-                            if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
-                            Weapon.PauseShoot = true;
-                            return;
-                        }
-                        if (!Weapon.System.ScanNonThreats && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
-                        {
-                            crumb = 16;
-
-                            masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
-                            if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
-                            return;
-                        }
-                        crumb = 17;
-
-                        return;
-
-                    }
-                    if (Weapon.System.ClosestFirst && topAsGrid != null && topAsGrid == targetTopEnt)
-                    {
-                        crumb = 18;
-
-                        var halfExtMin = topAsGrid.PositionComp.LocalAABB.HalfExtents.Min();
-                        var minSize = topAsGrid.GridSizeR * 8;
-                        var maxChange = halfExtMin > minSize ? halfExtMin : minSize;
-                        var targetPos = eTarget.PositionComp.WorldAABB.Center;
-                        var weaponPos = trackingCheckPosition;
-
-                        if (rayDist <= 0) Vector3D.Distance(ref weaponPos, ref targetPos, out rayDist);
-                        var newHitShortDist = rayDist * (1 - hitInfo.Fraction);
-                        var distanceToTarget = rayDist * hitInfo.Fraction;
-                        crumb = 19;
-
-                        var shortDistExceed = newHitShortDist - Weapon.Target.HitShortDist > maxChange;
-                        var escapeDistExceed = distanceToTarget - Weapon.Target.OrigDistance > Weapon.Target.OrigDistance;
-                        if (shortDistExceed || escapeDistExceed)
-                        {
-                            masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
-                            if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
-                            crumb = 20;
-
-                        }
                     }
                 }
-                catch (Exception ex)
+
+                var hitTopEnt = (MyEntity)hitInfo?.HitEntity?.GetTopMostParent();
+                if (hitTopEnt == null)
                 {
-                    var pTarget = Weapon?.Target?.TargetObject as Projectile;
-                    var eTarget = Weapon?.Target?.TargetObject as MyEntity;
-                    var msg = $"Emperor Palpatine, your bug is back!\n" +
-                        $"Crumb: {crumb} eTarget: {eTarget == null} pTarget: {pTarget == null} WepNull: {Weapon == null} Wep.Targ Null: {Weapon.Target == null}";
-                    MyLog.Default.WriteLine(msg);
-                    Log.Line(msg);
-                    throw ex;
+                    if (Weapon.System.TargetGridCenter && eTarget != null)
+                        hitTopEnt = eTarget;
+                    else
+                    {
+                        if (ignoreTargets)
+                            return;
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
+                        return;
+                    }
+                }
+
+                var targetTopEnt = eTarget?.GetTopMostParent();
+                if (targetTopEnt == null)
+                    return;
+
+                var unexpectedHit = ignoreTargets || targetTopEnt != hitTopEnt;
+                var topAsGrid = hitTopEnt as MyCubeGrid;
+
+                if (unexpectedHit)
+                {
+
+                    if (hitTopEnt is MyVoxelBase && !Weapon.System.ScanNonThreats)
+                    {
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
+                        return;
+                    }
+
+                    if (topAsGrid == null)
+                        return;
+                    if (Weapon.Comp.Ai.AiType == Ai.AiTypes.Grid && topAsGrid.IsSameConstructAs(Weapon.Comp.Ai.GridEntity))
+                    {
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
+                        Weapon.PauseShoot = true;
+                        return;
+                    }
+                    if (!Weapon.System.ScanNonThreats && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
+                    {
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        return;
+                    }
+                    return;
+
+                }
+                if (Weapon.System.ClosestFirst && topAsGrid != null && topAsGrid == targetTopEnt)
+                {
+                    var halfExtMin = topAsGrid.PositionComp.LocalAABB.HalfExtents.Min();
+                    var minSize = topAsGrid.GridSizeR * 8;
+                    var maxChange = halfExtMin > minSize ? halfExtMin : minSize;
+                    var targetPos = eTarget.PositionComp.WorldAABB.Center;
+                    var weaponPos = trackingCheckPosition;
+
+                    if (rayDist <= 0) Vector3D.Distance(ref weaponPos, ref targetPos, out rayDist);
+                    var newHitShortDist = rayDist * (1 - hitInfo.Fraction);
+                    var distanceToTarget = rayDist * hitInfo.Fraction;
+                    var shortDistExceed = newHitShortDist - Weapon.Target.HitShortDist > maxChange;
+                    var escapeDistExceed = distanceToTarget - Weapon.Target.OrigDistance > Weapon.Target.OrigDistance;
+                    if (shortDistExceed || escapeDistExceed)
+                    {
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
+                    }
                 }
             }
 
