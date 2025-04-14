@@ -1245,7 +1245,11 @@ namespace CoreSystems.Platform
             if (Target.TargetState == Target.TargetStates.IsFake)
             {
                 Casting = true;
-                Session.I.Physics.CastRayParallel(ref trackingCheckPosition, ref Target.TargetPos, filter, ManualShootRayCallBack);
+                //Session.I.Physics.CastRayParallel(ref trackingCheckPosition, ref Target.TargetPos, filter, ManualShootRayCallBack);
+
+                IHitInfo fakeHitInfo;
+                Session.I.Physics.CastRay(trackingCheckPosition, Target.TargetPos, out fakeHitInfo, filter);
+                ManualShootRayCallBack(fakeHitInfo);
                 return true;
             }
 
@@ -1319,7 +1323,12 @@ namespace CoreSystems.Platform
                 }
             }
             Casting = true;
-            Session.I.Physics.CastRayParallel(ref trackingCheckPosition, ref targetPos, filter, RayCallBack.NormalShootRayCallBack);
+            //Session.I.Physics.CastRayParallel(ref trackingCheckPosition, ref targetPos, filter, RayCallBack.NormalShootRayCallBack);
+
+            IHitInfo rayHitInfo;
+            Session.I.Physics.CastRay(trackingCheckPosition, targetPos, out rayHitInfo);
+            RayCallBack.NormalShootRayCallBack(rayHitInfo);
+
             return true;
         }
 
