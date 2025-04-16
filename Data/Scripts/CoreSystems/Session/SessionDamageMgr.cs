@@ -1017,13 +1017,6 @@ namespace CoreSystems
                 scaledDamage *= fallOffMultipler;
             }
 
-            //Rework of projectile on projectile damage calcs, as previously you could end up with a high primary damage projectile
-            //unintentionally surviving multiple hits and doing nearly infinite damage against other projectiles.  This was more apparent
-            //with smarts that would select and chase a new target.  Projectiles with EOL detonations could also pop multiple times without dying.
-            //If your attacking projectile has a health > 0, it will deduct the HealthHitModifier damage done to the target from its own health.  It will die once health hits zero or less
-            //If your attacking projectile has a health = 0, the HealthHitModifier damage it does will be deducted from the primary damage field.  It will die once damage hits zero or less
-            //In either case, a projectile with EOL will detonate on hitting another projectile and die
-
             var deductFromAttackerHealth = attacker.AmmoDef.Health > 0;
             if (scaledDamage >= objHp)
             {
@@ -1211,16 +1204,11 @@ namespace CoreSystems
                 foundSomething = false;
                 return;
             }
-
-            //Log.Line($"Start");
-            //var watch = System.Diagnostics.Stopwatch.StartNew();
             var rootHitPos = rootInfo.QueryPos; //local cube grid
             var localfrom = grid.WorldToGridScaledLocal(direction.From);
             var localto = grid.WorldToGridScaledLocal(direction.To);
             var gridsize = grid.GridSizeR;
             aoeHits = 0;
-
-            //Log.Line($"Raw rootpos{root.Position} localctr{rootInfo.QueryPos} rootpos {rootPos}  localfrom{localfrom} localto{localto}  min{root.Min} max{root.Max}"); 
             radius *= gridsize;  //GridSizeR is 0.4 for LG, 2.0 for SG
             depth *= gridsize;
             var gmin = grid.Min;
@@ -1250,11 +1238,7 @@ namespace CoreSystems
                 var xhit = (hitray.Intersects(xplane) ?? 0) + (hitray.Intersects(xmplane) ?? 0);
                 var yhit = (hitray.Intersects(yplane) ?? 0) + (hitray.Intersects(ymplane) ?? 0);
                 var zhit = (hitray.Intersects(zplane) ?? 0) + (hitray.Intersects(zmplane) ?? 0);
-                //Log.Line($"localto{localto}  rootpos{rootPos} rootmin{root.Min}  rootmax{root.Max}");
-                //Log.Line($"xhit {xhit}  yhit {yhit}  zhit{zhit}");
                 var axishit = new Vector3D(xhit, yhit, zhit);
-
-                // Log.Line($"Hitvec x{hitray.Intersects(xplane)}  y{hitray.Intersects(yplane)} xm{hitray.Intersects(xmplane)}  ym{hitray.Intersects(ymplane)}");
 
                 switch (axishit.AbsMaxComponent())//sort out which "face" was hit and coming/going along that axis
                 {                   
@@ -1366,8 +1350,6 @@ namespace CoreSystems
                     }
                 }
             }
-            //watch.Stop();
-            //Log.Line($"End {watch.ElapsedMilliseconds}");
         }
 
         public static void GetBlocksInsideSphereFast(MyCubeGrid grid, ref BoundingSphereD sphere, bool checkDestroyed, List<IMySlimBlock> blocks)
@@ -1453,26 +1435,6 @@ namespace CoreSystems
                     var hit = (MyEntity)hitInfo.HitEntity;
                     var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
                     var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == block.CubeGrid;
-                    return rayHitTarget;
-                }
-            }
-            return false;
-        }
-
-        private bool RayAccuracyCheck(HitEntity hitEnt, IMyCharacter character)
-        {
-            var box = character.PositionComp.WorldAABB;
-            var ray = new RayD(ref hitEnt.Intersection.From, ref hitEnt.Intersection.Direction);
-            var rayHit = ray.Intersects(box);
-            if (rayHit != null)
-            {
-                var hitPos = hitEnt.Intersection.From + (hitEnt.Intersection.Direction * (rayHit.Value - 0.1f));
-                IHitInfo hitInfo;
-                if (Physics.CastRay(hitPos, hitEnt.Intersection.To, out hitInfo, 15))
-                {
-                    var hit = (MyEntity)hitInfo.HitEntity;
-                    var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
-                    var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == character;
                     return rayHitTarget;
                 }
             }

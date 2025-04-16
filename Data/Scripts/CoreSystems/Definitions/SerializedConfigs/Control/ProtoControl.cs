@@ -1,11 +1,8 @@
 ﻿using CoreSystems.Platform;
 using CoreSystems.Support;
 using ProtoBuf;
-using Sandbox.ModAPI;
-using System;
 using System.ComponentModel;
 using static CoreSystems.Support.CoreComponent;
-using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 
 namespace CoreSystems
 {

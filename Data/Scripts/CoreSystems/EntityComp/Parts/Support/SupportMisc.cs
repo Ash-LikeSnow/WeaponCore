@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using Sandbox.Game.Entities;
 using VRage.Game.ModAPI;
 using static CoreSystems.Support.SupportDefinition.SupportEffect.Protections;
 

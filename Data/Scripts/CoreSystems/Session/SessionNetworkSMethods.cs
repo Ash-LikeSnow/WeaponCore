@@ -2,7 +2,6 @@
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.Focus;

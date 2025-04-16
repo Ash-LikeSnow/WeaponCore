@@ -959,7 +959,7 @@ namespace CoreSystems.Support
 
                 if (Hit.EventType == HitEntity.Type.Water) 
                 {
-                    HitParticleActive = true;//FML... didn't know there was rand for impacts.
+                    HitParticleActive = true;
                 }
 
                 if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
@@ -1410,7 +1410,6 @@ namespace CoreSystems.Support
 
         internal void Close()
         {
-            // Reset only vars that are not always set
             Hit = new Hit();
             EndState = new AvClose();
 

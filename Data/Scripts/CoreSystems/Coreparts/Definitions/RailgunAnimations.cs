@@ -2,8 +2,6 @@
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers;
-using static CoreSystems.Support.WeaponDefinition.AnimationDef.RelMove.MoveType;
-using static CoreSystems.Support.WeaponDefinition.AnimationDef.RelMove;
 namespace Scripts
 { // Don't edit above this line
     partial class Parts

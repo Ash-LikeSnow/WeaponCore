@@ -3,7 +3,6 @@ using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -59,46 +58,41 @@ namespace CoreSystems.Support
 
         internal void SubpartClosed(MyEntity ent)
         {
-            try
+            if (ent == null)
             {
-                if (ent == null)
-                {
-                    Log.Line($"SubpartClosed had null entity");
-                    return;
-                }
+                Log.Line($"SubpartClosed had null entity");
+                return;
+            }
 
-                using (CoreEntity.Pin())
+            using (CoreEntity.Pin())
+            {
+                ent.OnClose -= SubpartClosed;
+                if (!CoreEntity.MarkedForClose && Platform.State == CorePlatform.PlatformState.Ready)
                 {
-                    ent.OnClose -= SubpartClosed;
-                    if (!CoreEntity.MarkedForClose && Platform.State == CorePlatform.PlatformState.Ready)
+                    if (Type == CompType.Weapon)
+                        Platform.ResetParts();
+                    Status = Start.Started;
+
+                    foreach (var w in Platform.Weapons)
                     {
-                        if (Type == CompType.Weapon)
-                            Platform.ResetParts();
-                        Status = Start.Started;
+                        w.Azimuth = 0;
+                        w.Elevation = 0;
+                        w.Elevation = 0;
 
-                        foreach (var w in Platform.Weapons)
+                        if (w.ActiveAmmoDef.AmmoDef.Const.MustCharge)
+                            w.ExitCharger = true;
+
+                        if (!FunctionalBlock.Enabled)
+                            w.EventTriggerStateChanged(EventTriggers.TurnOff, true);
+                        else if (w.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
+                            Session.I.FutureEvents.Schedule(w.TurnOnAV, null, 100);
+
+                        if (w.ProtoWeaponAmmo.CurrentAmmo == 0)
                         {
-                            w.Azimuth = 0;
-                            w.Elevation = 0;
-                            w.Elevation = 0;
-
-                            if (w.ActiveAmmoDef.AmmoDef.Const.MustCharge)
-                                w.ExitCharger = true;
-
-                            if (!FunctionalBlock.Enabled)
-                                w.EventTriggerStateChanged(EventTriggers.TurnOff, true);
-                            else if (w.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
-                                Session.I.FutureEvents.Schedule(w.TurnOnAV, null, 100);
-
-                            if (w.ProtoWeaponAmmo.CurrentAmmo == 0)
-                            {
-                                w.EventTriggerStateChanged(EventTriggers.EmptyOnGameLoad, true);
-                            }
+                            w.EventTriggerStateChanged(EventTriggers.EmptyOnGameLoad, true);
                         }
                     }
                 }
-            }
-            catch (Exception ex) { Log.Line($"Exception in SubpartClosed: {ex}", null, true);
             }
         }
 

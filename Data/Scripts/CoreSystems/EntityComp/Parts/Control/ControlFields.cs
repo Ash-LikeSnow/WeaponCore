@@ -1,6 +1,5 @@
 ﻿using CoreSystems.Support;
 using Sandbox.ModAPI;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using VRage.Utils;
 using VRageMath;
 

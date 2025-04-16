@@ -762,8 +762,7 @@ namespace CoreSystems
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var finish = w.FinishShots || delayedFire;
-                        var pauseForRay = w.Target.TargetState != TargetStates.IsProjectile && !wComp.Data.Repo.Values.Set.Overrides.Override && w.Casting && !w.PreFired && !finish;
-                        var shootRequest = (anyShot || finish) && !pauseForRay;
+                        var shootRequest = (anyShot || finish);
 
                         var shotReady = canShoot && shootRequest;
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);

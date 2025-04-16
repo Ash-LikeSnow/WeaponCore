@@ -71,7 +71,6 @@ namespace CoreSystems
             GenerateButtonMap();
             Settings = new CoreSettings(this);
             ReallyStupidKeenShit();
-            CounterKeenLogMessage();
 
             var control = MyAPIGateway.Input.GetGameControl(MyStringId.GetOrCompute("RELOAD"));
             UiInput.ReloadKey = control.GetKeyboardControl();

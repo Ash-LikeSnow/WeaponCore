@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using CoreSystems.Platform;
-using CoreSystems.Support;
 using ProtoBuf;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;

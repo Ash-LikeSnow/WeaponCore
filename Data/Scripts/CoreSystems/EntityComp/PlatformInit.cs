@@ -8,7 +8,6 @@ using VRageMath;
 using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.CompTypeSpecific;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
-using Sandbox.Game.World;
 
 namespace CoreSystems.Platform
 {

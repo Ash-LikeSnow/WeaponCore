@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -855,13 +854,9 @@ namespace CoreSystems.Support
             {
                 if (TotalEffect > 0)
                 {
-                    try
-                    {
-                        PlayerMap player;
-                        var playerName = Session.I.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
-                        Log.Stats($"{Ai.TopEntity?.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAoeEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
-                    }
-                    catch (Exception ex) { Log.Line($"Exception in ConstructClean: {ex}", null, true); }
+                    PlayerMap player;
+                    var playerName = Session.I.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
+                    Log.Stats($"{Ai.TopEntity?.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAoeEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
                 }
 
                 if (WeaponGroups.Count > 0)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Weapons;

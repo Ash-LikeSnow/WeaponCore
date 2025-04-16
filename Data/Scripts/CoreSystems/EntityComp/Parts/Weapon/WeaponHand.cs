@@ -1,5 +1,4 @@
-﻿using CoreSystems.Projectiles;
-using CoreSystems.Support;
+﻿using CoreSystems.Support;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;

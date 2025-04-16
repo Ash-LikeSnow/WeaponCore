@@ -1,11 +1,9 @@
-﻿using System;
-using CoreSystems;
+﻿using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRage.Input;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Hud;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 {

@@ -105,11 +105,6 @@ namespace CoreSystems
                         ClientProjectileTargetSyncs(packetObj);
                         break;
                     }
-                    case PacketType.HandWeaponDebug:
-                    {
-                        ClientHandDebug(packetObj);
-                        break;
-                    }
                     case PacketType.AimTargetUpdate: 
                     {
                             ClientFakeTargetUpdate(packetObj);

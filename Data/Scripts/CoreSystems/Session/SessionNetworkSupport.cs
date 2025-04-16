@@ -1,13 +1,9 @@
 ﻿using System;
 using CoreSystems.Platform;
 using CoreSystems.Support;
-using Sandbox.ModAPI;
-using VRage;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Platform.ControlSys;
-using static CoreSystems.Platform.Weapon.ShootManager;
 using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems
@@ -103,24 +99,6 @@ namespace CoreSystems
         #endregion
 
         #region ServerOnly
-
-        internal readonly HandWeaponDebugPacket HandDebugPacketPacket = new HandWeaponDebugPacket {PType = PacketType.HandWeaponDebug};
-        private void SendHandDebugInfo(Weapon weapon)
-        {
-            PlayerMap player;
-            if (Players.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out player))
-            {
-                HandDebugPacketPacket.SenderId = player.Player.SteamUserId;
-
-                PacketsToClient.Add(new PacketInfo
-                {
-                    SingleClient = true,
-                    Unreliable = true,
-                    Packet = HandDebugPacketPacket
-                });
-            }
-        }
-
         private void SendProjectilePosSyncs()
         {
             var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPositionPacket ();

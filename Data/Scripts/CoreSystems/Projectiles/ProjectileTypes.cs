@@ -749,10 +749,5 @@ namespace CoreSystems.Support
             Vector3D.Distance(ref PlanetSphere.Center, ref hitPos, out dist);
             PlanetSphere = new BoundingSphereD(PlanetSphere.Center, dist);
         }
-
-        internal void DebugDraw()
-        {
-            DsDebugDraw.DrawSphere(HitSphere, Color.Red);
-        }
     }
 }

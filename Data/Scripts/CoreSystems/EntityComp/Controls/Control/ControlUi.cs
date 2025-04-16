@@ -4,11 +4,9 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
-using VRageMath;
 
 namespace CoreSystems
 {

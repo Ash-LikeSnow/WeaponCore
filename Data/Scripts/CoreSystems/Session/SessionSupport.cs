@@ -83,18 +83,7 @@ namespace CoreSystems
                 if (IsServer && PbActivate && !PbApiInited) Api.PbInit();
 
                 if (HandlesInput && !ClientCheck && Tick > 1200)
-                {
-                    if (IsClient)
-                    {
-                        if (ServerVersion != ModContext.ModName)
-                        {
-                            var message = $"::CoreSystems Version Mismatch::    Server:{ServerVersion} - Client:{ModContext.ModName} -   Unexpected behavior may occur.";
-                            Log.Line(message);
-                            //MyAPIGateway.Utilities.ShowNotification(message, 10000, "Red");
-                        }
-                    }
                     ClientCheck = true;
-                }
 
             }
             LCount++;
@@ -146,8 +135,6 @@ namespace CoreSystems
 
             if (!PlayersLoaded && KeenFuckery())
                 PlayersLoaded = true;
-
-            //Api.PbHackDetection();
         }
 
         internal void AddLosCheck(LosDebug debug)
@@ -257,45 +244,6 @@ namespace CoreSystems
                 else
                     ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2} - {ApproachDebug.TimeSinceSpawn}:{ApproachDebug.NextSpawn}", 2000, "White");
             }
-
-            /*
-            if (Tick - _clientHandDebug.LastHitTick < 1200 || Tick - _clientHandDebug.LastShootTick < 1200)
-            {
-                if (_clientHandDebug.ShootStart != Vector3D.Zero)
-                    DsDebugDraw.DrawLine(_clientHandDebug.ShootStart, _clientHandDebug.ShootEnd, Color.Blue, 0.2f);
-                if (_clientHandDebug.HitStart != Vector3D.Zero)
-                    DsDebugDraw.DrawLine(_clientHandDebug.HitStart, _clientHandDebug.HitEnd, Color.Red, 0.2f);
-            }
-
-            if (Tick - _clientHandDebug2.LastHitTick < 1200 || Tick - _clientHandDebug2.LastShootTick < 1200)
-            {
-                if (_clientHandDebug2.ShootStart != Vector3D.Zero)
-                    DsDebugDraw.DrawLine(_clientHandDebug2.ShootStart, _clientHandDebug2.ShootEnd, Color.Green, 0.2f);
-                if (_clientHandDebug2.HitStart != Vector3D.Zero)
-                    DsDebugDraw.DrawLine(_clientHandDebug2.HitStart, _clientHandDebug2.HitEnd, Color.Yellow, 0.2f);
-            }
-            */
-        }
-
-        public void AddHandHitDebug(Vector3D start, Vector3D end, bool shoot)
-        {
-            var packet = HandlesInput ? _clientHandDebug2 : HandDebugPacketPacket;
-            if (shoot)
-            {
-                packet.LastShootTick = Tick + 1;
-                packet.LastHitTick = uint.MaxValue;
-                packet.ShootStart = start;
-                packet.ShootEnd = end;
-                packet.HitStart = Vector3D.Zero;
-                packet.HitEnd = Vector3D.Zero;
-            }
-            else
-            {
-                packet.LastHitTick = Tick + 1;
-                packet.HitStart = start;
-                packet.HitEnd = end;
-            }
-
         }
 
         private double _drawCpuTime;
@@ -1132,26 +1080,6 @@ namespace CoreSystems
 
 
             }
-        }
-
-        private readonly HandWeaponDebugPacket _clientHandDebug = new HandWeaponDebugPacket();
-        private readonly HandWeaponDebugPacket _clientHandDebug2 = new HandWeaponDebugPacket();
-
-        private void DrawHandDebug(HandWeaponDebugPacket hDebug)
-        {
-            _clientHandDebug.ShootStart = hDebug.ShootStart;
-            _clientHandDebug.ShootEnd = hDebug.ShootEnd;
-            _clientHandDebug.HitStart = hDebug.HitStart;
-            _clientHandDebug.HitEnd = hDebug.HitEnd;
-            _clientHandDebug.LastHitTick = Tick;
-            _clientHandDebug.LastShootTick = Tick;
-        }
-
-        private static void CounterKeenLogMessage(bool console = true)
-        {
-            var message = "\n***\n    [CoreSystems] Ignore log messages from keen stating 'Mod CoreSystems is accessing physics from parallel threads'\n     CS is using a thread safe parallel.for, not a parallel task\n***";
-            if (console) MyLog.Default.WriteLineAndConsole(message);
-            else MyLog.Default.WriteLine(message);
         }
 
         internal static double ModRadius(double radius, bool largeBlock)

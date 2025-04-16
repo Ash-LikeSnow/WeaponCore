@@ -430,9 +430,6 @@
     <Compile Include="Data\Scripts\CoreSystems\Support\MathFuncs.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\Spawn.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
     <Compile Include="Data\Scripts\CoreSystems\AudioVisual\AvShot.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
@@ -530,9 +527,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Support\Draw\DrawExts.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\DsAutoResetEvent.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\ModelSupport\Dummies.cs">

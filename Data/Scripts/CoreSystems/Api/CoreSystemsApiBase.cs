@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems.Platform;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;

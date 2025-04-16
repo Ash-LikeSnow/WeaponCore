@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems;
 using VRage.Utils;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 

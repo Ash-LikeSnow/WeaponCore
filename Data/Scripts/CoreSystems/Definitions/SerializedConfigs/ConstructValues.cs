@@ -6,7 +6,6 @@ namespace CoreSystems
     [ProtoContract]
     public class ConstructDataValues
     {
-        //[ProtoMember(1)] public int Version = Session.VersionControl;
         [ProtoMember(2)] public FocusData FocusData;
 
         public bool Sync(Constructs construct, ConstructDataValues sync, bool localCall = false)

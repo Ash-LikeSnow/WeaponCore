@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Interfaces;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Utils;
 using VRageMath;
 
 namespace CoreSystems.Support
@@ -185,10 +183,7 @@ namespace CoreSystems.Support
                 if (!ModOverride && Session.I.IsPartAreaRestricted(cube.BlockDefinition.Id.SubtypeId, blockBox, cube.CubeGrid, cube.EntityId, null, out b, out s))
                 {
                     if (Session.I.IsServer)
-                    {
                         Session.I.FutureEvents.Schedule(QueuedBlockRemoval, cube, 10);
-                        //cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-                    }
                 }
 
                 //Projected block ammo removal

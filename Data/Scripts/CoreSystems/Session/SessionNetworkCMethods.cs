@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using CoreSystems.Platform;
+﻿using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage.Game.Entity;
-using static CoreSystems.Session;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems
 {
@@ -454,18 +451,6 @@ namespace CoreSystems
 
             return true;
 
-        }
-
-        private bool ClientHandDebug(PacketObj data)
-        {
-            var packet = data.Packet;
-            var debugPacket = (HandWeaponDebugPacket)packet;
-            if (debugPacket == null) return Error(data, Msg("HandDebug"));
-            {
-                DrawHandDebug(debugPacket);
-            }
-            data.Report.PacketValid = true;
-            return true;
         }
 
         private bool ClientProjectilePosSyncs(PacketObj data)

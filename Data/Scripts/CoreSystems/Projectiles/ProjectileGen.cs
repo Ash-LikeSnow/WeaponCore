@@ -1,6 +1,5 @@
 ﻿using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using System;
 using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
