@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Sandbox.ModAPI;
-using VRage;
-using VRage.Game.Entity;
-using VRage.ModAPI;
-using VRageMath;
 
 namespace CoreSystems.Api
 {

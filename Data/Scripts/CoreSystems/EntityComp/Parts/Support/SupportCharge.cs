@@ -1,6 +1,4 @@
-﻿using Sandbox.Game.Entities;
-
-namespace CoreSystems.Platform
+﻿namespace CoreSystems.Platform
 {
     public partial class SupportSys
     {

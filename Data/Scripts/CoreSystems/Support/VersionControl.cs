@@ -6,8 +6,6 @@ using CoreSystems;
 using CoreSystems.Settings;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
-using VRage.Utils;
-using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {

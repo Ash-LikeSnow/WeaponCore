@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using CoreSystems.Projectiles;
+﻿using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using System;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
@@ -27,15 +26,14 @@ namespace CoreSystems.Platform
                 var eTarget = Weapon.Target.TargetObject as MyEntity;
                 if (pTarget == null && eTarget == null)
                     return;
-                Weapon.Casting = false;
                 Weapon.PauseShoot = false;
                 var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.PrimaryWeapon;
-                var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetObject is IMyCharacter;
+                var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || (eTarget != null && Weapon.Target.TargetObject is IMyCharacter);
                 var scope = Weapon.GetScope;
                 var trackingCheckPosition = scope.CachedPos;
                 double rayDist = 0;
 
-                if (Session.I.DebugLos)
+                if (Session.I.DebugLos && hitInfo != null)
                 {
                     var hitPos = hitInfo.Position;
                     if (rayDist <= 0) Vector3D.Distance(ref trackingCheckPosition, ref hitPos, out rayDist);
@@ -45,7 +43,7 @@ namespace CoreSystems.Platform
 
                 if (Weapon.Comp.Ai.ShieldNear)
                 {
-                    var targetPos = pTarget?.Position ?? eTarget.PositionComp.WorldMatrixRef.Translation;
+                    var targetPos = pTarget?.Position ?? eTarget.PositionComp.WorldVolume.Center;
                     var targetDir = targetPos - trackingCheckPosition;
                     if (Weapon.HitFriendlyShield(trackingCheckPosition, targetPos, targetDir))
                     {
@@ -112,10 +110,9 @@ namespace CoreSystems.Platform
                     var maxChange = halfExtMin > minSize ? halfExtMin : minSize;
                     var targetPos = eTarget.PositionComp.WorldAABB.Center;
                     var weaponPos = trackingCheckPosition;
-
                     if (rayDist <= 0) Vector3D.Distance(ref weaponPos, ref targetPos, out rayDist);
-                    var newHitShortDist = rayDist * (1 - hitInfo.Fraction);
-                    var distanceToTarget = rayDist * hitInfo.Fraction;
+                    var newHitShortDist = hitInfo == null ? rayDist : rayDist * (1 - hitInfo.Fraction);
+                    var distanceToTarget = hitInfo == null ? rayDist : rayDist * hitInfo.Fraction;
                     var shortDistExceed = newHitShortDist - Weapon.Target.HitShortDist > maxChange;
                     var escapeDistExceed = distanceToTarget - Weapon.Target.OrigDistance > Weapon.Target.OrigDistance;
                     if (shortDistExceed || escapeDistExceed)
@@ -124,8 +121,8 @@ namespace CoreSystems.Platform
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
                     }
                 }
+                
             }
-
         }
 
         internal class Muzzle

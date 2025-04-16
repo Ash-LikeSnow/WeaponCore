@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using ProtoBuf;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -63,9 +61,6 @@ namespace CoreSystems
     [ProtoContract]
     public class WeaponRandomGenerator
     {
-        //[ProtoMember(1)] public int TurretCurrentCounter;
-        //[ProtoMember(2)] public int ClientProjectileCurrentCounter;
-        //[ProtoMember(3)] public int AcquireCurrentCounter;
         [ProtoMember(4)] public int CurrentSeed;
         public XorShiftRandomStruct TurretRandom;
         public XorShiftRandomStruct AcquireRandom;

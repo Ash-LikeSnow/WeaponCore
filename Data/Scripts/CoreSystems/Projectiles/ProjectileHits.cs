@@ -5,7 +5,6 @@ using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage;
-using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
@@ -18,7 +17,6 @@ using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
 using static CoreSystems.Projectiles.Projectile;
 using static CoreSystems.Support.VoxelIntersect;
-using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Projectiles
 {
@@ -379,15 +377,7 @@ namespace CoreSystems.Projectiles
                         hitEntity.EventType = info.FirstWaterHitTick != tick ? Voxel : Water;
                     }
                     else if (voxelState == VoxelIntersectBranch.DeferedMissUpdate || voxelState == VoxelIntersectBranch.DeferFullCheck)
-                    {
                         FullVoxelCheck(p, voxel, voxelState, lineCheck);
-                        /*
-                        lock (DeferedVoxels)
-                        {
-                            DeferedVoxels.Add(new DeferedVoxels { Projectile = p, Branch = voxelState, Voxel = voxel, LineCheck = lineCheck});
-                        }
-                        */
-                    }
                 }
                 else if (ent.Physics != null && !ent.Physics.IsPhantom && !ent.IsPreview && grid != null)
                 {
@@ -633,133 +623,117 @@ namespace CoreSystems.Projectiles
 
         internal bool GenerateHitInfo(Projectile p)
         {
-            try
+            var info = p.Info;
+            var count = info.HitList.Count;
+            if (count > 1)
             {
-                var info = p.Info;
-                var count = info.HitList.Count;
-                if (count > 1)
-                {
-                    try { info.HitList.Sort((x, y) => GetEntityCompareDist(x, y, info)); } // Unable to sort because the IComparer.Compare() method returns inconsistent results
-                    catch (Exception ex) { Log.Line($"p.Info.HitList.Sort failed: {ex} - weapon:{info.Weapon.System.PartName} - ammo:{info.AmmoDef.AmmoRound} - hitCount:{info.HitList.Count}", null, true); }
-                }
-                else GetEntityCompareDist(info.HitList[0], null, info);
-
-                try
-                {
-                    var pulseTrigger = false;
-                    var voxelFound = false;
-                    for (int i = info.HitList.Count - 1; i >= 0; i--)
-                    {
-                        var ent = info.HitList[i];
-                        if (ent.EventType == Voxel)
-                            voxelFound = true;
-
-                        if (!ent.Hit) {
-                            if (ent.PulseTrigger) pulseTrigger = true;
-                            info.HitList.RemoveAtFast(i);
-                            ent.Clean();
-                        }
-                        else break;
-                    }
-
-                    if (pulseTrigger)
-                    {
-
-                        info.ExpandingEwarField = true;
-                        p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                        p.PrevVelocity = p.Velocity;
-                        p.Velocity = Vector3D.Zero;
-                        info.ProHit.LastHit = p.Position;
-                        info.HitList.Clear();
-                        return false;
-                    }
-
-                    var finalCount = info.HitList.Count;
-                    try
-                    {
-                        if (finalCount > 0)
-                        {
-                            var aConst = info.AmmoDef.Const;
-                            try
-                            {
-                                if (voxelFound && info.HitList[0].EventType != Voxel && aConst.IsBeamWeapon)
-                                    info.VoxelCache.HitRefreshed = 0;
-                            }
-                            catch (Exception ex) { Log.Line($"Exception in HitRefreshed finalCount: {ex}", null, true); }
-
-                            var checkHit = (!aConst.IsBeamWeapon || !info.ShieldBypassed || finalCount > 1);
-
-                            var blockingEnt = !info.ShieldBypassed || finalCount == 1 ? 0 : 1;
-                            var hitEntity = info.HitList[blockingEnt];
-                            if (hitEntity == null)
-                            {
-                                Log.Line($"null hitEntity");
-                                return false;
-                            }
-
-                            if (!checkHit)
-                                hitEntity.HitPos = p.Beam.To;
-
-                            info.ProHit.Entity = hitEntity.Entity;
-                            info.ProHit.LastHit = hitEntity.HitPos ?? p.Beam.To;
-
-                            if (aConst.OnHit && Session.I.Tick >= info.ProHit.EndTick)
-                            {
-                                info.ProHit.EndTick = Session.I.Tick + aConst.OnHitDuration;
-                            }
-
-                            if (p.EnableAv || aConst.VirtualBeams)
-                            {
-                                Vector3D lastHitVel = Vector3D.Zero;
-                                if (hitEntity.EventType == Shield)
-                                {
-                                    var cube = hitEntity.Entity as MyCubeBlock;
-                                    if (cube?.CubeGrid?.Physics != null)
-                                        lastHitVel = cube.CubeGrid.Physics.LinearVelocity;
-                                }
-                                else if (hitEntity.Projectile != null)
-                                    lastHitVel = hitEntity.Projectile?.Velocity ?? Vector3D.Zero;
-                                else if (hitEntity.Entity?.Physics != null)
-                                    lastHitVel = hitEntity.Entity?.Physics.LinearVelocity ?? Vector3D.Zero;
-                                else lastHitVel = Vector3D.Zero;
-
-                                Vector3D visualHitPos;
-                                if (hitEntity.Entity is MyCubeGrid)
-                                {
-                                    IHitInfo hitInfo = null;
-                                    if (Session.I.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.I.CameraPos) < 22500 && Session.I.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
-                                    {
-                                        var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
-                                        var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
-                                        var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
-                                        Session.I.Physics.CastRay(from, to, out hitInfo, CollisionLayers.NoVoxelCollisionLayer);
-                                    }
-                                    visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos ?? p.Beam.To;
-                                }
-                                else visualHitPos = hitEntity.HitPos ?? p.Beam.To;
-
-                                if (p.EnableAv) {
-                                    info.AvShot.LastHitShield = hitEntity.EventType == Shield;
-                                    info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos };
-                                }
-                                else if (aConst.VirtualBeams)
-                                    AvShot.UpdateVirtualBeams(p, info, hitEntity, visualHitPos, lastHitVel, true);
-
-                                if (info.AimedShot && Session.I.TrackingAi != null && Session.I.TargetUi.HitIncrease < 0.1d && info.Ai.ControlComp == null && (aConst.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
-                                    Session.I.TargetUi.SetHit(info);
-                            }
-
-
-                            return true;
-                        }
-
-                    }
-                    catch (Exception ex) { Log.Line($"Exception in GenerateHitInfo1: {ex}", null, true); }
-                }
-                catch (Exception ex) { Log.Line($"Exception in GenerateHitInfo2: {ex}", null, true); }
-
+                try { info.HitList.Sort((x, y) => GetEntityCompareDist(x, y, info)); } // Unable to sort because the IComparer.Compare() method returns inconsistent results
+                catch (Exception ex) { Log.Line($"p.Info.HitList.Sort failed: {ex} - weapon:{info.Weapon.System.PartName} - ammo:{info.AmmoDef.AmmoRound} - hitCount:{info.HitList.Count}", null, true); }
             }
-            catch (Exception ex) { Log.Line($"Exception in GenerateHitInfo3: {ex}", null, true); }
+            else GetEntityCompareDist(info.HitList[0], null, info);
+
+
+            var pulseTrigger = false;
+            var voxelFound = false;
+            for (int i = info.HitList.Count - 1; i >= 0; i--)
+            {
+                var ent = info.HitList[i];
+                if (ent.EventType == Voxel)
+                    voxelFound = true;
+
+                if (!ent.Hit) {
+                    if (ent.PulseTrigger) pulseTrigger = true;
+                    info.HitList.RemoveAtFast(i);
+                    ent.Clean();
+                }
+                else break;
+            }
+
+            if (pulseTrigger)
+            {
+
+                info.ExpandingEwarField = true;
+                p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
+                p.PrevVelocity = p.Velocity;
+                p.Velocity = Vector3D.Zero;
+                info.ProHit.LastHit = p.Position;
+                info.HitList.Clear();
+                return false;
+            }
+
+            var finalCount = info.HitList.Count;
+
+            if (finalCount > 0)
+            {
+                var aConst = info.AmmoDef.Const;
+                if (voxelFound && info.HitList[0].EventType != Voxel && aConst.IsBeamWeapon)
+                    info.VoxelCache.HitRefreshed = 0;
+
+                var checkHit = (!aConst.IsBeamWeapon || !info.ShieldBypassed || finalCount > 1);
+
+                var blockingEnt = !info.ShieldBypassed || finalCount == 1 ? 0 : 1;
+                var hitEntity = info.HitList[blockingEnt];
+                if (hitEntity == null)
+                {
+                    Log.Line($"null hitEntity");
+                    return false;
+                }
+
+                if (!checkHit)
+                    hitEntity.HitPos = p.Beam.To;
+
+                info.ProHit.Entity = hitEntity.Entity;
+                info.ProHit.LastHit = hitEntity.HitPos ?? p.Beam.To;
+
+                if (aConst.OnHit && Session.I.Tick >= info.ProHit.EndTick)
+                {
+                    info.ProHit.EndTick = Session.I.Tick + aConst.OnHitDuration;
+                }
+
+                if (p.EnableAv || aConst.VirtualBeams)
+                {
+                    Vector3D lastHitVel = Vector3D.Zero;
+                    if (hitEntity.EventType == Shield)
+                    {
+                        var cube = hitEntity.Entity as MyCubeBlock;
+                        if (cube?.CubeGrid?.Physics != null)
+                            lastHitVel = cube.CubeGrid.Physics.LinearVelocity;
+                    }
+                    else if (hitEntity.Projectile != null)
+                        lastHitVel = hitEntity.Projectile?.Velocity ?? Vector3D.Zero;
+                    else if (hitEntity.Entity?.Physics != null)
+                        lastHitVel = hitEntity.Entity?.Physics.LinearVelocity ?? Vector3D.Zero;
+                    else lastHitVel = Vector3D.Zero;
+
+                    Vector3D visualHitPos;
+                    if (hitEntity.Entity is MyCubeGrid)
+                    {
+                        IHitInfo hitInfo = null;
+                        if (Session.I.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.I.CameraPos) < 22500 && Session.I.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
+                        {
+                            var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
+                            var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
+                            var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
+                            Session.I.Physics.CastRay(from, to, out hitInfo, CollisionLayers.NoVoxelCollisionLayer);
+                        }
+                        visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos ?? p.Beam.To;
+                    }
+                    else visualHitPos = hitEntity.HitPos ?? p.Beam.To;
+
+                    if (p.EnableAv) {
+                        info.AvShot.LastHitShield = hitEntity.EventType == Shield;
+                        info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos };
+                    }
+                    else if (aConst.VirtualBeams)
+                        AvShot.UpdateVirtualBeams(p, info, hitEntity, visualHitPos, lastHitVel, true);
+
+                    if (info.AimedShot && Session.I.TrackingAi != null && Session.I.TargetUi.HitIncrease < 0.1d && info.Ai.ControlComp == null && (aConst.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
+                        Session.I.TargetUi.SetHit(info);
+                }
+
+
+                return true;
+            }
 
             return false;
         }

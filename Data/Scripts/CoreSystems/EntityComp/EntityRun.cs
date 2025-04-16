@@ -1,12 +1,10 @@
-﻿using System;
-using CoreSystems.Platform;
+﻿using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRageMath;
 using static CoreSystems.Session;
 using static CoreSystems.Support.Ai;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {

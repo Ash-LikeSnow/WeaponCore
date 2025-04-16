@@ -2,10 +2,8 @@
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.ModelAssignmentsDef;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
-using static CoreSystems.Support.WeaponDefinition.HardPointDef.Prediction;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.Threat;
-using static CoreSystems.Support.WeaponDefinition.HardPointDef.HardwareDef;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef.HardwareDef.HardwareType;
 
 namespace Scripts {   

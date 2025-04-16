@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
-using Sandbox.ModAPI;
 using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;

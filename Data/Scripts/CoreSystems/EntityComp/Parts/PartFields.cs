@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using CoreSystems.Support;
-using VRageMath;
+﻿using CoreSystems.Support;
 
 namespace CoreSystems.Platform
 {
     public partial class Part
     {
-        //internal readonly List<Action<long, int, ulong, long, Vector3D, bool>> Monitors = new List<Action<long, int, ulong, long, Vector3D, bool>>();
-
         internal CoreComponent BaseComp;
         internal CoreSystem CoreSystem;
         internal PartAcquire Acquire;
@@ -40,8 +35,6 @@ namespace CoreSystems.Platform
             Acquire = new PartAcquire(this);
             UniquePartId = Session.I.UniquePartId;
             ShortLoadId = Session.I.ShortLoadAssigner();
-            //for (int i = 0; i < BaseComp.Monitors[PartId].Count; i++)
-            //    Monitors.Add(BaseComp.Monitors[PartId][i]);
         }
 
 

@@ -1,13 +1,9 @@
 ﻿using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
-using System.Runtime.CompilerServices;
-using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {

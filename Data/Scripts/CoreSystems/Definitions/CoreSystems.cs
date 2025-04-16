@@ -781,22 +781,10 @@ namespace CoreSystems.Support
             if (wO.MinTargetDistance.HasValue) MinTargetDistance = Math.Max(wO.MinTargetDistance.Value, 0f);
             if (wO.RateOfFire.HasValue) RateOfFire = Math.Max(wO.RateOfFire.Value, 0);
             if (wO.ReloadTime.HasValue) ReloadTime = Math.Max(wO.ReloadTime.Value, 0);
-
             if (wO.DeviateShotAngle.HasValue) DeviateShotAngleRads = MathHelper.ToRadians(Math.Max(wO.DeviateShotAngle.Value, 0f));
             if (wO.AimingTolerance.HasValue) AimingToleranceRads = MathHelperD.ToRadians(wO.AimingTolerance.Value <= 0 ? 180 : wO.AimingTolerance.Value);
-            //if (wO.InventorySize.HasValue) 
-
             if (wO.HeatPerShot.HasValue) HeatPerShot = Math.Max(wO.HeatPerShot.Value, 0);
-            //if (wO.MaxHeat.HasValue) 
             if (wO.HeatSinkRate.HasValue) HeatSinkRate = Math.Max(wO.HeatSinkRate.Value, 0);
-            //if (wO.Cooldown.HasValue) 
-
-            //if (wO.ConstructPartCap.HasValue) 
-            //if (wO.RestrictionRadius.HasValue) 
-            //if (wO.CheckInflatedBox.HasValue) 
-            //if (wO.CheckForAnyWeapon.HasValue) 
-            //if (wO.MuzzleCheck.HasValue) 
-
             if (wO.IdlePower.HasValue) IdlePower = Math.Max(wO.IdlePower.Value, 0.001f);
         }
     }

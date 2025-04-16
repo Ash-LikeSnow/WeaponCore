@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.EntityComponents;
@@ -68,7 +67,7 @@ namespace CoreSystems.Support
                                 WeaponIdx[WeaponComps[weaponIdx]] = weaponIdx;
                             WeaponIdx.Remove(wComp);
 
-                            if (wCompMaxWepRange >= (MaxTargetingRange - TopEntity.PositionComp.LocalVolume.Radius) * 0.95) //Filter so that only the longest ranged weps force a recalc
+                            if (wCompMaxWepRange >= (MaxTargetingRange - TopEntity.PositionComp.LocalVolume.Radius) * 0.95)
                                 UpdateMaxTargetingRange();
 
                             if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)

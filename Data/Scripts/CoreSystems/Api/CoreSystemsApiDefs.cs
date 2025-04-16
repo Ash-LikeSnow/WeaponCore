@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
-using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
 namespace CoreSystems.Api
 {

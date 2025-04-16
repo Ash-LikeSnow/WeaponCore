@@ -8,11 +8,9 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.Ai;
-using static VRage.Game.MyObjectBuilder_ControllerSchemaDefinition;
 
 namespace CoreSystems
 {

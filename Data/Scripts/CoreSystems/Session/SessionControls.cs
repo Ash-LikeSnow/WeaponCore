@@ -8,7 +8,6 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
-using VRage.Utils;
 using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems

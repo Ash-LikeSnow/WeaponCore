@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
-using Sandbox.Game.World;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Collections;
 using VRage.Game;
@@ -12,7 +9,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 namespace CoreSystems.Support
 {
     public partial class Ai
@@ -366,7 +362,7 @@ namespace CoreSystems.Support
                 DroneCount = 0;
 
                 var rootConstruct = ai.Construct.RootAi.Construct;
-                if (rootConstruct.DroneCount != 0 && Session.I.Tick - rootConstruct.LastDroneTick > 30) //Was 200, dropped for faster updates on current threats
+                if (rootConstruct.DroneCount != 0 && Session.I.Tick - rootConstruct.LastDroneTick > 30)
                     rootConstruct.DroneCleanup();
             }
         }

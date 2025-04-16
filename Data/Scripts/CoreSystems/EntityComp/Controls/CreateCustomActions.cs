@@ -609,43 +609,6 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
-        internal static void CreateOnOffActionSet(Session session, IMyTerminalControlOnOffSwitch tc, string name, Func<IMyTerminalBlock, bool> enabler, bool group = false)
-        {
-            var action0 = MyAPIGateway.TerminalControls.CreateAction<T>($"WC_{name}_Toggle");
-            action0.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action0.Name = new StringBuilder(Localization.GetTextWithoutFallback($"{name} Toggle On/Off"));
-            action0.Action = b => tc.Setter(b, !tc.Getter(b));
-            action0.Writer = (b, t) => t.Append(tc.Getter(b) ? tc.OnText : tc.OffText);
-            action0.Enabled = enabler;
-            action0.ValidForGroups = group;
-
-            MyAPIGateway.TerminalControls.AddAction<T>(action0);
-            session.CustomActions.Add(action0);
-
-            var action1 = MyAPIGateway.TerminalControls.CreateAction<T>($"WC_{name}_Toggle_On");
-            action1.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
-            action1.Name = new StringBuilder(Localization.GetTextWithoutFallback($"{name} On"));
-            action1.Action = b => tc.Setter(b, true);
-            action1.Writer = (b, t) => t.Append(tc.Getter(b) ? tc.OnText : tc.OffText);
-            action1.Enabled = enabler;
-            action1.ValidForGroups = group;
-
-            MyAPIGateway.TerminalControls.AddAction<T>(action1);
-            session.CustomActions.Add(action1);
-
-            var action2 = MyAPIGateway.TerminalControls.CreateAction<T>($"WC_{name}_Toggle_Off");
-            action2.Icon = @"Textures\GUI\Icons\Actions\SwitchOff.dds";
-            action2.Name = new StringBuilder(Localization.GetTextWithoutFallback($"{name} Off"));
-            action2.Action = b => tc.Setter(b, true);
-            action2.Writer = (b, t) => t.Append(tc.Getter(b) ? tc.OnText : tc.OffText);
-            action2.Enabled = enabler;
-            action2.ValidForGroups = group;
-
-            MyAPIGateway.TerminalControls.AddAction<T>(action2);
-            session.CustomActions.Add(action2);
-
-        }
-
         internal static void CreateOnOffActionSet(Session session, IMyTerminalControlCheckbox tc, string name, Func<IMyTerminalBlock, bool> enabler, bool group = false)
         {
             var action0 = MyAPIGateway.TerminalControls.CreateAction<T>($"WC_{name}_Toggle");

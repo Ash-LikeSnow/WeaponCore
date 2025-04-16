@@ -288,39 +288,6 @@ namespace CoreSystems.Support
             }
         }
 
-        public static void NetLog(string text, Session session, int logLevel)
-        {
-            var set = session.AuthorSettings;
-            var netEnabled = session.AuthLogging && set[4] >= 0 && logLevel >= set[5];
-            if (netEnabled)
-                NetLogger(session, "[R-LOG] " + text, string.Empty);
-        }
-
-        public static void Chars(string text, string instanceName = null)
-        {
-            try
-            {
-                var name = instanceName ?? _defaultInstance;
-                var instance = _instances[name];
-                if (instance.TextWriter != null) {
-
-                    if (name == _defaultInstance && !instance.Session.LocalVersion && instance.Paused())
-                        return;
-
-                    instance.TextWriter.Write(text);
-                    instance.TextWriter.Flush();
-
-                    var set = instance.Session.AuthorSettings;
-                    var netEnabled = instance.Session.AuthLogging && name == _defaultInstance && set[0] >= 0 || name == "perf" && set[1] >= 0 || name == "stats" && set[2] >= 0 || name == "net" && set[3] >= 0;
-                    if (netEnabled)
-                        NetLogger(instance.Session, "[R-LOG] " + text, name);
-                }
-            }
-            catch (Exception e)
-            {
-            }
-        }
-
         public static void CleanLine(string text, string instanceName = null)
         {
             try
@@ -343,31 +310,6 @@ namespace CoreSystems.Support
             }
             catch (Exception e)
             {
-            }
-        }
-
-        public static void ThreadedWrite(string logLine)
-        {
-            _threadedLineQueue.Enqueue(new[] { $"Threaded Time:  {DateTime.Now:HH-mm-ss-fff} - ", logLine });
-            MyAPIGateway.Utilities.InvokeOnGameThread(WriteLog);
-        }
-
-        private static void WriteLog() {
-            string[] line;
-
-            var instance = _instances[_defaultInstance];
-            if (instance.TextWriter != null)
-                Init("debugdevelop.log", null);
-
-            instance = _instances[_defaultInstance];           
-
-            while (_threadedLineQueue.TryDequeue(out line))
-            {
-                if (instance.TextWriter != null)
-                {
-                    instance.TextWriter.WriteLine(line[0] + line[1]);
-                    instance.TextWriter.Flush();
-                }
             }
         }
 

@@ -173,7 +173,6 @@ namespace CoreSystems.Support
                     }
                     if (av.Hit.Entity != null && av.AmmoDef.AmmoGraphics.Decals.MaxAge > 0 && !Vector3D.IsZero(av.Hit.SurfaceHit) && av.AmmoDef.Const.TextureHitMap.Count > 0 && !av.Hit.Entity.MarkedForClose && av.Hit.Entity.InScene)
                     {
-                        //Starcore bug report on decals, parent "not found" and world position goes to NaN
                         var shield = av.Hit.Entity as IMyUpgradeModule;
                         var floating = av.Hit.Entity as MyFloatingObject;
                         if (shield == null && floating == null)
@@ -201,10 +200,6 @@ namespace CoreSystems.Support
                                     Position = av.Hit.SurfaceHit + (av.Direction * 0.01),
                                     Normal = av.Direction,
                                 };
-                                
-                                
-                                //Log.Line($"Decal: {av.Hit.Entity.DebugName} mat{materialType} closed?{av.Hit.Entity.Closed} posCompNull?{av.Hit.Entity.PositionComp != null}");
-
                                 MyDecals.HandleAddDecal(av.Hit.Entity, hitInfo, Vector3.Zero, materialType, projectileMaterial, null, -1, voxelMaterial, false, MyDecalFlags.IgnoreOffScreenDeletion, MyAPIGateway.Session.GameplayFrameCounter + av.AmmoDef.AmmoGraphics.Decals.MaxAge);
                             }
                         }
@@ -212,7 +207,7 @@ namespace CoreSystems.Support
 
                     if (av.Hit.EventType == HitEntity.Type.Water)
                     {
-                        var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept or correction?
+                        var splashHit = av.Hit.SurfaceHit;
                         var ammoInfo = av.AmmoDef;
                         var radius = ammoInfo.Const.CollisionSize > ammoInfo.Const.LargestHitSize ? (float)ammoInfo.Const.CollisionSize : (float)ammoInfo.Const.LargestHitSize;
                         if (radius < 3)

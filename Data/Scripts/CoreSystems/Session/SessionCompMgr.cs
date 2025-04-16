@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
+﻿using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -10,7 +8,6 @@ using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {

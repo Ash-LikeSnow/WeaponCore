@@ -9,8 +9,6 @@ using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {

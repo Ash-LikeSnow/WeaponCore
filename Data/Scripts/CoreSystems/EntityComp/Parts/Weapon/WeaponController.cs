@@ -1,11 +1,9 @@
 ﻿using System;
 using CoreSystems.Support;
-using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.CoreComponent;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -257,79 +255,75 @@ namespace CoreSystems.Platform
 
         internal void UpdateWeaponHeat(object o = null)
         {
-            try
+            if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
             {
-                if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
-                {
-                    var hsRateMod = HsRate + (float)Comp.HeatLoss;
-                    Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
-                    PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
-                    Comp.HeatLoss = 0;
-                }
-
-                var set = PartState.Heat - LastHeat > 0.001 || PartState.Heat - LastHeat < 0.001;
-
-                LastHeatUpdateTick = Session.I.Tick;
-
-                if (!Session.I.DedicatedServer)
-                {
-                    var heatOffset = HeatPerc = PartState.Heat / System.MaxHeat;
-
-                    if (set && heatOffset > .33)
-                    {
-                        if (heatOffset > 1) heatOffset = 1;
-
-                        heatOffset -= .33f;
-
-                        var intensity = .7f * heatOffset;
-
-                        var color = Session.I.HeatEmissives[(int)(heatOffset * 100)];
-
-                        for(int i = 0; i < HeatingParts.Count; i++)
-                            HeatingParts[i]?.SetEmissiveParts("Heating", color, intensity);
-                    }
-                    else if (set)
-                        for(int i = 0; i < HeatingParts.Count; i++)
-                            HeatingParts[i]?.SetEmissiveParts("Heating", Color.Transparent, 0);
-
-                    LastHeat = PartState.Heat;
-                }
-
-                if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * .8))
-                {
-                    CurrentlyDegrading = true;
-                    UpdateRof();
-                }
-                else if (set && CurrentlyDegrading)
-                {
-                    if (PartState.Heat <= (System.MaxHeat * .4)) 
-                        CurrentlyDegrading = false;
-
-                    UpdateRof();
-                }
-
-                if (PartState.Overheated && PartState.Heat <= (System.MaxHeat * System.WepCoolDown))
-                {
-                    EventTriggerStateChanged(EventTriggers.Overheated, false);
-                    if (Session.I.IsServer)
-                    {
-                        PartState.Overheated = false;
-                        OverHeatCountDown = 0;
-                        if (Session.I.MpActive)
-                            Session.I.SendState(Comp);
-                    }
-
-                }
-
-                if (PartState.Heat > 0)
-                    Session.I.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
-                else
-                {
-                    HeatLoopRunning = false;
-                    LastHeatUpdateTick = 0;
-                }
+                var hsRateMod = HsRate + (float)Comp.HeatLoss;
+                Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
+                PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
+                Comp.HeatLoss = 0;
             }
-            catch (Exception ex) { Log.Line($"Exception in UpdateWeaponHeat: {ex} - {System == null}- BaseComp:{Comp == null} - ProtoRepo:{Comp?.Data.Repo == null}  - Weapons:{Comp.Data.Repo?.Values.State.Weapons[PartId] == null}", null, true); }
+
+            var set = PartState.Heat - LastHeat > 0.001 || PartState.Heat - LastHeat < 0.001;
+
+            LastHeatUpdateTick = Session.I.Tick;
+
+            if (!Session.I.DedicatedServer)
+            {
+                var heatOffset = HeatPerc = PartState.Heat / System.MaxHeat;
+
+                if (set && heatOffset > .33)
+                {
+                    if (heatOffset > 1) heatOffset = 1;
+
+                    heatOffset -= .33f;
+
+                    var intensity = .7f * heatOffset;
+
+                    var color = Session.I.HeatEmissives[(int)(heatOffset * 100)];
+
+                    for(int i = 0; i < HeatingParts.Count; i++)
+                        HeatingParts[i]?.SetEmissiveParts("Heating", color, intensity);
+                }
+                else if (set)
+                    for(int i = 0; i < HeatingParts.Count; i++)
+                        HeatingParts[i]?.SetEmissiveParts("Heating", Color.Transparent, 0);
+
+                LastHeat = PartState.Heat;
+            }
+
+            if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * .8))
+            {
+                CurrentlyDegrading = true;
+                UpdateRof();
+            }
+            else if (set && CurrentlyDegrading)
+            {
+                if (PartState.Heat <= (System.MaxHeat * .4)) 
+                    CurrentlyDegrading = false;
+
+                UpdateRof();
+            }
+
+            if (PartState.Overheated && PartState.Heat <= (System.MaxHeat * System.WepCoolDown))
+            {
+                EventTriggerStateChanged(EventTriggers.Overheated, false);
+                if (Session.I.IsServer)
+                {
+                    PartState.Overheated = false;
+                    OverHeatCountDown = 0;
+                    if (Session.I.MpActive)
+                        Session.I.SendState(Comp);
+                }
+
+            }
+
+            if (PartState.Heat > 0)
+                Session.I.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
+            else
+            {
+                HeatLoopRunning = false;
+                LastHeatUpdateTick = 0;
+            }
         }
 
         internal void UpdateRof()

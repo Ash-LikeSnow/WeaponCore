@@ -1,5 +1,4 @@
-﻿using System;
-using VRage.Game.Components;
+﻿using VRage.Game.Components;
 
 namespace CoreSystems.Support
 {

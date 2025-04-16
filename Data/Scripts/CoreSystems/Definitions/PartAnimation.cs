@@ -61,7 +61,6 @@ namespace CoreSystems.Support {
         internal bool Running;
         internal bool Triggered;
         internal bool CanPlay;
-        //internal bool Paused;
         internal uint StartTick;
         internal List<uint> PlayTicks;
 

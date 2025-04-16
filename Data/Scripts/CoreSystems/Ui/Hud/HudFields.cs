@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using CoreSystems;
 using CoreSystems.Platform;
 using VRage.Collections;
 using VRage.Utils;

@@ -1,16 +1,9 @@
 ﻿using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EjectionDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EjectionDef.SpawnType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.ShapeDef.Shapes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.CustomScalesDef.SkipMode;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.DecalDef;
-
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.PatternDef.PatternModes;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef.PointTypes;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.ShieldDef.ShieldType;
@@ -18,12 +11,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.DeformD
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef.Falloff;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef.AoeShape;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarMode;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.PushPullDef.Force;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef.TracerBaseDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef.Texture;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.DamageTypes.Damage;
 namespace Scripts

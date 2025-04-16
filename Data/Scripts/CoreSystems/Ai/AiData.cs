@@ -5,8 +5,6 @@ using Sandbox.ModAPI;
 
 namespace CoreSystems
 {
-    using static Session;
-
     public class AiData
     {
         public Ai Ai;
