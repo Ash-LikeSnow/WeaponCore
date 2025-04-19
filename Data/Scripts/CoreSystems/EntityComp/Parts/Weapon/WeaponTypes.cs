@@ -1,10 +1,8 @@
 ﻿using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using System;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Utils;
 using VRageMath;
 
 namespace CoreSystems.Platform

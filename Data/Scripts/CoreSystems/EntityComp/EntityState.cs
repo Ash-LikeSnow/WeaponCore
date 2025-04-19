@@ -1,5 +1,4 @@
-﻿using System;
-using CoreSystems.Platform;
+﻿using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
