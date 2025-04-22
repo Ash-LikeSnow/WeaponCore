@@ -919,7 +919,7 @@ namespace Scripts
             Trajectory = new TrajectoryDef
             {
                 MaxLifeTime = 300, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
-                DesiredSpeed = 1000, //TEMP was 1000// voxel phasing if you go above 5100
+                DesiredSpeed = 1000, // voxel phasing if you go above 5100
                 MaxTrajectory = 1400f, // Max Distance the projectile or beam can Travel.
             },
             AmmoGraphics = new GraphicDef
