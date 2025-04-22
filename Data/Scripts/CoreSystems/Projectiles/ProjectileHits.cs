@@ -731,7 +731,33 @@ namespace CoreSystems.Projectiles
                         Session.I.TargetUi.SetHit(info);
                 }
 
+                if (info.HitList.Count > 1 && info.BlockList.Count > 1)
+                {
+                    //Sort list of blocks hit by dist in KVP
+                    info.BlockList.SortNoAlloc((b, a) => b.Value.CompareTo(a.Value));
+                    /*
+                    //Determine order of grids hit, incl repeats
+                    var gridList = new List<IMyCubeGrid>();
+                    for (int i = 0; i < info.BlockList.Count; i++)
+                    {
+                        if (i == 0)
+                        {
+                            gridList.Add(info.BlockList[i].Key.CubeGrid);
+                            continue;
+                        }
+                        if (info.BlockList[i - 1].Key.CubeGrid != info.BlockList[i].Key.CubeGrid)
+                            gridList.Add(info.BlockList[i].Key.CubeGrid);
+                    }
 
+                    //Logging readout only
+                    Log.Line("Grids hit:");
+                    for (int i = 0; i < gridList.Count; i++)
+                        Log.Line($"{gridList[i].DisplayName}");
+                    Log.Line("Blocks hit:");
+                    for (int i = 0; i < info.BlockList.Count; i++)
+                        Log.Line($"Blk: {info.BlockList[i].Key.BlockDefinition.DisplayNameText} {info.BlockList[i].Value} {info.BlockList[i].Key.CubeGrid.DisplayName}");
+                    */
+                }
                 return true;
             }
 
@@ -830,6 +856,11 @@ namespace CoreSystems.Projectiles
                                 {
                                     lastBlockHit = firstBlock;
                                     hitEnt.Blocks.Add(new HitEntity.RootBlocks {Block = firstBlock, QueryPos = posI});
+                                    //
+                                    var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
+                                    info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
+
+
                                     if (closestBlockFound) continue;
                                     MyOrientedBoundingBoxD obb;
                                     var fat = firstBlock.FatBlock;

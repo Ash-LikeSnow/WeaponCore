@@ -18,6 +18,7 @@ namespace CoreSystems.Support
         internal readonly Target Target = new Target();
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>();
+        internal readonly List<KeyValuePair<IMySlimBlock, double>> BlockList = new List<KeyValuePair<IMySlimBlock, double>>();
         internal readonly ProHit ProHit = new ProHit();
         internal List<MyTuple<Vector3D, object, float>> ProHits;
         internal int[] PatternShuffle;
@@ -113,8 +114,9 @@ namespace CoreSystems.Support
 
             Target.Reset(Session.I.Tick, Target.States.ProjectileClean);
             HitList.Clear();
-            
-            if(aConst.IsGuided)
+            BlockList.Clear();
+
+            if (aConst.IsGuided)
                 Storage.Clean(this);
 
 
