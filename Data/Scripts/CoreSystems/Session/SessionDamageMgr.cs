@@ -41,16 +41,6 @@ namespace CoreSystems
                 var noDamageProjectile = ammoDef.BaseDamage <= 0;
                 var lastIndex = info.HitList.Count - 1;
 
-                //
-                if (info.HitList.Count > 1 && info.BlockList.Count > 1)
-                    info.BlockList.SortNoAlloc((b, a) => b.Value.CompareTo(a.Value));
-                Log.Line("Blocks hit:");
-                for (int i = 0; i < info.BlockList.Count; i++)
-                    Log.Line($"Blk: {info.BlockList[i].Key.BlockDefinition.DisplayNameText} {info.BlockList[i].Value} {info.BlockList[i].Key.CubeGrid.DisplayName}");
-                //TODO- stop repeats by flushing BlockList after first grid proc or remove other grid hitEnts
-                //
-
-
                 if (!info.DoDamage && IsServer)
                     info.BaseDamagePool = 0;
 
@@ -368,7 +358,7 @@ namespace CoreSystems
                 return;
             }
 
-            if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal || (!t.AmmoDef.Const.SelfDamage && !t.AmmoDef.Const.IsCriticalReaction && !t.Storage.SmartReady) && t.Ai.AiType == Ai.AiTypes.Grid && t.Ai.GridEntity.IsInSameLogicalGroupAs(hitEnt.Blocks[0].Block.CubeGrid) )
+            if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal || (!t.AmmoDef.Const.SelfDamage && !t.AmmoDef.Const.IsCriticalReaction && !t.Storage.SmartReady) && t.Ai.AiType == Ai.AiTypes.Grid && t.Ai.GridEntity.IsInSameLogicalGroupAs(hitEnt.Blocks[0].Block.CubeGrid))
             {
                 t.BaseDamagePool = 0;
                 return;
@@ -431,6 +421,7 @@ namespace CoreSystems
                     basePool = 0;
 
                 //var rootInfo = hitEnt.Blocks[i];
+                //rootBlock = rootInfo.Block;
                 rootBlock = t.BlockList[i].Key;
 
                 //Grid specific
@@ -760,7 +751,7 @@ namespace CoreSystems
                             }
                         }
 
-                        Log.Line($"Damaged {block.BlockDefinition.DisplayNameText} on {block.CubeGrid.DisplayName}");
+                        //Log.Line($"Damaged {block.BlockDefinition.DisplayNameText} on {block.CubeGrid.DisplayName}");
 
                         //Apply damage
                         if (t.DoDamage)
@@ -1447,26 +1438,6 @@ namespace CoreSystems
                     var hit = (MyEntity)hitInfo.HitEntity;
                     var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
                     var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == block.CubeGrid;
-                    return rayHitTarget;
-                }
-            }
-            return false;
-        }
-
-        private bool RayAccuracyCheck(HitEntity hitEnt, IMyCharacter character)
-        {
-            var box = character.PositionComp.WorldAABB;
-            var ray = new RayD(ref hitEnt.Intersection.From, ref hitEnt.Intersection.Direction);
-            var rayHit = ray.Intersects(box);
-            if (rayHit != null)
-            {
-                var hitPos = hitEnt.Intersection.From + (hitEnt.Intersection.Direction * (rayHit.Value - 0.1f));
-                IHitInfo hitInfo;
-                if (Physics.CastRay(hitPos, hitEnt.Intersection.To, out hitInfo, 15))
-                {
-                    var hit = (MyEntity)hitInfo.HitEntity;
-                    var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
-                    var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == character;
                     return rayHitTarget;
                 }
             }
