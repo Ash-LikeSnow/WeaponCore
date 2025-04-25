@@ -433,7 +433,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFocusTargets"));
             action.Action = CustomActions.TerminalActionToggleFocusTargets;
             action.Writer = CustomActions.FocusTargetsWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.HasTrackingExceptCommSlave;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

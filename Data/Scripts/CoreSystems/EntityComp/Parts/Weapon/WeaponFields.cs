@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
-using Sandbox.Definitions;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Lights;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using VRageRender.Lights;
 using static CoreSystems.Session;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
