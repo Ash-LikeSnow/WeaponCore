@@ -308,6 +308,11 @@ namespace CoreSystems.Projectiles
                     var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.Hit.Extras.HitPlayChance;
                     Info.AvShot.HitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
                 }
+                if (aConst.ShieldHitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
+                {
+                    var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.ShieldHit.Extras.HitPlayChance;
+                    Info.AvShot.ShieldHitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
+                }
 
                 if (aConst.PrimeModel || aConst.TriggerModel)
                 {
