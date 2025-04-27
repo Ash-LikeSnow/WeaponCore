@@ -239,6 +239,9 @@ namespace CoreSystems.Support
                         { "MoveShipAny", "Ships" },
                         { "WeaponTargTrue", "True" },
                         { "WeaponTargFalse", "False" },
+                        { "WeaponTargRange", "Not in range" },
+                        { "WeaponTargNeedSelection", "Manually select target" },
+                        { "WeaponTargTooClose", "Too close" },
                     }
                 },
                {

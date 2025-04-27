@@ -460,15 +460,7 @@ namespace CoreSystems.Platform
             return predictedPos + _cachedPredictedOffset;
         }
 
-        internal enum FriendlyNames
-        {
-            Normal,
-            NoAmmo,
-            NoSubSystems,
-            NoTarget,
-        }
-
-        internal string UpdateAndGetFriendlyName(FriendlyNames type)
+        internal void UpdateAndGetFriendlyName()
         {
 
             string weaponName;
@@ -481,28 +473,12 @@ namespace CoreSystems.Platform
                 update = !weaponName.Equals(FriendlyName);
             }
             else
-            {
                 weaponName = System.ShortName;
-            }
 
             if (update)
             {
-                FriendlyName = weaponName;
-                FriendlyNameNoTarget = weaponName + Hud.NoTargetStr;
-                FriendlyNameNoAmmo = weaponName + Hud.NoAmmoStr;
-                FriendlyNameNoSubsystem = weaponName + Hud.NoSubSystemStr;
-            }
-
-            switch (type)
-            {
-                case FriendlyNames.NoAmmo:
-                    return FriendlyNameNoAmmo;
-                case FriendlyNames.NoTarget:
-                    return FriendlyNameNoTarget;
-                case FriendlyNames.NoSubSystems:
-                    return FriendlyNameNoSubsystem;
-                default:
-                    return FriendlyName;
+                var nameLen = weaponName.Length;
+                FriendlyName = nameLen > 30 ? weaponName.Remove(30, nameLen - 30) : weaponName;
             }
         }
     }

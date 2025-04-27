@@ -139,7 +139,7 @@ namespace CoreSystems.Platform
                     Comp.AmmoStorage(true);
 
                 //Interior turret shenanigans
-                if (Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName == "LargeInteriorTurret")
+                if (Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName.Contains("LargeInteriorTurret"))
                 {
                     var wep = collection[0];
                     foreach (var item in wep.BaseComp.CoreInventory.GetItems())

@@ -12,7 +12,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
     {
         private const float MetersInPixel = 0.0002645833f;
         private const float PaddingConst = 10 * MetersInPixel;
-        private const float WeaponHudFontSize = 8f;
+        private const float WeaponHudFontSize = 7f;
         private const float WeaponHudFontHeight = WeaponHudFontSize * MetersInPixel;
         private const float ReloadHeightConst = 4f * MetersInPixel;
         private const float ReloadWidthConst = ReloadHeightConst;

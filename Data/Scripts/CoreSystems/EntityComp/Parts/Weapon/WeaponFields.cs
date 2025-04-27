@@ -114,9 +114,6 @@ namespace CoreSystems.Platform
         internal Matrix[] BarrelRotationPerShot = new Matrix[10];
 
         internal string FriendlyName = string.Empty;
-        internal string FriendlyNameNoAmmo = string.Empty;
-        internal string FriendlyNameNoTarget = string.Empty;
-        internal string FriendlyNameNoSubsystem = string.Empty;
 
         internal string AmmoName = "";
         internal string AmmoNameTerminal = "";
