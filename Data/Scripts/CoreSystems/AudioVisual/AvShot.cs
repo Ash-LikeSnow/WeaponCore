@@ -58,6 +58,7 @@ namespace CoreSystems.Support
         internal bool LastHitShield;
         internal bool ForceHitParticle;
         internal bool HitParticleActive;
+        internal bool ShieldHitParticleActive;
         internal bool MarkForClose;
         internal bool ProEnded;
         internal bool AccelClearance;
@@ -127,6 +128,7 @@ namespace CoreSystems.Support
         {
             None,
             Custom,
+            Shield,
             Dirty,
         }
 
@@ -963,8 +965,10 @@ namespace CoreSystems.Support
                 }
 
                 if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
-                    if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
-                            HitParticle = ParticleState.Custom;
+                    if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle)
+                        HitParticle = ParticleState.Shield;
+                    else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
+                        HitParticle = ParticleState.Custom;
                 }
 
 

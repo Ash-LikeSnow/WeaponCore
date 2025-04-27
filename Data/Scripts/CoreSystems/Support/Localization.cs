@@ -204,7 +204,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoWaitingCharge", "Waiting on charge" },
                         { "WeaponInfoLoadedIn", "Loaded in" },
                         { "WeaponInfoLoaded", "Loaded" },
-                        { "WeaponInfoNoammo", "No Ammo" },
+                        { "WeaponInfoNoammo", "No ammo available" },
                         { "WeaponInfoNoTarget", "No Target" },
                         { "WeaponInfoHeatPerSecOverMax", "Heat per Sec/Max" },
                         { "SubtypeAny", "Any" },
@@ -242,6 +242,7 @@ namespace CoreSystems.Support
                         { "WeaponTargRange", "Not in range" },
                         { "WeaponTargNeedSelection", "Manually select target" },
                         { "WeaponTargTooClose", "Too close" },
+                        { "WeaponInfoCheckAmmoType", "No selected ammo, alternatives in inventory" },
                     }
                 },
                {

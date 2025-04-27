@@ -77,6 +77,7 @@ namespace CoreSystems.Support
         public readonly Vector4 LinearTrailColor;
         public readonly string ModelPath;
         public readonly string HitParticleStr;
+        public readonly string ShieldHitParticleStr;
         public readonly string DetParticleStr;
         public readonly string DetSoundStr;
         public readonly string ShotSoundStr;
@@ -136,6 +137,7 @@ namespace CoreSystems.Support
         public readonly bool IsField;
         public readonly bool AmmoParticle;
         public readonly bool HitParticle;
+        public readonly bool ShieldHitParticle;
         public readonly bool CustomDetParticle;
         public readonly bool FieldParticle;
         public readonly bool AmmoSkipAccel;
@@ -416,6 +418,9 @@ namespace CoreSystems.Support
             AmmoParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Ammo.Name);
             HitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
             HitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name;
+            ShieldHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
+            ShieldHitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Name;
+
             EndOfLifeAv = !ammo.AmmoDef.AreaOfDamage.EndOfLife.NoVisuals && ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable;
             OverrideWeaponEffect = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.WeaponEffect1Override.Name);
 

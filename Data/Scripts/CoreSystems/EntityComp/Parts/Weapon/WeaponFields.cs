@@ -266,6 +266,7 @@ namespace CoreSystems.Platform
                 if (c.MustCharge) CanUseChargeAmmo = true;
                 if (c.IsBeamWeapon) CanUseBeams = true;
                 if (c.HitParticle) hitParticle = true;
+                if (c.ShieldHitParticle) hitParticle = true;
             }
 
             comp.HasEnergyWeapon = comp.HasEnergyWeapon || CanUseEnergyAmmo || CanUseHybridAmmo;
