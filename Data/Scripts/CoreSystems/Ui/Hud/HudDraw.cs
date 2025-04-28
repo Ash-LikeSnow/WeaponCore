@@ -230,6 +230,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         public const string NotInRangeStr =     ": Too Far";
         public const string InsideMinRangeStr = ": Too Close";
         public const string NoTargetSetStr =    ": Pick Targ";
+        public const string FakeOnTarg =        ": Aligned";
+        public const string FakeCannotHit =     ": Cannot hit";
 
         private void WeaponsToAdd(bool reset, Vector2D currWeaponDisplayPos, double bgStartPosX)
         {
@@ -255,18 +257,26 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 {
                     if (weapon.OutOfAmmo && !showReloadIcon)
                         displayText += NoAmmoStr;
-                    else if (weapon.Target.CurrentState == Target.States.NotSet)
+                    else if (comp.MasterOverrides.Control != ProtoWeaponOverrides.ControlModes.Manual && (weapon.Target.CurrentState == Target.States.NotSet || weapon.Target.CurrentState == Target.States.Expired))
                         displayText += NoTargetSetStr;
                     else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
                         displayText += NoSubSystemStr;
                     else if (weapon.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < weapon.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < weapon.MinTargetDistanceSqr))
                         displayText += InsideMinRangeStr;
-                    else
+                    else if (comp.MasterOverrides.Control != ProtoWeaponOverrides.ControlModes.Manual)
                         displayText += NotInRangeStr;
                 }
-                else if (weapon.Comp.HasTurret && !weapon.Target.IsAligned)
+                else if (weapon.Comp.HasTurret && !weapon.Target.IsAligned && weapon.Target.ValidEstimate)
                         displayText += RotatingStr;
-                var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
+                else if (weapon.Comp.HasTurret && weapon.Target.CurrentState == Target.States.Fake)
+                {
+                    if (weapon.Target.IsAligned)
+                        displayText += FakeOnTarg;
+                    else if (!weapon.Target.ValidEstimate)
+                        displayText += FakeCannotHit;
+                }
+
+                    var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;
                 
                 var textInfo = _textDrawPool.Count > 0 ? _textDrawPool.Dequeue() :  new TextDrawRequest();

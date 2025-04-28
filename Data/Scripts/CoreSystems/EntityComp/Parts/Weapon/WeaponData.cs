@@ -139,18 +139,19 @@ namespace CoreSystems.Platform
                     Comp.AmmoStorage(true);
 
                 //Interior turret shenanigans
-                if (Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName.Contains("LargeInteriorTurret"))
+                if (Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName == "LargeInteriorTurret") //"NPCLargeInteriorTurret"
                 {
                     var wep = collection[0];
-                    foreach (var item in wep.BaseComp.CoreInventory.GetItems())
-                    {
-                        if (wep.System.AmmoTypes[wep.Reload.AmmoTypeId].AmmoDef.AmmoMagazine == item.Content.SubtypeName)
-                            break;
-                        else if (item.Content.SubtypeName == "NATO_5p56x45mm")
-                            wep.ProposedAmmoId = 1;
-                        else if (item.Content.SubtypeName == "RapidFireAutomaticRifleGun_Mag_50rd")
-                            wep.ProposedAmmoId = 0;
-                    }
+                    if (wep.System.AmmoTypes.Length == 2)
+                        foreach (var item in wep.BaseComp.CoreInventory.GetItems())
+                        {
+                            if (wep.System.AmmoTypes[wep.Reload.AmmoTypeId].AmmoDef.AmmoMagazine == item.Content.SubtypeName)
+                                break;
+                            else if (item.Content.SubtypeName == "NATO_5p56x45mm")
+                                wep.ProposedAmmoId = 1;
+                            else if (item.Content.SubtypeName == "RapidFireAutomaticRifleGun_Mag_50rd")
+                                wep.ProposedAmmoId = 0;
+                        }
                 }
             }
 

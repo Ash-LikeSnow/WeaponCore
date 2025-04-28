@@ -159,6 +159,7 @@ namespace CoreSystems.Platform
                     canTrack = IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
             }
             willHit = canTrack;
+            weapon.Target.ValidEstimate = willHit;
         }
 
         internal static bool CanShootTargetObb(Weapon weapon, MyEntity entity, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos)
@@ -356,6 +357,7 @@ namespace CoreSystems.Platform
                 if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
 
                 targetPos = TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, w.MyPivotPos,  out validEstimate, false, baseData.Set.Overrides.AngularTracking);
+                w.Target.ValidEstimate = validEstimate;
             }
             else
                 targetPos = targetCenter;
