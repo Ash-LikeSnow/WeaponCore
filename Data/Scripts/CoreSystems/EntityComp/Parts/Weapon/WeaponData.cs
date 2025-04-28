@@ -137,9 +137,7 @@ namespace CoreSystems.Platform
                 ProtoRepoBase = Repo;
                 if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
                     Comp.AmmoStorage(true);
-
-                //Interior turret shenanigans
-                if (Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName == "LargeInteriorTurret") //"NPCLargeInteriorTurret"
+                else if (Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom && Comp.Cube != null && Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName == "LargeInteriorTurret") //"NPCLargeInteriorTurret"
                 {
                     var wep = collection[0];
                     if (wep.System.AmmoTypes.Length == 2)
