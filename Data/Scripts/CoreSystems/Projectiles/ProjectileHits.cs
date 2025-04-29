@@ -831,6 +831,19 @@ namespace CoreSystems.Projectiles
                             if (hitEnt.SelfHit && (Vector3D.DistanceSquared(hitPos, hitEnt.Info.Origin) <= grid.GridSize * grid.GridSize) && hitEnt.EventType != Field) 
                                 continue;
 
+                            IMySlimBlock lastBlockHit = null;
+                            var ewarWeaponDamage = info.EwarActive && aConst.SelfDamage && hitEnt.EventType == Effect;
+                            for (int j = 0; j < hitEnt.Vector3ICache.Count; j++)
+                            {
+                                var posI = hitEnt.Vector3ICache[j];
+                                var firstBlock = grid.GetCubeBlock(posI) as IMySlimBlock;
+                                if (firstBlock != null && firstBlock != lastBlockHit && !firstBlock.IsDestroyed && (hitEnt.Info.Ai.AiType != Ai.AiTypes.Grid || firstBlock != hitEnt.Info.Weapon.Comp.Cube?.SlimBlock || ewarWeaponDamage && firstBlock == hitEnt.Info.Weapon.Comp.Cube?.SlimBlock))
+                                {
+                                    var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
+                                    info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
+                                }
+                            }
+
                             if (!ewarActive)
                                 GetAndSortBlocksInSphere(hitEnt.Info.AmmoDef, hitEnt.Info.Weapon.System, grid, hitEnt.PruneSphere, false, hitEnt.Blocks);
 
@@ -856,7 +869,6 @@ namespace CoreSystems.Projectiles
                                 {
                                     lastBlockHit = firstBlock;
                                     hitEnt.Blocks.Add(new HitEntity.RootBlocks {Block = firstBlock, QueryPos = posI});
-                                    //
                                     var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
                                     info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
 
@@ -1107,8 +1119,6 @@ namespace CoreSystems.Projectiles
             }
             else
             {
-                //usage:
-                //var dict = (Dictionary<Vector3I, IMySlimBlock>)GetHackDict((IMySlimBlock) null);
                 var tmpList = Session.I.SlimPool.Get();
                 Session.GetBlocksInsideSphereFast(grid, ref sphere, true, tmpList);
 
@@ -1128,7 +1138,5 @@ namespace CoreSystems.Projectiles
                 return Vector3D.DistanceSquared(aPos, hitPos).CompareTo(Vector3D.DistanceSquared(bPos, hitPos));
             });
         }
-        public static object GetHackDict<TVal>(TVal valueType) => new Dictionary<Vector3I, TVal>();
-
     }
 }
