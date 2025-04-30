@@ -418,7 +418,7 @@ namespace CoreSystems.Support
             AmmoParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Ammo.Name);
             HitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
             HitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name;
-            ShieldHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
+            ShieldHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Name);
             ShieldHitParticleStr = ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Name;
 
             EndOfLifeAv = !ammo.AmmoDef.AreaOfDamage.EndOfLife.NoVisuals && ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable;

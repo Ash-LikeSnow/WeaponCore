@@ -144,9 +144,15 @@ namespace CoreSystems.Support
                         {
                             var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
                             var particle = av.HitParticle == AvShot.ParticleState.Shield ? av.AmmoDef.AmmoGraphics.Particles.ShieldHit : av.AmmoDef.AmmoGraphics.Particles.Hit;
-                            var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
                             MatrixD matrix = MatrixD.CreateTranslation(pos);
-                            if (keenStrikesAgain)
+                            if (av.HitParticle == AvShot.ParticleState.Shield)
+                            {
+                                var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
+                                var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
+                                lineToShield.Normalize();
+                                matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));                               
+                            }
+                            else if (particle.Offset == Vector3D.MaxValue)
                             {
                                 matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
                             }

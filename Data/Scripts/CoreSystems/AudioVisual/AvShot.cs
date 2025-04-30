@@ -399,19 +399,23 @@ namespace CoreSystems.Support
                 {
                     if (a.Tracer == TracerState.Shrink && !a.ShrinkInited)
                         a.Shrink();
-                    else if (aConst.IsBeamWeapon && aConst.HitParticle && !(a.MuzzleId != 0 && (aConst.ConvergeBeams || aConst.OneHitParticle)))
+                    else if (aConst.IsBeamWeapon && !(a.MuzzleId != 0 && (aConst.ConvergeBeams || aConst.OneHitParticle)))
                     {
-                        MyParticleEffect effect;
-                        if (a.Hitting)
+                        var shieldHit = a.Hit.EventType == HitEntity.Type.Shield && aConst.ShieldHitParticle;
+                        if (shieldHit && a.ShieldHitParticleActive || (!shieldHit && aConst.HitParticle && a.HitParticleActive))
                         {
-                            ContainmentType containment;
-                            s.CameraFrustrum.Contains(ref a.Hit.SurfaceHit, out containment);
-                            if (containment != ContainmentType.Disjoint) a.RunBeam();
-                        }
-                        else if (s.Av.BeamEffects.TryGetValue(a.UniqueMuzzleId, out effect))
-                        {
-                            effect.Stop();
-                            s.Av.BeamEffects.Remove(a.UniqueMuzzleId);
+                            MyParticleEffect effect;
+                            if (a.Hitting)
+                            {
+                                ContainmentType containment;
+                                s.CameraFrustrum.Contains(ref a.Hit.SurfaceHit, out containment);
+                                if (containment != ContainmentType.Disjoint) a.RunBeam(shieldHit && a.ShieldHitParticleActive);
+                            }
+                            else if (s.Av.BeamEffects.TryGetValue(a.UniqueMuzzleId, out effect))
+                            {
+                                effect.Stop();
+                                s.Av.BeamEffects.Remove(a.UniqueMuzzleId);
+                            }
                         }
                     }
 
@@ -1191,22 +1195,22 @@ namespace CoreSystems.Support
         }
 
 
-        internal void RunBeam()
-        {
+        internal void RunBeam(bool shieldHit)
+        {           
+            var p = AmmoDef.AmmoGraphics.Particles;
             MyParticleEffect effect;
             MatrixD matrix;
             var vel = HitVelocity;
             if (!Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
 
                 MatrixD.CreateTranslation(ref TracerFront, out matrix);
-                if (!MyParticlesManager.TryCreateParticleEffect(AmmoDef.AmmoGraphics.Particles.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) {
+                if (!MyParticlesManager.TryCreateParticleEffect(shieldHit ? p.ShieldHit.Name : p.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) 
                     return;
-                }
 
                 if (effect.Loop || effect.DurationMax <= 0)
                     Session.Av.BeamEffects[UniqueMuzzleId] = effect;
 
-                effect.UserScale = AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
+                effect.UserScale = shieldHit ? p.ShieldHit.Extras.Scale : p.Hit.Extras.Scale;
 
                 Vector3D.ClampToSphere(ref vel, (float)MaxSpeed);
             }
