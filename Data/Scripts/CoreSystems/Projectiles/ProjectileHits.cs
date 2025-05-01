@@ -161,7 +161,7 @@ namespace CoreSystems.Projectiles
                             var shrapnelSpawn = p.Info.IsFragment && p.Info.PrevRelativeAge <= -1;
                             if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                             {
-
+                                Vector3D angle;
                                 var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                 if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(((Projectile)target.TargetObject).Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                     projetileInShield = true;
@@ -175,9 +175,9 @@ namespace CoreSystems.Projectiles
 
                                     hitEntity.EventType = Shield;
                                     var hitPos = beamFrom + (direction * dist.Value);
-                                    hitEntity.HitPos = beamFrom + (direction * dist.Value);
+                                    hitEntity.HitPos = hitPos;
                                     hitEntity.HitDist = dist;
-
+                                    hitEntity.ShieldHitAngle = MathFuncs.ShieldHitAngle(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                     var weakendShield = shieldInfo.Value.Item4.Item2 || shieldInfo.Value.Item4.Item3 < shieldInfo.Value.Item4.Item4;
 
                                     if (weakendShield || shieldInfo.Value.Item2.Item2)
@@ -719,9 +719,9 @@ namespace CoreSystems.Projectiles
                         visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos ?? p.Beam.To;
                     }
                     else visualHitPos = hitEntity.HitPos ?? p.Beam.To;
-
                     if (p.EnableAv) {
                         info.AvShot.LastHitShield = hitEntity.EventType == Shield;
+                        info.AvShot.ShieldHitAngle = hitEntity.ShieldHitAngle;
                         info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos };
                     }
                     else if (aConst.VirtualBeams)

@@ -105,6 +105,7 @@ namespace CoreSystems.Support
         internal Vector3D ShootVelStep;
         internal Vector3D TracerFront;
         internal Vector3D TracerBack;
+        internal Vector3D ShieldHitAngle;
         internal Vector4 Color;
         internal Vector4 SegmentColor;
         internal Vector4 FgFactionColor;
@@ -387,7 +388,7 @@ namespace CoreSystems.Support
 
                 var lineOnScreen = a.OnScreen > (Screen)2;
 
-                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && aConst.HitParticleNoCull || aConst.FieldParticle && aConst.FieldParticleNoCull)) {
+                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && (a.Hit.EventType == HitEntity.Type.Shield && aConst.ShieldHitParticleNoCull) || aConst.HitParticleNoCull) || aConst.FieldParticle && aConst.FieldParticleNoCull) {
                     a.Active = true;
                     s.Av.AvShots.Add(a);
                 }
@@ -968,10 +969,10 @@ namespace CoreSystems.Support
                     HitParticleActive = true;
                 }
 
-                if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
-                    if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle)
+                if (OnScreen == Screen.Tracer) {
+                    if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle && (AmmoDef.Const.ShieldHitParticleNoCull || distToCameraSqr < 360000))
                         HitParticle = ParticleState.Shield;
-                    else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
+                    else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && (AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000))
                         HitParticle = ParticleState.Custom;
                 }
 
@@ -1202,8 +1203,10 @@ namespace CoreSystems.Support
             MatrixD matrix;
             var vel = HitVelocity;
             if (!Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
-
-                MatrixD.CreateTranslation(ref TracerFront, out matrix);
+                if (shieldHit)
+                    matrix = MatrixD.CreateWorld(TracerFront, ShieldHitAngle, Vector3D.CalculatePerpendicularVector(ShieldHitAngle));
+                else
+                    MatrixD.CreateTranslation(ref TracerFront, out matrix);
                 if (!MyParticlesManager.TryCreateParticleEffect(shieldHit ? p.ShieldHit.Name : p.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) 
                     return;
 
@@ -1489,6 +1492,7 @@ namespace CoreSystems.Support
                 Session.Av.OffSetLists.Push(Offsets);
             }
 
+            ShieldHitAngle = Vector3D.Zero;
             HitVelocity = Vector3D.Zero;
             TracerBack = Vector3D.Zero;
             TracerFront = Vector3D.Zero;

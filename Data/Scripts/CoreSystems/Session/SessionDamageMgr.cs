@@ -1163,18 +1163,12 @@ namespace CoreSystems
                     if (cut)
                     {
                         var radius = (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier);
-                        destObj.PerformCutOutSphereFast(hitInfo.Position, radius, true);
-                    }
-
-                    if (detonateOnEnd && info.BaseDamagePool <= 0 && cut)
-                    {
-                        var dRadius = info.AmmoDef.Const.EndOfLifeRadius;
-
-                        if (dRadius < 1.5) 
+                        var dRadius = detonateOnEnd ? info.AmmoDef.Const.EndOfLifeDepth < info.AmmoDef.Const.EndOfLifeRadius ? info.AmmoDef.Const.EndOfLifeDepth : info.AmmoDef.Const.EndOfLifeRadius : -1;
+                        if (dRadius != -1 && dRadius < 1.5)
                             dRadius = 1.5f;
-
-                        if (info.DoDamage)
-                            destObj.PerformCutOutSphereFast(hitInfo.Position, dRadius, true);
+                        if (detonateOnEnd && info.BaseDamagePool <= 0 && dRadius > radius)
+                            radius = dRadius;
+                        destObj.PerformCutOutSphereFast(hitInfo.Position, radius, true);
                     }
 
                     if (GlobalDamageHandlerActive)
@@ -1184,7 +1178,6 @@ namespace CoreSystems
                     }
                 }
             }
-
         }
 
         public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits,out int aoeHits) //added depth and angle

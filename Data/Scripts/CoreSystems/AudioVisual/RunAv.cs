@@ -147,15 +147,18 @@ namespace CoreSystems.Support
                             MatrixD matrix = MatrixD.CreateTranslation(pos);
                             if (av.HitParticle == AvShot.ParticleState.Shield)
                             {
-                                var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
-                                var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
-                                lineToShield.Normalize();
-                                matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));                               
+                                if(av.ShieldHitAngle == Vector3D.Zero)
+                                {
+                                    var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
+                                    var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
+                                    lineToShield.Normalize();
+                                    matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));
+                                }
+                                else
+                                    matrix = MatrixD.CreateWorld(pos, av.ShieldHitAngle, Vector3D.CalculatePerpendicularVector(av.ShieldHitAngle));
                             }
                             else if (particle.Offset == Vector3D.MaxValue)
-                            {
                                 matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
-                            }
                             else if (particle.Offset == Vector3D.MinValue)
                             {
                                 float interference;

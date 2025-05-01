@@ -163,6 +163,7 @@ namespace CoreSystems.Support
         public readonly bool AmmoParticleNoCull;
         public readonly bool FieldParticleNoCull;
         public readonly bool HitParticleNoCull;
+        public readonly bool ShieldHitParticleNoCull;
         public readonly bool DrawLine;
         public readonly bool Ewar;
         public readonly bool NonAntiSmartEwar;

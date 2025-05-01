@@ -438,6 +438,7 @@ namespace CoreSystems.Support
         public Type EventType;
         public int DamageMulti = 1;
         public Stack<HitEntity> Pool;
+        public Vector3D ShieldHitAngle;
         public void Clean()
         {
             Vector3ICache.Clear();
