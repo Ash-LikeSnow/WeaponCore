@@ -36,10 +36,9 @@ namespace CoreSystems.Support
         internal static Vector3D ShieldHitAngle(MatrixD ellipsoidMatrixInv, MatrixD ellipsoidMatrix, RayD ray)
         {
             var dirMat = MatrixD.CreateWorld(ray.Position, ray.Direction, Vector3D.CalculatePerpendicularVector(ray.Direction));
-
-            var ray1 = new RayD(ray.Position + dirMat.Up * 0.001 + dirMat.Right * 0.001, ray.Direction);
-            var ray2 = new RayD(ray.Position + dirMat.Down * 0.001 + dirMat.Right * 0.001, ray.Direction);
-            var ray3 = new RayD(ray.Position + dirMat.Left * 0.001414, ray.Direction);
+            var ray1 = new RayD(ray.Position + dirMat.Up * 0.01 + dirMat.Right * 0.01, ray.Direction);
+            var ray2 = new RayD(ray.Position + dirMat.Down * 0.01 + dirMat.Right * 0.01, ray.Direction);
+            var ray3 = new RayD(ray.Position + dirMat.Left * 0.01414, ray.Direction);
 
             var dist1 = IntersectEllipsoid(ellipsoidMatrixInv, ellipsoidMatrix, ray1);
             var dist2 = IntersectEllipsoid(ellipsoidMatrixInv, ellipsoidMatrix, ray2);
