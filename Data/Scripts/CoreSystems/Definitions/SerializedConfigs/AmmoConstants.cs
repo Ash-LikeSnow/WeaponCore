@@ -414,6 +414,7 @@ namespace CoreSystems.Support
 
             AmmoParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.Ammo.DisableCameraCulling;
             HitParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.Hit.DisableCameraCulling;
+            ShieldHitParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.DisableCameraCulling;
             FieldParticleNoCull = ammo.AmmoDef.Ewar.Field.Particle.DisableCameraCulling;
 
             AmmoParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Ammo.Name);
