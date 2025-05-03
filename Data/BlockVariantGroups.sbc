@@ -19,6 +19,8 @@
                 <Block Type="MyObjectBuilder_ConveyorSorter" Subtype="LargeRailgun" />
                 <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="LargeBlockLargeCalibreGun" />
                 <Block Type="MyObjectBuilder_SmallMissileLauncherReload" Subtype="SmallBlockMediumCalibreGun" />
+				<Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="LargeFlareLauncher" />
+                <Block Type="MyObjectBuilder_SmallMissileLauncher" Subtype="SmallFlareLauncher" />
             </Blocks>
         </BlockVariantGroup>
 
@@ -30,8 +32,12 @@
             <Blocks>
                 <Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="" />
                 <Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="SmallGatlingTurret" />
+				<Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="LargeGatlingTurretReskin" />
+                <Block Type="MyObjectBuilder_LargeGatlingTurret" Subtype="SmallGatlingTurretReskin" />
                 <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="" />
                 <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="SmallMissileTurret" />
+				<Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="LargeMissileTurretReskin" />
+                <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="SmallMissileTurretReskin" />
                 <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="LargeCalibreTurret" />
                 <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="LargeBlockMediumCalibreTurret" />
                 <Block Type="MyObjectBuilder_LargeMissileTurret" Subtype="SmallBlockMediumCalibreTurret" />
