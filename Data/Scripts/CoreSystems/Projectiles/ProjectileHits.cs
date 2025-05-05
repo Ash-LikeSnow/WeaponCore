@@ -161,7 +161,6 @@ namespace CoreSystems.Projectiles
                             var shrapnelSpawn = p.Info.IsFragment && p.Info.PrevRelativeAge <= -1;
                             if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                             {
-                                Vector3D angle;
                                 var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                 if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(((Projectile)target.TargetObject).Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                     projetileInShield = true;
@@ -214,7 +213,7 @@ namespace CoreSystems.Projectiles
                                             {
                                                 //if (((MyCubeGrid)shieldInfo.Value.Item1.CubeGrid).DebugName.Contains("test"))
                                                 //    Log.Line($"resist: RNG:{normalized} <= penChance:{threshold} - ammo:{info.AmmoDef.AmmoRound} - sPerc:{shieldInfo.Value.Item2.Item5} - heat:{shieldInfo.Value.Item2.Item6} - threshold:{shieldInfo.Value.Item2.Item5 / (1 + (shieldInfo.Value.Item2.Item6 * 0.01))}");
-                                                
+
                                                 p.Info.ShieldBypassMod = 1f;
                                             }
 
@@ -228,7 +227,8 @@ namespace CoreSystems.Projectiles
                                         info.ShieldBypassMod = aConst.ShieldDamageBypassMod;
                                     }
                                 }
-                                else continue;
+                                else
+                                    continue;
                             }
                         }
                         else
@@ -479,6 +479,10 @@ namespace CoreSystems.Projectiles
                     hitEntity.EventType = Destroyable;
                 }
 
+
+                if (info.ShieldBypassed && hitEntity.EventType != Shield)
+                    info.ShieldBypassedHitOther = true;
+
                 if (hitEntity != null)
                 {
                     var hitEnt = hitEntity.EventType != Shield ? ent : (MyEntity)shieldInfo.Value.Item1;
@@ -719,10 +723,11 @@ namespace CoreSystems.Projectiles
                         visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos ?? p.Beam.To;
                     }
                     else visualHitPos = hitEntity.HitPos ?? p.Beam.To;
-                    if (p.EnableAv) {
+                    if (p.EnableAv) 
+                    {
                         info.AvShot.LastHitShield = hitEntity.EventType == Shield;
                         info.AvShot.ShieldHitAngle = hitEntity.ShieldHitAngle;
-                        info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos };
+                        info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos};
                     }
                     else if (aConst.VirtualBeams)
                         AvShot.UpdateVirtualBeams(p, info, hitEntity, visualHitPos, lastHitVel, true);
@@ -930,6 +935,11 @@ namespace CoreSystems.Projectiles
 
                             hitEnt.Miss = !closestBlockFound;
                         }
+                    }
+
+                    if (hitEnt.HitPos != null && info.ShieldBypassedHitOther && info.AvShot.HitParticle == AvShot.ParticleState.Dirty)
+                    {
+                        info.AvShot.HitParticle = AvShot.ParticleState.Custom;
                     }
                 }
                 else if (voxel != null)

@@ -1319,11 +1319,10 @@ namespace CoreSystems.Support
                     {
                         
                         var particle = AmmoDef.AmmoGraphics.Particles.Hit;
-                        var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
                         MatrixD matrix = MatrixD.CreateTranslation(pos);
-                        if(keenStrikesAgain)
+                        if (particle.Offset == Vector3D.MaxValue)
                         {
-                            matrix = MatrixD.CreateWorld(pos, VisualDir, OriginUp);
+                            matrix = MatrixD.CreateWorld(pos, VisualDir, Vector3D.CalculatePerpendicularVector(VisualDir));
                         }
                         else if (particle.Offset == Vector3D.MinValue)
                         {

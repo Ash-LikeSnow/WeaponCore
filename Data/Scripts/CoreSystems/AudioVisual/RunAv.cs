@@ -158,7 +158,7 @@ namespace CoreSystems.Support
                                     matrix = MatrixD.CreateWorld(pos, av.ShieldHitAngle, Vector3D.CalculatePerpendicularVector(av.ShieldHitAngle));
                             }
                             else if (particle.Offset == Vector3D.MaxValue)
-                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, Vector3D.CalculatePerpendicularVector(av.VisualDir));
                             else if (particle.Offset == Vector3D.MinValue)
                             {
                                 float interference;
