@@ -936,10 +936,8 @@ namespace CoreSystems.Projectiles
                         }
                     }
 
-                    if (hitEnt.HitPos != null && info.ShieldBypassedHitOther && info.AvShot.HitParticle == AvShot.ParticleState.Dirty)
-                    {
+                    if (hitEnt.HitPos != null && info.ShieldBypassedHitOther && info.AvShot?.HitParticle == AvShot.ParticleState.Dirty)
                         info.AvShot.HitParticle = AvShot.ParticleState.Custom;
-                    }
                 }
                 else if (voxel != null)
                 {
