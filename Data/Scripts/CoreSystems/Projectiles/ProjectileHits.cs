@@ -479,12 +479,11 @@ namespace CoreSystems.Projectiles
                     hitEntity.EventType = Destroyable;
                 }
 
-
-                if (info.ShieldBypassed && hitEntity.EventType != Shield)
-                    info.ShieldBypassedHitOther = true;
-
                 if (hitEntity != null)
                 {
+                    if (info.ShieldBypassed && hitEntity.EventType != Shield)
+                        info.ShieldBypassedHitOther = true;
+
                     var hitEnt = hitEntity.EventType != Shield ? ent : (MyEntity)shieldInfo.Value.Item1;
                     if (hitEnt != null)
                     {
