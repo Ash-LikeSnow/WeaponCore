@@ -64,7 +64,7 @@ namespace CoreSystems.Platform
             var maxRangeSqr = fakeTargetInfo != null && topAi.Construct.RootAi != null ? topAi.Construct.RootAi.MaxTargetingRangeSqr : cValues.Set.Range * cValues.Set.Range;
 
             bool valid;
-            if (weapon.ActiveAmmoDef.AmmoDef.Const.IsSmart || weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon)
+            if (weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon)
             {
                 valid = true;
                 topAi.RotorTargetPosition = targetCenter;
