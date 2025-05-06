@@ -71,6 +71,7 @@ namespace CoreSystems.Support
         internal bool AimedShot;
         internal bool DoDamage;
         internal bool ShieldBypassed;
+        internal bool ShieldBypassedHitOther;
         internal bool ShieldKeepBypass;
         internal bool ShieldInLine;
         internal uint FirstWaterHitTick;
@@ -438,6 +439,7 @@ namespace CoreSystems.Support
         public Type EventType;
         public int DamageMulti = 1;
         public Stack<HitEntity> Pool;
+        public Vector3D ShieldHitAngle;
         public void Clean()
         {
             Vector3ICache.Clear();

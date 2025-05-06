@@ -190,6 +190,7 @@ namespace CoreSystems.Api
                 ["HasGridAi"] = new Func<long, bool>(PbHasGridAi),
                 ["HasCoreWeapon"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool>(PbHasCoreWeapon),
                 ["GetOptimalDps"] = new Func<long, float>(PbGetOptimalDps),
+                ["GetAmmoCount"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, int>(PbGetAmmoCount),
                 ["GetActiveAmmo"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string>(PbGetActiveAmmo),
                 ["SetActiveAmmo"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string>(PbSetActiveAmmo),
                 ["RegisterProjectileAdded"] = new Action<Action<Vector3, float>>(RegisterProjectileAddedCallback),
@@ -262,6 +263,15 @@ namespace CoreSystems.Api
         private void PbSetActiveAmmo(object arg1, int arg2, string arg3)
         {
             SetActiveAmmo((MyEntity) arg1, arg2, arg3);
+        }
+
+        private int PbGetAmmoCount(object arg1, int arg2)
+        {
+            var weaponBlock = (MyEntity)arg1;
+            var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > arg2)
+                return comp.Platform.Weapons[arg2].ProtoWeaponAmmo.CurrentAmmo;
+            return -1;
         }
 
         private string PbGetActiveAmmo(object arg1, int arg2)

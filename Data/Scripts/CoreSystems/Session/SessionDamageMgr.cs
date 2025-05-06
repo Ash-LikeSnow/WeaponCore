@@ -1126,55 +1126,49 @@ namespace CoreSystems
 
                     info.ObjectsHit++;
                     float damageScale = 1 * directDmgGlobal;
-                    if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
+                    if (info.AmmoDef.Const.VirtualBeams) 
+                        damageScale *= info.Weapon.WeaponCache.Hits;
 
                     var scaledDamage = info.BaseDamagePool * damageScale;
-
+                    
+                    //Falloff
                     var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
-                    var fallOff = info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance;
-
-                    if (fallOff)
-                    {
-                        var fallOffMultipler = (float)MathHelperD.Clamp(1.0 - ((distTraveled - info.AmmoDef.Const.FallOffDistance) / (info.AmmoDef.Const.MaxTrajectory - info.AmmoDef.Const.FallOffDistance)), info.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
-                        scaledDamage *= fallOffMultipler;
-                    }
+                    if (info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance)
+                        scaledDamage *= (float)MathHelperD.Clamp(1.0 - ((distTraveled - info.AmmoDef.Const.FallOffDistance) / (info.AmmoDef.Const.MaxTrajectory - info.AmmoDef.Const.FallOffDistance)), info.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
 
                     var oRadius = info.AmmoDef.Const.ByBlockHitRadius;
                     var minTestRadius = distTraveled - info.PrevDistanceTraveled;
                     var tRadius = oRadius < minTestRadius && !info.AmmoDef.Const.IsBeamWeapon ? minTestRadius : oRadius;
                     var objHp = (int)MathHelper.Clamp(MathFuncs.VolumeCube(MathFuncs.LargestCubeInSphere(tRadius)), 5000, double.MaxValue);
 
-                    if (tRadius > 5) objHp *= 5;
+                    if (tRadius > 5) 
+                        objHp *= 5;
 
                     if (scaledDamage < objHp)
                     {
                         var reduceBy = objHp / scaledDamage;
                         oRadius /= reduceBy;
-                        if (oRadius < 1) oRadius = 1;
-
+                        if (oRadius < 1) 
+                            oRadius = 1;
                         info.BaseDamagePool = 0;
                     }
                     else
                     {
                         info.BaseDamagePool -= objHp;
-                        if (oRadius < minTestRadius) oRadius = minTestRadius;
+                        if (oRadius < minTestRadius) 
+                            oRadius = minTestRadius;
                     }
 
                     var cut = aConst.FakeVoxelHitTicks == 0 || aConst.FakeVoxelHitTicks == Tick;
                     if (cut)
                     {
                         var radius = (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier);
+                        var dRadius = detonateOnEnd ? info.AmmoDef.Const.EndOfLifeDepth < info.AmmoDef.Const.EndOfLifeRadius ? info.AmmoDef.Const.EndOfLifeDepth : info.AmmoDef.Const.EndOfLifeRadius : -1;
+                        if (dRadius != -1 && dRadius < 1.5)
+                            dRadius = 1.5f;
+                        if (detonateOnEnd && info.BaseDamagePool <= 0 && dRadius > radius)
+                            radius = dRadius;
                         destObj.PerformCutOutSphereFast(hitInfo.Position, radius, true);
-                    }
-
-                    if (detonateOnEnd && info.BaseDamagePool <= 0 && cut)
-                    {
-                        var dRadius = info.AmmoDef.Const.EndOfLifeRadius;
-
-                        if (dRadius < 1.5) dRadius = 1.5f;
-
-                        if (info.DoDamage)
-                            destObj.PerformCutOutSphereFast(hitInfo.Position, dRadius, true);
                     }
 
                     if (GlobalDamageHandlerActive)
@@ -1184,7 +1178,6 @@ namespace CoreSystems
                     }
                 }
             }
-
         }
 
         public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits,out int aoeHits) //added depth and angle

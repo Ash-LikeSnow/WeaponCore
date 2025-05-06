@@ -138,19 +138,27 @@ namespace CoreSystems.Support
                         else av.TravelEmitter.SetPosition(av.TracerFront);
                     }
 
-                    if (av.HitParticle == AvShot.ParticleState.Custom)
+                    if (av.HitParticle == AvShot.ParticleState.Custom || av.HitParticle == AvShot.ParticleState.Shield)
                     {
-                        av.HitParticle = AvShot.ParticleState.Dirty;
                         if (av.OnScreen != AvShot.Screen.None)
                         {
                             var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
-                            var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
-                            var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
+                            var particle = av.HitParticle == AvShot.ParticleState.Shield ? av.AmmoDef.AmmoGraphics.Particles.ShieldHit : av.AmmoDef.AmmoGraphics.Particles.Hit;
                             MatrixD matrix = MatrixD.CreateTranslation(pos);
-                            if (keenStrikesAgain)
+                            if (av.HitParticle == AvShot.ParticleState.Shield)
                             {
-                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
+                                if(av.ShieldHitAngle == Vector3D.Zero)
+                                {
+                                    var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
+                                    var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
+                                    lineToShield.Normalize();
+                                    matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));
+                                }
+                                else
+                                    matrix = MatrixD.CreateWorld(pos, av.ShieldHitAngle, Vector3D.CalculatePerpendicularVector(av.ShieldHitAngle));
                             }
+                            else if (particle.Offset == Vector3D.MaxValue)
+                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, Vector3D.CalculatePerpendicularVector(av.VisualDir));
                             else if (particle.Offset == Vector3D.MinValue)
                             {
                                 float interference;
@@ -161,15 +169,16 @@ namespace CoreSystems.Support
                             }
 
                             MyParticleEffect hitEffect;
-                            if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
+                            if (MyParticlesManager.TryCreateParticleEffect(av.HitParticle == AvShot.ParticleState.Shield ? av.AmmoDef.Const.ShieldHitParticleStr : av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
                             {
-                                hitEffect.UserScale = av.AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
+                                hitEffect.UserScale = particle.Extras.Scale;
                                 var tickVelo = av.Hit.HitVelocity / 60;
                                 HitParticles.Add(new HitParticleEvent(hitEffect, tickVelo));
                                 if (hitEffect.Loop)
                                     hitEffect.Stop();
                             }
                         }
+                        av.HitParticle = AvShot.ParticleState.Dirty;
                     }
                     if (av.Hit.Entity != null && av.AmmoDef.AmmoGraphics.Decals.MaxAge > 0 && !Vector3D.IsZero(av.Hit.SurfaceHit) && av.AmmoDef.Const.TextureHitMap.Count > 0 && !av.Hit.Entity.MarkedForClose && av.Hit.Entity.InScene)
                     {

@@ -114,9 +114,6 @@ namespace CoreSystems.Platform
         internal Matrix[] BarrelRotationPerShot = new Matrix[10];
 
         internal string FriendlyName = string.Empty;
-        internal string FriendlyNameNoAmmo = string.Empty;
-        internal string FriendlyNameNoTarget = string.Empty;
-        internal string FriendlyNameNoSubsystem = string.Empty;
 
         internal string AmmoName = "";
         internal string AmmoNameTerminal = "";
@@ -269,6 +266,7 @@ namespace CoreSystems.Platform
                 if (c.MustCharge) CanUseChargeAmmo = true;
                 if (c.IsBeamWeapon) CanUseBeams = true;
                 if (c.HitParticle) hitParticle = true;
+                if (c.ShieldHitParticle) hitParticle = true;
             }
 
             comp.HasEnergyWeapon = comp.HasEnergyWeapon || CanUseEnergyAmmo || CanUseHybridAmmo;

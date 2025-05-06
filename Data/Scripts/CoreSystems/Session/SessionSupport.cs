@@ -825,52 +825,47 @@ namespace CoreSystems
             try
             {
                 var cube = o as MyCubeBlock;
-                if (cube != null)
+                if (cube != null && !cube.MarkedForClose && !cube.Closed && cube.SlimBlock != null && cube.BlockDefinition != null && cube.CubeGrid != null && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose)
                 {
-                    var processCube = !cube.MarkedForClose && !cube.Closed && cube.SlimBlock != null && cube.BlockDefinition != null && cube.CubeGrid != null && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose;
-                    if (processCube)
+                    if (BrokenMod(cube))
+                        return;
+
+                    if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
                     {
-                        if (BrokenMod(cube))
-                            return;
+                        _lastIncompatibleMessageTick = Tick;
+                        var skipMessage = IsClient && Settings.Enforcement.UnsupportedMode && Tick > 600;
+                        if (!skipMessage)
+                            FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
+                    }
 
-                        if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
+                    if (cube.BlockDefinition?.Id.SubtypeName != null)
+                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
+
+                    if (DedicatedServer)
+                    {
+                        if (!Settings.Enforcement.UnsupportedMode)
+                            cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
+                    }
+                    else if (!Settings.Enforcement.UnsupportedMode)
+                    {
+                        if (!_removeComplete)
+                            _unsupportedBlocks.Add(cube);
+
+                        if (_removeComplete || DedicatedServer)
+                            cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
+
+                        if (!_removeScheduled)
                         {
-                            _lastIncompatibleMessageTick = Tick;
-                            var skipMessage = IsClient && Settings.Enforcement.UnsupportedMode && Tick > 600;
-                            if (!skipMessage)
-                                FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
-                        }
-
-                        if (cube.BlockDefinition?.Id.SubtypeName != null)
-                            _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
-
-                        if (DedicatedServer)
-                        {
-                            if (!Settings.Enforcement.UnsupportedMode)
-                                cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-                        }
-                        else if (!Settings.Enforcement.UnsupportedMode)
-                        {
-                            if (!_removeComplete)
-                                _unsupportedBlocks.Add(cube);
-
-                            if (_removeComplete || DedicatedServer)
-                                cube.CubeGrid.RemoveBlock(cube.SlimBlock, true);
-
-                            if (!_removeScheduled)
-                            {
-                                _removeScheduled = true;
-                                FutureEvents.Schedule(RemoveIncompatibleBlocks, null, 3600);
-                            }
+                            _removeScheduled = true;
+                            FutureEvents.Schedule(RemoveIncompatibleBlocks, null, 3600);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                var errorMsg = $"WC exception in RemoveIncompatibleBlock. Obj null: {o == null} Settings null: {Settings?.Enforcement == null} Unsupported mode: {Settings?.Enforcement.UnsupportedMode} \n{ex}";
-                Log.Line(errorMsg);
-                MyLog.Default.WriteLineAndConsole(errorMsg);
+                var errorMsg = $"WC exception in RemoveIncompatibleBlock. Settings.Enforcement null: {Settings?.Enforcement == null} Unsupported mode: {Settings?.Enforcement?.UnsupportedMode} \n{ex}";
+                MyLog.Default.Error(errorMsg);
                 throw ex;
             }
         }

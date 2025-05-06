@@ -303,10 +303,15 @@ namespace CoreSystems.Projectiles
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
                 Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), MaxSpeed, ref Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
-                if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
+                if (aConst.HitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
                     var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.Hit.Extras.HitPlayChance;
                     Info.AvShot.HitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
+                }
+                if (aConst.ShieldHitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
+                {
+                    var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.ShieldHit.Extras.HitPlayChance;
+                    Info.AvShot.ShieldHitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
                 }
 
                 if (aConst.PrimeModel || aConst.TriggerModel)

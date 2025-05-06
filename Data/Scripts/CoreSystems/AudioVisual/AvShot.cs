@@ -58,6 +58,7 @@ namespace CoreSystems.Support
         internal bool LastHitShield;
         internal bool ForceHitParticle;
         internal bool HitParticleActive;
+        internal bool ShieldHitParticleActive;
         internal bool MarkForClose;
         internal bool ProEnded;
         internal bool AccelClearance;
@@ -104,6 +105,7 @@ namespace CoreSystems.Support
         internal Vector3D ShootVelStep;
         internal Vector3D TracerFront;
         internal Vector3D TracerBack;
+        internal Vector3D ShieldHitAngle;
         internal Vector4 Color;
         internal Vector4 SegmentColor;
         internal Vector4 FgFactionColor;
@@ -127,6 +129,7 @@ namespace CoreSystems.Support
         {
             None,
             Custom,
+            Shield,
             Dirty,
         }
 
@@ -385,7 +388,7 @@ namespace CoreSystems.Support
 
                 var lineOnScreen = a.OnScreen > (Screen)2;
 
-                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && aConst.HitParticleNoCull || aConst.FieldParticle && aConst.FieldParticleNoCull)) {
+                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && (a.Hit.EventType == HitEntity.Type.Shield && aConst.ShieldHitParticleNoCull) || aConst.HitParticleNoCull) || aConst.FieldParticle && aConst.FieldParticleNoCull) {
                     a.Active = true;
                     s.Av.AvShots.Add(a);
                 }
@@ -397,19 +400,23 @@ namespace CoreSystems.Support
                 {
                     if (a.Tracer == TracerState.Shrink && !a.ShrinkInited)
                         a.Shrink();
-                    else if (aConst.IsBeamWeapon && aConst.HitParticle && !(a.MuzzleId != 0 && (aConst.ConvergeBeams || aConst.OneHitParticle)))
+                    else if (aConst.IsBeamWeapon && !(a.MuzzleId != 0 && (aConst.ConvergeBeams || aConst.OneHitParticle)))
                     {
-                        MyParticleEffect effect;
-                        if (a.Hitting)
+                        var shieldHit = a.Hit.EventType == HitEntity.Type.Shield && aConst.ShieldHitParticle;
+                        if (shieldHit && a.ShieldHitParticleActive || (!shieldHit && aConst.HitParticle && a.HitParticleActive))
                         {
-                            ContainmentType containment;
-                            s.CameraFrustrum.Contains(ref a.Hit.SurfaceHit, out containment);
-                            if (containment != ContainmentType.Disjoint) a.RunBeam();
-                        }
-                        else if (s.Av.BeamEffects.TryGetValue(a.UniqueMuzzleId, out effect))
-                        {
-                            effect.Stop();
-                            s.Av.BeamEffects.Remove(a.UniqueMuzzleId);
+                            MyParticleEffect effect;
+                            if (a.Hitting)
+                            {
+                                ContainmentType containment;
+                                s.CameraFrustrum.Contains(ref a.Hit.SurfaceHit, out containment);
+                                if (containment != ContainmentType.Disjoint) a.RunBeam(shieldHit && a.ShieldHitParticleActive);
+                            }
+                            else if (s.Av.BeamEffects.TryGetValue(a.UniqueMuzzleId, out effect))
+                            {
+                                effect.Stop();
+                                s.Av.BeamEffects.Remove(a.UniqueMuzzleId);
+                            }
                         }
                     }
 
@@ -962,9 +969,11 @@ namespace CoreSystems.Support
                     HitParticleActive = true;
                 }
 
-                if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
-                    if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
-                            HitParticle = ParticleState.Custom;
+                if (OnScreen == Screen.Tracer) {
+                    if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle && (AmmoDef.Const.ShieldHitParticleNoCull || distToCameraSqr < 360000))
+                        HitParticle = ParticleState.Shield;
+                    else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && (AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000))
+                        HitParticle = ParticleState.Custom;
                 }
 
 
@@ -1187,22 +1196,24 @@ namespace CoreSystems.Support
         }
 
 
-        internal void RunBeam()
-        {
+        internal void RunBeam(bool shieldHit)
+        {           
+            var p = AmmoDef.AmmoGraphics.Particles;
             MyParticleEffect effect;
             MatrixD matrix;
             var vel = HitVelocity;
             if (!Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
-
-                MatrixD.CreateTranslation(ref TracerFront, out matrix);
-                if (!MyParticlesManager.TryCreateParticleEffect(AmmoDef.AmmoGraphics.Particles.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) {
+                if (shieldHit)
+                    matrix = MatrixD.CreateWorld(TracerFront, ShieldHitAngle, Vector3D.CalculatePerpendicularVector(ShieldHitAngle));
+                else
+                    MatrixD.CreateTranslation(ref TracerFront, out matrix);
+                if (!MyParticlesManager.TryCreateParticleEffect(shieldHit ? p.ShieldHit.Name : p.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) 
                     return;
-                }
 
                 if (effect.Loop || effect.DurationMax <= 0)
                     Session.Av.BeamEffects[UniqueMuzzleId] = effect;
 
-                effect.UserScale = AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
+                effect.UserScale = shieldHit ? p.ShieldHit.Extras.Scale : p.Hit.Extras.Scale;
 
                 Vector3D.ClampToSphere(ref vel, (float)MaxSpeed);
             }
@@ -1308,11 +1319,10 @@ namespace CoreSystems.Support
                     {
                         
                         var particle = AmmoDef.AmmoGraphics.Particles.Hit;
-                        var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
                         MatrixD matrix = MatrixD.CreateTranslation(pos);
-                        if(keenStrikesAgain)
+                        if (particle.Offset == Vector3D.MaxValue)
                         {
-                            matrix = MatrixD.CreateWorld(pos, VisualDir, OriginUp);
+                            matrix = MatrixD.CreateWorld(pos, VisualDir, Vector3D.CalculatePerpendicularVector(VisualDir));
                         }
                         else if (particle.Offset == Vector3D.MinValue)
                         {
@@ -1481,6 +1491,7 @@ namespace CoreSystems.Support
                 Session.Av.OffSetLists.Push(Offsets);
             }
 
+            ShieldHitAngle = Vector3D.Zero;
             HitVelocity = Vector3D.Zero;
             TracerBack = Vector3D.Zero;
             TracerFront = Vector3D.Zero;

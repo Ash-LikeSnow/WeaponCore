@@ -161,7 +161,6 @@ namespace CoreSystems.Projectiles
                             var shrapnelSpawn = p.Info.IsFragment && p.Info.PrevRelativeAge <= -1;
                             if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                             {
-
                                 var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                 if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(((Projectile)target.TargetObject).Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                     projetileInShield = true;
@@ -175,9 +174,9 @@ namespace CoreSystems.Projectiles
 
                                     hitEntity.EventType = Shield;
                                     var hitPos = beamFrom + (direction * dist.Value);
-                                    hitEntity.HitPos = beamFrom + (direction * dist.Value);
+                                    hitEntity.HitPos = hitPos;
                                     hitEntity.HitDist = dist;
-
+                                    hitEntity.ShieldHitAngle = MathFuncs.ShieldHitAngle(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                     var weakendShield = shieldInfo.Value.Item4.Item2 || shieldInfo.Value.Item4.Item3 < shieldInfo.Value.Item4.Item4;
 
                                     if (weakendShield || shieldInfo.Value.Item2.Item2)
@@ -214,7 +213,7 @@ namespace CoreSystems.Projectiles
                                             {
                                                 //if (((MyCubeGrid)shieldInfo.Value.Item1.CubeGrid).DebugName.Contains("test"))
                                                 //    Log.Line($"resist: RNG:{normalized} <= penChance:{threshold} - ammo:{info.AmmoDef.AmmoRound} - sPerc:{shieldInfo.Value.Item2.Item5} - heat:{shieldInfo.Value.Item2.Item6} - threshold:{shieldInfo.Value.Item2.Item5 / (1 + (shieldInfo.Value.Item2.Item6 * 0.01))}");
-                                                
+
                                                 p.Info.ShieldBypassMod = 1f;
                                             }
 
@@ -228,7 +227,8 @@ namespace CoreSystems.Projectiles
                                         info.ShieldBypassMod = aConst.ShieldDamageBypassMod;
                                     }
                                 }
-                                else continue;
+                                else
+                                    continue;
                             }
                         }
                         else
@@ -481,6 +481,9 @@ namespace CoreSystems.Projectiles
 
                 if (hitEntity != null)
                 {
+                    if (info.ShieldBypassed && hitEntity.EventType != Shield)
+                        info.ShieldBypassedHitOther = true;
+
                     var hitEnt = hitEntity.EventType != Shield ? ent : (MyEntity)shieldInfo.Value.Item1;
                     if (hitEnt != null)
                     {
@@ -719,10 +722,11 @@ namespace CoreSystems.Projectiles
                         visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos ?? p.Beam.To;
                     }
                     else visualHitPos = hitEntity.HitPos ?? p.Beam.To;
-
-                    if (p.EnableAv) {
+                    if (p.EnableAv) 
+                    {
                         info.AvShot.LastHitShield = hitEntity.EventType == Shield;
-                        info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos };
+                        info.AvShot.ShieldHitAngle = hitEntity.ShieldHitAngle;
+                        info.AvShot.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, HitTick = Session.I.Tick, HitVelocity = lastHitVel, LastHit = visualHitPos, SurfaceHit = visualHitPos};
                     }
                     else if (aConst.VirtualBeams)
                         AvShot.UpdateVirtualBeams(p, info, hitEntity, visualHitPos, lastHitVel, true);
@@ -831,6 +835,19 @@ namespace CoreSystems.Projectiles
                             if (hitEnt.SelfHit && (Vector3D.DistanceSquared(hitPos, hitEnt.Info.Origin) <= grid.GridSize * grid.GridSize) && hitEnt.EventType != Field) 
                                 continue;
 
+                            IMySlimBlock lastBlockHit = null;
+                            var ewarWeaponDamage = info.EwarActive && aConst.SelfDamage && hitEnt.EventType == Effect;
+                            for (int j = 0; j < hitEnt.Vector3ICache.Count; j++)
+                            {
+                                var posI = hitEnt.Vector3ICache[j];
+                                var firstBlock = grid.GetCubeBlock(posI) as IMySlimBlock;
+                                if (firstBlock != null && firstBlock != lastBlockHit && !firstBlock.IsDestroyed && (hitEnt.Info.Ai.AiType != Ai.AiTypes.Grid || firstBlock != hitEnt.Info.Weapon.Comp.Cube?.SlimBlock || ewarWeaponDamage && firstBlock == hitEnt.Info.Weapon.Comp.Cube?.SlimBlock))
+                                {
+                                    var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
+                                    info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
+                                }
+                            }
+
                             if (!ewarActive)
                                 GetAndSortBlocksInSphere(hitEnt.Info.AmmoDef, hitEnt.Info.Weapon.System, grid, hitEnt.PruneSphere, false, hitEnt.Blocks);
 
@@ -856,7 +873,6 @@ namespace CoreSystems.Projectiles
                                 {
                                     lastBlockHit = firstBlock;
                                     hitEnt.Blocks.Add(new HitEntity.RootBlocks {Block = firstBlock, QueryPos = posI});
-                                    //
                                     var blockDist = Vector3D.DistanceSquared(grid.GridIntegerToWorld(posI), beam.From);
                                     info.BlockList.Add(new KeyValuePair<IMySlimBlock, double>(firstBlock, blockDist));
 
@@ -919,6 +935,9 @@ namespace CoreSystems.Projectiles
                             hitEnt.Miss = !closestBlockFound;
                         }
                     }
+
+                    if (hitEnt.HitPos != null && info.ShieldBypassedHitOther && info.AvShot?.HitParticle == AvShot.ParticleState.Dirty)
+                        info.AvShot.HitParticle = AvShot.ParticleState.Custom;
                 }
                 else if (voxel != null)
                 {
@@ -1107,8 +1126,6 @@ namespace CoreSystems.Projectiles
             }
             else
             {
-                //usage:
-                //var dict = (Dictionary<Vector3I, IMySlimBlock>)GetHackDict((IMySlimBlock) null);
                 var tmpList = Session.I.SlimPool.Get();
                 Session.GetBlocksInsideSphereFast(grid, ref sphere, true, tmpList);
 
@@ -1128,7 +1145,5 @@ namespace CoreSystems.Projectiles
                 return Vector3D.DistanceSquared(aPos, hitPos).CompareTo(Vector3D.DistanceSquared(bPos, hitPos));
             });
         }
-        public static object GetHackDict<TVal>(TVal valueType) => new Dictionary<Vector3I, TVal>();
-
     }
 }

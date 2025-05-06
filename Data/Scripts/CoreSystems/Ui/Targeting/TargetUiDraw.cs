@@ -551,11 +551,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void CheckHandWeaponEntityHit(ProInfo info)
         {
+            if (Session.I.TrackingAi != null && info.Weapon?.Comp?.Ai?.Construct?.RootAi != Session.I.TrackingAi)
+                return;
             foreach (var hitEnt in info.HitList)
             {
-                if (info.Weapon.Comp.Ai.Construct.RootAi != Session.I.TrackingAi || hitEnt.Entity is MyVoxelBase)
+                if (hitEnt.Entity is MyVoxelBase)
                     continue;
-
                 HandHitIncrease = HandFullPulseSize - HandCircleSize;
                 HandHitMarkerActive = true;
                 return;

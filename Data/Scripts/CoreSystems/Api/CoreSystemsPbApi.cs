@@ -44,6 +44,7 @@ namespace CoreSystems.Api
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool> _hasCoreWeapon;
         private Func<long, float> _getOptimalDps;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string> _getActiveAmmo;
+        private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, int> _getAmmoCount;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string> _setActiveAmmo;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile;
@@ -120,6 +121,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "HasGridAi", ref _hasGridAi);
             AssignMethod(delegates, "HasCoreWeapon", ref _hasCoreWeapon);
             AssignMethod(delegates, "GetOptimalDps", ref _getOptimalDps);
+            AssignMethod(delegates, "GetAmmoCount", ref _getAmmoCount);
             AssignMethod(delegates, "GetActiveAmmo", ref _getActiveAmmo);
             AssignMethod(delegates, "SetActiveAmmo", ref _setActiveAmmo);
             AssignMethod(delegates, "MonitorProjectile", ref _monitorProjectile);
@@ -500,6 +502,15 @@ namespace CoreSystems.Api
         /// <param name="weaponId"></param>
         /// <returns><see cref="string"/> AmmoName</returns>
         public string GetActiveAmmo(Sandbox.ModAPI.Ingame.IMyTerminalBlock weapon, int weaponId) =>
+            _getActiveAmmo?.Invoke(weapon, weaponId) ?? null;
+
+        /// <summary>
+        /// Returns the current amount of ammo the weapon has internally (loaded, not inventory) <paramref name="weaponId"/> on <paramref name="weapon"/>.
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <param name="weaponId"></param>
+        /// <returns><see cref="int"/> Current ammo </returns>
+        public string GetAmmoCount(Sandbox.ModAPI.Ingame.IMyTerminalBlock weapon, int weaponId) =>
             _getActiveAmmo?.Invoke(weapon, weaponId) ?? null;
 
         /// <summary>

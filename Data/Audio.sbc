@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Sounds>
+        <Sound>
+            <Id>
+                <TypeId>MyObjectBuilder_AudioDefinition</TypeId>
+                <SubtypeId>ArcWepShipGatlingShot</SubtypeId>
+            </Id>
+            <Category>SHOT</Category>
+            <MaxDistance>200</MaxDistance>
+            <PreventSynchronization>0</PreventSynchronization>
+            <DynamicMusicCategory>HeavyFight</DynamicMusicCategory>
+            <DynamicMusicAmount>3</DynamicMusicAmount>
+            <DistantSounds>
+                <DistantSound DistanceCrossfade="10" Distance="200" Sound="WepShipGatlingShotDistant1" />
+            </DistantSounds>
+            <Volume>0.7</Volume>
+            <Waves>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d01.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d02.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d03.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d04.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d05.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d06.wav</Start>
+                </Wave>
+                <Wave Type="D3">
+                    <Start>Audio\ARC\WEP\ArcWepShipGatlingShot3d07.wav</Start>
+                </Wave>
+            </Waves>
+        </Sound>
+    </Sounds>
+</Definitions>

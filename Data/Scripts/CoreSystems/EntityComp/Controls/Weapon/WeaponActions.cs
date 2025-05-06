@@ -115,6 +115,8 @@ namespace CoreSystems.Control
             var mode = comp.Data.Repo.Values.Set.Overrides.ShootMode;
             if (mode == Weapon.ShootManager.ShootModes.KeyToggle || mode == Weapon.ShootManager.ShootModes.KeyFire)
             {
+                if (!comp.Data.Repo.Values.Set.Overrides.Override && comp.HasRequireTarget && comp.PrimaryWeapon.Target.CurrentState != Target.States.Acquired)
+                    return;
                 var keyToggle = mode == Weapon.ShootManager.ShootModes.KeyToggle;
                 var signal = keyToggle ? Weapon.ShootManager.Signals.KeyToggle : Weapon.ShootManager.Signals.Once;
                 var on = comp.Data.Repo.Values.State.Trigger == On;

@@ -22,6 +22,7 @@ namespace CoreSystems.Support
         internal bool TargetChanged;
         internal bool ClientDirty;
         internal bool IsDrone;
+        internal bool ValidEstimate;
         internal uint ChangeTick;
         internal uint ProjectileEndTick;
         internal long TargetId;
