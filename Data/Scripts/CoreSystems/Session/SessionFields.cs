@@ -332,6 +332,7 @@ namespace CoreSystems
         internal Projectiles.Projectiles Projectiles;
         internal ApiBackend Api;
         internal Action<Vector3, float> ProjectileAddedCallback = (location, health) => { };
+        internal Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> ScanTargetsAction = null;
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
