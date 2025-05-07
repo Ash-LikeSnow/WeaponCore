@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -91,6 +92,8 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, MyTuple<MyDefinitionId, string, string, bool>> _getMagazineMap;
         private Func<MyEntity, int, MyDefinitionId, bool, bool> _setMagazine;
         private Func<MyEntity, int, bool> _forceReload;
+        private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _addScanTargetsAction;
+        private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _removeScanTargetsAction;
 
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
@@ -467,6 +470,18 @@ namespace CoreSystems.Api
 
         }
 
+        /// <summary>
+        /// Registers an action that tells a given grid's AI available target entities in a given sphere.
+        /// </summary>
+        /// <param name="action"></param>
+        public void AddScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action) => _addScanTargetsAction?.Invoke(action);
+
+        /// <summary>
+        /// Unregisters an action that tells a given grid's AI available target entities in a given sphere.
+        /// </summary>
+        /// <param name="action"></param>
+        public void RemoveScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action) => _removeScanTargetsAction?.Invoke(action);
+
         private const long Channel = 67549756549;
         private bool _getWeaponDefinitions;
         private bool _isRegistered;
@@ -616,6 +631,9 @@ namespace CoreSystems.Api
 
             AssignMethod(delegates, "SetMagazine", ref _setMagazine);
             AssignMethod(delegates, "ForceReload", ref _forceReload);
+
+            AssignMethod(delegates, "AddScanTargetsAction", ref _addScanTargetsAction);
+            AssignMethod(delegates, "RemoveScanTargetsAction", ref _removeScanTargetsAction);
 
             // Damage handler
             AssignMethod(delegates, "DamageHandler", ref _registerDamageEvent);
