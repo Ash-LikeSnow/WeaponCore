@@ -472,19 +472,19 @@ namespace CoreSystems.Api
         }
 
         /// <summary>
-        /// Registers an action that tells a given grid's AI available target entities in a given sphere.
+        /// Registers an action that tells a given grid's AI available target entities in a given sphere. NOT NETWORKED - make sure this is synced in your mod.
         /// </summary>
         /// <param name="action"></param>
         public void AddScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action) => _addScanTargetsAction?.Invoke(action);
 
         /// <summary>
-        /// Unregisters an action that tells a given grid's AI available target entities in a given sphere.
+        /// Unregisters an action that tells a given grid's AI available target entities in a given sphere. NOT NETWORKED - make sure this is synced in your mod.
         /// </summary>
         /// <param name="action"></param>
         public void RemoveScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action) => _removeScanTargetsAction?.Invoke(action);
 
         /// <summary>
-        /// Assigns a function that determines if a given weapon can target a given entity.
+        /// Assigns a function that determines if a given weapon can target a given entity. NOT NETWORKED - make sure this is synced in your mod.
         /// </summary>
         /// <param name="func">Block, PartId, target</param>
         public void SetValidateWeaponTargetFunc(Func<IMyTerminalBlock, int, MyEntity, bool> func) =>
