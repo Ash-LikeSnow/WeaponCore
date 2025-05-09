@@ -46,21 +46,9 @@ namespace CoreSystems
             if (HandlesInput)
                 MyAPIGateway.Utilities.MessageEntered += ChatMessageSet;
 
-            var env = MyDefinitionManager.Static.EnvironmentDefinition;
-            if (env.LargeShipMaxSpeed > MaxEntitySpeed) MaxEntitySpeed = env.LargeShipMaxSpeed;
-            else if (env.SmallShipMaxSpeed > MaxEntitySpeed) MaxEntitySpeed = env.SmallShipMaxSpeed;
-            if (MpActive)
-            {
-                SyncDist = MyAPIGateway.Session.SessionSettings.SyncDistance;
-                SyncDistSqr = SyncDist * SyncDist;
-                SyncBufferedDistSqr = SyncDistSqr + 250000;
-            }
-            else
-            {
-                SyncDist = MyAPIGateway.Session.SessionSettings.ViewDistance;
-                SyncDistSqr = SyncDist * SyncDist;
-                SyncBufferedDistSqr = (SyncDist + 500) * (SyncDist + 500);
-            }
+            SyncDist = MpActive ? MyAPIGateway.Session.SessionSettings.SyncDistance : MyAPIGateway.Session.SessionSettings.ViewDistance;
+            SyncDistSqr = SyncDist * SyncDist;
+            SyncBufferedDistSqr = SyncDistSqr + 250000;
 
             PreFetchMaxDist = MyAPIGateway.Session.SessionSettings.PrefetchShapeRayLengthLimit - 1;
 

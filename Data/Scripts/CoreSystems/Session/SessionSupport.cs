@@ -1359,13 +1359,6 @@ namespace CoreSystems
             }
         }
 
-        public enum CubeTypes
-        {
-            All,
-            Slims,
-            Fats,
-        }
-
         internal void DeferredPlayerLocks()
         {
             foreach (var p in DeferredPlayerLock)
@@ -1398,41 +1391,6 @@ namespace CoreSystems
             }
             else
                 PlayerPos = Vector3D.Zero;
-        }
-
-        public static void GetCubesInRange(MyCubeGrid grid, MyCubeBlock rootBlock, int cubeDistance, HashSet<MyCube> resultSet, out Vector3I min, out Vector3I max, CubeTypes types = CubeTypes.All)
-        {
-            resultSet.Clear();
-            min = rootBlock.Min - cubeDistance;
-            max = rootBlock.Max + cubeDistance;
-            var gridMin = grid.Min;
-            var gridMax = grid.Max;
-
-            Vector3I.Max(ref min, ref gridMin, out min);
-            Vector3I.Min(ref max, ref gridMax, out max);
-
-            var iter = new Vector3I_RangeIterator(ref min, ref max);
-
-            var next = rootBlock.Position;
-            while (iter.IsValid()) {
-
-                MyCube myCube;
-                if (grid.TryGetCube(next, out myCube) && myCube.CubeBlock != rootBlock.SlimBlock) {
-
-                    var slim = (IMySlimBlock)myCube.CubeBlock;
-
-                    if (next == slim.Position) {
-
-                        if (types == CubeTypes.Slims && slim.FatBlock == null)
-                            resultSet.Add(myCube);
-                        else if (types == CubeTypes.Fats && slim.FatBlock != null)
-                            resultSet.Add(myCube);
-                        else if (types == CubeTypes.All)
-                            resultSet.Add(myCube);
-                    }
-                }
-                iter.GetNext(out next);
-            }
         }
 
         private void ColorAreas()
@@ -1806,15 +1764,6 @@ namespace CoreSystems
             }
 
             Log.Line($"WC Version: {ModVersion}");
-            if (IsClient && Settings.Enforcement.Version > ModVersion)
-                WarnClientAboutOldVersion();
-        }
-
-        private void WarnClientAboutOldVersion()
-        {
-            var message = "Your WeaponCore version is [older than the servers]!  This is likely due to a [corrupted download], please follow directions on [WC Steam Page] to correct";
-            ShowLocalNotify(message, 30000);
-            Log.Line(message);
         }
     }
 }

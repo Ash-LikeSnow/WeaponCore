@@ -425,7 +425,6 @@ namespace CoreSystems
         internal double SyncDistSqr;
         internal double SyncBufferedDistSqr;
         internal double SyncDist;
-        internal double MaxEntitySpeed;
         internal double Load;
         internal double ScaleFov;
         internal double RayMissAmounts;
