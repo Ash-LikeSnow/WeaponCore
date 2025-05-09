@@ -40,7 +40,10 @@ namespace CoreSystems.Support
 
         internal void Scan()
         {
-            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref ScanVolume, _possibleTargets);
+            if (Session.I.ScanTargetsAction == null)
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref ScanVolume, _possibleTargets);
+            else
+                Session.I.ScanTargetsAction.Invoke(GridEntity, ScanVolume, _possibleTargets);
             NearByEntitiesTmp = _possibleTargets.Count;
 
             for (int i = 0; i < NearByEntitiesTmp; i++)

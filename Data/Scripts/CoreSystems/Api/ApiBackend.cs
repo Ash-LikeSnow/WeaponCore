@@ -141,6 +141,9 @@ namespace CoreSystems.Api
                 ["IsInRange"] = new Func<IMyEntity, MyTuple<bool, bool>>(IsInRangeLegacy),
                 ["GetConstructEffectiveDpsBase"] = new Func<MyEntity, float>(GetConstructEffectiveDps),
                 ["GetConstructEffectiveDps"] = new Func<IMyEntity, float>(GetConstructEffectiveDpsLegacy),
+                ["AddScanTargetsAction"] = new Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>>(AddScanTargetsAction),
+                ["RemoveScanTargetsAction"] = new Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>>(RemoveScanTargetsAction),
+                ["SetValidateWeaponTargetFunc"] = new Action<Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyEntity, bool>>(SetValidateWeaponTargetFunc),
 
                 // Phantoms
                 ["GetTargetAssessment"] = new Func<MyEntity, MyEntity, int, bool, bool, MyTuple<bool, bool, Vector3D?>>(GetPhantomTargetAssessment),
@@ -1519,6 +1522,23 @@ namespace CoreSystems.Api
             }
             return new MyTuple<bool, bool>();
         }
+
+        private void AddScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action)
+        {
+            Session.I.ScanTargetsAction += action;
+        }
+
+        private void RemoveScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action)
+        {
+            Session.I.ScanTargetsAction -= action;
+        }
+
+        private void SetValidateWeaponTargetFunc(Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyEntity, bool> func)
+        {
+            Session.I.ValidateWeaponTargetFunc = func;
+        }
+
+
         ///
         /// Phantoms
         /// 
