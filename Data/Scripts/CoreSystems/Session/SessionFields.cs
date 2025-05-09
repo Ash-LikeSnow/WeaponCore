@@ -332,7 +332,14 @@ namespace CoreSystems
         internal Projectiles.Projectiles Projectiles;
         internal ApiBackend Api;
         internal Action<Vector3, float> ProjectileAddedCallback = (location, health) => { };
+        /// <summary>
+        /// WcApi action for feeding targets to grid AI. Overrides default if not null.
+        /// </summary>
         internal Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> ScanTargetsAction = null;
+        /// <summary>
+        /// WcApi function for checking if a weapon's target is allowed. Defaults true if null.
+        /// </summary>
+        internal Func<IMyTerminalBlock, int, MyEntity, bool> ValidateWeaponTargetFunc = null;
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();

@@ -246,9 +246,15 @@ namespace CoreSystems.Support
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 Vector3D predictedPos;
 
+                // WcApi turret target validation
+                if (Session.I.ValidateWeaponTargetFunc != null &&
+                    !Session.I.ValidateWeaponTargetFunc.Invoke(w.Comp.TerminalBlock, w.PartId, info.Target))
+                    continue;
+
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
+
                     if (w.System.TargetGridCenter)
                     {
                         if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;

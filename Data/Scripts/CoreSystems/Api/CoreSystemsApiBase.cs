@@ -94,6 +94,7 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, bool> _forceReload;
         private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _addScanTargetsAction;
         private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _removeScanTargetsAction;
+        private Action<Func<IMyTerminalBlock, int, MyEntity, bool>> _setValidateWeaponTargetFunc;
 
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
@@ -482,6 +483,13 @@ namespace CoreSystems.Api
         /// <param name="action"></param>
         public void RemoveScanTargetsAction(Action<MyCubeGrid, BoundingSphereD, List<MyEntity>> action) => _removeScanTargetsAction?.Invoke(action);
 
+        /// <summary>
+        /// Assigns a function that determines if a given weapon can target a given entity.
+        /// </summary>
+        /// <param name="func">Block, PartId, target</param>
+        public void SetValidateWeaponTargetFunc(Func<IMyTerminalBlock, int, MyEntity, bool> func) =>
+            _setValidateWeaponTargetFunc?.Invoke(func);
+
         private const long Channel = 67549756549;
         private bool _getWeaponDefinitions;
         private bool _isRegistered;
@@ -634,6 +642,7 @@ namespace CoreSystems.Api
 
             AssignMethod(delegates, "AddScanTargetsAction", ref _addScanTargetsAction);
             AssignMethod(delegates, "RemoveScanTargetsAction", ref _removeScanTargetsAction);
+            AssignMethod(delegates, "SetValidateWeaponTargetFunc", ref _setValidateWeaponTargetFunc);
 
             // Damage handler
             AssignMethod(delegates, "DamageHandler", ref _registerDamageEvent);
