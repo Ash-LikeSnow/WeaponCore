@@ -1031,7 +1031,7 @@ namespace CoreSystems.Platform
                 return false;
             }
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !ActiveAmmoDef.AmmoDef.IgnoreWater && Comp.Ai.InPlanetGravity && Comp.Ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(Comp.Ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && !(ActiveAmmoDef.AmmoDef.IgnoreWater && Comp.TargetSubmerged) && Comp.Ai.InPlanetGravity && Comp.Ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(Comp.Ai.MyPlanet.EntityId, out water))
             {
                 var waterSphere = new BoundingSphereD(Comp.Ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
                 if (waterSphere.Contains(targetPos) != ContainmentType.Disjoint)

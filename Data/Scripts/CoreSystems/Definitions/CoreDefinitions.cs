@@ -486,6 +486,7 @@ namespace CoreSystems.Support
             [ProtoMember(14)] internal bool CanShootSubmerged;
             [ProtoMember(15)] internal bool NpcSafe;
             [ProtoMember(16)] internal bool ScanTrackOnly;
+            [ProtoMember(17)] internal bool CanTargetSubmerged;
 
             [ProtoContract]
             public struct LoadingDef

@@ -58,6 +58,7 @@ namespace CoreSystems.Platform
             internal bool HasDisabledBurst;
             internal bool HasRofSlider;
             internal bool ShootSubmerged;
+            internal bool TargetSubmerged;
             internal bool HasTracking;
             internal bool HasRequireTarget;
             internal bool HasDrone;
@@ -424,7 +425,6 @@ namespace CoreSystems.Platform
                     Ai.DetectOtherSignals = true;
                 var wasAsleep = IsAsleep;
                 IsAsleep = false;
-                //IsDisabled = Ai.TouchingWater && !ShootSubmerged && Ai.WaterVolume.Contains(CoreEntity.PositionComp.WorldAABB.Center) != ContainmentType.Disjoint; //submerged wep check
                 if (Ai.TouchingWater && !ShootSubmerged)
                 {
                     var projectedPos = CoreEntity.PositionComp.WorldAABB.Center + (Vector3D.Normalize(CoreEntity.PositionComp.WorldVolume.Center- Ai.ClosestPlanetCenter) * CoreEntity.PositionComp.WorldVolume.Radius);
