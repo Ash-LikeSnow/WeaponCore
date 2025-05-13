@@ -212,25 +212,20 @@ namespace CoreSystems
         }
         internal static void CreateCustomActionSet<T>(Session session) where T : IMyTerminalBlock
         {
+            CreateCustomActions<T>.CreateShootMode(session);
             CreateCustomActions<T>.CreateArmReaction(session);
             CreateCustomActions<T>.CreateTriggerNow(session);
-
-
             CreateCustomActions<T>.CreateKeyShoot(session);
             CreateCustomActions<T>.CreateMouseToggle(session);
-
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
-            CreateCustomActions<T>.CreateShootMode(session);
+            CreateCustomActions<T>.CreateAngularTracking(session);
             CreateCustomActions<T>.CreateControlModes(session);
             CreateCustomActions<T>.CreateObjectiveMode(session);
             CreateCustomActions<T>.CreateMovementState(session);
-
             CreateCustomActions<T>.CreateCycleAmmo(session);
             CreateCustomActions<T>.CreateForceReload(session);
-
-            CreateCustomActions<T>.CreateAngularTracking(session);
 
             CreateCustomActions<T>.CreateFocusSubSystem(session);
             CreateCustomActions<T>.CreateSubSystems(session);
@@ -252,42 +247,42 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateWeaponCameraChannels(session);
             CreateCustomActions<T>.CreateSelectFriend(session);
             CreateCustomActions<T>.CreateSelectEnemy(session);
+
             CreateCustomActions<T>.CreateMinSize(session);
             CreateCustomActions<T>.CreateMaxSize(session);
-            CreateCustomActions<T>.CreateFriendly(session);
-            //CreateCustomActions<T>.CreateSelectPosition(session); Suppressed for now as it's inop
+            //CreateCustomActions<T>.CreateFriendly(session);
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock
         {
             CreateCustomActions<T>.CreateShareFireControlControl(session);
             CreateCustomActions<T>.CreateAiEnabledControl(session);
-            CreateCustomActions<T>.CreateNeutralsControl(session);
-            CreateCustomActions<T>.CreateFriendlyControl(session);
-            CreateCustomActions<T>.CreateUnownedControl(session);
-
-            CreateCustomActions<T>.CreateMovementStateControl(session);
-            //CreateCustomActions<T>.CreateShootModeControl(session);
-            CreateCustomActions<T>.CreateSubSystemsControl(session);
             CreateCustomActions<T>.CreateControlModesControl(session);
-            CreateCustomActions<T>.CreateProjectilesControl(session);
-            CreateCustomActions<T>.CreateSupportingPDControl(session);
-            CreateCustomActions<T>.CreateBiologicalsControl(session);
-            CreateCustomActions<T>.CreateMeteorsControl(session);
-            CreateCustomActions<T>.CreateGridsControl(session);
-            CreateCustomActions<T>.CreateFocusTargetsControl(session);
+            CreateCustomActions<T>.CreateMovementStateControl(session);
             CreateCustomActions<T>.CreateFocusSubSystemControl(session);
-            CreateCustomActions<T>.CreateMaxSizeControl(session);
-            CreateCustomActions<T>.CreateMinSizeControl(session);
+            CreateCustomActions<T>.CreateSubSystemsControl(session);
+
+            CreateCustomActions<T>.CreateFocusTargetsControl(session);
             CreateCustomActions<T>.CreateRepelModeControl(session);
+
+            CreateCustomActions<T>.CreateNeutralsControl(session);
+            CreateCustomActions<T>.CreateUnownedControl(session);
+            CreateCustomActions<T>.CreateGridsControl(session);
             CreateCustomActions<T>.CreateLargeGridControl(session);
             CreateCustomActions<T>.CreateSmallGridControl(session);
+            CreateCustomActions<T>.CreateBiologicalsControl(session);
+            CreateCustomActions<T>.CreateProjectilesControl(session);
+            CreateCustomActions<T>.CreateSupportingPDControl(session);
+            CreateCustomActions<T>.CreateMeteorsControl(session);
+
+            CreateCustomActions<T>.CreateMinSizeControl(session);
+            CreateCustomActions<T>.CreateMaxSizeControl(session);
+            //CreateCustomActions<T>.CreateFriendlyControl(session);
         }
 
         internal static void CreateSearchlightActions<T>(Session session) where T : IMyTerminalBlock
         {
             CreateCustomActions<T>.CreateNeutralsControl(session);
-            //CreateCustomActions<T>.CreateFriendlyControl(session); //This even work for a "turret"?
             CreateCustomActions<T>.CreateUnownedControl(session);
             CreateCustomActions<T>.CreateGridsControl(session);
             CreateCustomActions<T>.CreateLargeGridControl(session);
@@ -295,11 +290,9 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateBiologicalsControl(session);
             CreateCustomActions<T>.CreateProjectilesControl(session);
             CreateCustomActions<T>.CreateMeteorsControl(session);
-
-            CreateCustomActions<T>.CreateMaxSizeControl(session);
-            CreateCustomActions<T>.CreateMinSizeControl(session);
-
             CreateCustomActions<T>.CreateWeaponCameraChannels(session);
+            CreateCustomActions<T>.CreateMinSizeControl(session);
+            CreateCustomActions<T>.CreateMaxSizeControl(session);
         }
 
         internal static void CreateCustomActionSetArmorEnhancer<T>(Session session) where T: IMyTerminalBlock

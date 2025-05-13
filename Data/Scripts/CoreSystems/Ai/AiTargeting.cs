@@ -135,7 +135,7 @@ namespace CoreSystems.Support
             var shipOnly = moveMode == ProtoWeaponOverrides.MoveModes.ShipAny;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
             var rootConstruct = ai.Construct.RootAi.Construct;
@@ -246,9 +246,15 @@ namespace CoreSystems.Support
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 Vector3D predictedPos;
 
+                // WcApi turret target validation
+                if (Session.I.ValidateWeaponTargetFunc != null &&
+                    !Session.I.ValidateWeaponTargetFunc.Invoke(w.Comp.TerminalBlock, w.PartId, info.Target))
+                    continue;
+
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
+
                     if (w.System.TargetGridCenter)
                     {
                         if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
@@ -518,7 +524,7 @@ namespace CoreSystems.Support
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !w.ActiveAmmoDef.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && !(w.ActiveAmmoDef.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
             var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
@@ -735,7 +741,7 @@ namespace CoreSystems.Support
             var previousEntity = info.AcquiredEntity;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !info.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && !(info.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             TargetInfo alphaInfo = null;
             int offset = 0;
@@ -1767,7 +1773,7 @@ namespace CoreSystems.Support
             var stationOnly = moveMode == ProtoWeaponOverrides.MoveModes.Moored;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
 
