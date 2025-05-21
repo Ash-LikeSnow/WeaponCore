@@ -625,8 +625,10 @@ namespace CoreSystems
                 var c = controls[i];
                 if (session.AlteredControls.Contains(c)) continue;
 
-                if (!_visibleControls.Contains(c.Id)) {
-                    c.Visible = TerminalHelpers.NotWcBlock;
+                if (!_visibleControls.Contains(c.Id))
+                {
+                    var prevVisibleFunc = c.Visible; // caching to avoid an infinite recursive loop
+                    c.Visible = block => (prevVisibleFunc?.Invoke(block) ?? true) && TerminalHelpers.NotWcBlock(block);
                     session.AlteredControls.Add(c);
                     continue;
                 }
