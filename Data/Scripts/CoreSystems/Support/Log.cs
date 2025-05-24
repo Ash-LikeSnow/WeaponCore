@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Sandbox.ModAPI;
 using VRage.Collections;
+using VRage.Utils;
 
 namespace CoreSystems.Support
 {
@@ -135,6 +136,7 @@ namespace CoreSystems.Support
             catch (Exception e)
             {
                 MyAPIGateway.Utilities.ShowNotification(e.Message, 5000);
+                MyLog.Default.Error($"WC failed to initialize log {name} \n {e.Message}");
             }
         }
 

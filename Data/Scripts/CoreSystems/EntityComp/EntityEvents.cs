@@ -269,7 +269,7 @@ namespace CoreSystems.Support
                     stringBuilder.Append($" {(collection.Count > 1 ? "\n{w.FriendlyName}" : string.Empty)}" +
                         $"{(w.MinTargetDistance > 0 ? $"\n{Localization.GetText("WeaponInfoMinRange")}: {w.MinTargetDistance}{Localization.GetText("WeaponInfoMeter")}" : string.Empty)}" +
                         $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance}{Localization.GetText("WeaponInfoMeter")}" +
-                        $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin}{Localization.GetText("WeaponInfoPerMin")}");
+                        $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin:0.}{Localization.GetText("WeaponInfoPerMin")}");
                     if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                     {
                         var targ = $"{Localization.GetText("WeaponInfoTargetLabel")}: ";
