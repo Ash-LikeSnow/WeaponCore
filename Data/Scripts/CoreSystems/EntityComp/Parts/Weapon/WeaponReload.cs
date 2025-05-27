@@ -1,5 +1,6 @@
 ﻿using System;
 using CoreSystems.Support;
+using VRage.Game.Entity;
 using VRage.Utils;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -255,35 +256,31 @@ namespace CoreSystems.Platform
             ++ClientStartId;
             ++Reload.LifetimeLoads;
 
-            if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo) {
-
+            if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
+            {
                 var isPhantom = Comp.TypeSpecific == CompTypeSpecific.Phantom;
                 Reload.MagsLoaded = ActiveAmmoDef.AmmoDef.Const.MagsToLoad <= Reload.CurrentMags || Session.I.IsCreative ? ActiveAmmoDef.AmmoDef.Const.MagsToLoad : Reload.CurrentMags;
-                
-                if (!Session.I.IsCreative)
-                {
-                    if (!isPhantom && Comp.CoreInventory.ItemsCanBeRemoved(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem))
-                    {
-                        if (System.HasAmmoSelection) {
-                            var magItem = Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem;
-                            Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
-                        }
-                        else
-                        {
-                            var magItem = Comp.TypeSpecific == CompTypeSpecific.Rifle ? Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem : ActiveAmmoDef.AmmoDef.Const.AmmoItem;
-                            Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
-                        }
-                    }
-                    else if (!isPhantom && Comp.CoreInventory.ItemCount > 0 && Comp.CoreInventory.ContainItems(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem.Content))
-                    {
-                        Comp.CoreInventory.Remove(ActiveAmmoDef.AmmoDef.Const.AmmoItem, Reload.MagsLoaded);
-                    }
-                }
 
+                if (!Session.I.IsCreative && !isPhantom)
+                {
+                    if (Comp.CoreInventory.ItemsCanBeRemoved(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem))
+                    {
+                        MyPhysicalInventoryItem magItem;
+                        if (System.HasAmmoSelection)
+                            magItem = Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem;
+                        else
+                            magItem = Comp.TypeSpecific == CompTypeSpecific.Rifle ? Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem : ActiveAmmoDef.AmmoDef.Const.AmmoItem;
+                        Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
+                    }
+                    else if (Comp.CoreInventory.ItemCount > 0 && Comp.CoreInventory.ContainItems(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem.Content))
+                        Comp.CoreInventory.Remove(ActiveAmmoDef.AmmoDef.Const.AmmoItem, Reload.MagsLoaded);
+                }
                 Reload.CurrentMags = !isPhantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : Reload.CurrentMags - Reload.MagsLoaded;
                 if (Reload.CurrentMags == 0)
                     CheckInventorySystem = true;
             }
+            else
+                Reload.MagsLoaded = ActiveAmmoDef.AmmoDef.Const.MagsToLoad;
 
             StartReload();
             return true;
