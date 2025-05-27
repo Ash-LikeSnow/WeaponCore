@@ -1232,6 +1232,8 @@ namespace CoreSystems.Support
 
             for (int v = 0; v < p.VrPros.Count; v++)
             {
+                if (p.State == ProjectileState.Dead)
+                    break;
                 var vp = p.VrPros[v];
                 var vs = vp.AvShot;
 

@@ -249,6 +249,7 @@ namespace CoreSystems.Support
         public readonly bool ProjectilesFirst;
         public readonly bool OnHit;
         public readonly bool OverrideWeaponEffect;
+        public readonly bool IgnoreAntiSmarts;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
@@ -405,7 +406,7 @@ namespace CoreSystems.Support
 
             ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
                 out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ZeroEffortNav, out ScanRange, out OffsetMinRangeSqr,
-                out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime);
+                out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime, out IgnoreAntiSmarts);
 
             IsGuided = TravelTo || IsMine || IsDrone || IsSmart;
 
@@ -598,7 +599,7 @@ namespace CoreSystems.Support
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
             out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out bool zeroEffortNav, out double scanRange, out double offsetMinRangeSqr,
-            out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime)
+            out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime, out bool ignoreAntiSmarts)
         {
             isSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
 
@@ -633,6 +634,7 @@ namespace CoreSystems.Support
             offsetTime = ammo.AmmoDef.Trajectory.Smarts.OffsetTime;
             noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
             zeroEffortNav = ammo.AmmoDef.Trajectory.Smarts.AltNavigation;
+            ignoreAntiSmarts = ammo.AmmoDef.Trajectory.Smarts.IgnoreAntiSmarts;
         }
 
 
@@ -1250,34 +1252,6 @@ namespace CoreSystems.Support
             if (overrides.ShieldBypass.HasValue) shieldBypassRaw = Math.Max(overrides.ShieldBypass.Value, 0f);
 
         }
-
-        //private void GetModifiableValues(AmmoDef ammoDef, out float baseDamage, out float health, out float gravityMultiplier, out float maxTrajectory, out float maxTrajectorySqr, out bool energyBaseDmg, out bool energyAreaDmg, out bool energyDetDmg, out bool energyShieldDmg, out double shieldModifier, out float fallOffDistance, out float fallOffMinMult, out float mass, out float shieldBypassRaw)
-        //{
-        //    baseDamage = AmmoModsFound && _modifierMap[BaseDmgStr].HasData() ? _modifierMap[BaseDmgStr].GetAsFloat : ammoDef.BaseDamage;
-
-        //    if (baseDamage < 0.000001)
-        //        baseDamage = 0.000001f;
-
-        //    health = AmmoModsFound && _modifierMap[HealthStr].HasData() ? _modifierMap[HealthStr].GetAsFloat : ammoDef.Health;
-        //    gravityMultiplier = AmmoModsFound && _modifierMap[GravityStr].HasData() ? _modifierMap[GravityStr].GetAsFloat : ammoDef.Trajectory.GravityMultiplier;
-        //    maxTrajectory = AmmoModsFound && _modifierMap[MaxTrajStr].HasData() ? _modifierMap[MaxTrajStr].GetAsFloat : ammoDef.Trajectory.MaxTrajectory;
-        //    maxTrajectorySqr = maxTrajectory * maxTrajectory;
-        //    energyBaseDmg = AmmoModsFound && _modifierMap[EnergyBaseDmgStr].HasData() ? _modifierMap[EnergyBaseDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Base != DamageTypes.Damage.Kinetic;
-        //    energyAreaDmg = AmmoModsFound && _modifierMap[EnergyAreaDmgStr].HasData() ? _modifierMap[EnergyAreaDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.AreaEffect != DamageTypes.Damage.Kinetic;
-        //    energyDetDmg = AmmoModsFound && _modifierMap[EnergyDetDmgStr].HasData() ? _modifierMap[EnergyDetDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Detonation != DamageTypes.Damage.Kinetic;
-        //    energyShieldDmg = AmmoModsFound && _modifierMap[EnergyShieldDmgStr].HasData() ? _modifierMap[EnergyShieldDmgStr].GetAsBool : ammoDef.DamageScales.DamageType.Shield != DamageTypes.Damage.Kinetic;
-
-        //    var givenShieldModifier = AmmoModsFound && _modifierMap[ShieldModStr].HasData() ? _modifierMap[ShieldModStr].GetAsDouble : ammoDef.DamageScales.Shields.Modifier;
-        //    shieldModifier = givenShieldModifier < 0 ? 1 : givenShieldModifier;
-
-        //    fallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammoDef.DamageScales.FallOff.Distance;
-        //    fallOffMinMult = AmmoModsFound && _modifierMap[FallOffMinMultStr].HasData() ? _modifierMap[FallOffMinMultStr].GetAsFloat : ammoDef.DamageScales.FallOff.MinMultipler;
-
-        //    mass = AmmoModsFound && _modifierMap[MassStr].HasData() ? _modifierMap[MassStr].GetAsFloat : ammoDef.Mass;
-
-        //    shieldBypassRaw = AmmoModsFound && _modifierMap[ShieldBypassStr].HasData() ? _modifierMap[ShieldBypassStr].GetAsFloat : ammoDef.DamageScales.Shields.BypassModifier;
-        //}
-
 
         private int mexLogLevel = 0;
         private void GetPeakDps(WeaponSystem.AmmoType ammoDef, WeaponSystem system, WeaponDefinition wDef, out float peakDps, out float effectiveDps, out float dpsWoInaccuracy, out float shotsPerSec, out float realShotsPerSec, out float baseDps, out float areaDps, out float detDps, out float realShotsPerMin)

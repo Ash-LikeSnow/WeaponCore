@@ -3399,11 +3399,11 @@ namespace CoreSystems.Projectiles
 
                             var nStorage = netted.Info.Storage;
                             var nAconst = netted.Info.AmmoDef.Const;
-                            if (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart)
+                            if (nAconst.IgnoreAntiSmarts || (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart))
                                 continue;
                             if (Info.Random.NextDouble() * 100f < aConst.PulseChance || !aConst.EwarField)
                             {
-                                Info.BaseEwarPool -= (float)netted.Info.AmmoDef.Const.HealthHitModifier;
+                                Info.BaseEwarPool -= (float)nAconst.HealthHitModifier;
                                 if (Info.BaseEwarPool <= 0 && Info.BaseHealthPool-- > 0)
                                 {
                                     Info.EwarActive = true;
@@ -3432,13 +3432,13 @@ namespace CoreSystems.Projectiles
 
                                 var nStorage = netted.Info.Storage;
                                 var nAconst = netted.Info.AmmoDef.Const;
-                                if (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart)
+                                if (nAconst.IgnoreAntiSmarts || (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart))
                                     continue;
                                 if (Info.Random.NextDouble() * 100f < aConst.PulseChance || !aConst.EwarField)
                                 {
-                                    if (Info.BaseEwarPool - netted.Info.AmmoDef.Const.Health >= 0)
+                                    if (Info.BaseEwarPool - nAconst.Health >= 0)
                                     {
-                                        Info.BaseEwarPool -= netted.Info.AmmoDef.Const.Health;
+                                        Info.BaseEwarPool -= nAconst.Health;
                                         Info.EwarActive = true;
                                         netted.Info.Target.TargetObject = this;
                                         netted.Info.Target.TargetState = Target.TargetStates.IsProjectile;

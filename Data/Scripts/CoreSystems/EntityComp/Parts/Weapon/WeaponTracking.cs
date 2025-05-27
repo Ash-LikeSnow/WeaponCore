@@ -1024,7 +1024,7 @@ namespace CoreSystems.Platform
 
             var targetPos = pTarget?.Position ?? eTarget?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
             var distToTargetSqr = Vector3D.DistanceSquared(targetPos, trackingCheckPosition);
-            if (distToTargetSqr > MaxTargetDistanceSqr && distToTargetSqr < MinTargetDistanceSqr)
+            if (distToTargetSqr > MaxTargetDistanceSqr || distToTargetSqr < MinTargetDistanceSqr) //TODO this was &&, will that ever trip for a wep with min and max range?
             {
                 masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistExceeded);
                 if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckDistExceeded);
@@ -1042,7 +1042,11 @@ namespace CoreSystems.Platform
                 }
             }
             IHitInfo rayHitInfo;
-            Session.I.Physics.CastRay(trackingCheckPosition, targetPos, out rayHitInfo);
+            if (distToTargetSqr <= 2500)
+                Session.I.Physics.CastRay(trackingCheckPosition, targetPos, out rayHitInfo);
+            else
+                Session.I.Physics.CastLongRay(trackingCheckPosition, targetPos, out rayHitInfo, false); //TODO check if this improves voxel detection
+
             RayCallBack.NormalShootRayCallBack(rayHitInfo);
 
             return true;

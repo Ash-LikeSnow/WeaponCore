@@ -12,7 +12,7 @@ using VRageMath;
 namespace CoreSystems.Api
 {
     /// <summary>
-    /// https://github.com/sstixrud/CoreSystems/blob/master/BaseData/Scripts/CoreSystems/Api/CoreSystemsApiBase.cs
+    /// https://github.com/Ash-LikeSnow/WeaponCore/blob/master/Data/Scripts/CoreSystems/Api/CoreSystemsApiBase.cs
     /// </summary>
     public partial class WcApi
     {
