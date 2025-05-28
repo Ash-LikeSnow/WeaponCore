@@ -269,7 +269,7 @@ namespace CoreSystems
                 {
                     if (scaledDamage < blockHp || gridBlockCount < 1000)
                     {
-                        block.DoDamage((float) scaledDamage, MyDamageType.Explosion, sync, null, attackerId, 0, false);
+                        block.DoDamage((float) scaledDamage, MyDamageType.Explosion, true, null, attackerId, 0, false);
                     }
                     else
                     {

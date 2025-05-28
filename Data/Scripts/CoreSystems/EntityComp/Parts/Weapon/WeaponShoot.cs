@@ -360,7 +360,7 @@ namespace CoreSystems.Platform
 
         private void OverHeat()
         {
-            if (!Session.I.IsClient && Comp.Data.Repo.Values.Set.Overload > 1)
+            if (Session.I.IsServer && Comp.Data.Repo.Values.Set.Overload > 1)
             {
                 var dmg = .02f * Comp.MaxIntegrity;
                 Comp.Slim.DoDamage(dmg, MyDamageType.Environment, true, null, Comp.TopEntity.EntityId);
