@@ -313,6 +313,16 @@ namespace CoreSystems.Projectiles
                     var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.ShieldHit.Extras.HitPlayChance;
                     Info.AvShot.ShieldHitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
                 }
+                if (aConst.VoxelHitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
+                {
+                    var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.VoxelHit.Extras.HitPlayChance;
+                    Info.AvShot.VoxelHitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
+                }
+                if (aConst.WaterHitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
+                {
+                    var hitPlayChance = Info.AmmoDef.AmmoGraphics.Particles.WaterHit.Extras.HitPlayChance;
+                    Info.AvShot.WaterHitParticleActive = hitPlayChance >= 1 || hitPlayChance >= MyUtils.GetRandomDouble(0.0f, 1f);
+                }
 
                 if (aConst.PrimeModel || aConst.TriggerModel)
                 {
