@@ -1042,10 +1042,7 @@ namespace CoreSystems.Platform
                 }
             }
             IHitInfo rayHitInfo;
-            if (distToTargetSqr <= 2500)
-                Session.I.Physics.CastRay(trackingCheckPosition, targetPos, out rayHitInfo);
-            else
-                Session.I.Physics.CastLongRay(trackingCheckPosition, targetPos, out rayHitInfo, false); //TODO check if this improves voxel detection
+            Session.I.Physics.CastRay(trackingCheckPosition, targetPos, out rayHitInfo);
 
             RayCallBack.NormalShootRayCallBack(rayHitInfo);
 

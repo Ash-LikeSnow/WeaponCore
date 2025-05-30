@@ -11,6 +11,7 @@ using VRageMath;
 using VRageRender;
 using static VRageRender.MyBillboard;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
+using static CoreSystems.Support.WeaponDefinition;
 namespace CoreSystems.Support
 {
     class RunAv
@@ -138,38 +139,66 @@ namespace CoreSystems.Support
                         else av.TravelEmitter.SetPosition(av.TracerFront);
                     }
 
-                    if (av.HitParticle == AvShot.ParticleState.Custom || av.HitParticle == AvShot.ParticleState.Shield)
+                    if (!(av.HitParticle == AvShot.ParticleState.Dirty || av.HitParticle == AvShot.ParticleState.None))
                     {
                         if (av.OnScreen != AvShot.Screen.None)
                         {
                             var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
-                            var particle = av.HitParticle == AvShot.ParticleState.Shield ? av.AmmoDef.AmmoGraphics.Particles.ShieldHit : av.AmmoDef.AmmoGraphics.Particles.Hit;
+                            ParticleDef particle;
+                            bool gravPerp = false;
                             MatrixD matrix = MatrixD.CreateTranslation(pos);
-                            if (av.HitParticle == AvShot.ParticleState.Shield)
+                            switch (av.HitParticle)
                             {
-                                if(av.ShieldHitAngle == Vector3D.Zero)
+                                case AvShot.ParticleState.Shield:
+                                    particle = av.AmmoDef.AmmoGraphics.Particles.ShieldHit;
+                                    if (av.ShieldHitAngle == Vector3D.Zero)
+                                    {
+                                        var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
+                                        var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
+                                        lineToShield.Normalize();
+                                        matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));
+                                    }
+                                    else
+                                        matrix = MatrixD.CreateWorld(pos, av.ShieldHitAngle, Vector3D.CalculatePerpendicularVector(av.ShieldHitAngle));
+                                    break;
+                                case AvShot.ParticleState.Water:
+                                    particle = av.AmmoDef.AmmoGraphics.Particles.WaterHit;
+                                    gravPerp = true;
+                                    break;
+                                case AvShot.ParticleState.Voxel:
+                                    particle = av.AmmoDef.AmmoGraphics.Particles.VoxelHit;
+                                    gravPerp = true;
+                                    break;
+                                case AvShot.ParticleState.Custom:
+                                default:
+                                    particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
+                                    if (particle.Offset == Vector3D.MaxValue)
+                                        matrix = MatrixD.CreateWorld(pos, av.VisualDir, Vector3D.CalculatePerpendicularVector(av.VisualDir));
+                                    else if (particle.Offset == Vector3D.MinValue)
+                                        gravPerp = true;
+                                    break;
+                            }
+
+                            if (gravPerp)
+                            {
+                                if (av.Weapon?.Comp?.Ai?.MyPlanet != null)
                                 {
-                                    var grid = av.Hit.Entity.GetTopMostParent() as IMyCubeGrid;
-                                    var lineToShield = pos - grid.PositionComp.WorldAABB.Center;
-                                    lineToShield.Normalize();
-                                    matrix = MatrixD.CreateWorld(pos, lineToShield, Vector3D.CalculatePerpendicularVector(lineToShield));
+                                    var planetDir = pos - av.Weapon.Comp.Ai.MyPlanet.PositionComp.WorldAABB.Center;
+                                    planetDir.Normalize();
+                                    matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(planetDir), -planetDir);
                                 }
                                 else
-                                    matrix = MatrixD.CreateWorld(pos, av.ShieldHitAngle, Vector3D.CalculatePerpendicularVector(av.ShieldHitAngle));
-                            }
-                            else if (particle.Offset == Vector3D.MaxValue)
-                                matrix = MatrixD.CreateWorld(pos, av.VisualDir, Vector3D.CalculatePerpendicularVector(av.VisualDir));
-                            else if (particle.Offset == Vector3D.MinValue)
-                            {
-                                float interference;
-                                Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
-                                localGrav.Normalize();
-                                if (localGrav != Vector3D.Zero)
-                                    matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(localGrav), -localGrav);
+                                {
+                                    float interference;
+                                    Vector3D localGrav = Session.I.Physics.CalculateNaturalGravityAt(pos, out interference);
+                                    localGrav.Normalize();
+                                    if (localGrav != Vector3D.Zero)
+                                        matrix = MatrixD.CreateWorld(pos, Vector3D.CalculatePerpendicularVector(localGrav), -localGrav);
+                                }
                             }
 
                             MyParticleEffect hitEffect;
-                            if (MyParticlesManager.TryCreateParticleEffect(av.HitParticle == AvShot.ParticleState.Shield ? av.AmmoDef.Const.ShieldHitParticleStr : av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
+                            if (MyParticlesManager.TryCreateParticleEffect(particle.Name, ref matrix, ref pos, uint.MaxValue, out hitEffect))
                             {
                                 hitEffect.UserScale = particle.Extras.Scale;
                                 var tickVelo = av.Hit.HitVelocity / 60;
@@ -214,7 +243,7 @@ namespace CoreSystems.Support
                         }
                     }
 
-                    if (av.Hit.EventType == HitEntity.Type.Water)
+                    if (av.Hit.EventType == HitEntity.Type.Water && !av.AmmoDef.Const.WaterHitParticle)
                     {
                         var splashHit = av.Hit.SurfaceHit;
                         var ammoInfo = av.AmmoDef;

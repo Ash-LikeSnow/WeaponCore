@@ -59,6 +59,8 @@ namespace CoreSystems.Support
         internal bool ForceHitParticle;
         internal bool HitParticleActive;
         internal bool ShieldHitParticleActive;
+        internal bool VoxelHitParticleActive;
+        internal bool WaterHitParticleActive;
         internal bool MarkForClose;
         internal bool ProEnded;
         internal bool AccelClearance;
@@ -130,6 +132,8 @@ namespace CoreSystems.Support
             None,
             Custom,
             Shield,
+            Water,
+            Voxel,
             Dirty,
         }
 
@@ -388,7 +392,10 @@ namespace CoreSystems.Support
 
                 var lineOnScreen = a.OnScreen > (Screen)2;
 
-                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && (a.Hit.EventType == HitEntity.Type.Shield && aConst.ShieldHitParticleNoCull) || aConst.HitParticleNoCull) || aConst.FieldParticle && aConst.FieldParticleNoCull) {
+                var anyHitParticleNoCull = saveHit && (aConst.HitParticleNoCull || aConst.ShieldHitParticleNoCull || aConst.VoxelHitParticleNoCull || aConst.WaterHitParticleNoCull);
+
+                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || anyHitParticleNoCull || aConst.FieldParticle && aConst.FieldParticleNoCull))
+                {
                     a.Active = true;
                     s.Av.AvShots.Add(a);
                 }
@@ -972,6 +979,10 @@ namespace CoreSystems.Support
                 if (OnScreen == Screen.Tracer) {
                     if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle && (AmmoDef.Const.ShieldHitParticleNoCull || distToCameraSqr < 360000))
                         HitParticle = ParticleState.Shield;
+                    else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && (AmmoDef.Const.WaterHitParticleNoCull || distToCameraSqr < 360000))
+                        HitParticle = ParticleState.Water;
+                    else if (VoxelHitParticleActive && Hit.EventType == HitEntity.Type.Voxel && (AmmoDef.Const.VoxelHitParticleNoCull || distToCameraSqr < 360000))
+                        HitParticle = ParticleState.Voxel;
                     else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && (AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000))
                         HitParticle = ParticleState.Custom;
                 }

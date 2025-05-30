@@ -47,6 +47,7 @@ namespace CoreSystems.Platform
                     {
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        Weapon.PauseShoot = true;
                         return;
                     }
                 }
@@ -62,6 +63,7 @@ namespace CoreSystems.Platform
                             return;
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
+                        Weapon.PauseShoot = true;
                         return;
                     }
                 }
@@ -80,6 +82,7 @@ namespace CoreSystems.Platform
                     {
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
+                        Weapon.PauseShoot = true;
                         return;
                     }
 
@@ -96,6 +99,7 @@ namespace CoreSystems.Platform
                     {
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        Weapon.PauseShoot = true;
                         return;
                     }
                     return;

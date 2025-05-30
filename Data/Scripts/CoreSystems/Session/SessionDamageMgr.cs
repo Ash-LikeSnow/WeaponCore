@@ -124,7 +124,6 @@ namespace CoreSystems
         internal readonly List<MyCubeGrid> Clean = new List<MyCubeGrid>();
         internal void DefferedDestroy()
         {
-            var sync = MpActive && (DedicatedServer || IsServer);
             Clean.Clear();
             _destroyedSlims.Clear();
             foreach (var d in DeferredDestroy)
@@ -146,7 +145,7 @@ namespace CoreSystems
                     {
                         var info = collection[i];
                         if (!info.Block.IsDestroyed)
-                            info.Block.DoDamage(info.ScaledDamage, info.DamageType, sync, null, info.AttackerId, 0, info.DetonateAmmo);
+                            info.Block.DoDamage(info.ScaledDamage, info.DamageType, IsServer, null, info.AttackerId, 0, info.DetonateAmmo);
                     }
                     collection.Clear();
                 }
@@ -766,7 +765,7 @@ namespace CoreSystems
 
                                 if (!deadBlock || gridBlockCount < 2500)
                                 {
-                                    block.DoDamage(scaledDamage, damageType, DedicatedServer, null, attackerId);
+                                    block.DoDamage(scaledDamage, damageType, IsServer, null, attackerId);
 
                                     var remainingHp = blockHp - scaledDamage;
 
@@ -916,8 +915,6 @@ namespace CoreSystems
             var areaDmgGlobal = Settings.Enforcement.AreaDamageModifer;
 
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
-            var sync = MpActive && IsServer;
-
             var attackerId = info.Weapon.Comp.CoreEntity.EntityId;
 
             var objHp = destObj.Integrity;
@@ -964,7 +961,7 @@ namespace CoreSystems
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Entity, (float)scaledDamage));
                 }
-                destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, sync, null, attackerId);
+                destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, IsServer, null, attackerId);
             }
 
             if (info.AmmoDef.Const.Mass > 0)
