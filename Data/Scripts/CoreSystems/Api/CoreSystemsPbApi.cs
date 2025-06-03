@@ -8,6 +8,8 @@ using VRageMath;
 
 namespace CoreSystems.Api
 {
+    // WC PB API USERS:  Copy the class below into your script
+
     /// <summary>
     /// https://github.com/Ash-LikeSnow/WeaponCore/blob/master/Data/Scripts/CoreSystems/Api/CoreSystemsPbApi.cs
     /// </summary>

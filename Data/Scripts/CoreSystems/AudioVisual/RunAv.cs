@@ -243,17 +243,6 @@ namespace CoreSystems.Support
                         }
                     }
 
-                    if (av.Hit.EventType == HitEntity.Type.Water && !av.AmmoDef.Const.WaterHitParticle)
-                    {
-                        var splashHit = av.Hit.SurfaceHit;
-                        var ammoInfo = av.AmmoDef;
-                        var radius = ammoInfo.Const.CollisionSize > ammoInfo.Const.LargestHitSize ? (float)ammoInfo.Const.CollisionSize : (float)ammoInfo.Const.LargestHitSize;
-                        if (radius < 3)
-                            radius = 3;
-
-                        WaterModAPI.CreateSplash(splashHit, radius, true);
-                    }
-
                     if (av.Model != AvShot.ModelState.None)
                     {
                         if (av.AmmoEffect != null && av.AmmoDef.Const.AmmoParticle && av.AmmoDef.Const.PrimeModel)
