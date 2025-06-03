@@ -248,6 +248,8 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateSelectFriend(session);
             CreateCustomActions<T>.CreateSelectEnemy(session);
 
+            CreateCustomActions<T>.CreateMaxRange(session);
+
             CreateCustomActions<T>.CreateMinSize(session);
             CreateCustomActions<T>.CreateMaxSize(session);
             //CreateCustomActions<T>.CreateFriendly(session);
