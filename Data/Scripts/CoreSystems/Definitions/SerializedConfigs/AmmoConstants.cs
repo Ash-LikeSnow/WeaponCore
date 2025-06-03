@@ -49,6 +49,7 @@ namespace CoreSystems.Support
         public readonly MySoundPair VoxelSoundPair;
         public readonly MySoundPair PlayerSoundPair;
         public readonly MySoundPair FloatingSoundPair;
+        public readonly MySoundPair WaterSoundPair;
         public readonly MyAmmoMagazineDefinition MagazineDef;
         public readonly ApproachConstants[] Approaches;
         public readonly AmmoDef[] AmmoPattern;
@@ -235,6 +236,7 @@ namespace CoreSystems.Support
         public readonly bool PlayerSound;
         public readonly bool FloatingSound;
         public readonly bool ShieldSound;
+        public readonly bool WaterSound;
         public readonly bool IsDrone;
         public readonly bool IsSmart;
         public readonly bool AccelClearance;
@@ -505,7 +507,7 @@ namespace CoreSystems.Support
 
             Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay, out PowerPerTick);
             Sound(ammo, system,out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr,
-                out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair);
+                out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair, out WaterSound, out WaterSoundPair);
 
             MagazineSize = EnergyAmmo ? EnergyMagSize : MagazineDef.Capacity;
 
@@ -1107,7 +1109,8 @@ namespace CoreSystems.Support
 
         private void Sound(WeaponSystem.AmmoType ammo, WeaponSystem system, out bool hitSound, out MySoundPair hitSoundPair, out bool ammoTravelSound, out MySoundPair travelSoundPair, out bool shotSound, out MySoundPair shotSoundPair, 
             out bool detSound, out MySoundPair detSoundPair, out float hitSoundDistSqr, out float ammoTravelSoundDistSqr, out float ammoSoundMaxDistSqr, out float shotSoundDistSqr, out float detSoundDistSqr, out string rawShotSoundStr, 
-            out bool voxelSound, out MySoundPair voxelSoundPair, out bool floatingSound, out MySoundPair floatingSoundPair, out bool playerSound, out MySoundPair playerSoundPair, out bool shieldSound, out MySoundPair shieldSoundPair)
+            out bool voxelSound, out MySoundPair voxelSoundPair, out bool floatingSound, out MySoundPair floatingSoundPair, out bool playerSound, out MySoundPair playerSoundPair, out bool shieldSound, out MySoundPair shieldSoundPair, 
+            out bool waterSound, out MySoundPair waterSoundPair)
         {
             var ammoDef = ammo.AmmoDef;
             var weaponShotSound = !string.IsNullOrEmpty(system.Values.HardPoint.Audio.FiringSound);
@@ -1182,6 +1185,9 @@ namespace CoreSystems.Support
 
             shieldSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.ShieldHitSound);
             shieldSoundPair = shieldSound ? new MySoundPair(ammoDef.AmmoAudio.ShieldHitSound, false) : hitSound ? new MySoundPair(ammoDef.AmmoAudio.HitSound, false) :  null;
+
+            waterSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.WaterHitSound);
+            waterSoundPair = waterSound ? new MySoundPair(ammoDef.AmmoAudio.WaterHitSound, false) : null;
         }
 
         private MyEntity PrimeEntityActivator()

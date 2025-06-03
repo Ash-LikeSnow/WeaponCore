@@ -1278,6 +1278,7 @@ namespace CoreSystems.Support
                 [ProtoMember(7)] internal string FloatingHitSound;
                 [ProtoMember(8)] internal string ShieldHitSound;
                 [ProtoMember(9)] internal string ShotSound;
+                [ProtoMember(10)] internal string WaterHitSound;
             }
 
             [ProtoContract]

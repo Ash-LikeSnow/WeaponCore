@@ -3,6 +3,7 @@ using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent.Trigger;
 
@@ -408,6 +409,90 @@ namespace CoreSystems.Control
             Weapon.WeaponComponent.RequestSetValue(comp, "MinSize", newValue, Session.I.PlayerId);
         }
 
+        internal static void TerminalActionMaxRangeIncrease(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var curRange = comp.Data.Repo.Values.Set.Range;
+            var maxRange = 0f;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var w = comp.Collection[i];
+                var curMax = w.GetMaxWeaponRange();
+                if (curMax > maxRange)
+                    maxRange = (float)curMax;
+            }
+
+            var delta = maxRange * 0.1f;
+            if (curRange == maxRange)
+                return;
+            else if (curRange + delta > maxRange)
+                curRange = maxRange;
+            else
+                curRange += delta;
+
+            if (!MyUtils.IsEqual(curRange, comp.Data.Repo.Values.Set.Range))
+            {
+                if (Session.I.IsServer)
+                {
+                    comp.Data.Repo.Values.Set.Range = curRange;
+                    Weapon.WeaponComponent.SetRange(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
+                }
+                else
+                    Session.I.SendSetCompFloatRequest(comp, curRange, PacketType.RequestSetRange);
+            }
+        }
+
+        internal static void TerminalActionMaxRangeDecrease(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var curRange = comp.Data.Repo.Values.Set.Range;
+
+            var minRange = float.MaxValue;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var w = comp.Collection[i];
+                var curMin = w.System.WConst.MinTargetDistance;
+                if (curMin < minRange)
+                    minRange = (float)curMin;
+            }
+
+            var maxRange = 0f;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var w = comp.Collection[i];
+                var curMax = w.GetMaxWeaponRange();
+                if (curMax > maxRange)
+                    maxRange = (float)curMax;
+            }
+
+            var delta = maxRange * 0.1f;
+            if (curRange == minRange)
+                return;
+            else if (curRange - delta < minRange)
+                curRange = minRange;
+            else
+                curRange -= delta;
+
+            if (!MyUtils.IsEqual(curRange, comp.Data.Repo.Values.Set.Range))
+            {
+                if (Session.I.IsServer)
+                {
+                    comp.Data.Repo.Values.Set.Range = curRange;
+                    Weapon.WeaponComponent.SetRange(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
+                }
+                else
+                    Session.I.SendSetCompFloatRequest(comp, curRange, PacketType.RequestSetRange);
+            }
+        }
+
         internal static void TerminalActionCycleAmmo(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -655,14 +740,20 @@ namespace CoreSystems.Control
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.MaxSize);
+            sb.Append($"Mx:{comp.Data.Repo.Values.Set.Overrides.MaxSize}");
         }
 
         internal static void MinSizeWriter(IMyTerminalBlock blk, StringBuilder sb)
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.MinSize);
+            sb.Append($"Mn:{comp.Data.Repo.Values.Set.Overrides.MinSize}");
+        }
+        internal static void MaxRangeWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            sb.Append($"{comp.Data.Repo.Values.Set.Range}m");
         }
 
         internal static void ControlStateWriter(IMyTerminalBlock blk, StringBuilder sb)

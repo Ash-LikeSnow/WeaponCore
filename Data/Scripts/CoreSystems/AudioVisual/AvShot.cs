@@ -971,12 +971,11 @@ namespace CoreSystems.Support
                 double distToCameraSqr;
                 Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref Session.CameraPos, out distToCameraSqr);
 
-                if (Hit.EventType == HitEntity.Type.Water) 
-                {
+                if (Hit.EventType == HitEntity.Type.Water && !AmmoDef.Const.WaterHitParticle)
                     HitParticleActive = true;
-                }
 
-                if (OnScreen == Screen.Tracer) {
+                if (OnScreen != Screen.None) 
+                {
                     if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle && (AmmoDef.Const.ShieldHitParticleNoCull || distToCameraSqr < 360000))
                         HitParticle = ParticleState.Shield;
                     else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && (AmmoDef.Const.WaterHitParticleNoCull || distToCameraSqr < 360000))
@@ -987,43 +986,32 @@ namespace CoreSystems.Support
                         HitParticle = ParticleState.Custom;
                 }
 
-
                 var hitSound = AmmoDef.Const.HitSound && HitSoundActive && distToCameraSqr < AmmoDef.Const.HitSoundDistSqr && (!LastHitShield || AmmoDef.AmmoAudio.HitPlayShield);
-                if (hitSound) {
-
+                if (hitSound) 
+                {
                     MySoundPair pair = null;
-                    var shield = Hit.Entity as IMyUpgradeModule;
-                    var voxel = Hit.Entity as MyVoxelBase;
-                    var player = Hit.Entity as IMyCharacter;
-                    var floating = Hit.Entity as MyFloatingObject;
 
-                    if (voxel != null && AmmoDef.Const.VoxelSound) {
+                    if (AmmoDef.Const.VoxelSound && Hit.EventType == HitEntity.Type.Voxel)
                         pair = AmmoDef.Const.VoxelSoundPair;
-                    }
-                    else if (player != null && AmmoDef.Const.PlayerSound) {
+                    else if (AmmoDef.Const.PlayerSound && Hit.Entity is IMyCharacter)
                         pair = AmmoDef.Const.PlayerSoundPair;
-                    }
-                    else if (floating != null && AmmoDef.Const.FloatingSound) {
+                    else if (AmmoDef.Const.FloatingSound && Hit.Entity is MyFloatingObject)
                         pair = AmmoDef.Const.FloatingSoundPair;
-                    }
-                    else if (shield != null && AmmoDef.Const.ShieldSound) {
+                    else if (AmmoDef.Const.ShieldSound && LastHitShield)
                         pair = AmmoDef.Const.ShieldSoundPair;
-                    }
-                    else if (AmmoDef.Const.HitSound) {
+                    else if (AmmoDef.Const.WaterSound && Hit.EventType == HitEntity.Type.Water)
+                        pair = AmmoDef.Const.WaterSoundPair;
+                    else if (AmmoDef.Const.HitSound)
                         pair = AmmoDef.Const.HitSoundPair;
-                    }
 
-                    if (pair != null) {
-
+                    if (pair != null) 
+                    {
                         var hitEmitter = Session.Av.PersistentEmitters.Count > 0 ? Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
-
                         var pos = Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) ? Hit.SurfaceHit : TracerFront;
                         hitEmitter.Entity = Hit.Entity;
                         hitEmitter.SetPosition(pos);
                         hitEmitter.PlaySound(pair);
-
                         Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Session.I.Av.PersistentEmitters, SpawnTick = Session.I.Tick });
-
                         HitSoundInitted = true;
                     }
                 }

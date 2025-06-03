@@ -299,6 +299,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                                 set.ClientConfig.MinimalHud = !set.ClientConfig.MinimalHud;
                                 set.ClientConfig.HideReload = false;
                             }
+                            s.ShowLocalNotify($"WC Top Hud: {(set.ClientConfig.MinimalHud ? "Minimal" : "Full")}", 2000, "Red", true);
+                            s.ShowLocalNotify($"WC Right Info Panel: {(set.ClientConfig.HideReload ? "Off" : "On")}", 2000, "Red");
                             set.VersionControl.UpdateClientCfgFile();
                         }
                         else if (!set.ClientConfig.AdvancedMode)

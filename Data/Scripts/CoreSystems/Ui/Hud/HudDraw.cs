@@ -228,6 +228,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         public const string NoSubSystemStr =    ": No Subsys";
         public const string RotatingStr =       ": Rotating";
         public const string NotInRangeStr =     ": Too Far";
+        public const string NoLOSStr =          ": No LOS";
         public const string InsideMinRangeStr = ": Too Close";
         public const string NoTargetSetStr =    ": Pick Targ";
         public const string FakeOnTarg =        ": Aligned";
@@ -255,19 +256,24 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     weapon.UpdateAndGetFriendlyName();
                 if (needsTarget)
                 {
+                    var di = comp.MasterAi.DetectionInfo;
+                    var notManual = comp.MasterOverrides.Control != ProtoWeaponOverrides.ControlModes.Manual;
+                    var inRange = weapon.MaxTargetDistanceSqr > 0 && ((di.OtherRangeSqr == double.MaxValue ? false : di.OtherRangeSqr < weapon.MaxTargetDistanceSqr) || (di.PriorityRangeSqr == double.MaxValue ? false : di.PriorityRangeSqr < weapon.MaxTargetDistanceSqr));
                     if (weapon.OutOfAmmo && !showReloadIcon)
                         displayText += NoAmmoStr;
-                    else if (comp.MasterOverrides.Control != ProtoWeaponOverrides.ControlModes.Manual && (weapon.Target.CurrentState == Target.States.NotSet || weapon.Target.CurrentState == Target.States.Expired))
+                    else if (notManual && (weapon.Target.CurrentState == Target.States.NotSet || weapon.Target.CurrentState == Target.States.Expired))
                         displayText += NoTargetSetStr;
                     else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
                         displayText += NoSubSystemStr;
-                    else if (weapon.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < weapon.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < weapon.MinTargetDistanceSqr))
+                    else if (weapon.MinTargetDistanceSqr > 0 && (di.OtherRangeSqr < weapon.MinTargetDistanceSqr || di.PriorityRangeSqr < weapon.MinTargetDistanceSqr))
                         displayText += InsideMinRangeStr;
-                    else if (comp.MasterOverrides.Control != ProtoWeaponOverrides.ControlModes.Manual)
+                    else if (!weapon.Target.HasTarget && (weapon.PauseShoot || (notManual && inRange)))
+                        displayText += NoLOSStr;
+                    else if (notManual && !inRange)
                         displayText += NotInRangeStr;
                 }
                 else if (weapon.Comp.HasTurret && !weapon.Target.IsAligned && weapon.Target.ValidEstimate)
-                        displayText += RotatingStr;
+                    displayText += RotatingStr;
                 else if (weapon.Comp.HasTurret && weapon.Target.CurrentState == Target.States.Fake)
                 {
                     if (weapon.Target.IsAligned)

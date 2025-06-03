@@ -504,6 +504,31 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action1);
         }
 
+        public static void CreateMaxRange(Session session)
+        {
+            var action0 = MyAPIGateway.TerminalControls.CreateAction<T>("MaxRange Increase");
+            action0.Icon = @"Textures\GUI\Icons\Actions\Increase.dds";
+            action0.Name = new StringBuilder(Localization.GetText("ActionMaxRangeIncrease"));
+            action0.Action = CustomActions.TerminalActionMaxRangeIncrease;
+            action0.Writer = CustomActions.MaxRangeWriter;
+            action0.Enabled = TerminalHelpers.HasTracking;
+            action0.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action0);
+            session.CustomActions.Add(action0);
+
+            var action1 = MyAPIGateway.TerminalControls.CreateAction<T>("MaxRange Decrease");
+            action1.Icon = @"Textures\GUI\Icons\Actions\Decrease.dds";
+            action1.Name = new StringBuilder(Localization.GetText("ActionMaxRangeDecrease"));
+            action1.Action = CustomActions.TerminalActionMaxRangeDecrease;
+            action1.Writer = CustomActions.MaxRangeWriter;
+            action1.Enabled = TerminalHelpers.HasTracking;
+            action1.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action1);
+            session.CustomActions.Add(action1);
+        }
+
         public static void CreateMovementState(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("TrackingMode");

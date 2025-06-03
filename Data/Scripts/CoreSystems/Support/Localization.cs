@@ -126,10 +126,10 @@ namespace CoreSystems.Support
                         { "ActionUnowned", "Target Unowned On/Off" },
                         { "ActionFocusTargets", "Focus Fire On/Off" },
                         { "ActionFocusSubSystem", "Target SubSystems On/Off" },
-                        { "ActionMaxSizeIncrease", "MaxSize Increase" },
-                        { "ActionMaxSizeDecrease", "MaxSize Decrease" },
-                        { "ActionMinSizeIncrease", "MinSize Increase" },
-                        { "ActionMinSizeDecrease", "MinSize Decrease" },
+                        { "ActionMaxSizeIncrease", "Max Target Size Increase" },
+                        { "ActionMaxSizeDecrease", "Max Target Size Decrease" },
+                        { "ActionMinSizeIncrease", "Min Target Size Increase" },
+                        { "ActionMinSizeDecrease", "Min Target Size Decrease" },
                         { "ActionTrackingMode", "Cycle Movement Mode" },
                         { "ActionWC_CycleAmmo", "Cycle Ammo" },
                         { "ActionWC_RepelMode", "Repel Mode On/Off" },
@@ -243,6 +243,8 @@ namespace CoreSystems.Support
                         { "WeaponTargNeedSelection", "Manually select target" },
                         { "WeaponTargTooClose", "Too close" },
                         { "WeaponInfoCheckAmmoType", "No selected ammo, alternatives in inventory" },
+                        { "ActionMaxRangeIncrease", "Increase Max Range" },
+                        { "ActionMaxRangeDecrease", "Decrease Max Range" },
                     }
                 },
                {
