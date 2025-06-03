@@ -1154,19 +1154,19 @@ namespace CoreSystems.Support
                     if (ob != null) hitSoundDistSqr = ob.MaxDistance * ob.MaxDistance;
                     if (hitSoundDistSqr > ammoSoundMaxDistSqr) ammoSoundMaxDistSqr = hitSoundDistSqr;
                 }
-                else if (ammoTravelSound && (id == travelSoundStr || id == ammoDef.AmmoAudio.TravelSound))
+                if (ammoTravelSound && (id == travelSoundStr || id == ammoDef.AmmoAudio.TravelSound))
                 {
                     var ob = def.GetObjectBuilder() as MyObjectBuilder_AudioDefinition;
                     if (ob != null) ammoTravelSoundDistSqr = ob.MaxDistance * ob.MaxDistance;
                     if (ammoTravelSoundDistSqr > ammoSoundMaxDistSqr) ammoSoundMaxDistSqr = ammoTravelSoundDistSqr;
                 }
-                else if (shotSound && (id == shotSoundStr || id == rawShotSoundStr))
+                if (shotSound && (id == shotSoundStr || id == rawShotSoundStr))
                 {
                     var ob = def.GetObjectBuilder() as MyObjectBuilder_AudioDefinition;
                     if (ob != null) shotSoundDistSqr = ob.MaxDistance * ob.MaxDistance;
                     if (shotSoundDistSqr > ammoSoundMaxDistSqr) ammoSoundMaxDistSqr = shotSoundDistSqr;
                 }
-                else if (detSound && (id == detSoundStr || id == DetSoundStr))
+                if (detSound && (id == detSoundStr || id == DetSoundStr))
                 {
                     var ob = def.GetObjectBuilder() as MyObjectBuilder_AudioDefinition;
                     if (ob != null) detSoundDistSqr = ob.MaxDistance * ob.MaxDistance;
