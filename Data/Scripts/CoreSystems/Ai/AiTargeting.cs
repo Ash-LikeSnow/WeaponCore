@@ -253,7 +253,7 @@ namespace CoreSystems.Support
 
                 if (info.IsGrid)
                 {
-                    if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
+                    if (!s.TrackGrids || !overRides.Grids || ((s.TrackProhibitLG || !overRides.LargeGrid) && info.LargeGrid) || ((s.TrackProhibitSG || !overRides.SmallGrid) && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
 
                     if (w.System.TargetGridCenter)
                     {
@@ -457,7 +457,7 @@ namespace CoreSystems.Support
 
                 if (grid != null)
                 {
-                    if (!overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
+                    if (!overRides.Grids || ((s.TrackProhibitLG || !overRides.LargeGrid) && info.LargeGrid) || ((s.TrackProhibitSG || !overRides.SmallGrid) && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
                     session.CanShoot++;
                     Vector3D newCenter;
 
@@ -827,7 +827,7 @@ namespace CoreSystems.Support
                 if (tInfo.IsGrid)
                 {
 
-                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || !aConst.CheckFutureIntersection && Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
+                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || !aConst.CheckFutureIntersection && Obstruction(ref tInfo, ref targetPos, p) || ((s.TrackProhibitLG || !overRides.LargeGrid) && tInfo.LargeGrid) || ((s.TrackProhibitSG || !overRides.SmallGrid) && !tInfo.LargeGrid)) continue;
 
                     if (!AcquireBlock(w, target, tInfo, ref waterSphere, ref info.Random, p, focusTarget)) continue;
                     acquired = true;
@@ -1823,7 +1823,7 @@ namespace CoreSystems.Support
                 if (info.IsGrid)
                 {
 
-                    if (!s.TrackGrids || !overRides.Grids || info.FatCount < 2 || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid)) continue;
+                    if (!s.TrackGrids || !overRides.Grids || info.FatCount < 2 || ((s.TrackProhibitLG || !overRides.LargeGrid) && info.LargeGrid) || ((s.TrackProhibitSG || !overRides.SmallGrid) && !info.LargeGrid)) continue;
                     session.CanShoot++;
                     Vector3D newCenter;
                     if (!w.TurretController)

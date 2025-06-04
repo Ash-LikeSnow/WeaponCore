@@ -190,6 +190,8 @@ namespace CoreSystems.Support
         public readonly bool TrackGrids;
         public readonly bool TrackCharacters;
         public readonly bool TrackMeteors;
+        public readonly bool TrackProhibitLG;
+        public readonly bool TrackProhibitSG;
         public readonly bool UniqueTargetPerWeapon;
         public readonly bool TrackNeutrals;
         public readonly bool DisableLosCheck;
@@ -374,7 +376,8 @@ namespace CoreSystems.Support
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents, out EmissiveLookup);
-
+            TrackProhibitLG = Values.HardPoint.Other.ProhibitLGTargeting;
+            TrackProhibitSG = Values.HardPoint.Other.ProhibitSGTargeting;
             // CheckForBadAnimations();
 
             ApproximatePeakPower = WConst.IdlePower;
