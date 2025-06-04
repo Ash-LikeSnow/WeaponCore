@@ -228,6 +228,12 @@ namespace CoreSystems.Support
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoServerModdedLine1")}\n")
                     .Append($"\n{Localization.GetText("WeaponInfoServerModdedLine2")}");
 
+            if (comp.PrimaryWeapon.System.TrackProhibitLG)
+                stringBuilder.Append($"\nCannot target large grids!");
+
+            if (comp.PrimaryWeapon.System.TrackProhibitSG)
+                stringBuilder.Append($"\nCannot target small grids!");
+
             //Start of new formatting
             if (IdlePower > 0.01)
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");

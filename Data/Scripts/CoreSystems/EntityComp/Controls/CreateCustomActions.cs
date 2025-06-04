@@ -377,7 +377,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionTargetLargeGrids"));
             action.Action = CustomActions.TerminalActionToggleLargeGrid;
             action.Writer = CustomActions.LargeGridWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.HasTrackingNoSizeProhibition;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -391,7 +391,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionTargetSmallGrids"));
             action.Action = CustomActions.TerminalActionToggleSmallGrid;
             action.Writer = CustomActions.SmallGridWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.HasTrackingNoSizeProhibition;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

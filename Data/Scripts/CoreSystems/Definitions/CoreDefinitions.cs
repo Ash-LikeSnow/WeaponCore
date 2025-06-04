@@ -617,6 +617,8 @@ namespace CoreSystems.Support
                 [ProtoMember(9)] internal bool DisableLosCheck;
                 [ProtoMember(10)] internal bool NoVoxelLosCheck;
                 [ProtoMember(11)] internal bool AllowScopeOutsideObb;
+                [ProtoMember(12)] internal bool ProhibitLGTargeting;
+                [ProtoMember(13)] internal bool ProhibitSGTargeting;
             }
 
             [ProtoContract]
