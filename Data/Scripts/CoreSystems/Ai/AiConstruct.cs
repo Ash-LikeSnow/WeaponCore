@@ -440,6 +440,19 @@ namespace CoreSystems.Support
                     double rangeToTarg = double.MaxValue;
                     var currentAim = aFB.LookAtPosition == null ? Vector3D.Zero : (Vector3D)aFB.LookAtPosition;
                     var hasTarg = aCB.SearchEnemyComponent.FoundEnemy != null;
+
+                    if (Session.I.IsServer)
+                    {
+                        if (hasTarg)
+                        {
+                            var targTopmost = aCB.SearchEnemyComponent.FoundEnemy.GetTopMostParent();
+                            if (checkAi.Construct.Data.Repo.FocusData.Target != targTopmost.EntityId)
+                                checkAi.Construct.Focus.ServerChangeFocus((MyEntity)targTopmost, checkAi, 0, Focus.ChangeMode.Add, true);
+                        }
+                        else if (checkAi.Construct.Data.Repo.FocusData.Target != 0)
+                            checkAi.Construct.Focus.ServerChangeFocus(null, checkAi, 0, Focus.ChangeMode.Release, true);
+                    }
+
                     var targSphere = new BoundingSphereD(hasTarg ? aCB.SearchEnemyComponent.FoundEnemy.PositionComp.WorldAABB.Center : Vector3D.Zero, 1); //Does the radius really matter here?  use actual enemy or lead position?
 
                     if (currentAim != Vector3D.Zero && !stopFiring)
@@ -452,7 +465,7 @@ namespace CoreSystems.Support
                     {
                         foreach (var comp in ais[x].WeaponComps)
                         {
-                            if (comp.HasTurret || comp.HasScanTrackOnly) continue;
+                            if (comp.HasTurret || comp.HasScanTrackOnly || comp.PrimaryWeapon.System.RadioType != WeaponCore.Data.Scripts.CoreSystems.Comms.Radio.RadioTypes.None) continue;
 
                             if (comp.HasGuidance)
                             {
