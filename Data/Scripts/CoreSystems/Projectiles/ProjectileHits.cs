@@ -688,11 +688,6 @@ namespace CoreSystems.Projectiles
                 info.ProHit.Entity = hitEntity.Entity;
                 info.ProHit.LastHit = hitEntity.HitPos ?? p.Beam.To;
 
-                if (aConst.OnHit && Session.I.Tick >= info.ProHit.EndTick)
-                {
-                    info.ProHit.EndTick = Session.I.Tick + aConst.OnHitDuration;
-                }
-
                 if (p.EnableAv || aConst.VirtualBeams)
                 {
                     Vector3D lastHitVel = Vector3D.Zero;

@@ -1314,7 +1314,7 @@ namespace CoreSystems.Support
                 [ProtoMember(14)] internal uint MaxTrajectoryTime;
                 [ProtoMember(15)] internal ApproachDef[] Approaches;
                 [ProtoMember(16)] internal double TotalAcceleration;
-                [ProtoMember(17)] internal OnHitDef OnHit;
+                [ProtoMember(17)] internal OnHitDef OnHit; //Deprecated
                 [ProtoMember(18)] internal float DragPerSecond;
                 [ProtoMember(19)] internal float DragMinSpeed;
 
@@ -1553,6 +1553,7 @@ namespace CoreSystems.Support
                 [ProtoContract]
                 public struct OnHitDef
                 {
+                    /*
                     [ProtoMember(1)] internal int Duration;
                     [ProtoMember(2)] internal int ProcInterval;
                     [ProtoMember(3)] internal double ProcAmount;
@@ -1561,6 +1562,7 @@ namespace CoreSystems.Support
                     [ProtoMember(6)] internal bool DieOnEnd;
                     [ProtoMember(7)] internal bool StickOnHit;
                     [ProtoMember(8)] internal bool AlignFragtoImpactAngle;
+                    */
                 }
             }
 

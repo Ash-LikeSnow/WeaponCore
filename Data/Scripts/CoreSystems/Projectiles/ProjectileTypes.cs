@@ -483,14 +483,6 @@ namespace CoreSystems.Support
     {
         internal MyEntity Entity;
         internal Vector3D LastHit;
-        internal uint EndTick;
-        internal int ProcInterval;
-        internal double ProcAmount;
-        internal bool ProcOnVoxels;
-        internal bool FragOnProc;
-        internal bool DieOnEnd;
-        internal bool StickOnHit;
-        internal bool AlignFragtoImpactAngle;
     }
 
     internal class WeaponFrameCache

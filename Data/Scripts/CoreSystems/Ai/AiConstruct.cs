@@ -441,7 +441,7 @@ namespace CoreSystems.Support
                     var currentAim = aFB.LookAtPosition == null ? Vector3D.Zero : (Vector3D)aFB.LookAtPosition;
                     var hasTarg = aCB.SearchEnemyComponent.FoundEnemy != null;
 
-                    if (Session.I.IsServer)
+                    if (aCB.IsWorking && aFB.IsWorking && Session.I.IsServer)
                     {
                         if (hasTarg)
                         {
