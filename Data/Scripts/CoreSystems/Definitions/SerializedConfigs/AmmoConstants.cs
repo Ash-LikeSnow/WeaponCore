@@ -108,8 +108,6 @@ namespace CoreSystems.Support
         public readonly int FragGroupDelay;
         public readonly int DeformDelay;
         public readonly int OffsetTime;
-        public readonly uint OnHitProcInterval;
-        public readonly uint OnHitDuration;
         public readonly uint FakeVoxelHitTicks;
         public readonly bool HasApproaches;
         public readonly bool KeepAliveAfterTargetLoss;
@@ -251,7 +249,6 @@ namespace CoreSystems.Support
         public readonly bool EwarFieldTrigger;
         public readonly bool ZeroEffortNav;
         public readonly bool ProjectilesFirst;
-        public readonly bool OnHit;
         public readonly bool OverrideWeaponEffect;
         public readonly bool IgnoreAntiSmarts;
         public readonly float LargeGridDmgScale;
@@ -566,9 +563,6 @@ namespace CoreSystems.Support
             ProjectilesFirst = system.ProjectilesFirst;
 
             PreComputedMath = new PreComputedMath(ammo, this);
-
-            OnHit = false;
-            OnHitProcInterval = 0;
         }
 
         internal void Purge()
