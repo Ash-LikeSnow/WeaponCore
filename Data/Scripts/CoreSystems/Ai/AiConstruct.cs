@@ -440,6 +440,19 @@ namespace CoreSystems.Support
                     double rangeToTarg = double.MaxValue;
                     var currentAim = aFB.LookAtPosition == null ? Vector3D.Zero : (Vector3D)aFB.LookAtPosition;
                     var hasTarg = aCB.SearchEnemyComponent.FoundEnemy != null;
+
+                    if (Session.I.IsServer)
+                    {
+                        if (hasTarg)
+                        {
+                            var targTopmost = aCB.SearchEnemyComponent.FoundEnemy.GetTopMostParent();
+                            if (checkAi.Construct.Data.Repo.FocusData.Target != targTopmost.EntityId)
+                                checkAi.Construct.Focus.ServerChangeFocus((MyEntity)targTopmost, checkAi, 0, Focus.ChangeMode.Add, true);
+                        }
+                        else if (checkAi.Construct.Data.Repo.FocusData.Target != 0)
+                            checkAi.Construct.Focus.ServerChangeFocus(null, checkAi, 0, Focus.ChangeMode.Release, true);
+                    }
+
                     var targSphere = new BoundingSphereD(hasTarg ? aCB.SearchEnemyComponent.FoundEnemy.PositionComp.WorldAABB.Center : Vector3D.Zero, 1); //Does the radius really matter here?  use actual enemy or lead position?
 
                     if (currentAim != Vector3D.Zero && !stopFiring)
@@ -452,9 +465,17 @@ namespace CoreSystems.Support
                     {
                         foreach (var comp in ais[x].WeaponComps)
                         {
-                            if (comp.HasTurret || comp.HasScanTrackOnly) continue;
+                            if (comp.HasTurret || comp.HasScanTrackOnly || comp.PrimaryWeapon.System.RadioType != WeaponCore.Data.Scripts.CoreSystems.Comms.Radio.RadioTypes.Slave) continue;
 
-                            if (comp.HasGuidance)
+                            if (comp.PrimaryWeapon.System.RadioType == WeaponCore.Data.Scripts.CoreSystems.Comms.Radio.RadioTypes.Slave)
+                            {
+                                var shoot = comp.PrimaryWeapon.Target.HasTarget;
+                                if (shoot && comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
+                                    comp.ShootManager.RequestShootSync(0, ShootManager.RequestType.On);
+                                else if ((stopFiring || !shoot) && comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On)
+                                    comp.ShootManager.RequestShootSync(0, ShootManager.RequestType.Off);
+                            }
+                            else if (comp.HasGuidance)
                             {
                                 bool shoot = hasTarg ? rangeToTarg <= comp.PrimaryWeapon.MaxTargetDistance && MathFuncs.TargetSphereInCone(ref targSphere, ref comp.PrimaryWeapon.AimCone) : false;
                                 if (shoot && comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
