@@ -234,6 +234,9 @@ namespace CoreSystems.Support
             if (comp.PrimaryWeapon.System.TrackProhibitSG)
                 stringBuilder.Append($"\nCannot target small grids!");
 
+            if (comp.PrimaryWeapon.System.TargetGridCenter)
+                stringBuilder.Append($"\nThis weapon aims at the center of grids");
+
             //Start of new formatting
             if (IdlePower > 0.01)
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
