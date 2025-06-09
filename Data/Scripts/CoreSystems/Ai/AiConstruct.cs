@@ -465,7 +465,7 @@ namespace CoreSystems.Support
                     {
                         foreach (var comp in ais[x].WeaponComps)
                         {
-                            if (comp.HasTurret || comp.HasScanTrackOnly || comp.PrimaryWeapon.System.RadioType != WeaponCore.Data.Scripts.CoreSystems.Comms.Radio.RadioTypes.Slave) continue;
+                            if (comp.HasTurret || comp.HasScanTrackOnly) continue;
 
                             if (comp.PrimaryWeapon.System.RadioType == WeaponCore.Data.Scripts.CoreSystems.Comms.Radio.RadioTypes.Slave)
                             {
