@@ -19,6 +19,7 @@ using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Sandbox.ModAPI;
 using VRage.ModAPI;
+using Sandbox.Game.EntityComponents;
 
 namespace CoreSystems.Support
 {
@@ -257,6 +258,14 @@ namespace CoreSystems.Support
 
                     if (w.System.TargetGridCenter)
                     {
+                        if (overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && grid != focusGrid || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled)
+                        {
+                            var gridI = grid as IMyCubeGrid;
+                            var powerDist = (MyResourceDistributorComponent)gridI.ResourceDistributor;
+                            if (powerDist.MaxAvailableResourceByType(MyResourceDistributorComponent.ElectricityId, gridI) <= 0)
+                                continue;
+                        }
+
                         if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
                         double rayDist;
                         Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
