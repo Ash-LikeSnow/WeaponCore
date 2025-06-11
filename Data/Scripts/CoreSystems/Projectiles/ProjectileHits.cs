@@ -283,7 +283,7 @@ namespace CoreSystems.Projectiles
                             {
                                 if (water != null && info.FirstWaterHitTick == 0)
                                 {
-                                    var waterOuterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
+                                    var waterOuterSphere = new BoundingSphereD(water.Center, water.MaxRadius);
                                     if (ray.Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(beamFrom) == ContainmentType.Contains || waterOuterSphere.Contains(beamTo) == ContainmentType.Contains)
                                     {
                                         if (WaterModAPI.LineIntersectsWater(p.Beam, water.Planet) != 0)

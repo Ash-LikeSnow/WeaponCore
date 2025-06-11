@@ -1033,7 +1033,7 @@ namespace CoreSystems.Platform
             WaterData water = null;
             if (Session.I.WaterApiLoaded && !(ActiveAmmoDef.AmmoDef.IgnoreWater || Comp.TargetSubmerged) && Comp.Ai.InPlanetGravity && Comp.Ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(Comp.Ai.MyPlanet.EntityId, out water))
             {
-                var waterSphere = new BoundingSphereD(Comp.Ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                var waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
                 if (waterSphere.Contains(targetPos) != ContainmentType.Disjoint)
                 {
                     masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFailed);

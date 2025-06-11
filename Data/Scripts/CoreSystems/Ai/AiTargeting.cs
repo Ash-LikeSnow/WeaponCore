@@ -137,7 +137,7 @@ namespace CoreSystems.Support
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
-                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
 
             var rootConstruct = ai.Construct.RootAi.Construct;
             int offset = 0;
@@ -238,7 +238,7 @@ namespace CoreSystems.Support
                 if (targetDistSqr > (w.MaxTargetDistance + info.TargetRadius) * (w.MaxTargetDistance + info.TargetRadius) || targetDistSqr < w.MinTargetDistanceSqr) continue;
                 
                 if (water != null) {
-                    if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
+                    if (new BoundingSphereD(water.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
                         continue;
                 }
 
@@ -534,7 +534,7 @@ namespace CoreSystems.Support
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (Session.I.WaterApiLoaded && !(w.ActiveAmmoDef.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
-                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
 
             var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
@@ -751,7 +751,7 @@ namespace CoreSystems.Support
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (Session.I.WaterApiLoaded && !(info.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
-                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
             TargetInfo alphaInfo = null;
             int offset = 0;
             MyEntity fTarget;
@@ -829,7 +829,7 @@ namespace CoreSystems.Support
                 if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192 || topTarget != null && tInfo.Target != topTarget) continue;
                 if (water != null)
                 {
-                    if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetPos, targetRadius)) == ContainmentType.Contains)
+                    if (new BoundingSphereD(water.Center, water.MinRadius).Contains(new BoundingSphereD(targetPos, targetRadius)) == ContainmentType.Contains)
                         continue;
                 }
 
@@ -1783,7 +1783,7 @@ namespace CoreSystems.Support
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
-                waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
 
             int checkSize;
@@ -1822,7 +1822,7 @@ namespace CoreSystems.Support
                 if (targetDistSqr > (w.MaxTargetDistance + info.TargetRadius) * (w.MaxTargetDistance + info.TargetRadius) || targetDistSqr < w.MinTargetDistanceSqr) continue;
                 if (water != null)
                 {
-                    if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
+                    if (new BoundingSphereD(water.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
                         continue;
                 }
                 session.TargetChecks++;

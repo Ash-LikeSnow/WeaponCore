@@ -259,7 +259,7 @@ namespace CoreSystems.Support
         {
             WaterData water;
             if (Session.I.WaterMap.TryGetValue(MyPlanet.EntityId, out water)) {
-                WaterVolume = new BoundingSphereD(MyPlanet.PositionComp.WorldAABB.Center, water.Radius + water.WaveHeight);
+                WaterVolume = new BoundingSphereD(water.Center, water.Radius);
                 return new MyOrientedBoundingBoxD(TopEntity.PositionComp.LocalAABB, TopEntity.PositionComp.WorldMatrixRef).Intersects(ref WaterVolume);
             }
             return false;

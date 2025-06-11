@@ -1122,18 +1122,12 @@ namespace CoreSystems
         public WaterData(MyPlanet planet)
         {
             Planet = planet;
-            WaterId = planet.EntityId;
         }
 
         public MyPlanet Planet;
         public Vector3D Center;
-        public long WaterId;
         public float Radius;
         public float MinRadius;
         public float MaxRadius;
-        public float WaveHeight;
-        public float WaveSpeed;
-        public float TideHeight;
-        public float TideSpeed;
     }
 }
