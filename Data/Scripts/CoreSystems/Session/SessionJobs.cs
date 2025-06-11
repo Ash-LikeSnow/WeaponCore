@@ -253,18 +253,13 @@ namespace CoreSystems
                         data = new WaterData(planet);
                         WaterMap[planet.EntityId] = data;
                     }
-
+                    var tideHeight = WaterModAPI.GetTideData(planet).Item1;
+                    var tideDirection = WaterModAPI.GetTideDirection(planet);
                     var radiusInfo = WaterModAPI.GetPhysical(planet);
-                    data.Center = radiusInfo.Item1;
+                    data.Center = radiusInfo.Item1 + tideDirection * tideHeight;
                     data.Radius = radiusInfo.Item2;
-                    data.MinRadius = radiusInfo.Item3;
-                    data.MaxRadius = radiusInfo.Item4;
-                    var waveInfo = WaterModAPI.GetWaveData(planet);
-                    data.WaveHeight = waveInfo.Item1;
-                    data.WaveSpeed = waveInfo.Item2;
-                    var tideInfo = WaterModAPI.GetTideData(planet);
-                    data.TideHeight = tideInfo.Item1;
-                    data.TideSpeed = tideInfo.Item2;
+                    data.MinRadius = radiusInfo.Item3 + tideHeight;
+                    data.MaxRadius = radiusInfo.Item4 - tideHeight;
                 }
                 else WaterMap.TryRemove(planet.EntityId, out data);
             }
