@@ -419,7 +419,7 @@ namespace CoreSystems.Control
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip() || comp.PrimaryWeapon.System.TrackProhibitLG || comp.PrimaryWeapon.System.TrackProhibitSG)
                 return false;
 
-            return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasAlternateUi;
         }
 
         internal static bool HasTrackingExceptCommSlave(IMyTerminalBlock block)
