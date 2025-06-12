@@ -199,7 +199,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionSubSystems"));
             action.Action = CustomActions.TerminActionCycleSubSystem;
             action.Writer = CustomActions.SubSystemWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -404,7 +404,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("TrackAngular"));
             action.Action = CustomActions.TerminalActionToggleAngularTracking;
             action.Writer = CustomActions.AngularTrackingWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -418,7 +418,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionCycleObjective"));
             action.Action = CustomActions.TerminActionCycleObjectiveMode;
             action.Writer = CustomActions.ObjectiveModeWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -447,7 +447,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFocusSubSystem"));
             action.Action = CustomActions.TerminalActionToggleFocusSubSystem;
             action.Writer = CustomActions.FocusSubSystemWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -536,7 +536,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionTrackingMode"));
             action.Action = CustomActions.TerminalActionMovementMode;
             action.Writer = CustomActions.MovementModeWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -563,7 +563,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionWC_RepelMode"));
             action.Action = CustomActions.TerminalActionToggleRepelMode;
             action.Writer = CustomActions.RepelWriter;
-            action.Enabled = TerminalHelpers.HasTracking;
+            action.Enabled = TerminalHelpers.TrackGrids;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
