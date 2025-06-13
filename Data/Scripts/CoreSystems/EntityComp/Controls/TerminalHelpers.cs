@@ -29,19 +29,19 @@ namespace CoreSystems.Control
         internal static void AddTurretOrTrackingControls<T>(Session session) where T : IMyTerminalBlock
         {
             AddComboboxNoAction<T>(session, "ControlModes", Localization.GetText("TerminalControlModesTitle"), Localization.GetText("TerminalControlModesTooltip"), BlockUi.GetControlMode, BlockUi.RequestControlMode, BlockUi.ListControlModes, TurretOrGuidedAmmo);
-            AddComboboxNoAction<T>(session, "ObjectiveMode", Localization.GetText("TerminalObjectiveTitle"), Localization.GetText("TerminalObjectiveTooltip"), BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, HasTracking);
-            AddComboboxNoAction<T>(session, "TrackingMode", Localization.GetText("TerminalTrackingModeTitle"), Localization.GetText("TerminalTrackingModeTooltip"), BlockUi.GetMovementMode, BlockUi.RequestMovementMode, BlockUi.ListMovementModes, HasTracking);
+            AddComboboxNoAction<T>(session, "ObjectiveMode", Localization.GetText("TerminalObjectiveTitle"), Localization.GetText("TerminalObjectiveTooltip"), BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, TrackGrids);
+            AddComboboxNoAction<T>(session, "TrackingMode", Localization.GetText("TerminalTrackingModeTitle"), Localization.GetText("TerminalTrackingModeTooltip"), BlockUi.GetMovementMode, BlockUi.RequestMovementMode, BlockUi.ListMovementModes, TrackGrids);
             AddComboboxNoAction<T>(session, "PickAmmo", Localization.GetText("TerminalPickAmmoTitle"), Localization.GetText("TerminalPickAmmoTooltip"), BlockUi.GetAmmos, BlockUi.RequestSetAmmo, BlockUi.ListAmmos, AmmoSelection);
             AddButtonNoAction<T>(session, "ForceReload", Localization.GetText("ForceReload"), Localization.GetText("TerminalForceReloadTooltip"), BlockUi.ForceReload, EnableForceReload, AmmoSelection);
             AddWeaponRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRange, BlockUi.RequestSetRange, BlockUi.ShowRange, BlockUi.GetMinRange, BlockUi.GetMaxRange, true, false);
 
             Separator<T>(session, "WC_sep2", HasTracking);
 
-            AddOnOffSwitchNoAction<T>(session, "SubSystems", Localization.GetText("TerminalSubSystemsTitle"), Localization.GetText("TerminalSubSystemsTooltip"), BlockUi.GetSubSystems, BlockUi.RequestSetSubSystems, true, HasTracking);
-            AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystem, BlockUi.RequestSubSystem, BlockUi.ListSubSystems, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "SubSystems", Localization.GetText("TerminalSubSystemsTitle"), Localization.GetText("TerminalSubSystemsTooltip"), BlockUi.GetSubSystems, BlockUi.RequestSetSubSystems, true, TrackGrids);
+            AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystem, BlockUi.RequestSubSystem, BlockUi.ListSubSystems, TrackGrids);
 
             AddOnOffSwitchNoAction<T>(session, "FocusFire", Localization.GetText("TerminalFocusFireTitle"), Localization.GetText("TerminalFocusFireTooltip"), BlockUi.GetFocusFire, BlockUi.RequestSetFocusFire, true, HasTrackingExceptCommSlave);
-            AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, TrackGrids);
 
             AddOnOffSwitchNoAction<T>(session, "Neutrals", Localization.GetText("TerminalNeutralsTitle"), Localization.GetText("TerminalNeutralsTooltip"), BlockUi.GetNeutrals, BlockUi.RequestSetNeutrals, true, HasTrackingNeutrals);
             AddOnOffSwitchNoAction<T>(session, "Unowned", Localization.GetText("TerminalUnownedTitle"), Localization.GetText("TerminalUnownedTooltip"), BlockUi.GetUnowned, BlockUi.RequestSetUnowned, true, HasTrackingUnowned);
@@ -72,7 +72,7 @@ namespace CoreSystems.Control
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
-            CtcAddListBoxNoAction<T>(session, "ToolsAndWeapons", "Available tools and weapons", "Auto populated by weaponcore", BlockUi.ToolWeaponFill, BlockUi.ToolWeaponSelect, CtcIsReady, 4, true);
+            CtcAddListBoxNoAction<T>(session, "ToolsAndWeapons", "Tools and Weapons", "Auto populated by Weaponcore", BlockUi.ToolWeaponFill, BlockUi.ToolWeaponSelect, IsTrue, 4, true);
             CtcAddCheckboxNoAction<T>(session, "Advanced", Localization.GetText("TerminalAdvancedTitle"), Localization.GetText("TerminalAdvancedTooltip"), BlockUi.GetAdvancedControl, BlockUi.RequestAdvancedControl, true, CtcIsReady);
             CtcAddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControlControl, BlockUi.RequestShareFireControlControl, true, CtcIsReady);
             CtcAddOnOffSwitchNoAction<T>(session, "WCAiEnabled", Localization.GetText("TerminalAiEnabledTitle"), Localization.GetText("TerminalAiEnabledTooltip"), BlockUi.GetAiEnabledControl, BlockUi.RequestSetAiEnabledControl, true, CtcIsReady);
@@ -123,9 +123,9 @@ namespace CoreSystems.Control
 
         internal static void AddOffenseBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
-            CtcAddListBoxNoAction<T>(session, "FixedWeapons", "Fixed weapons", "Auto populated by weaponcore", BlockUi.CombatWeaponFill, BlockUi.ToolWeaponSelect, CombatAiActive, 4, true);
+            CtcAddListBoxNoAction<T>(session, "FixedWeapons", "Fixed Weapons", "Auto populated by Weaponcore", BlockUi.CombatWeaponFill, null, IsTrue, 4, true);
         }
-            internal static void AddCameraControls<T>(Session session) where T : IMyTerminalBlock
+        internal static void AddCameraControls<T>(Session session) where T : IMyTerminalBlock
         {
             Separator<T>(session,  "WC_cameraSep1", IsTrue);
             AddBlockCameraSliderRange<T>(session, "WC_PickCameraChannel", Localization.GetText("TerminalCameraCameraChannelTitle"), Localization.GetText("TerminalCameraCameraChannelTooltip"), BlockUi.GetBlockCamera, BlockUi.RequestBlockCamera, BlockUi.ShowCamera, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
@@ -141,7 +141,7 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "Shoot", Localization.GetText("TerminalShootTitle"), Localization.GetText("TerminalShootTooltip"), BlockUi.GetShoot, BlockUi.RequestSetShoot, true, IsNotBomb);
             AddOnOffSwitchNoAction<T>(session, "Override", Localization.GetText("TerminalOverrideTitle"), Localization.GetText("TerminalOverrideTooltip"), BlockUi.GetOverride, BlockUi.RequestOverride, true, OverrideTarget);
-            AddOnOffSwitchNoAction<T>(session, "AngularTracking", Localization.GetText("TerminalAngularTitle"), Localization.GetText("TerminalAngularTooltip"), BlockUi.GetAngularTracking, BlockUi.RequestAngularTracking, true, HasTracking);
+            AddOnOffSwitchNoAction<T>(session, "AngularTracking", Localization.GetText("TerminalAngularTitle"), Localization.GetText("TerminalAngularTooltip"), BlockUi.GetAngularTracking, BlockUi.RequestAngularTracking, true, TrackGrids);
         }
 
         internal static void CreateGenericArmor<T>(Session session) where T : IMyTerminalBlock
@@ -165,12 +165,6 @@ namespace CoreSystems.Control
         {
             return block is IMyDecoy;
         }
-
-        internal static bool CombatAiActive(IMyTerminalBlock block)
-        {
-            return true;
-        }
-
 
         internal static bool KeyShootWeapon(IMyTerminalBlock block)
         {
@@ -197,7 +191,7 @@ namespace CoreSystems.Control
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRequireTarget && !comp.HasAlternateUi;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRequireTarget && !comp.HasAlternateUi && comp.PrimaryWeapon.System.TrackGrids;
         }
 
         internal static bool TrackMeteors(IMyTerminalBlock block)
@@ -431,7 +425,7 @@ namespace CoreSystems.Control
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return !comp.PrimaryWeapon.System.TargetSlaving && (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
+            return !comp.PrimaryWeapon.System.TargetSlaving && (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasAlternateUi;
         }
 
         internal static bool HasTrackingUnowned(IMyTerminalBlock block)
@@ -1006,7 +1000,7 @@ namespace CoreSystems.Control
             c.VisibleRowsCount = visibleRowCount;
             c.SupportsMultipleBlocks = groups;
             c.Visible = visibleGetter;
-            c.Enabled = CtcIsReady;
+            c.Enabled = IsFalse;
 
             MyAPIGateway.TerminalControls.AddControl<T>(c);
             session.CustomControls.Add(c);

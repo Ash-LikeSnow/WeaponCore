@@ -429,9 +429,9 @@ namespace CoreSystems
 
         internal static void ToolWeaponSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
         {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
+            //var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            //if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                //return;
 
             return;
         }
@@ -444,7 +444,7 @@ namespace CoreSystems
                 foreach (var comp in ai.WeaponComps)
                 {
                     if (comp.HasTurret || comp.HasScanTrackOnly) continue;
-                    arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(comp.PrimaryWeapon.FriendlyName), MyStringId.NullOrEmpty, comp.Cube));
+                    arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(comp.Cube.DisplayNameText), MyStringId.NullOrEmpty, comp.Cube));
                 }
             }
         }
