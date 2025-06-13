@@ -319,7 +319,12 @@ namespace CoreSystems
                     }
 
                     if (az == null || el == null)
+                    {
+                        cComp.ToolsAndWeapons.Clear();
+                        if (cComp.Platform.Control.TopAi != null)
+                            cComp.Platform.Control.CleanControl();
                         continue;
+                    }
 
                     if (MpActive && IsServer)
                     {
@@ -336,7 +341,6 @@ namespace CoreSystems
                             cComp.Controller.AzimuthRotor = az;
                             cComp.Controller.ElevationRotor = el;
                         }
-
                     }
 
                     var cPart = cComp.Platform.Control;
@@ -349,7 +353,8 @@ namespace CoreSystems
                     var topGrid = cPart.BaseMap.TopGrid as MyCubeGrid;
                     var otherGrid = cPart.OtherMap.TopGrid as MyCubeGrid;
 
-                    if (cPart.BaseMap == null || cPart.OtherMap == null  || topGrid == null || topGrid.MarkedForClose || otherGrid == null || otherGrid.MarkedForClose || !EntityAIs.TryGetValue(otherGrid, out cPart.TopAi))  {
+                    if (cPart.BaseMap == null || cPart.OtherMap == null  || topGrid == null || topGrid.MarkedForClose || otherGrid == null || otherGrid.MarkedForClose || !EntityAIs.TryGetValue(otherGrid, out cPart.TopAi))  
+                    {
                         if (cComp.RotorsMoving)
                             cComp.StopRotors();
 
@@ -367,6 +372,7 @@ namespace CoreSystems
 
                     if (Tick180)
                     {
+                        var priorCount = cComp.ToolsAndWeapons.Count;
                         cComp.ToolsAndWeapons.Clear();
                         foreach (var comp in cPart.TopAi.WeaponComps)
                         {
@@ -376,6 +382,9 @@ namespace CoreSystems
                         }
                         foreach (var tool in cPart.TopAi.Tools)
                             cComp.ToolsAndWeapons.Add((MyEntity)tool);
+
+                        if (priorCount != cComp.ToolsAndWeapons.Count)
+                            cComp.Cube.UpdateTerminalForced();
                     }
 
                     var cPlayerId = cValues.State.PlayerId;
