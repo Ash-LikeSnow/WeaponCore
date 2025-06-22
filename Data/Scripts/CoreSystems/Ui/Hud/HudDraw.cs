@@ -267,7 +267,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         displayText += NoSubSystemStr;
                     else if (weapon.MinTargetDistanceSqr > 0 && (di.OtherRangeSqr < weapon.MinTargetDistanceSqr || di.PriorityRangeSqr < weapon.MinTargetDistanceSqr))
                         displayText += InsideMinRangeStr;
-                    else if (!weapon.Target.HasTarget && (weapon.PauseShoot || (notManual && inRange)))
+                    else if (!weapon.System.DisableLosCheck && !weapon.Target.HasTarget && (weapon.PauseShoot || (notManual && inRange)))
                         displayText += NoLOSStr;
                     else if (notManual && !inRange)
                         displayText += NotInRangeStr;

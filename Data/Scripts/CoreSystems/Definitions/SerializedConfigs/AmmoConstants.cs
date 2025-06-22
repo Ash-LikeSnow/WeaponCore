@@ -302,6 +302,10 @@ namespace CoreSystems.Support
         public readonly float BackKickForce;
         public readonly float DragPerTick;
         public readonly float DragMinSpeed;
+        public readonly float HitParticleMaxDistSqr;
+        public readonly float ShieldHitParticleMaxDistSqr;
+        public readonly float VoxelHitParticleMaxDistSqr;
+        public readonly float WaterHitParticleMaxDistSqr;
         public readonly double MinTurnSpeedSqr;
         public readonly double Aggressiveness;
         public readonly double NavAcceleration;
@@ -426,6 +430,11 @@ namespace CoreSystems.Support
             ShieldHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Name);
             VoxelHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.VoxelHit.Name);
             WaterHitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.WaterHit.Name);
+
+            HitParticleMaxDistSqr = ammo.AmmoDef.AmmoGraphics.Particles.Hit.Extras.MaxDistance * ammo.AmmoDef.AmmoGraphics.Particles.Hit.Extras.MaxDistance;
+            ShieldHitParticleMaxDistSqr = ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Extras.MaxDistance * ammo.AmmoDef.AmmoGraphics.Particles.ShieldHit.Extras.MaxDistance;
+            WaterHitParticleMaxDistSqr = ammo.AmmoDef.AmmoGraphics.Particles.WaterHit.Extras.MaxDistance * ammo.AmmoDef.AmmoGraphics.Particles.WaterHit.Extras.MaxDistance;
+            VoxelHitParticleMaxDistSqr = ammo.AmmoDef.AmmoGraphics.Particles.VoxelHit.Extras.MaxDistance * ammo.AmmoDef.AmmoGraphics.Particles.VoxelHit.Extras.MaxDistance;
 
             EndOfLifeAv = !ammo.AmmoDef.AreaOfDamage.EndOfLife.NoVisuals && ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable;
             OverrideWeaponEffect = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.WeaponEffect1Override.Name);
