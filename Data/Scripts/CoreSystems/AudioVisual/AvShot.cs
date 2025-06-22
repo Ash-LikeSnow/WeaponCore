@@ -970,39 +970,37 @@ namespace CoreSystems.Support
 
                 double distToCameraSqr;
                 Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref Session.CameraPos, out distToCameraSqr);
-
-                if (Hit.EventType == HitEntity.Type.Water && !AmmoDef.Const.WaterHitParticle)
+                var ac = AmmoDef.Const;
+                var minDist = distToCameraSqr < 360000;
+                if (Hit.EventType == HitEntity.Type.Water && !ac.WaterHitParticle)
                     HitParticleActive = true;
 
-                if (OnScreen != Screen.None) 
-                {
-                    if (LastHitShield && ShieldHitParticleActive && AmmoDef.Const.ShieldHitParticle && (AmmoDef.Const.ShieldHitParticleNoCull || distToCameraSqr < 360000))
-                        HitParticle = ParticleState.Shield;
-                    else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && (AmmoDef.Const.WaterHitParticleNoCull || distToCameraSqr < 360000))
-                        HitParticle = ParticleState.Water;
-                    else if (VoxelHitParticleActive && Hit.EventType == HitEntity.Type.Voxel && (AmmoDef.Const.VoxelHitParticleNoCull || distToCameraSqr < 360000))
-                        HitParticle = ParticleState.Voxel;
-                    else if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && (AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000))
-                        HitParticle = ParticleState.Custom;
-                }
+                if (LastHitShield && ShieldHitParticleActive && ac.ShieldHitParticle && ((OnScreen == Screen.None && ac.ShieldHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.ShieldHitParticleMaxDistSqr < distToCameraSqr))))
+                    HitParticle = ParticleState.Shield;
+                else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && ((OnScreen == Screen.None && ac.WaterHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.WaterHitParticleMaxDistSqr < distToCameraSqr))))
+                    HitParticle = ParticleState.Water;
+                else if (VoxelHitParticleActive && Hit.EventType == HitEntity.Type.Voxel && ((OnScreen == Screen.None && ac.VoxelHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.VoxelHitParticleMaxDistSqr < distToCameraSqr))))
+                    HitParticle = ParticleState.Voxel;
+                else if (HitParticleActive && ac.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && ((OnScreen == Screen.None && ac.HitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.HitParticleMaxDistSqr < distToCameraSqr))))
+                    HitParticle = ParticleState.Custom;
 
-                var hitSound = AmmoDef.Const.HitSound && HitSoundActive && distToCameraSqr < AmmoDef.Const.HitSoundDistSqr && (!LastHitShield || AmmoDef.AmmoAudio.HitPlayShield);
+                var hitSound = ac.HitSound && HitSoundActive && distToCameraSqr < ac.HitSoundDistSqr && (!LastHitShield || AmmoDef.AmmoAudio.HitPlayShield);
                 if (hitSound) 
                 {
                     MySoundPair pair = null;
 
-                    if (AmmoDef.Const.VoxelSound && Hit.EventType == HitEntity.Type.Voxel)
-                        pair = AmmoDef.Const.VoxelSoundPair;
-                    else if (AmmoDef.Const.PlayerSound && Hit.Entity is IMyCharacter)
-                        pair = AmmoDef.Const.PlayerSoundPair;
-                    else if (AmmoDef.Const.FloatingSound && Hit.Entity is MyFloatingObject)
-                        pair = AmmoDef.Const.FloatingSoundPair;
-                    else if (AmmoDef.Const.ShieldSound && LastHitShield)
-                        pair = AmmoDef.Const.ShieldSoundPair;
-                    else if (AmmoDef.Const.WaterSound && Hit.EventType == HitEntity.Type.Water)
-                        pair = AmmoDef.Const.WaterSoundPair;
-                    else if (AmmoDef.Const.HitSound)
-                        pair = AmmoDef.Const.HitSoundPair;
+                    if (ac.VoxelSound && Hit.EventType == HitEntity.Type.Voxel)
+                        pair = ac.VoxelSoundPair;
+                    else if (ac.PlayerSound && Hit.Entity is IMyCharacter)
+                        pair = ac.PlayerSoundPair;
+                    else if (ac.FloatingSound && Hit.Entity is MyFloatingObject)
+                        pair = ac.FloatingSoundPair;
+                    else if (ac.ShieldSound && LastHitShield)
+                        pair = ac.ShieldSoundPair;
+                    else if (ac.WaterSound && Hit.EventType == HitEntity.Type.Water)
+                        pair = ac.WaterSoundPair;
+                    else if (ac.HitSound)
+                        pair = ac.HitSoundPair;
 
                     if (pair != null) 
                     {
