@@ -975,13 +975,13 @@ namespace CoreSystems.Support
                 if (Hit.EventType == HitEntity.Type.Water && !ac.WaterHitParticle)
                     HitParticleActive = true;
 
-                if (LastHitShield && ShieldHitParticleActive && ac.ShieldHitParticle && ((OnScreen == Screen.None && ac.ShieldHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.ShieldHitParticleMaxDistSqr < distToCameraSqr))))
+                if (LastHitShield && ShieldHitParticleActive && ac.ShieldHitParticle && ((OnScreen == Screen.None && ac.ShieldHitParticleNoCull) || (OnScreen != Screen.None && (minDist || distToCameraSqr < ac.ShieldHitParticleMaxDistSqr))))
                     HitParticle = ParticleState.Shield;
-                else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && ((OnScreen == Screen.None && ac.WaterHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.WaterHitParticleMaxDistSqr < distToCameraSqr))))
+                else if (WaterHitParticleActive && Hit.EventType == HitEntity.Type.Water && ((OnScreen == Screen.None && ac.WaterHitParticleNoCull) || (OnScreen != Screen.None && (minDist || distToCameraSqr < ac.WaterHitParticleMaxDistSqr))))
                     HitParticle = ParticleState.Water;
-                else if (VoxelHitParticleActive && Hit.EventType == HitEntity.Type.Voxel && ((OnScreen == Screen.None && ac.VoxelHitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.VoxelHitParticleMaxDistSqr < distToCameraSqr))))
+                else if (VoxelHitParticleActive && Hit.EventType == HitEntity.Type.Voxel && ((OnScreen == Screen.None && ac.VoxelHitParticleNoCull) || (OnScreen != Screen.None && (minDist || distToCameraSqr < ac.VoxelHitParticleMaxDistSqr ))))
                     HitParticle = ParticleState.Voxel;
-                else if (HitParticleActive && ac.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && ((OnScreen == Screen.None && ac.HitParticleNoCull) || (OnScreen != Screen.None && (minDist || ac.HitParticleMaxDistSqr < distToCameraSqr))))
+                else if (HitParticleActive && ac.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield) && ((OnScreen == Screen.None && ac.HitParticleNoCull) || (OnScreen != Screen.None && (minDist || distToCameraSqr < ac.HitParticleMaxDistSqr))))
                     HitParticle = ParticleState.Custom;
 
                 var hitSound = ac.HitSound && HitSoundActive && distToCameraSqr < ac.HitSoundDistSqr && (!LastHitShield || AmmoDef.AmmoAudio.HitPlayShield);
