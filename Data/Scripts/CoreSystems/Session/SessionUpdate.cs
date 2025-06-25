@@ -936,7 +936,11 @@ namespace CoreSystems
                 var invalidWeapon = w.Comp.CoreEntity.MarkedForClose || w.Comp.Ai == null || w.Comp.Ai.Concealed || w.Comp.Ai.MarkedForClose || w.Comp.TopEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready;
                 var smartTimer = w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance == Smart && w.System.TurretMovement == WeaponSystem.TurretType.Fixed && (QCount == w.ShortLoadId && w.Target.HasTarget && Tick - w.LastSmartLosCheck > 240 || Tick - w.LastSmartLosCheck > 1200);
                 var quickSkip = invalidWeapon || w.Comp.IsBlock && smartTimer && !w.System.DisableLosCheck && !w.SmartLos() || w.PauseShoot || w.LiveSmarts >= w.System.MaxActiveProjectiles || (w.ProtoWeaponAmmo.CurrentAmmo == 0 && w.ClientMakeUpShots == 0) && w.ActiveAmmoDef.AmmoDef.Const.Reloadable;
-                if (quickSkip) continue;
+                if (quickSkip)
+                {
+                    w.PauseShoot = false;
+                    continue;
+                }
 
                 w.Shoot();
             }

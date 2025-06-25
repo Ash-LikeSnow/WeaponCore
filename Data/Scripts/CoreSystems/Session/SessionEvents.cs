@@ -432,6 +432,39 @@ namespace CoreSystems
                 }
             }
             else if (term != null) Log.Line($"ToGridMap missing grid: cubeMark:{myCubeBlock.MarkedForClose} - gridMark:{myCubeBlock.CubeGrid.MarkedForClose} - name:{myCubeBlock.DebugName}");
+
+            var weaponType = (myCubeBlock is MyConveyorSorter || myCubeBlock is IMyUserControllableGun);
+            var isWeaponBase = weaponType && myCubeBlock.BlockDefinition != null && (VanillaIds.ContainsKey(myCubeBlock.BlockDefinition.Id) || PartPlatforms.ContainsKey(myCubeBlock.BlockDefinition.Id));
+            if (isWeaponBase)
+            {
+                //Projected block ammo removal
+                var slim = myCubeBlock.SlimBlock as IMySlimBlock;
+                if (slim.BuildLevelRatio < 1 && myCubeBlock.Storage != null && myCubeBlock.Storage.ContainsKey(CompDataGuid) && slim.ComponentStack.GetComponentStackInfo(0).MountedCount == 1)
+                {
+                    ProtoWeaponRepo load = null;
+                    string rawData;
+                    if (myCubeBlock.Storage.TryGetValue(CompDataGuid, out rawData))
+                    {
+                        try
+                        {
+                            var base64 = Convert.FromBase64String(rawData);
+                            load = MyAPIGateway.Utilities.SerializeFromBinary<ProtoWeaponRepo>(base64);
+                            foreach (var ammo in load.Ammos)
+                            {
+                                ammo.CurrentAmmo = 0;
+                                ammo.CurrentCharge = 0;
+                            }
+                            var save = MyAPIGateway.Utilities.SerializeToBinary<ProtoWeaponRepo>(load);
+                            var base64Out = Convert.ToBase64String(save);
+                            myCubeBlock.Storage[CompDataGuid] = base64Out;
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Line("WeaponCore failed to strip ammo from projector placed block\n" + e);
+                        }
+                    }
+                }
+            }
         }
 
         private void FromGridMap(MyCubeBlock myCubeBlock)
