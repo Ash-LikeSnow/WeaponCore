@@ -1121,7 +1121,8 @@ namespace CoreSystems
                 if (!string.IsNullOrEmpty(modPath))
                     ModInfo.TryAdd(mod.GetPath(), mod);
 
-                if (mod.PublishedFileId == 1365616918 || mod.PublishedFileId == 2372872458 || mod.PublishedFileId == 3154379105) ShieldMod = true;
+                if (mod.PublishedFileId == 1365616918 || mod.PublishedFileId == 2372872458 || mod.PublishedFileId == 3154379105)
+                    ShieldMod = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\DefenseShields"))
                     ShieldMod = true;
                 else if (mod.PublishedFileId == 1931509062 || mod.PublishedFileId == 1995197719 || mod.PublishedFileId == 2006751214 || mod.PublishedFileId == 2015560129)
@@ -1129,11 +1130,11 @@ namespace CoreSystems
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\VanillaReplacement") || mod.Name.Contains("WCVanilla") || mod.FriendlyName != null && mod.FriendlyName.Contains("WCVanilla"))
                     ReplaceVanilla = true;
                 else if (mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390)
-                {
                     DebugVersion = true;
-                }
                 else if (mod.PublishedFileId == 2200451495 || mod.PublishedFileId == 3283226082)
                     WaterMod = true;
+                else if (mod.PublishedFileId == 3514216428 || mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\NerdShieldsFramework"))
+                    NerdShieldMod = true;
             }
 
             SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);

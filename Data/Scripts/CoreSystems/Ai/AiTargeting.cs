@@ -529,7 +529,7 @@ namespace CoreSystems.Support
             var s = Session.I;
             var physics = Session.I.Physics;
             var target = w.NewTarget;
-            var weaponPos = w.BarrelOrigin;
+            var weaponPos = w.GetScope.Info.Position; //w.BarrelOrigin;
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
