@@ -17,6 +17,7 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using ShieldAPI;
 
 namespace CoreSystems
 {
@@ -377,9 +378,45 @@ namespace CoreSystems
             var fallOffMultipler = 1d;
             if (fallOff)
                 fallOffMultipler = (float)MathHelperD.Clamp(1.0 - ((distTraveled - t.AmmoDef.Const.FallOffDistance) / (t.AmmoDef.Const.MaxTrajectory - t.AmmoDef.Const.FallOffDistance)), t.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
+            
+            // check if alternate shields exist
+            var HasNerdShields = false;
+            float nerdShieldModifier = -1;
+            float nerdShieldPassthroughModifier = -1;
+            IMyCubeGrid currentGrid = hitEnt.Blocks[0].Block.CubeGrid;
+            MyStringHash damageTypeWCStringHash;
 
+            if (t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic)
+            {
+                damageTypeWCStringHash = MyStringHash.GetOrCompute("Kinetic");
+            }
+            else
+            {
+                damageTypeWCStringHash = MyStringHash.GetOrCompute("Energy");
+            }
+            if (NerdShieldAPI.IsReady)
+            {
+                HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
+
+                switch (t.AmmoDef.DamageScales.Shields.Type)
+                {
+                    case ShieldDef.ShieldType.Default:
+                        nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                        break;
+                    case ShieldDef.ShieldType.Bypass:
+                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                        break;
+                }
+            }
+            
             //hit & damage loop info
             var basePool = t.BaseDamagePool;
+            if (HasNerdShields)
+            {
+                basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, hitEnt.Blocks[0].Block.CubeGrid.GridIntegerToWorld(hitEnt.Blocks[0].Block.Position), damageTypeWCStringHash, basePool,
+                    nerdShieldModifier, nerdShieldPassthroughModifier);
+            }
+
             var hits = 1;
             if (t.AmmoDef.Const.VirtualBeams)
                 hits = t.Weapon.WeaponCache.Hits;
@@ -464,6 +501,33 @@ namespace CoreSystems
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
 
+                if (rootBlock.CubeGrid != currentGrid && !HasNerdShields)
+                {
+                    HasNerdShields |= NerdShieldAPI.GridHasShields(currentGrid);
+
+                    switch (t.AmmoDef.DamageScales.Shields.Type)
+                    {
+                        case ShieldDef.ShieldType.Default:
+                            nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                            break;
+                        case ShieldDef.ShieldType.Bypass:
+                            nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                            break;
+                    }
+
+                    basePool = NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash, 
+                        basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+
+                    currentGrid = rootBlock.CubeGrid;
+                    // has an edge case where main grid --> subgrid --> main grid but oh well, would require caching every grid hit for that
+                    // it should be fine if it double hits anyways
+                }
+
+                if (HasNerdShields)
+                {
+                    aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, damageTypeWCStringHash, aoeDamage, (float)aoeRadius,
+                        nerdShieldModifier, nerdShieldPassthroughModifier);
+                }
 
                 if (!detRequested)
                 {
@@ -501,7 +565,7 @@ namespace CoreSystems
 
 
 
-                if (hasAoe && !detRequested || hasDet && detRequested)
+                if ((hasAoe && aoeDamage > 0.5f) && !detRequested || hasDet && detRequested)
                 {
                     detRequested = false;
                     RadiantAoe(rootBlock.Position, grid, aoeRadius, aoeDepth, hitEnt.Intersection, ref maxAoeDistance, out foundAoeBlocks, aoeShape, showHits, out aoeHits);
@@ -516,7 +580,7 @@ namespace CoreSystems
 
 
                     var aoeDamageFall = 0d;
-                    if (hasAoe || hasDet && detActive)
+                    if ((hasAoe && aoeDamage > 0.5f) || hasDet && detActive)
                     {
                         //Falloff switches & calcs for type of explosion & aoeDamageFall as output
                         var maxfalldist = aoeRadius * grid.GridSizeR + 1;
