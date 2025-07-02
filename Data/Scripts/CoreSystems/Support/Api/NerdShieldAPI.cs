@@ -11,14 +11,14 @@ using VRage.Utils;
 
 namespace ShieldAPI
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
-    public class NerdShieldAPI : MySessionComponentBase
+    public class NerdShieldAPI
     {
         public static string ModAPIVersion = "v1";
         public const long ModAPIMessageID = 3514216898;
-
-        public override void LoadData()
+        private static NerdShieldAPI I;
+        public static void Load(Action Callback)
         {
+            I = new NerdShieldAPI();
             MyAPIUtilities.Static.RegisterMessageHandler(ModAPIMessageID, OnModMessageRecieved);
         }
 
@@ -30,16 +30,16 @@ namespace ShieldAPI
             get; private set;
         }
 
-        private static Func<IMyCubeGrid, Vector3D, MyStringHash, float, float, float, float> _ShieldDoDamage;
-        private static Func<IMyCubeGrid, Vector3D, MyStringHash, float, float, float, float, float> _ShieldDoDamageExplosion;
-        private static Func<IMyCubeGrid, bool> _GridHasShields;
-        private static Func<IMyCubeGrid, float> _GetCurrentShieldHP;
-        private static Func<IMyCubeGrid, float> _GetMaximumShieldHP;
-        private static Func<IMyCubeGrid, float> _GetCurrentShieldRegen;
-        private static Func<IMyCubeGrid, float> _GetMaximumShieldRegen;
-        private static Func<IMyCubeGrid, int> _GetTicksUntilShieldRegen;
-        private static Action<IMyCubeGrid, float> _SetShieldHP;
-        private static Action<IMyCubeGrid, int> _SetTicksUntilShieldRegen;
+        private Func<IMyCubeGrid, Vector3D, MyStringHash, float, float, float, float> _ShieldDoDamage;
+        private Func<IMyCubeGrid, Vector3D, MyStringHash, float, float, float, float, float> _ShieldDoDamageExplosion;
+        private Func<IMyCubeGrid, bool> _GridHasShields;
+        private Func<IMyCubeGrid, float> _GetCurrentShieldHP;
+        private Func<IMyCubeGrid, float> _GetMaximumShieldHP;
+        private Func<IMyCubeGrid, float> _GetCurrentShieldRegen;
+        private Func<IMyCubeGrid, float> _GetMaximumShieldRegen;
+        private Func<IMyCubeGrid, int> _GetTicksUntilShieldRegen;
+        private Action<IMyCubeGrid, float> _SetShieldHP;
+        private Action<IMyCubeGrid, int> _SetTicksUntilShieldRegen;
         /// <summary>
         /// Deals damage to the shield owned by the target grid, and if spawnParticleLocation != Vector3D.Zero, spawns a shield hit particle at the specified position.
         /// </summary>
@@ -52,7 +52,7 @@ namespace ShieldAPI
         /// <returns>the unblocked damage.</returns>
         public static float ShieldDoDamage(IMyCubeGrid targetgrid, Vector3D spawnParticleLocation, MyStringHash damageType, float damageToDo, float shieldDamageMultiplier = -1, float shieldPassthroughMultiplier = -1)
         {
-            return _ShieldDoDamage?.Invoke(targetgrid, spawnParticleLocation, damageType, damageToDo, shieldDamageMultiplier, shieldPassthroughMultiplier) ?? 0;
+            return I._ShieldDoDamage?.Invoke(targetgrid, spawnParticleLocation, damageType, damageToDo, shieldDamageMultiplier, shieldPassthroughMultiplier) ?? 0;
         }
         /// <summary>
         /// Deals damage modified by the given radius to the shield owned by the target grid, and if spawnParticleLocation != Vector3D.Zero, spawns a shield hit particle at the specified position.
@@ -67,7 +67,7 @@ namespace ShieldAPI
         /// <returns>the unblocked damage.</returns>
         public static float ShieldDoDamageExplosion(IMyCubeGrid targetgrid, Vector3D spawnParticleLocation, MyStringHash damageType, float damageToDo, float radius, float shieldDamageMultiplier = -1, float shieldPassthroughMultiplier = -1)
         {
-            return _ShieldDoDamageExplosion?.Invoke(targetgrid, spawnParticleLocation, damageType, damageToDo, radius, shieldDamageMultiplier, shieldPassthroughMultiplier) ?? 0;
+            return I._ShieldDoDamageExplosion?.Invoke(targetgrid, spawnParticleLocation, damageType, damageToDo, radius, shieldDamageMultiplier, shieldPassthroughMultiplier) ?? 0;
         }
         /// <summary>
         /// Check to see if the given grid has shields.
@@ -76,7 +76,7 @@ namespace ShieldAPI
         /// <returns>Whether the grid has shields.</returns>
         public static bool GridHasShields(IMyCubeGrid grid)
         {
-            return _GridHasShields?.Invoke(grid) ?? false;
+            return I._GridHasShields?.Invoke(grid) ?? false;
         }
         /// <summary>
         /// Gets the current shield HP of the given grid, or 0 if it has none.
@@ -85,7 +85,7 @@ namespace ShieldAPI
         /// <returns>current shield HP of the given grid, or 0 if it has none</returns>
         public static float GetCurrentShieldHP(IMyCubeGrid grid)
         {
-            return _GetCurrentShieldHP?.Invoke(grid) ?? 0;
+            return I._GetCurrentShieldHP?.Invoke(grid) ?? 0;
         }
         /// <summary>
         /// Gets the maximum shield HP of the given grid, or 0 if it has none.
@@ -94,7 +94,7 @@ namespace ShieldAPI
         /// <returns>maximum shield HP of the given grid, or 0 if it has none</returns>
         public static float GetMaximumShieldHP(IMyCubeGrid grid)
         {
-            return _GetMaximumShieldHP?.Invoke(grid) ?? 0;
+            return I._GetMaximumShieldHP?.Invoke(grid) ?? 0;
         }
         /// <summary>
         /// Gets the current shield HP regen of the given grid, or 0 if it has none.
@@ -103,7 +103,7 @@ namespace ShieldAPI
         /// <returns>current shield HP regen of the given grid, or 0 if it has none</returns>
         public static float GetCurrentShieldRegen(IMyCubeGrid grid)
         {
-            return _GetCurrentShieldRegen?.Invoke(grid) ?? 0;
+            return I._GetCurrentShieldRegen?.Invoke(grid) ?? 0;
         }
         /// <summary>
         /// Gets the maximum shield HP regen of the given grid, or 0 if it has none.
@@ -112,7 +112,7 @@ namespace ShieldAPI
         /// <returns>maximum shield HP regen of the given grid, or 0 if it has none</returns>
         public static float GetMaximumShieldRegen(IMyCubeGrid grid)
         {
-            return _GetMaximumShieldRegen?.Invoke(grid) ?? 0;
+            return I._GetMaximumShieldRegen?.Invoke(grid) ?? 0;
         }
         /// <summary>
         /// Gets the ticks until the grid starts regenning of the given grid, or 0 if it has none, or is regenning.
@@ -121,7 +121,7 @@ namespace ShieldAPI
         /// <returns>ticks until the grid starts regenning of the given grid, or 0 if it has none, or is regenninge</returns>
         public static int GetTicksUntilShieldRegen(IMyCubeGrid grid)
         {
-            return _GetTicksUntilShieldRegen?.Invoke(grid) ?? 0;
+            return I._GetTicksUntilShieldRegen?.Invoke(grid) ?? 0;
         }
         /// <summary>
         /// Sets the grid's shield HP, if any. There are no checks to make sure the HP is in bounds.
@@ -130,7 +130,7 @@ namespace ShieldAPI
         /// <param name="HP">Value to set to</param>
         public static void SetShieldHP(IMyCubeGrid grid, float HP)
         {
-            _SetShieldHP?.Invoke(grid, HP);
+            I._SetShieldHP?.Invoke(grid, HP);
         }
         /// <summary>
         /// Sets the ticks until the grid starts regenning. There are no checks to make sure the value is in bounds.
@@ -139,11 +139,12 @@ namespace ShieldAPI
         /// <param name="ticks">Value to set to</param>
         public static void SetTicksUntilShieldRegen(IMyCubeGrid grid, int ticks)
         {
-            _SetTicksUntilShieldRegen?.Invoke(grid, ticks);
+            I._SetTicksUntilShieldRegen?.Invoke(grid, ticks);
         }
-        protected override void UnloadData()
+        public static void Unload()
         {
             MyAPIUtilities.Static.UnregisterMessageHandler(ModAPIMessageID, OnModMessageRecieved);
+            I = null;
         }
 
         private static void OnModMessageRecieved(object obj)
@@ -159,7 +160,7 @@ namespace ShieldAPI
                 return;
             try
             {
-                ApiAssign(dict);
+                I.ApiAssign(dict);
             }
             catch (Exception e)
             {
@@ -172,7 +173,7 @@ namespace ShieldAPI
         }
         // core systems assign method
 
-        private static void ApiAssign(IReadOnlyDictionary<string, Delegate> delegates)
+        private void ApiAssign(IReadOnlyDictionary<string, Delegate> delegates)
         {
             // base methods
             AssignMethod(delegates, "ShieldDoDamage", ref _ShieldDoDamage);
@@ -187,7 +188,7 @@ namespace ShieldAPI
             AssignMethod(delegates, "SetTicksUntilShieldRegen", ref _SetTicksUntilShieldRegen);
         }
         // core systems assign method
-        protected static void AssignMethod<T>(IReadOnlyDictionary<string, Delegate> delegates, string name, ref T field) where T : class
+        protected void AssignMethod<T>(IReadOnlyDictionary<string, Delegate> delegates, string name, ref T field) where T : class
         {
             if (delegates == null)
             {
