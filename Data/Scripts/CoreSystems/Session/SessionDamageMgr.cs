@@ -402,6 +402,7 @@ namespace CoreSystems
                 {
                     case ShieldDef.ShieldType.Default:
                         nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
                         break;
                     case ShieldDef.ShieldType.Bypass:
                         nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
@@ -413,6 +414,12 @@ namespace CoreSystems
             var basePool = t.BaseDamagePool;
             if (HasNerdShields)
             {
+                if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                {
+                    NerdShieldAPI.ShieldDoDamage(currentGrid, hitEnt.Blocks[0].Block.CubeGrid.GridIntegerToWorld(hitEnt.Blocks[0].Block.Position), damageTypeWCStringHash, -basePool,
+                    nerdShieldModifier, nerdShieldPassthroughModifier);
+                }
+
                 basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, hitEnt.Blocks[0].Block.CubeGrid.GridIntegerToWorld(hitEnt.Blocks[0].Block.Position), damageTypeWCStringHash, basePool,
                     nerdShieldModifier, nerdShieldPassthroughModifier);
             }
@@ -514,9 +521,17 @@ namespace CoreSystems
                             nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
                             break;
                     }
-
-                    basePool = NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash, 
-                        basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                    if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                    {
+                        NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
+                            -basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                    }
+                    else
+                    {
+                        basePool = NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
+                            basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                    }
+                        
 
                     currentGrid = rootBlock.CubeGrid;
                     // has an edge case where main grid --> subgrid --> main grid but oh well, would require caching every grid hit for that
@@ -525,8 +540,16 @@ namespace CoreSystems
 
                 if (HasNerdShields)
                 {
-                    aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, damageTypeWCStringHash, aoeDamage, (float)aoeRadius,
-                        nerdShieldModifier, nerdShieldPassthroughModifier);
+                    if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                    {
+                        NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, damageTypeWCStringHash, -aoeDamage, (float)aoeRadius,
+                            nerdShieldModifier, nerdShieldPassthroughModifier);
+                    }
+                    else
+                    {
+                        aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, damageTypeWCStringHash, aoeDamage, (float)aoeRadius,
+                            nerdShieldModifier, nerdShieldPassthroughModifier);
+                    }
                 }
 
                 if (!detRequested)
