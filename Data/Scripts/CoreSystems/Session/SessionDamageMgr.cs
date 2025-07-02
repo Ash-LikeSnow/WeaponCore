@@ -383,7 +383,7 @@ namespace CoreSystems
             var HasNerdShields = false;
             float nerdShieldModifier = -1;
             float nerdShieldPassthroughModifier = -1;
-            IMyCubeGrid currentGrid = hitEnt.Blocks[0].Block.CubeGrid;
+            IMyCubeGrid currentGrid = null;
             MyStringHash damageTypeWCStringHash;
 
             if (t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic)
@@ -394,35 +394,9 @@ namespace CoreSystems
             {
                 damageTypeWCStringHash = MyStringHash.GetOrCompute("Energy");
             }
-            if (NerdShieldAPI.IsReady)
-            {
-                HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
-
-                switch (t.AmmoDef.DamageScales.Shields.Type)
-                {
-                    case ShieldDef.ShieldType.Default:
-                        nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
-                        break;
-                    case ShieldDef.ShieldType.Bypass:
-                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                        break;
-                }
-            }
             
             //hit & damage loop info
             var basePool = t.BaseDamagePool;
-            if (HasNerdShields)
-            {
-                if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
-                {
-                    NerdShieldAPI.ShieldDoDamage(currentGrid, hitEnt.Blocks[0].Block.CubeGrid.GridIntegerToWorld(hitEnt.Blocks[0].Block.Position), damageTypeWCStringHash, -basePool,
-                    nerdShieldModifier, nerdShieldPassthroughModifier);
-                }
-
-                basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, hitEnt.Blocks[0].Block.CubeGrid.GridIntegerToWorld(hitEnt.Blocks[0].Block.Position), damageTypeWCStringHash, basePool,
-                    nerdShieldModifier, nerdShieldPassthroughModifier);
-            }
 
             var hits = 1;
             if (t.AmmoDef.Const.VirtualBeams)
@@ -508,9 +482,10 @@ namespace CoreSystems
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
 
-                if (!rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid) && !HasNerdShields)
+                if (NerdShieldAPI.IsReady && (currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid)))
                 {
-                    HasNerdShields |= NerdShieldAPI.GridHasShields(currentGrid);
+                    currentGrid = rootBlock.CubeGrid;
+                    HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
 
                     switch (t.AmmoDef.DamageScales.Shields.Type)
                     {
@@ -524,16 +499,16 @@ namespace CoreSystems
                     }
                     if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
                     {
-                        NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
+                        NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
                             -basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
                     }
                     else
                     {
-                        basePool = NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
+                        basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
                             basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
                     }
 
-                    currentGrid = rootBlock.CubeGrid;
+                    
                     // has an edge case where main grid --> 2nd grid --> main grid but oh well, would require caching every grid hit for that
                     // it should be fine if it double hits anyways
                 }
