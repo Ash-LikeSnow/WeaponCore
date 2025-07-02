@@ -508,7 +508,7 @@ namespace CoreSystems
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
 
-                if (rootBlock.CubeGrid != currentGrid && !HasNerdShields)
+                if (!rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid) && !HasNerdShields)
                 {
                     HasNerdShields |= NerdShieldAPI.GridHasShields(currentGrid);
 
@@ -516,6 +516,7 @@ namespace CoreSystems
                     {
                         case ShieldDef.ShieldType.Default:
                             nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                            nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
                             break;
                         case ShieldDef.ShieldType.Bypass:
                             nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
@@ -531,10 +532,9 @@ namespace CoreSystems
                         basePool = NerdShieldAPI.ShieldDoDamage(rootBlock.CubeGrid, rootBlock.CubeGrid.GridIntegerToWorld(rootBlock.Position), damageTypeWCStringHash,
                             basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
                     }
-                        
 
                     currentGrid = rootBlock.CubeGrid;
-                    // has an edge case where main grid --> subgrid --> main grid but oh well, would require caching every grid hit for that
+                    // has an edge case where main grid --> 2nd grid --> main grid but oh well, would require caching every grid hit for that
                     // it should be fine if it double hits anyways
                 }
 
