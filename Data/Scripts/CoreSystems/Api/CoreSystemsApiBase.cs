@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -88,6 +88,7 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, bool> _isWeaponShooting;
         private Func<MyEntity, int, int> _getShotsFired;
         private Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>> _getMuzzleInfo;
+        private Action<MyEntity, int, List<MyTuple<MyEntity, MatrixD>>> _getMuzzleParentEntity;
         private Func<MyEntity, int, MyTuple<Vector3D, Vector3D>> _getWeaponScope;
         private Func<MyEntity, int, MyTuple<MyDefinitionId, string, string, bool>> _getMagazineMap;
         private Func<MyEntity, int, MyDefinitionId, bool, bool> _setMagazine;
@@ -223,7 +224,7 @@ namespace CoreSystems.Api
             _setProjectileState?.Invoke(projectileId, values);
 
         /// <summary>
-        /// Gets whether the weapon is shooting, used by Hakerman's Beam Logic
+        /// Gets whether the weapon is shooting, used by ANPaL Beam Logic
         /// Unexpected behavior may occur when using this method
         /// </summary>
         /// <param name="weaponBlock"></param>
@@ -232,7 +233,7 @@ namespace CoreSystems.Api
         internal bool IsWeaponShooting(MyEntity weaponBlock, int weaponId) => _isWeaponShooting?.Invoke(weaponBlock, weaponId) ?? false;
 
         /// <summary>
-        /// Gets how many shots the weapon fired, used by Hakerman's Beam Logic
+        /// Gets how many shots the weapon fired, used by ANPaL Beam Logic
         /// Unexpected behavior may occur when using this method
         /// </summary>
         /// <param name="weaponBlock"></param>
@@ -241,7 +242,7 @@ namespace CoreSystems.Api
         internal int GetShotsFired(MyEntity weaponBlock, int weaponId) => _getShotsFired?.Invoke(weaponBlock, weaponId) ?? -1;
 
         /// <summary>
-        /// Gets the info of the weapon's all muzzles, used by Hakerman's Beam Logic
+        /// Gets the info of weapon's all muzzles, used by ANPaL Beam Logic
         /// returns: A list that contains every muzzle's Position, LocalPosition, Direction, UpDirection, ParentMatrix, DummyMatrix
         /// Unexpected behavior may occur when using this method
         /// </summary>
@@ -250,6 +251,18 @@ namespace CoreSystems.Api
         /// <returns></returns>
         internal void GetMuzzleInfo(MyEntity weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output) =>
             _getMuzzleInfo?.Invoke(weaponBlock, weaponId, output);
+
+
+        /// <summary>
+        /// Gets parent subpart for weapon's all muzzles, used by ANPaL Beam Logic
+        /// returns: A list contains every muzzle's parent subpart and dummy offset
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal void GetMuzzleParentEntity(MyEntity weaponBlock, int weaponId, List<MyTuple<MyEntity, MatrixD>> output) =>
+            _getMuzzleParentEntity?.Invoke(weaponBlock, weaponId, output);
 
         /// <summary>
         /// Entity can be a weapon or a grid/player (enables on all subgrids as well)
@@ -628,10 +641,12 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "SpawnPhantom", ref _spawnPhantom);
             AssignMethod(delegates, "SetFocusTarget", ref _setPhantomFocusTarget);
 
-            //Hakerman's Beam Logic
+            //ANPaL Compatibility
             AssignMethod(delegates, "IsWeaponShootingBase", ref _isWeaponShooting);
             AssignMethod(delegates, "GetShotsFiredBase", ref _getShotsFired);
             AssignMethod(delegates, "GetMuzzleInfoBase", ref _getMuzzleInfo);
+            AssignMethod(delegates, "GetMuzzleParentEntityBase", ref _getMuzzleParentEntity);
+
             AssignMethod(delegates, "ToggleInfiniteAmmoBase", ref _toggoleInfiniteResources);
             AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
             AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
