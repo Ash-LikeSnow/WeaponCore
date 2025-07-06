@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using CoreSystems.Platform;
@@ -76,6 +76,7 @@ namespace CoreSystems.Api
                 ["GetShotsFiredBase"] = new Func<MyEntity, int, int>(GetShotsFired),
                 ["GetShotsFired"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, int>(GetShotsFiredLegacy),
                 ["GetMuzzleInfoBase"] = new Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfo),
+                ["GetMuzzleParentEntityBase"] = new Action<MyEntity, int, List<MyTuple<MyEntity, MatrixD>>>(GetMuzzleParentEntity),
                 ["GetMuzzleInfo"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfoLegacy),
                 ["IsWeaponShootingBase"] = new Func<MyEntity, int, bool>(IsWeaponShooting),
                 ["IsWeaponShooting"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, bool>(IsWeaponShootingLegacy),
@@ -1667,7 +1668,7 @@ namespace CoreSystems.Api
         }
 
         ///
-        /// Hakerman;s Beam Logic
+        /// ANPaL Compatibility
         /// 
         private bool IsWeaponShootingLegacy(IMyEntity weaponBlock, int weaponId) => IsWeaponShooting((MyEntity) weaponBlock, weaponId);
         private bool IsWeaponShooting(MyEntity weaponBlock, int weaponId)
@@ -1715,6 +1716,23 @@ namespace CoreSystems.Api
                 }
             }
         }
+        
+        private void GetMuzzleParentEntity(MyEntity weaponBlock, int weaponId, List<MyTuple<MyEntity, MatrixD>> output)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                Weapon w = comp.Collection[weaponId];
+                foreach (var m in w.Dummies)
+                {
+                    output.Add(new MyTuple<MyEntity, MatrixD>(
+                        m.Entity, 
+                        m.Info.DummyMatrix
+                    ));
+                }
+            }
+        }
+
 
         internal List<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> ProjectileDamageEvents = new List<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>();
         private void RegisterForDamageEvents(long modId, int eventType, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
