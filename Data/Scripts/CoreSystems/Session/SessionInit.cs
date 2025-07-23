@@ -75,7 +75,14 @@ namespace CoreSystems
             {
                 WaterApiLoaded = true;
                 WApi.Register(); 
-                WaterHash = MyStringHash.GetOrCompute("Water");
+            }
+
+            if (NerdShieldMod && !NerdShieldApiLoaded)
+            {
+                NerdShieldApiLoaded = true;
+                NSApi.LoadData();
+                KineticHash = MyStringHash.GetOrCompute("Kinetic");
+                EnergyHash = MyStringHash.GetOrCompute("Energy");
             }
 
             if (!CompsToStart.IsEmpty)

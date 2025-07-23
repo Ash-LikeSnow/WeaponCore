@@ -15,6 +15,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using Sandbox.ModAPI.Weapons;
+using ShieldAPI;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
@@ -69,6 +70,7 @@ namespace CoreSystems
 
         internal readonly TargetCompare TargetCompare = new TargetCompare();
         internal readonly WaterModAPI WApi = new WaterModAPI();
+        internal readonly NerdShieldAPI NSApi = new NerdShieldAPI();
         internal readonly CustomHitInfo CustomHitInfo = new CustomHitInfo();
 
         internal readonly MyStringHash ShieldBypassDamageType = MyStringHash.GetOrCompute("bypass");
@@ -367,7 +369,8 @@ namespace CoreSystems
         internal Task ITask = new Task();
         internal Task CTask = new Task();
         internal MyStringHash ShieldHash;
-        internal MyStringHash WaterHash;
+        internal MyStringHash KineticHash;
+        internal MyStringHash EnergyHash;
         internal MyStringHash CustomEntityHash;
 
         internal string TriggerEntityModel;
@@ -473,6 +476,8 @@ namespace CoreSystems
         internal bool Tick1800;
         internal bool Tick3600;
         internal bool ShieldMod;
+        internal bool NerdShieldMod;
+        internal bool NerdShieldApiLoaded;
         internal bool ReplaceVanilla;
         internal bool ShieldApiLoaded;
         internal bool WaterApiLoaded;

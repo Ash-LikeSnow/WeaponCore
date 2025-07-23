@@ -225,7 +225,7 @@ namespace CoreSystems.Projectiles
                         if (dumbAdd || validAi)
                         {
                             targetAi.DeadProjectiles.Remove(p);
-                            targetAi.LiveProjectile[p] = condition1 || condition2 || condition6;
+                            targetAi.LiveProjectile[p] = condition1 || condition2 || condition4 || condition6;
                             targetAi.LiveProjectileTick = Session.I.Tick;
                             targetAi.NewProjectileTick = Session.I.Tick;
                             p.Watchers.Add(targetAi);

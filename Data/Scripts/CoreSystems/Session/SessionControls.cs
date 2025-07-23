@@ -572,8 +572,8 @@ namespace CoreSystems
         private static readonly HashSet<string> HideActions = new HashSet<string>()
         {
             "UseConveyor",
-            "Shoot_On",
-            "Shoot_Off",
+            //"Shoot_On",
+            //"Shoot_Off",
         };
 
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>

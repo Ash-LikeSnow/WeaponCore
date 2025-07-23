@@ -17,6 +17,7 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using ShieldAPI;
 
 namespace CoreSystems
 {
@@ -57,14 +58,17 @@ namespace CoreSystems
                     var phantomEffect = noDamageProjectile && hitEnt.EventType == HitEntity.Type.Effect;
                     var outOfPew = info.BaseDamagePool <= 0 && !phantomEffect;
 
-                    if (outOfPew && p.State == Projectile.ProjectileState.Detonate && i != lastIndex) {
+                    if (outOfPew && p.State == Projectile.ProjectileState.Detonate && i != lastIndex)
+                    {
                         outOfPew = false;
                         info.BaseDamagePool = 0.01f;
                     }
 
-                    if (pExpiring || tInvalid || hitMax || outOfPew) {
+                    if (pExpiring || tInvalid || hitMax || outOfPew)
+                    {
 
-                        if ((hitMax || outOfPew) && (int) p.State < 3) {
+                        if ((hitMax || outOfPew) && (int)p.State < 3)
+                        {
                             p.State = Projectile.ProjectileState.Depleted;
                             if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
                                 p.AddToDeathSyncMonitor();
@@ -78,10 +82,10 @@ namespace CoreSystems
                     switch (hitEnt.EventType)
                     {
                         case HitEntity.Type.Shield:
-                            DamageShield(hitEnt, info);  
+                            DamageShield(hitEnt, info);
                             continue;
                         case HitEntity.Type.Grid:
-                            DamageGrid(hitEnt, info);  
+                            DamageGrid(hitEnt, info);
                             continue;
                         case HitEntity.Type.Destroyable:
                             DamageDestObj(hitEnt, info);
@@ -105,7 +109,8 @@ namespace CoreSystems
                     hitEnt.Clean();
                 }
 
-                if (info.BaseDamagePool <= 0 && (int) p.State < 3) {
+                if (info.BaseDamagePool <= 0 && (int)p.State < 3)
+                {
 
                     p.State = Projectile.ProjectileState.Depleted;
                     if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
@@ -133,14 +138,16 @@ namespace CoreSystems
                 var dTick = d.Value.DestroyTick;
                 var age = (long)Tick - dTick;
 
-                if (age > 600 && collection.Count == 0) {
+                if (age > 600 && collection.Count == 0)
+                {
                     Clean.Add(grid);
                     continue;
                 }
 
                 var ready = (Tick + dTick) % 20 == 0 && age >= 0;
 
-                if ((ready || age == 0) && collection.Count > 0) {
+                if ((ready || age == 0) && collection.Count > 0)
+                {
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var info = collection[i];
@@ -165,7 +172,8 @@ namespace CoreSystems
         private void DamageShield(HitEntity hitEnt, ProInfo info) // silly levels of inlining due to mod profiler
         {
             var shield = hitEnt.Entity as IMyTerminalBlock;
-            if (shield == null || !hitEnt.HitPos.HasValue) return;
+            if (shield == null || !hitEnt.HitPos.HasValue)
+                return;
             if (!info.ShieldBypassed)
                 info.ObjectsHit++;
 
@@ -177,14 +185,15 @@ namespace CoreSystems
             var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
             var fallOff = info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance;
 
-            if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
+            if (info.AmmoDef.Const.VirtualBeams)
+                damageScale *= info.Weapon.WeaponCache.Hits;
             var damageType = info.AmmoDef.DamageScales.Shields.Type;
             var heal = damageType == ShieldDef.ShieldType.Heal;
             var energy = info.AmmoDef.Const.EnergyShieldDmg;
             var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime && !info.ShieldBypassed;
             var areaDamage = info.AmmoDef.AreaOfDamage.ByBlockHit.Enable;
             var scaledBaseDamage = info.BaseDamagePool * damageScale;
-            var priDamage = (scaledBaseDamage) * info.AmmoDef.Const.ShieldModifier * shieldDmgGlobal* info.ShieldResistMod * info.ShieldBypassMod;
+            var priDamage = (scaledBaseDamage) * info.AmmoDef.Const.ShieldModifier * shieldDmgGlobal * info.ShieldResistMod * info.ShieldBypassMod;
             var logDamage = info.Weapon.System.WConst.DebugMode;
 
             var areafalloff = info.AmmoDef.AreaOfDamage.ByBlockHit.Falloff;
@@ -230,11 +239,12 @@ namespace CoreSystems
                         unscaledDetDmg *= detradius * 0.29f;
                         break;
                 }
-            
+
             }
             var detonateDamage = detonateOnEnd && info.ShieldBypassMod >= 1 ? (unscaledDetDmg * info.AmmoDef.Const.ShieldModifier * areaDmgGlobal * shieldDmgGlobal) * info.ShieldResistMod : 0;
-            if (detonateDamage >= detmaxabsorb && detmaxabsorb > 0) detonateDamage = detmaxabsorb;
-            
+            if (detonateDamage >= detmaxabsorb && detmaxabsorb > 0)
+                detonateDamage = detmaxabsorb;
+
             if (areaDamage)
             {
                 switch (areafalloff)
@@ -264,8 +274,9 @@ namespace CoreSystems
 
             }
             var radiantDamage = areaDamage && info.ShieldBypassMod >= 1 ? (unscaledAoeDmg * info.AmmoDef.Const.ShieldModifier * areaDmgGlobal * shieldDmgGlobal) * info.ShieldResistMod : 0;
-            if (radiantDamage >= aoeMaxAbsorb && aoeMaxAbsorb > 0) radiantDamage = aoeMaxAbsorb;
-            
+            if (radiantDamage >= aoeMaxAbsorb && aoeMaxAbsorb > 0)
+                radiantDamage = aoeMaxAbsorb;
+
             if (heal)
             {
                 var heat = SApi.GetShieldHeat(shield);
@@ -297,7 +308,8 @@ namespace CoreSystems
                 }
             }
 
-            if (logDamage) Log.Line($"Shld hit: Primary dmg: {priDamage}    AOE dmg: {detonateDamage+radiantDamage}");
+            if (logDamage)
+                Log.Line($"Shld hit: Primary dmg: {priDamage}    AOE dmg: {detonateDamage + radiantDamage}");
 
             var hitWave = info.AmmoDef.Const.RealShotsPerMin <= 120;
             var hit = SApi.PointAttackShieldHeat(shield, hitEnt.HitPos.Value, info.Weapon.Comp.CoreEntity.EntityId, (float)priDamage, (float)(detonateDamage + radiantDamage), energy, hitWave, false, (float)info.AmmoDef.Const.ShieldHeatScaler);
@@ -307,7 +319,8 @@ namespace CoreSystems
 
             if (hit.HasValue)
             {
-                if (GlobalDamageHandlerActive) {
+                if (GlobalDamageHandlerActive)
+                {
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.ShieldEntity, (float)totalDamage));
                 }
@@ -331,9 +344,11 @@ namespace CoreSystems
                     else
                         info.BaseDamagePool -= (info.BaseDamagePool * info.ShieldResistMod) * info.ShieldBypassMod;
                 }
-                else info.BaseDamagePool = (objHp * -1);
+                else
+                    info.BaseDamagePool = (objHp * -1);
 
-                if (info.AmmoDef.Const.Mass <= 0) return;
+                if (info.AmmoDef.Const.Mass <= 0)
+                    return;
 
                 var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
                 if (Session.IsServer && !shield.CubeGrid.IsStatic && !SApi.IsFortified(shield))
@@ -378,22 +393,29 @@ namespace CoreSystems
             if (fallOff)
                 fallOffMultipler = (float)MathHelperD.Clamp(1.0 - ((distTraveled - t.AmmoDef.Const.FallOffDistance) / (t.AmmoDef.Const.MaxTrajectory - t.AmmoDef.Const.FallOffDistance)), t.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
 
+            // check if alternate shields exist
+            var HasNerdShields = false;
+            float nerdShieldModifier = -1;
+            float nerdShieldPassthroughModifier = -1;
+            IMyCubeGrid currentGrid = null;
+
             //hit & damage loop info
             var basePool = t.BaseDamagePool;
+
             var hits = 1;
             if (t.AmmoDef.Const.VirtualBeams)
                 hits = t.Weapon.WeaponCache.Hits;
             var objectsHit = t.ObjectsHit;
             var blockCount = t.BlockList.Count;
             var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks;
-            
+
             //Generics used for both AOE and detonation
             var aoeFalloff = Falloff.NoFalloff;
             var aoeShape = AoeShape.Diamond;
-            var hasAoe = t.AmmoDef.AreaOfDamage.ByBlockHit.Enable; 
+            var hasAoe = t.AmmoDef.AreaOfDamage.ByBlockHit.Enable;
             var hasDet = t.AmmoDef.AreaOfDamage.EndOfLife.Enable && t.RelativeAge >= t.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
             var damageType = t.ShieldBypassed ? ShieldBypassDamageType : hasAoe || hasDet ? MyDamageType.Explosion : MyDamageType.Bullet;
-            
+
             //Switches and setup for damage types/event loops
             var detRequested = false;
             var detActive = false;
@@ -415,7 +437,7 @@ namespace CoreSystems
                     basePool = 0;
                     break;
                 }
-                else if(hasDet && objectsHit >= maxObjects && t.AmmoDef.ObjectsHit.SkipBlocksForAOE)
+                else if (hasDet && objectsHit >= maxObjects && t.AmmoDef.ObjectsHit.SkipBlocksForAOE)
                     basePool = 0;
 
                 //var rootInfo = hitEnt.Blocks[i];
@@ -433,7 +455,7 @@ namespace CoreSystems
                 var gridSizeBuff = grid.GridSizeEnum == MyCubeSize.Large ? Settings.Enforcement.LargeGridDamageMultiplier : Settings.Enforcement.SmallGridDamageMultiplier;
                 var partialShield = t.ShieldInLine && !t.ShieldBypassed && SApi.MatchEntToShieldFast(grid, true) != null;
                 if (!Settings.Enforcement.DisableSmallVsLargeBuff && t.Ai.AiType == Ai.AiTypes.Grid && grid.GridSizeEnum != t.Ai.GridEntity.GridSizeEnum && t.Ai.GridEntity.GridSizeEnum == MyCubeSize.Large && aConst.SmallGridDmgScale < 0 && aConst.LargeGridDmgScale < 0)
-                            smallVsLargeBuff = 0.25f;
+                    smallVsLargeBuff = 0.25f;
 
                 var aoeAbsorb = 0d;
                 var aoeDepth = 0d;
@@ -463,7 +485,35 @@ namespace CoreSystems
                     aoeShape = t.AmmoDef.AreaOfDamage.EndOfLife.Shape;
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
+                if (NerdShieldApiLoaded && NerdShieldAPI.IsReady)
+                    if(currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid))
+                    {
+                        currentGrid = rootBlock.CubeGrid;
+                        HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
 
+                        switch (t.AmmoDef.DamageScales.Shields.Type)
+                        {
+                            case ShieldDef.ShieldType.Default:
+                                nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
+                                break;
+                            case ShieldDef.ShieldType.Bypass:
+                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                                break;
+                        }
+                        if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                            NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
+                                -basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                        else
+                            basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
+                                basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                        // has an edge case where main grid --> 2nd grid --> main grid but oh well, would require caching every grid hit for that
+                        // it should be fine if it double hits anyways
+                    }
+                    else
+                    {
+                        currentGrid = rootBlock.CubeGrid; // duplicated because doing it before would invalidate the nullcheck above
+                    }
 
                 if (!detRequested)
                 {
@@ -501,10 +551,15 @@ namespace CoreSystems
 
 
 
-                if (hasAoe && !detRequested || hasDet && detRequested)
+                if ((hasAoe && aoeDamage > 0.5f) && !detRequested || hasDet && detRequested)
                 {
                     detRequested = false;
                     RadiantAoe(rootBlock.Position, grid, aoeRadius, aoeDepth, hitEnt.Intersection, ref maxAoeDistance, out foundAoeBlocks, aoeShape, showHits, out aoeHits);
+                    if (HasNerdShields)
+                        if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                            NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash, -aoeDamage, (float)aoeRadius, nerdShieldModifier, nerdShieldPassthroughModifier);
+                        else
+                            aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash, aoeDamage, (float)aoeRadius, nerdShieldModifier, nerdShieldPassthroughModifier);
                 }
 
                 var blockStages = maxAoeDistance + 1;
@@ -516,7 +571,7 @@ namespace CoreSystems
 
 
                     var aoeDamageFall = 0d;
-                    if (hasAoe || hasDet && detActive)
+                    if ((hasAoe && aoeDamage > 0.5f) || hasDet && detActive)
                     {
                         //Falloff switches & calcs for type of explosion & aoeDamageFall as output
                         var maxfalldist = aoeRadius * grid.GridSizeR + 1;
@@ -585,8 +640,10 @@ namespace CoreSystems
 
                             if (aConst.GridScaling)
                             {
-                                if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
-                                else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
+                                if (aConst.LargeGridDmgScale >= 0 && largeGrid)
+                                    damageScale *= aConst.LargeGridDmgScale;
+                                else if (aConst.SmallGridDmgScale >= 0 && !largeGrid)
+                                    damageScale *= aConst.SmallGridDmgScale;
                             }
 
                             MyDefinitionBase blockDef = null;
@@ -594,30 +651,38 @@ namespace CoreSystems
                             {
                                 blockDef = block.BlockDefinition;
                                 var isArmor = AllArmorBaseDefinitions.Contains(blockDef) || CustomArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                if (isArmor && armor.Armor >= 0) damageScale *= armor.Armor;
-                                else if (!isArmor && armor.NonArmor >= 0) damageScale *= armor.NonArmor;
+                                if (isArmor && armor.Armor >= 0)
+                                    damageScale *= armor.Armor;
+                                else if (!isArmor && armor.NonArmor >= 0)
+                                    damageScale *= armor.NonArmor;
                                 if (isArmor && (armor.Light >= 0 || armor.Heavy >= 0))
                                 {
                                     var isHeavy = HeavyArmorBaseDefinitions.Contains(blockDef) || CustomHeavyArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                    if (isHeavy && armor.Heavy >= 0) damageScale *= armor.Heavy;
-                                    else if (!isHeavy && armor.Light >= 0) damageScale *= armor.Light;
+                                    if (isHeavy && armor.Heavy >= 0)
+                                        damageScale *= armor.Heavy;
+                                    else if (!isHeavy && armor.Light >= 0)
+                                        damageScale *= armor.Light;
                                 }
                             }
 
                             if (aConst.CustomDamageScales)
                             {
-                                if (blockDef == null) blockDef = block.BlockDefinition;
+                                if (blockDef == null)
+                                    blockDef = block.BlockDefinition;
                                 float modifier;
                                 var found = aConst.CustomBlockDefinitionBasesToScales.TryGetValue(blockDef, out modifier);
-                                if (found) damageScale *= modifier;
-                                else modifier = 1f;
-                                
-                                if (t.AmmoDef.DamageScales.Custom.SkipOthers != CustomScalesDef.SkipMode.NoSkip) {
+                                if (found)
+                                    damageScale *= modifier;
+                                else
+                                    modifier = 1f;
+
+                                if (t.AmmoDef.DamageScales.Custom.SkipOthers != CustomScalesDef.SkipMode.NoSkip)
+                                {
 
                                     var exclusive = t.AmmoDef.DamageScales.Custom.SkipOthers == CustomScalesDef.SkipMode.Exclusive;
                                     if (exclusive && !found)
                                         continue;
-                                    
+
                                     if (exclusive)
                                         damageScale *= modifier;
                                     else if (found)
@@ -629,7 +694,8 @@ namespace CoreSystems
 
                             if (GlobalDamageModifed)
                             {
-                                if (blockDef == null) blockDef = block.BlockDefinition;
+                                if (blockDef == null)
+                                    blockDef = block.BlockDefinition;
                                 BlockDamage modifier;
                                 var found = BlockDamageMap.TryGetValue(blockDef, out modifier);
 
@@ -685,7 +751,7 @@ namespace CoreSystems
 
                         if (countBlocksAsObjects && (primaryDamage || !primaryDamage && countBlocksAsObjects && !t.AmmoDef.ObjectsHit.SkipBlocksForAOE))
                             objectsHit++;
-                        if(objectsHit >= maxObjects && primaryDamage)
+                        if (objectsHit >= maxObjects && primaryDamage)
                             detRequested = hasDet;
 
                         //AOE damage logic applied to aoeDamageFall
@@ -695,7 +761,7 @@ namespace CoreSystems
                             {
                                 var scale = damageScale == 0d ? 0.0000001 : damageScale;
 
-                                if (aoeAbsorb <= 0 )// pooled without AOE absorb limit
+                                if (aoeAbsorb <= 0)// pooled without AOE absorb limit
                                 {
                                     if (aoeDamage < aoeScaledDmg && blockHp >= aoeDamage)//If remaining pool is less than calc'd damage, only apply remainder of pool
                                     {
@@ -756,7 +822,7 @@ namespace CoreSystems
                         {
                             try
                             {
-                                if (Session.IsServer && !appliedImpulse && primaryDamage && t.AmmoDef.Const.Mass > 0 )
+                                if (Session.IsServer && !appliedImpulse && primaryDamage && t.AmmoDef.Const.Mass > 0)
                                 {
                                     appliedImpulse = true;
                                     var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed : 1;
@@ -791,7 +857,8 @@ namespace CoreSystems
                                 }
                                 else
                                 {
-                                    if (dInfo == null && !DeferredDestroy.TryGetValue(grid, out dInfo)) {
+                                    if (dInfo == null && !DeferredDestroy.TryGetValue(grid, out dInfo))
+                                    {
                                         dInfo = DefferedDestroyPool.Count > 0 ? DefferedDestroyPool.Pop() : new DeferredBlockDestroy();
                                         DeferredDestroy[grid] = dInfo;
                                     }
@@ -799,10 +866,11 @@ namespace CoreSystems
                                     if (dInfo.DestroyBlocks.Count == 0)
                                         dInfo.DestroyTick = Tick + 10;
 
-                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo {Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage, DetonateAmmo = true});
+                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo { Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage, DetonateAmmo = true });
                                 }
-                                
-                                if (GlobalDamageHandlerActive) {
+
+                                if (GlobalDamageHandlerActive)
+                                {
                                     t.ProHits = t.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                                     t.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, block, scaledDamage));
                                 }
@@ -829,11 +897,13 @@ namespace CoreSystems
                                 else
                                     _slimHealthClient.Remove(block);
                             }
-                            else if (block.Integrity - realDmg > 0) _slimHealthClient[block] = (float)(blockHp - realDmg);
+                            else if (block.Integrity - realDmg > 0)
+                                _slimHealthClient[block] = (float)(blockHp - realDmg);
                         }
 
                         var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 && !aoeIsPool || aoeDamage <= 0.5d)) || (!t.AmmoDef.ObjectsHit.SkipBlocksForAOE && objectsHit >= maxObjects) || t.AmmoDef.ObjectsHit.SkipBlocksForAOE && rootStep;
-                        if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
+                        if (showHits && primaryDamage)
+                            Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
 
                         //doneskies
                         if (endCycle)
@@ -847,13 +917,15 @@ namespace CoreSystems
                                 break;
                             }
 
-                            if (detActive) {
+                            if (detActive)
+                            {
                                 //Log.Line($"[EARLY-EXIT] by detActive - aoeDmg:{aoeDamage} <= 0 --- {aoeDmgTally} >= {aoeAbsorb} -- foundAoeBlocks:{foundAoeBlocks} -- primaryExit:{!foundAoeBlocks && basePool <= 0} - objExit:{objectsHit >= maxObjects}");
                                 earlyExit = true;
                                 break;
                             }
 
-                            if (primaryDamage) {
+                            if (primaryDamage)
+                            {
                                 t.BaseDamagePool = 0;
                                 t.ObjectsHit = objectsHit;
                             }
@@ -863,9 +935,12 @@ namespace CoreSystems
 
                 for (int l = 0; l < blockStages; l++)
                     DamageBlockCache[l].Clear();
-                if (showHits && !detActive && hasAoe) Log.Line($"BBH: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
-                if (showHits && detActive && aoeDmgTally>0) Log.Line($"EOL: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
-                if (aoeDmgTally > 0) t.DamageDoneAoe += (long)aoeDmgTally;
+                if (showHits && !detActive && hasAoe)
+                    Log.Line($"BBH: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
+                if (showHits && detActive && aoeDmgTally > 0)
+                    Log.Line($"EOL: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
+                if (aoeDmgTally > 0)
+                    t.DamageDoneAoe += (long)aoeDmgTally;
             }
 
             //stuff I still haven't looked at yet
@@ -890,7 +965,7 @@ namespace CoreSystems
                     t.ProHit.LastHit = hitEnt.Intersection.From + (hitEnt.Intersection.Direction * dist.Value);
             }
             if (!countBlocksAsObjects)
-                t.ObjectsHit ++;
+                t.ObjectsHit++;
             else
                 t.ObjectsHit = objectsHit;
 
@@ -908,7 +983,8 @@ namespace CoreSystems
             var entity = hitEnt.Entity;
             var destObj = hitEnt.Entity as IMyDestroyableObject;
 
-            if (destObj == null || entity == null) return;
+            if (destObj == null || entity == null)
+                return;
             info.ObjectsHit++;
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
@@ -927,7 +1003,8 @@ namespace CoreSystems
 
             var character = hitEnt.Entity as IMyCharacter;
             float damageScale = 1;
-            if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
+            if (info.AmmoDef.Const.VirtualBeams)
+                damageScale *= info.Weapon.WeaponCache.Hits;
             if (character != null && info.AmmoDef.DamageScales.Characters >= 0)
                 damageScale *= info.AmmoDef.DamageScales.Characters;
 
@@ -944,7 +1021,8 @@ namespace CoreSystems
                 scaledDamage *= fallOffMultipler;
             }
 
-            if (scaledDamage <= objHp) info.BaseDamagePool = 0;
+            if (scaledDamage <= objHp)
+                info.BaseDamagePool = 0;
             else
             {
                 var damageLeft = scaledDamage - objHp;
@@ -957,7 +1035,8 @@ namespace CoreSystems
 
             if (info.DoDamage)
             {
-                if (GlobalDamageHandlerActive) {
+                if (GlobalDamageHandlerActive)
+                {
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Entity, (float)scaledDamage));
                 }
@@ -967,14 +1046,16 @@ namespace CoreSystems
             if (info.AmmoDef.Const.Mass > 0)
             {
                 var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
-                if (Session.IsServer) ApplyProjectileForce(entity, entity.PositionComp.WorldAABB.Center, hitEnt.Intersection.Direction, (info.AmmoDef.Const.Mass * speed));
+                if (Session.IsServer)
+                    ApplyProjectileForce(entity, entity.PositionComp.WorldAABB.Center, hitEnt.Intersection.Direction, (info.AmmoDef.Const.Mass * speed));
             }
         }
 
         private void DamageProjectile(HitEntity hitEnt, ProInfo attacker)
         {
             var pTarget = hitEnt.Projectile;
-            if (pTarget == null || pTarget.State != Projectile.ProjectileState.Alive) return;
+            if (pTarget == null || pTarget.State != Projectile.ProjectileState.Alive)
+                return;
             attacker.ObjectsHit++;
 
             if (pTarget.Info.AmmoDef.Const.ArmedWhenHit)
@@ -982,11 +1063,13 @@ namespace CoreSystems
 
             var objHp = pTarget.Info.BaseHealthPool;
             var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
-            if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) return;
+            if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity)
+                return;
 
 
             var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
-            if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;
+            if (attacker.AmmoDef.Const.VirtualBeams)
+                damageScale *= attacker.Weapon.WeaponCache.Hits;
             var scaledDamage = 1 * damageScale;
 
             var distTraveled = attacker.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? attacker.DistanceTraveled : attacker.DistanceTraveled;
@@ -1016,10 +1099,10 @@ namespace CoreSystems
                         attacker.BaseDamagePool = 0;
                 }
                 else
-                    attacker.BaseDamagePool -= objHp;                
-                
+                    attacker.BaseDamagePool -= objHp;
+
                 pTarget.Info.BaseHealthPool = 0;
-                
+
                 var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
                 pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
                 /*
@@ -1040,7 +1123,8 @@ namespace CoreSystems
             if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
                 DetonateProjectile(hitEnt, attacker);
 
-            if (GlobalDamageHandlerActive) {
+            if (GlobalDamageHandlerActive)
+            {
                 attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                 attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, pTarget.Info.Id, scaledDamage));
             }
@@ -1056,13 +1140,15 @@ namespace CoreSystems
 
                     var objHp = sTarget.Info.BaseHealthPool;
                     var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
-                    if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) continue;
+                    if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity)
+                        continue;
 
                     if (sTarget.Info.AmmoDef.Const.ArmedWhenHit)
                         sTarget.Info.ObjectsHit++;
 
                     var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
-                    if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;
+                    if (attacker.AmmoDef.Const.VirtualBeams)
+                        damageScale *= attacker.Weapon.WeaponCache.Hits;
                     var scaledDamage = 1 * damageScale;
 
                     if (scaledDamage >= objHp)
@@ -1085,7 +1171,8 @@ namespace CoreSystems
                         attacker.DamageDoneProj += (long)scaledDamage;
                     }
 
-                    if (GlobalDamageHandlerActive) {
+                    if (GlobalDamageHandlerActive)
+                    {
                         attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                         attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Projectile.Info.Id, scaledDamage));
                     }
@@ -1098,7 +1185,8 @@ namespace CoreSystems
         {
             var entity = hitEnt.Entity;
             var destObj = hitEnt.Entity as MyVoxelBase;
-            if (destObj == null || entity == null || !hitEnt.HitPos.HasValue) return;
+            if (destObj == null || entity == null || !hitEnt.HitPos.HasValue)
+                return;
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
             if (type == HitEntity.Type.Water || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
             {
@@ -1123,11 +1211,11 @@ namespace CoreSystems
 
                     info.ObjectsHit++;
                     float damageScale = 1 * directDmgGlobal;
-                    if (info.AmmoDef.Const.VirtualBeams) 
+                    if (info.AmmoDef.Const.VirtualBeams)
                         damageScale *= info.Weapon.WeaponCache.Hits;
 
                     var scaledDamage = info.BaseDamagePool * damageScale;
-                    
+
                     //Falloff
                     var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
                     if (info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance)
@@ -1138,21 +1226,21 @@ namespace CoreSystems
                     var tRadius = oRadius < minTestRadius && !info.AmmoDef.Const.IsBeamWeapon ? minTestRadius : oRadius;
                     var objHp = (int)MathHelper.Clamp(MathFuncs.VolumeCube(MathFuncs.LargestCubeInSphere(tRadius)), 5000, double.MaxValue);
 
-                    if (tRadius > 5) 
+                    if (tRadius > 5)
                         objHp *= 5;
 
                     if (scaledDamage < objHp)
                     {
                         var reduceBy = objHp / scaledDamage;
                         oRadius /= reduceBy;
-                        if (oRadius < 1) 
+                        if (oRadius < 1)
                             oRadius = 1;
                         info.BaseDamagePool = 0;
                     }
                     else
                     {
                         info.BaseDamagePool -= objHp;
-                        if (oRadius < minTestRadius) 
+                        if (oRadius < minTestRadius)
                             oRadius = minTestRadius;
                     }
 
@@ -1177,88 +1265,48 @@ namespace CoreSystems
             }
         }
 
-        public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits,out int aoeHits) //added depth and angle
+        public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits, out int aoeHits)
         {
-            if (depth <= 0)
-            {
-                aoeHits = 0;
-                foundSomething = false;
-                return;
-            }
-
-            //Log.Line($"Start");
-            //var watch = System.Diagnostics.Stopwatch.StartNew();
-            var rootHitPos = rootInfo; //local cube grid
-            var localfrom = grid.WorldToGridScaledLocal(direction.From);
-            var localto = grid.WorldToGridScaledLocal(direction.To);
-            var gridsize = grid.GridSizeR;
             aoeHits = 0;
-
-            //Log.Line($"Raw rootpos{root.Position} localctr{rootInfo.QueryPos} rootpos {rootPos}  localfrom{localfrom} localto{localto}  min{root.Min} max{root.Max}"); 
-            radius *= gridsize;  //GridSizeR is 0.4 for LG, 2.0 for SG
-            depth *= gridsize;
-            var gmin = grid.Min;
-            var gmax = grid.Max;
-            int maxradius = (int)Math.Floor(radius);  //changed to floor, experiment for precision/rounding bias
-            int maxdepth = (int)Math.Ceiling(depth); //Meters to cube conversion.  Round up or down?
-            Vector3I min2 = Vector3I.Max(rootHitPos - maxradius, gmin);
-            Vector3I max2 = Vector3I.Min(rootHitPos + maxradius, gmax);
             foundSomething = false;
+
+            if (depth <= 0 || radius <= 0) return;
+
+            var rootHitPos = rootInfo;
+            radius *= grid.GridSizeR;
+            depth *= grid.GridSizeR;
+            int maxradius = (int)Math.Floor(radius);
+            int maxdepth = (int)Math.Ceiling(depth);
+            Vector3I min2 = Vector3I.Max(rootHitPos - maxradius, grid.Min);
+            Vector3I max2 = Vector3I.Min(rootHitPos + maxradius, grid.Max);
+            int i, j, k;
 
             if (depth < radius)
             {
-                var localline = new LineD(localfrom, localto);
-                
-                var bmin = new Vector3D(rootHitPos) - 0.51d;//Check if this needs to be adjusted for small grid
+                var localline = new LineD(grid.WorldToGridScaledLocal(direction.From), grid.WorldToGridScaledLocal(direction.To));
+                var bmin = new Vector3D(rootHitPos) - 0.51d;
                 var bmax = new Vector3D(rootHitPos) + 0.51d;
-
-                var xplane = new BoundingBoxD(bmin, new Vector3D(bmax.X, bmax.Y, bmin.Z));
-                var yplane = new BoundingBoxD(bmin, new Vector3D(bmax.X, bmin.Y, bmax.Z));
-                var zplane = new BoundingBoxD(bmin, new Vector3D(bmin.X, bmax.Y, bmax.Z));
-                var xmplane = new BoundingBoxD(bmax, new Vector3D(bmin.X, bmin.Y, bmax.Z));
-                var ymplane = new BoundingBoxD(bmax, new Vector3D(bmin.X, bmax.Y, bmin.Z));
-                var zmplane = new BoundingBoxD(bmax, new Vector3D(bmax.X, bmin.Y, bmin.Z));
-
-                var hitray = new RayD(localto, -localline.Direction);
-
-                var xhit = (hitray.Intersects(xplane) ?? 0) + (hitray.Intersects(xmplane) ?? 0);
-                var yhit = (hitray.Intersects(yplane) ?? 0) + (hitray.Intersects(ymplane) ?? 0);
-                var zhit = (hitray.Intersects(zplane) ?? 0) + (hitray.Intersects(zmplane) ?? 0);
-                //Log.Line($"localto{localto}  rootpos{rootPos} rootmin{root.Min}  rootmax{root.Max}");
-                //Log.Line($"xhit {xhit}  yhit {yhit}  zhit{zhit}");
-                var axishit = new Vector3D(xhit, yhit, zhit);
-
-                // Log.Line($"Hitvec x{hitray.Intersects(xplane)}  y{hitray.Intersects(yplane)} xm{hitray.Intersects(xmplane)}  ym{hitray.Intersects(ymplane)}");
-
-                switch (axishit.AbsMaxComponent())//sort out which "face" was hit and coming/going along that axis
-                {                   
+                var hitray = new RayD(localline.To, -localline.Direction);
+                var xhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmin.X, bmax.Y, bmax.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmax.X, bmin.Y, bmin.Z))) ?? 0);
+                var yhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmax.X, bmin.Y, bmax.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmin.X, bmax.Y, bmin.Z))) ?? 0);
+                var zhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmax.X, bmax.Y, bmin.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmin.X, bmin.Y, bmax.Z))) ?? 0);
+                switch (new Vector3D(xhit, yhit, zhit).AbsMaxComponent())//sort out which "face" was hit and coming/going along that axis
+                {
+                    case 0://hit face perp to x
+                        min2.X = rootHitPos.X - maxdepth + 1;
+                        max2.X = rootHitPos.X + maxdepth - 1;
+                        break;
                     case 1://hit face perp to y
-
-                            min2.Y = rootHitPos.Y - maxdepth + 1;
-                            max2.Y = rootHitPos.Y + maxdepth - 1;
-
+                        min2.Y = rootHitPos.Y - maxdepth + 1;
+                        max2.Y = rootHitPos.Y + maxdepth - 1;
                         break;
-
-                    case 2://hit face perp to x
-
-                            min2.X = rootHitPos.X - maxdepth + 1;
-                            max2.X = rootHitPos.X + maxdepth - 1;        
-
-                        break;
-
-                    case 0://Hit face is perp to z
-
-                            min2.Z = rootHitPos.Z - maxdepth + 1;
-                            max2.Z = rootHitPos.Z + maxdepth - 1;
-
+                    case 2://Hit face is perp to z
+                        min2.Z = rootHitPos.Z - maxdepth + 1;
+                        max2.Z = rootHitPos.Z + maxdepth - 1;
                         break;
                 }
             }
-                        
 
-            var damageBlockCache = DamageBlockCache;
-
-            int i, j, k;
             for (i = min2.X; i <= max2.X; ++i)
             {
                 for (j = min2.Y; j <= max2.Y; ++j)
@@ -1266,82 +1314,48 @@ namespace CoreSystems
                     for (k = min2.Z; k <= max2.Z; ++k)
                     {
                         var vector3I = new Vector3I(i, j, k);
-
                         int hitdist;
-                        switch(shape)
-                        {
-                            case AoeShape.Diamond:
-                                hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
-                                break;
-                            case AoeShape.Round:
-                                hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
-                                break;
-                            default:
-                                hitdist = int.MaxValue;
-                                break;
-                        }
+
+                        if (shape == AoeShape.Diamond)
+                            hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
+                        else
+                            hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
 
                         if (hitdist <= maxradius)
                         {
                             MyCube cube;
                             if (grid.TryGetCube(vector3I, out cube))
                             {
-
                                 var slim = (IMySlimBlock)cube.CubeBlock;
-                                if (slim.IsDestroyed)
-                                    continue;
 
-                                var distArray = damageBlockCache[hitdist];
+                                if (slim.IsDestroyed) continue;
 
-                                var slimmin = slim.Min;
-                                var slimmax = slim.Max;
-                                if (slimmax != slimmin)//Block larger than 1x1x1
+                                if (slim.Max != slim.Min)//Block larger than 1x1x1
                                 {
-                                    var hitblkbound = new BoundingBoxI(slimmin, slimmax);
+                                    var hitblkbound = new BoundingBoxI(slim.Min, slim.Max);
                                     var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);//Direct hit on non1x1x1 block
+
                                     if (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Contains)
-                                    {
                                         rootHitPosbound.IntersectWith(ref hitblkbound);
-                                    }
                                     else //Find first point of non1x1x1 to inflate from
-                                    {
                                         while (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Disjoint)
-                                        {
                                             rootHitPosbound.Inflate(1);
-                                        }
-                                    }
 
                                     rootHitPosbound.Inflate(1);
-
-                                    if (rootHitPosbound.Contains(vector3I) != ContainmentType.Contains) 
-                                        continue;
-
-                                    distArray.Add(slim);
-                                    foundSomething = true;
-                                    aoeHits++;
-
-                                    if (hitdist > maxDbc) 
-                                        maxDbc = hitdist;
-
-                                    if (showHits) 
-                                        slim.Dithering = 0.50f;
-
+                                    if (rootHitPosbound.Contains(vector3I) != ContainmentType.Contains) continue;
                                 }
-                                else//Happy normal 1x1x1
-                                {
-                                    distArray.Add(slim);
-                                    foundSomething = true;
-                                    aoeHits++;
-                                    if (hitdist > maxDbc) maxDbc = hitdist;
-                                    if(showHits)slim.Dithering = 0.50f;
-                                }
+                                DamageBlockCache[hitdist].Add(slim);
+                                foundSomething = true;
+                                aoeHits++;
+                                if (hitdist > maxDbc)
+                                    maxDbc = hitdist;
+                                if (showHits)
+                                    slim.Dithering = 0.50f;
                             }
                         }
                     }
                 }
             }
-            //watch.Stop();
-            //Log.Line($"End {watch.ElapsedMilliseconds}");
         }
 
         public static void GetBlocksInsideSphereFast(MyCubeGrid grid, ref BoundingSphereD sphere, bool checkDestroyed, List<IMySlimBlock> blocks)
