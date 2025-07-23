@@ -1265,88 +1265,48 @@ namespace CoreSystems
             }
         }
 
-        public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits, out int aoeHits) //added depth and angle
+        public void RadiantAoe(Vector3I rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits, out int aoeHits)
         {
-            if (depth <= 0)
-            {
-                aoeHits = 0;
-                foundSomething = false;
-                return;
-            }
-
-            //Log.Line($"Start");
-            //var watch = System.Diagnostics.Stopwatch.StartNew();
-            var rootHitPos = rootInfo; //local cube grid
-            var localfrom = grid.WorldToGridScaledLocal(direction.From);
-            var localto = grid.WorldToGridScaledLocal(direction.To);
-            var gridsize = grid.GridSizeR;
             aoeHits = 0;
-
-            //Log.Line($"Raw rootpos{root.Position} localctr{rootInfo.QueryPos} rootpos {rootPos}  localfrom{localfrom} localto{localto}  min{root.Min} max{root.Max}"); 
-            radius *= gridsize;  //GridSizeR is 0.4 for LG, 2.0 for SG
-            depth *= gridsize;
-            var gmin = grid.Min;
-            var gmax = grid.Max;
-            int maxradius = (int)Math.Floor(radius);  //changed to floor, experiment for precision/rounding bias
-            int maxdepth = (int)Math.Ceiling(depth); //Meters to cube conversion.  Round up or down?
-            Vector3I min2 = Vector3I.Max(rootHitPos - maxradius, gmin);
-            Vector3I max2 = Vector3I.Min(rootHitPos + maxradius, gmax);
             foundSomething = false;
+
+            if (depth <= 0 || radius <= 0) return;
+
+            var rootHitPos = rootInfo;
+            radius *= grid.GridSizeR;
+            depth *= grid.GridSizeR;
+            int maxradius = (int)Math.Floor(radius);
+            int maxdepth = (int)Math.Ceiling(depth);
+            Vector3I min2 = Vector3I.Max(rootHitPos - maxradius, grid.Min);
+            Vector3I max2 = Vector3I.Min(rootHitPos + maxradius, grid.Max);
+            int i, j, k;
 
             if (depth < radius)
             {
-                var localline = new LineD(localfrom, localto);
-
-                var bmin = new Vector3D(rootHitPos) - 0.51d;//Check if this needs to be adjusted for small grid
+                var localline = new LineD(grid.WorldToGridScaledLocal(direction.From), grid.WorldToGridScaledLocal(direction.To));
+                var bmin = new Vector3D(rootHitPos) - 0.51d;
                 var bmax = new Vector3D(rootHitPos) + 0.51d;
-
-                var xplane = new BoundingBoxD(bmin, new Vector3D(bmax.X, bmax.Y, bmin.Z));
-                var yplane = new BoundingBoxD(bmin, new Vector3D(bmax.X, bmin.Y, bmax.Z));
-                var zplane = new BoundingBoxD(bmin, new Vector3D(bmin.X, bmax.Y, bmax.Z));
-                var xmplane = new BoundingBoxD(bmax, new Vector3D(bmin.X, bmin.Y, bmax.Z));
-                var ymplane = new BoundingBoxD(bmax, new Vector3D(bmin.X, bmax.Y, bmin.Z));
-                var zmplane = new BoundingBoxD(bmax, new Vector3D(bmax.X, bmin.Y, bmin.Z));
-
-                var hitray = new RayD(localto, -localline.Direction);
-
-                var xhit = (hitray.Intersects(xplane) ?? 0) + (hitray.Intersects(xmplane) ?? 0);
-                var yhit = (hitray.Intersects(yplane) ?? 0) + (hitray.Intersects(ymplane) ?? 0);
-                var zhit = (hitray.Intersects(zplane) ?? 0) + (hitray.Intersects(zmplane) ?? 0);
-                //Log.Line($"localto{localto}  rootpos{rootPos} rootmin{root.Min}  rootmax{root.Max}");
-                //Log.Line($"xhit {xhit}  yhit {yhit}  zhit{zhit}");
-                var axishit = new Vector3D(xhit, yhit, zhit);
-
-                // Log.Line($"Hitvec x{hitray.Intersects(xplane)}  y{hitray.Intersects(yplane)} xm{hitray.Intersects(xmplane)}  ym{hitray.Intersects(ymplane)}");
-
-                switch (axishit.AbsMaxComponent())//sort out which "face" was hit and coming/going along that axis
+                var hitray = new RayD(localline.To, -localline.Direction);
+                var xhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmin.X, bmax.Y, bmax.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmax.X, bmin.Y, bmin.Z))) ?? 0);
+                var yhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmax.X, bmin.Y, bmax.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmin.X, bmax.Y, bmin.Z))) ?? 0);
+                var zhit = (hitray.Intersects(new BoundingBoxD(bmin, new Vector3D(bmax.X, bmax.Y, bmin.Z))) ?? 0) + (hitray.Intersects(new BoundingBoxD(bmax, new Vector3D(bmin.X, bmin.Y, bmax.Z))) ?? 0);
+                switch (new Vector3D(xhit, yhit, zhit).AbsMaxComponent())//sort out which "face" was hit and coming/going along that axis
                 {
-                    case 1://hit face perp to y
-
-                        min2.Y = rootHitPos.Y - maxdepth + 1;
-                        max2.Y = rootHitPos.Y + maxdepth - 1;
-
-                        break;
-
-                    case 2://hit face perp to x
-
+                    case 0://hit face perp to x
                         min2.X = rootHitPos.X - maxdepth + 1;
                         max2.X = rootHitPos.X + maxdepth - 1;
-
                         break;
-
-                    case 0://Hit face is perp to z
-
+                    case 1://hit face perp to y
+                        min2.Y = rootHitPos.Y - maxdepth + 1;
+                        max2.Y = rootHitPos.Y + maxdepth - 1;
+                        break;
+                    case 2://Hit face is perp to z
                         min2.Z = rootHitPos.Z - maxdepth + 1;
                         max2.Z = rootHitPos.Z + maxdepth - 1;
-
                         break;
                 }
             }
 
-
-            var damageBlockCache = DamageBlockCache;
-
-            int i, j, k;
             for (i = min2.X; i <= max2.X; ++i)
             {
                 for (j = min2.Y; j <= max2.Y; ++j)
@@ -1354,84 +1314,48 @@ namespace CoreSystems
                     for (k = min2.Z; k <= max2.Z; ++k)
                     {
                         var vector3I = new Vector3I(i, j, k);
-
                         int hitdist;
-                        switch (shape)
-                        {
-                            case AoeShape.Diamond:
-                                hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
-                                break;
-                            case AoeShape.Round:
-                                hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
-                                break;
-                            default:
-                                hitdist = int.MaxValue;
-                                break;
-                        }
+
+                        if (shape == AoeShape.Diamond)
+                            hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
+                        else
+                            hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
 
                         if (hitdist <= maxradius)
                         {
                             MyCube cube;
                             if (grid.TryGetCube(vector3I, out cube))
                             {
-
                                 var slim = (IMySlimBlock)cube.CubeBlock;
-                                if (slim.IsDestroyed)
-                                    continue;
 
-                                var distArray = damageBlockCache[hitdist];
+                                if (slim.IsDestroyed) continue;
 
-                                var slimmin = slim.Min;
-                                var slimmax = slim.Max;
-                                if (slimmax != slimmin)//Block larger than 1x1x1
+                                if (slim.Max != slim.Min)//Block larger than 1x1x1
                                 {
-                                    var hitblkbound = new BoundingBoxI(slimmin, slimmax);
+                                    var hitblkbound = new BoundingBoxI(slim.Min, slim.Max);
                                     var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);//Direct hit on non1x1x1 block
+
                                     if (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Contains)
-                                    {
                                         rootHitPosbound.IntersectWith(ref hitblkbound);
-                                    }
                                     else //Find first point of non1x1x1 to inflate from
-                                    {
                                         while (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Disjoint)
-                                        {
                                             rootHitPosbound.Inflate(1);
-                                        }
-                                    }
 
                                     rootHitPosbound.Inflate(1);
-
-                                    if (rootHitPosbound.Contains(vector3I) != ContainmentType.Contains)
-                                        continue;
-
-                                    distArray.Add(slim);
-                                    foundSomething = true;
-                                    aoeHits++;
-
-                                    if (hitdist > maxDbc)
-                                        maxDbc = hitdist;
-
-                                    if (showHits)
-                                        slim.Dithering = 0.50f;
-
+                                    if (rootHitPosbound.Contains(vector3I) != ContainmentType.Contains) continue;
                                 }
-                                else//Happy normal 1x1x1
-                                {
-                                    distArray.Add(slim);
-                                    foundSomething = true;
-                                    aoeHits++;
-                                    if (hitdist > maxDbc)
-                                        maxDbc = hitdist;
-                                    if (showHits)
-                                        slim.Dithering = 0.50f;
-                                }
+                                DamageBlockCache[hitdist].Add(slim);
+                                foundSomething = true;
+                                aoeHits++;
+                                if (hitdist > maxDbc)
+                                    maxDbc = hitdist;
+                                if (showHits)
+                                    slim.Dithering = 0.50f;
                             }
                         }
                     }
                 }
             }
-            //watch.Stop();
-            //Log.Line($"End {watch.ElapsedMilliseconds}");
         }
 
         public static void GetBlocksInsideSphereFast(MyCubeGrid grid, ref BoundingSphereD sphere, bool checkDestroyed, List<IMySlimBlock> blocks)
