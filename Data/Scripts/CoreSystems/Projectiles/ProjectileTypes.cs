@@ -204,6 +204,7 @@ namespace CoreSystems.Support
         internal bool WasTracking;
         internal bool Sleep;
         internal bool PickTarget;
+        internal bool ManualMode;
         internal int ChaseAge;
         internal int LastOffsetTime;
         internal int SmartSlot;
@@ -230,6 +231,7 @@ namespace CoreSystems.Support
             SmartReady = false;
             WasTracking = false;
             PickTarget = false;
+            ManualMode = false;
 
             Sleep = false;
 

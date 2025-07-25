@@ -539,7 +539,7 @@ namespace CoreSystems.Projectiles
                     Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
                     if (fake && s.DummyTargets != null)
                     {
-                        var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
+                        var fakeTarget = !s.ManualMode && s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
                         fakeTargetInfo = fakeTarget.LastInfoTick != session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                         targetPos = fakeTargetInfo != null ? fakeTargetInfo.WorldPosition : fakeTarget.FakeInfo.WorldPosition;
                         HadTarget = HadTargetState.Fake;
