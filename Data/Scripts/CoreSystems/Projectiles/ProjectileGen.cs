@@ -62,10 +62,10 @@ namespace CoreSystems.Projectiles
                 storage.DummyTargets = null;
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + ((1 + w.Reload.EndId) * aConst.MagazineSize + w.ProjectileCounter) * 5));
                 info.ShieldProc = info.Random;
-                if (aConst.IsDrone || aConst.IsSmart)
+                if ((aConst.IsDrone || aConst.IsSmart) && comp.FakeMode)
                 {
-                    if (comp.FakeMode)
-                        Session.I.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
+                    Session.I.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
+                    storage.ManualMode = comp.ManualMode;
                 }
 
 
