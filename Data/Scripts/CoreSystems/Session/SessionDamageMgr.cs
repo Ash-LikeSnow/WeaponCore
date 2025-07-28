@@ -1006,7 +1006,7 @@ namespace CoreSystems
             if (info.AmmoDef.Const.VirtualBeams)
                 damageScale *= info.Weapon.WeaponCache.Hits;
             if (character != null && info.AmmoDef.DamageScales.Characters >= 0)
-                damageScale *= info.AmmoDef.DamageScales.Characters;
+                damageScale *= info.AmmoDef.Const.CharacterDmgScale;
 
             var areaEffect = info.AmmoDef.AreaOfDamage;
             var areaDamage = areaEffect.ByBlockHit.Enable ? (info.AmmoDef.Const.ByBlockHitDamage * (info.AmmoDef.Const.ByBlockHitRadius * 0.5f)) * areaDmgGlobal : 0;
@@ -1040,6 +1040,14 @@ namespace CoreSystems
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Entity, (float)scaledDamage));
                 }
+                /*
+                if (character != null && IsCreative) //Applies character damage in creative like pre-1.206, but will kill even if Invulnerable = true 
+                {
+                    MyCharacterStatComponent statComp;
+                    character.Components.TryGet(out statComp);
+                    statComp.Health.Decrease(scaledDamage, null);
+                }
+                */
                 destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, IsServer, null, attackerId);
             }
 

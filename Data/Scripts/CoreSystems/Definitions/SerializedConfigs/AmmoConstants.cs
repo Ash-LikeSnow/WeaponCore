@@ -253,6 +253,7 @@ namespace CoreSystems.Support
         public readonly bool IgnoreAntiSmarts;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
+        public readonly float CharacterDmgScale;
         public readonly float OffsetRatio;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
@@ -502,7 +503,7 @@ namespace CoreSystems.Support
             ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool, out HasApproaches);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
-            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale);
+            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale, out CharacterDmgScale);
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
             
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
@@ -1035,7 +1036,7 @@ namespace CoreSystems.Support
             collisionSize = size;
         }
 
-        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool gridScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale)
+        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool gridScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale, out float characterDmgScale)
         {
             var d = ammoDef.DamageScales;
             customBlockDef = null;
@@ -1073,7 +1074,7 @@ namespace CoreSystems.Support
             var healthHitModiferRaw = AmmoModsFound && Overrides.HealthHitModifier.HasValue ? Math.Max(Overrides.HealthHitModifier.Value, 0) : d.HealthHitModifier;
             healthHitModifer = healthHitModiferRaw > 0 ? healthHitModiferRaw : 1;
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
-
+            characterDmgScale = d.Characters > 0 ? d.Characters : 1;
             deformDelay = d.Deform.DeformDelay <= 0 ? 30 : d.Deform.DeformDelay;
         }
 
