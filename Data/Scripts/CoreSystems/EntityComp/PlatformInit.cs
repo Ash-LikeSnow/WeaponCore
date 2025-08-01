@@ -256,6 +256,12 @@ namespace CoreSystems.Platform
                 {
                     part.NeedsWorldMatrix = true;
                 }
+                if (Parts.VanillaSubparts.ContainsKey(part))
+                {
+                    ForceNeedsWorld = true;
+                    Comp.NeedsWorldReset = true;
+                    part.NeedsWorldMatrix = true;
+                }
             }
         }
 
