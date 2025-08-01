@@ -310,12 +310,12 @@ namespace CoreSystems
                         if (eventParticle.EmptyNames.Length == eventParticle.MuzzleNames.Length) {
                             
                             for (int j = 0; j<eventParticle.EmptyNames.Length; j++)
-                                tmpEvents[particleEvent.Key].Add(new ParticleEvent(eventParticle.Particle.Name, eventParticle.EmptyNames[j], eventParticle.Particle.Color, eventParticle.Particle.Offset, eventParticle.Particle.Extras.Scale, (eventParticle.Particle.Extras.MaxDistance* eventParticle.Particle.Extras.MaxDistance), (uint) eventParticle.Particle.Extras.MaxDuration, eventParticle.StartDelay, eventParticle.LoopDelay, eventParticle.Particle.Extras.Loop, eventParticle.Particle.Extras.Restart, eventParticle.ForceStop, eventParticle.MuzzleNames[j]));
+                                tmpEvents[particleEvent.Key].Add(new ParticleEvent(eventParticle.Particle.Name, eventParticle.EmptyNames[j], eventParticle.Particle.Color, (Vector3)eventParticle.Particle.Offset, eventParticle.Particle.Extras.Scale, (eventParticle.Particle.Extras.MaxDistance* eventParticle.Particle.Extras.MaxDistance), (uint) eventParticle.Particle.Extras.MaxDuration, eventParticle.StartDelay, eventParticle.LoopDelay, eventParticle.Particle.Extras.Loop, eventParticle.Particle.Extras.Restart, eventParticle.ForceStop, eventParticle.MuzzleNames[j]));
                         }
                         else {
                             
                             for (int j = 0; j<eventParticle.EmptyNames.Length; j++)
-                                tmpEvents[particleEvent.Key].Add(new ParticleEvent(eventParticle.Particle.Name, eventParticle.EmptyNames[j], eventParticle.Particle.Color, eventParticle.Particle.Offset, eventParticle.Particle.Extras.Scale, (eventParticle.Particle.Extras.MaxDistance* eventParticle.Particle.Extras.MaxDistance), (uint) eventParticle.Particle.Extras.MaxDuration, eventParticle.StartDelay, eventParticle.LoopDelay, eventParticle.Particle.Extras.Loop, eventParticle.Particle.Extras.Restart, eventParticle.ForceStop, eventParticle.MuzzleNames));
+                                tmpEvents[particleEvent.Key].Add(new ParticleEvent(eventParticle.Particle.Name, eventParticle.EmptyNames[j], eventParticle.Particle.Color, (Vector3)eventParticle.Particle.Offset, eventParticle.Particle.Extras.Scale, (eventParticle.Particle.Extras.MaxDistance* eventParticle.Particle.Extras.MaxDistance), (uint) eventParticle.Particle.Extras.MaxDuration, eventParticle.StartDelay, eventParticle.LoopDelay, eventParticle.Particle.Extras.Loop, eventParticle.Particle.Extras.Restart, eventParticle.ForceStop, eventParticle.MuzzleNames));
                         }
                     }                    
                 }
@@ -986,7 +986,7 @@ namespace CoreSystems
 
                         if (animation.Reverse)
                         {
-                            if (animationType == AnimationType.Movement) localMatrix.Translation -= translation;
+                            if (animationType == AnimationType.Movement) localMatrix.Translation -= (Vector3)translation;
 
                             animation.Previous();
                             if (animation.Previous(false) == animation.NumberOfMoves - 1)
@@ -994,7 +994,7 @@ namespace CoreSystems
                         }
                         else
                         {
-                            if (animationType == AnimationType.Movement) localMatrix.Translation += translation;
+                            if (animationType == AnimationType.Movement) localMatrix.Translation += (Vector3)translation;
 
                             animation.Next();
                             if (animation.DoesReverse && animation.Next(false) == 0)

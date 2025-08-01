@@ -588,7 +588,7 @@ namespace CoreSystems.Support
                 var r1Cos = Math.Cos(randomFloat1);
                 var r2Cos = Math.Cos(randomFloat2);
 
-                var shrapnelDir = Vector3.TransformNormal(mutli  * -new Vector3(r1Sin * r2Cos, r1Sin * r2Sin, r1Cos), Matrix.CreateFromDir(pointDir));
+                var shrapnelDir = Vector3.TransformNormal(mutli  * -new Vector3(r1Sin * r2Cos, r1Sin * r2Sin, r1Cos), Matrix.CreateFromDir((Vector3)pointDir));
 
                 frag.Direction = shrapnelDir;
                 Sharpnel.Add(frag);

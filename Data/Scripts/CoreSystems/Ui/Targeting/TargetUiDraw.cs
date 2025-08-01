@@ -103,7 +103,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             _lastDrawTick = s.Tick;
             
             if (enableActivator)
-                MyTransparentGeometry.AddBillboardOriented(_reticle, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale, BlendTypeEnum.PostPP);
+                MyTransparentGeometry.AddBillboardOriented(_reticle, _reticleColor, offetPosition, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, (float)PointerAdjScale, BlendTypeEnum.PostPP);
 
 
             Vector3D targetCenter;
@@ -118,7 +118,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     dotpos.Y *= (float)screenScale;
                     screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
                     var radius = (float)(screenScale * MarkerSize());
-                    MyTransparentGeometry.AddBillboardOriented(_targetCircle, _reticleColor, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
+                    MyTransparentGeometry.AddBillboardOriented(_targetCircle, _reticleColor, screenPos, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
                 }
 
                 if (_3RdPersonDraw == ThirdPersonModes.DotTarget)
@@ -128,13 +128,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     if (handHit)
                         _reticleColor = Color.White;
                     
-                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
+                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
                 }
             }
             else if (!enableActivator && _3RdPersonDraw != ThirdPersonModes.None)
             {
                 var scaler = s.UiInput.TurretBlockView ? 0.5f : 0.35f;
-                MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
+                MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
             }
 
             DrawReticle = true;
@@ -156,7 +156,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             _alertHudInfo.GetTextureInfo(s, out textureName, out scale, out screenScale, out fontScale, out offset, out localOffset);
 
-            MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
+            MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
             string textLine1;
             string textLine2;
             Vector2 textOffset1;
@@ -353,7 +353,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var lineColor = new Vector4(0.5f, 0.5f, 1, 1);
             var lineMagnitude = lineEndScreenPos - lineStartScreenPos;
 
-            MyTransparentGeometry.AddLineBillboard(_laserLine, lineColor, lineStartScreenPos, lineMagnitude, 1f, lineScale * 0.005f);
+            MyTransparentGeometry.AddLineBillboard(_laserLine, lineColor, lineStartScreenPos, (Vector3)lineMagnitude, 1f, lineScale * 0.005f);
 
             var avgScreenPos = s.Camera.WorldToScreen(ref fullAveragePos);
             var avgLockedScreenPos = MyUtils.GetClosestPointOnLine(ref startScreenPos, ref endScreenPos, ref avgScreenPos);
@@ -437,7 +437,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                             lockColor = Color.White;
                             break;
                     }
-                    MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
+                    MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
 
                     for (int j = 0; j < 11; j++)
                     {
@@ -487,7 +487,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
 
                 var radius = (float) (screenScale * MarkerSize());
-                MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
+                MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
             }
         }
 
@@ -569,7 +569,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var offetPosition = Vector3D.Transform(HandPointerOffset, s.CameraMatrix);
             var screenScale = (s.UiInput.IronSights ? 0.0375 : 0.025) * s.ScaleFov;
             var radius = (float)(screenScale * HandMarkerSize());
-            MyTransparentGeometry.AddBillboardOriented(_targetCircle, HandHitMarkerColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
+            MyTransparentGeometry.AddBillboardOriented(_targetCircle, HandHitMarkerColor, offetPosition, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
         }
 
         private double MarkerSize()
@@ -845,7 +845,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     {
 
                         leadAvg /= addLead;
-                        var leadLength = Vector3.Distance(leadAvg, targetPos);
+                        var leadLength = (float)Vector3D.Distance(leadAvg, targetPos);
                         if (leadLength > maxLeadLength)
                             maxLeadLength = leadLength;
 

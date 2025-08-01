@@ -105,7 +105,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 else if (!restrict)
                 {
                     textureToDraw.Position = Vector3D.Transform(textureToDraw.Position, _cameraWorldMatrix);
-                    MyTransparentGeometry.AddBillboardOriented(textureToDraw.Material, textureToDraw.Color, textureToDraw.Position, _cameraWorldMatrix.Left, _cameraWorldMatrix.Up, textureToDraw.Height, textureToDraw.Blend);
+                    MyTransparentGeometry.AddBillboardOriented(textureToDraw.Material, textureToDraw.Color, textureToDraw.Position, (Vector3)_cameraWorldMatrix.Left, (Vector3)_cameraWorldMatrix.Up, textureToDraw.Height, textureToDraw.Blend);
                 }
 
                 if (!textureToDraw.Persistant)
@@ -142,8 +142,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     tdd.Material = cm.Material;
                     tdd.Color = textAdd.Color;
                     tdd.Position = textPos;
-                    tdd.Up = _cameraWorldMatrix.Up;
-                    tdd.Left = _cameraWorldMatrix.Left;
+                    tdd.Up = (Vector3)_cameraWorldMatrix.Up;
+                    tdd.Left = (Vector3)_cameraWorldMatrix.Left;
                     tdd.Width = width;
                     tdd.Height = height;
                     tdd.P0 = cm.P0;
@@ -166,8 +166,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var tdd = _textureAddList[i];
                 tdd.Position.Z = _viewPortSize.Z;
                 tdd.Position = Vector3D.Transform(tdd.Position, _cameraWorldMatrix);
-                tdd.Up = _cameraWorldMatrix.Up;
-                tdd.Left = _cameraWorldMatrix.Left;
+                tdd.Up = (Vector3)_cameraWorldMatrix.Up;
+                tdd.Left = (Vector3)_cameraWorldMatrix.Left;
                 _drawList.Add(tdd);
             }
         }

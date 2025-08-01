@@ -116,7 +116,7 @@ namespace CoreSystems.Projectiles
                     w.GravityLength = w.GravityUnitDir.Normalize();
                 }
 
-                p.Gravity = updateGravity ? w.GravityPoint : Vector3D.Zero;
+                p.Gravity = updateGravity ? (Vector3)w.GravityPoint : Vector3.Zero;
 
                 if (t != Kind.Virtual)
                 {
@@ -192,7 +192,7 @@ namespace CoreSystems.Projectiles
                         var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
-                            if (Vector3.Dot(p.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
+                            if (Vector3.Dot((Vector3)p.Direction, (Vector3)(info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation)) < 0)
                             {
                                 var testRay = new RayD(info.Origin, p.Direction);
                                 var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null;

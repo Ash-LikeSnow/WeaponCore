@@ -243,7 +243,7 @@ namespace CoreSystems.Projectiles
             }
             else DistanceToTravelSqr = Info.MaxTrajectory * Info.MaxTrajectory;
 
-            PrevTargetVel = Vector3D.Zero;
+            PrevTargetVel = Vector3.Zero;
 
             var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);
 
@@ -563,7 +563,7 @@ namespace CoreSystems.Projectiles
                         {
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
-                            if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
+                            if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3D.Dot(Direction, Position - targetPos) > 0)
                                 OffSetTarget();
                         }
                         targetPos += OffsetTarget;
@@ -576,12 +576,12 @@ namespace CoreSystems.Projectiles
 
                     var tVel = Vector3.Zero;
                     if (fake && fakeTargetInfo != null) tVel = fakeTargetInfo.LinearVelocity;
-                    else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = ((Projectile)Info.Target.TargetObject).Velocity;
+                    else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = (Vector3)((Projectile)Info.Target.TargetObject).Velocity;
                     else if (physics != null) tVel = physics.LinearVelocity;
 
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
-                        if (s.WasTracking && Vector3.Dot(Direction, Vector3D.Normalize(targetPos - Position)) < aConst.TargetLossDegree)
+                        if (s.WasTracking && Vector3D.Dot(Direction, Vector3D.Normalize(targetPos - Position)) < aConst.TargetLossDegree)
                         {
                             s.PickTarget = true;
                         }
@@ -608,7 +608,7 @@ namespace CoreSystems.Projectiles
 
                         double dist;
                         Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
-                        if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - TargetPosition) > 0)
+                        if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3D.Dot(Direction, Position - TargetPosition) > 0)
                         {
                             OffSetTarget(true);
                             TargetPosition += OffsetTarget;
@@ -683,7 +683,7 @@ namespace CoreSystems.Projectiles
                             if (Vector3D.IsZero(gravity) || Vector3D.IsZero(commandedAccel))
                                 gravityCompensationVec = Vector3D.Zero;
                             else
-                                gravityCompensationVec = (gravity - gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+                                gravityCompensationVec = (gravity - gravity.Dot((Vector3)commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
 
                             var diffSq = accelMpsMulti * accelMpsMulti - gravityCompensationVec.LengthSquared();
                             commandedAccel = diffSq < 0 ? commandedAccel - gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
@@ -2953,7 +2953,7 @@ namespace CoreSystems.Projectiles
 
                     double dist;
                     Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
-                    if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
+                    if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3D.Dot(Direction, Position - targetPos) > 0)
                         OffSetTarget();
                 }
                 targetPos += OffsetTarget;
@@ -2968,7 +2968,7 @@ namespace CoreSystems.Projectiles
             }
             else if (Info.Target.TargetState == Target.TargetStates.IsProjectile && pTarget != null)
             {
-                tVel = pTarget.Velocity;
+                tVel = (Vector3)pTarget.Velocity;
             }
             else if (physics != null)
             {
@@ -2984,7 +2984,7 @@ namespace CoreSystems.Projectiles
         private void SmartTargetLoss(Vector3D targetPos)
         {
 
-            if (Info.Storage.WasTracking && (Session.I.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
+            if (Info.Storage.WasTracking && (Session.I.Tick20 || Vector3D.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
             {
                 var targetDir = -Direction;
                 var refDir = Vector3D.Normalize(Position - targetPos);
@@ -3642,7 +3642,7 @@ namespace CoreSystems.Projectiles
             var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPosition();
             proSync.Position = Position;
             proSync.State = state;
-            proSync.Velocity = Velocity;
+            proSync.Velocity = (Vector3)Velocity;
             proSync.ProId = Info.SyncId;
             Info.Weapon.ProPositionSync.Collection.Add(proSync);
             session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProPositionSync;
