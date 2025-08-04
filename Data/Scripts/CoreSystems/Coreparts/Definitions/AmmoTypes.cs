@@ -492,7 +492,7 @@ namespace Scripts
                 Guidance = None, // None, Remote, TravelTo, Smart, DetectTravelTo, DetectSmart, DetectFixed
                 TargetLossDegree = 15, // Degrees, Is pointed forward
                 MaxLifeTime = 1200, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
-                AccelPerSec = 600, // Meters Per Second. This is the spawning Speed of the Projectile, and used by turning.
+                AccelPerSec = 0, // Meters Per Second. This is the spawning Speed of the Projectile, and used by turning.
                 DesiredSpeed = 200, // voxel phasing if you go above 5100
                 MaxTrajectory = 800f, // Max Distance the projectile or beam can Travel.
             },
