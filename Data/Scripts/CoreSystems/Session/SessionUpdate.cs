@@ -514,7 +514,7 @@ namespace CoreSystems
                             var manualThisWeapon = pControl.ControlEntity == wComp.Cube && wComp.HasAim || pControl.ControlEntity is IMyAutomaticRifleGun;
                             var controllingWeapon = customWeapon || manualThisWeapon;
                             var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
-                            var manual = controllingWeapon || pControl.ShareControl && validManualModes && ((wComp.HasTurret && wComp.HasAim) || wComp.HasRequireTarget || ai.ControlComp != null) || !IdToCompMap.ContainsKey(pControl.EntityId);
+                            var manual = controllingWeapon || pControl.ShareControl && validManualModes && (((wComp.HasTurret && wComp.HasAim) || wComp.HasRequireTarget || ai.ControlComp != null) || !IdToCompMap.ContainsKey(pControl.EntityId));
                             var playerAim = activePlayer && manual;
                             var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
