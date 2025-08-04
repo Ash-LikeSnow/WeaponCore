@@ -25,9 +25,8 @@ namespace CoreSystems.Support
 
         internal const string MissileVanillaBase = "MissileTurretBase1";
         internal const string MissileVanillaBarrels = "MissileTurretBarrels";
-        internal const string GatVanillaBase1 = "GatlingTurretBase1";
-        internal const string GatVanillaBase2 = "GatlingTurretBase2";
-        internal const string GatVanillaBarrels = "GatlingBarrel";
+        internal const string GatVanillaBase = "GatlingTurretBase1";
+        internal const string GatVanillaBarrels = "GatlingTurretBase2";
         internal const string NoneStr = "None";
 
 
@@ -80,7 +79,7 @@ namespace CoreSystems.Support
                                 NameToEntity[name] = res;
                                 EntityToName[res] = name;
                                 var sorter = Entity as MyConveyorSorter;
-                                if (sorter == null && (name.Equals(MissileVanillaBase) || name.Equals(MissileVanillaBarrels) || name.Equals(GatVanillaBase1) || name.Equals(GatVanillaBase2) || name.Equals(GatVanillaBarrels)))
+                                if (sorter == null && (name.Equals(MissileVanillaBase) || name.Equals(MissileVanillaBarrels) || name.Equals(GatVanillaBase) || name.Equals(GatVanillaBarrels)))
                                     VanillaSubparts[res] = name;
                             }
                         }
