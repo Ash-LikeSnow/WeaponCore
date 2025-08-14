@@ -422,6 +422,7 @@ namespace CoreSystems
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
 
+        internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;
         internal int ClientAvDivisor = 1;

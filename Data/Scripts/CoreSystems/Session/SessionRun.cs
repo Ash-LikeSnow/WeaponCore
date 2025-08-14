@@ -36,6 +36,18 @@ namespace CoreSystems
                 Paused();
         }
 
+        private void SeamlessServerUnloaded() 
+        {
+            if (IsClient)
+                SeamlessEntID = ActiveControlBlock?.GetTopMostParent().EntityId ?? 0;
+        }
+
+        private void SeamlessServerLoaded()
+        {
+            if (IsClient)
+                UpdateLocalAiAndCockpit(true);
+        }
+
         public override void UpdateBeforeSimulation()
         {
 
