@@ -34,7 +34,7 @@ namespace CoreSystems
             ai.Construct.Focus.RequestAddFocus(entity, ai, PlayerId);
         }
 
-        internal bool UpdateLocalAiAndCockpit(bool force = false)
+        internal bool UpdateLocalAiAndCockpit()
         {
             InGridAiBlock = false;
             ActiveControlBlock = ControlledEntity as MyCubeBlock;
@@ -57,7 +57,7 @@ namespace CoreSystems
 
                 TrackingAi.PlayerControl.TryGetValue(PlayerId, out oldControlId);
 
-                if (oldControlId.EntityId != controlledEntity.EntityId || force)
+                if (oldControlId.EntityId != controlledEntity.EntityId)
                 {
                     if (ActiveControlBlock is MyShipController)
                         CheckToolbarForVanilla(ActiveControlBlock);
