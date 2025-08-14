@@ -45,11 +45,19 @@ namespace CoreSystems
         private void SeamlessServerLoaded()
         {
             if (IsClient)
-                UpdateLocalAiAndCockpit(true);
+                QueueSeamless = true;
         }
 
         public override void UpdateBeforeSimulation()
         {
+
+            if (QueueSeamless && Session?.Player?.Controller != null)
+            {
+                var controller = Session.Player.Controller;
+                controller.ControlledEntityChanged += OnPlayerController;
+                OnPlayerController(null, controller.ControlledEntity);
+                QueueSeamless = false;
+            }
 
             if (SuppressWc)
                 return;

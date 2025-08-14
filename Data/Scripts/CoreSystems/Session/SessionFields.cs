@@ -510,6 +510,7 @@ namespace CoreSystems
         internal bool AntiSmartActive;
         internal bool DirtyGrid;
         internal bool AuthorConnected;
+        internal bool QueueSeamless;
 
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {
