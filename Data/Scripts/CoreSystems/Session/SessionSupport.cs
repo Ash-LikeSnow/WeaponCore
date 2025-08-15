@@ -1051,7 +1051,6 @@ namespace CoreSystems
 
         internal void CheckToolbarForVanilla(MyCubeBlock cube)
         {
-            string message = null;
             if (cube is MyShipController)
             {
                 var ob = (MyObjectBuilder_ShipController)cube.GetObjectBuilderCubeBlock();
@@ -1063,17 +1062,10 @@ namespace CoreSystems
                         var defId = (MyDefinitionId)toolbarItem.defId;
                         if (VanillaIds.ContainsKey(defId) || PartPlatforms.ContainsKey(defId))
                         {
-                            MyVisualScriptLogicProvider.ClearToolbarSlotLocal(i, PlayerId);
-                            //var index = ob.Toolbar.Slots[i].Index;
-                           // message += $"*Warning* Vanilla weapon toolbar action detected in slot {index + 1}, replace with WeaponCore Group toolbar action!\n";
+                            MyVisualScriptLogicProvider.ClearToolbarSlotLocal(ob.Toolbar.Slots[i].Index, PlayerId);
                         }
                     }
                 }
-
-                if (message != null)
-                    ShowLocalNotify(message, 10000, "Red");
-
-
             }
         }
 

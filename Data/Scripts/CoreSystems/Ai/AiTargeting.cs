@@ -248,7 +248,7 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
 
                 // WcApi turret target validation
-                if (Session.I.ValidateWeaponTargetFunc != null &&
+                if (Session.I.ValidateWeaponTargetFunc != null && w.Comp.TerminalBlock != null &&
                     !Session.I.ValidateWeaponTargetFunc.Invoke(w.Comp.TerminalBlock, w.PartId, info.Target))
                     continue;
 

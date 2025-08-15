@@ -91,7 +91,7 @@ namespace CoreSystems
                 }
                 var massMod = !forceDef.DisableRelativeMass ? hitEnt.Entity.Physics.Mass : 1;
                 
-                hitEnt.Entity.Physics.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, normHitDir * (((force * massMod)) / massMulti), forcePosition, Vector3.Zero);
+                hitEnt.Entity.Physics.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, (Vector3)(normHitDir * (((force * massMod)) / massMulti)), forcePosition, Vector3.Zero);
                 if (forceDef.ShooterFeelsForce && info.Ai?.GridEntity != null)
                 {
 
@@ -111,7 +111,7 @@ namespace CoreSystems
 
                     }
 
-                    info.Ai.GridEntity.Physics.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, -normHitDir * ((force * massMod) * massMod), forcePosition, Vector3.Zero);
+                    info.Ai.GridEntity.Physics.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, (Vector3)(- normHitDir * ((force * massMod) * massMod)), forcePosition, Vector3.Zero);
                 }
             }
 

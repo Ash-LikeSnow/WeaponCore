@@ -286,7 +286,7 @@ namespace CoreSystems.Support
                     a.VisualDir = d.Direction;
                 else if (a.LifeTime == 1)
                     a.VisualDir = a.OriginDir;
-                else if (!MyUtils.IsEqual(d.Direction, a.Direction) && !saveHit) {
+                else if (!MyUtils.IsEqual((Vector3)d.Direction, (Vector3)a.Direction) && !saveHit) {
                     var relativeDifference = (d.TracerFront - a.TracerFront) - a.ShootVelStep;
                     Vector3D.Normalize(ref relativeDifference, out a.VisualDir);
                 }
@@ -904,7 +904,7 @@ namespace CoreSystems.Support
 
                 var qc = av.QuadCachePool.Count > 0 ? av.QuadCachePool.Pop() : new QuadCache();
 
-                Vector3 dir = (toBeam - fromBeam);
+                Vector3 dir = (Vector3)(toBeam - fromBeam);
                 var length = dir.Length();
                 var normDir = dir / length;
                 qc.Shot = this;
@@ -1337,7 +1337,7 @@ namespace CoreSystems.Support
                             detEffect.UserScale = a.AreaOfDamage.EndOfLife.ParticleScale;
 
                             if (hit)
-                                detEffect.Velocity = Hit.HitVelocity;
+                                detEffect.Velocity = (Vector3)Hit.HitVelocity;
 
 
                             if (detEffect.Loop)

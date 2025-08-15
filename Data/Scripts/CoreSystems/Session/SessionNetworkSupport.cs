@@ -1037,7 +1037,7 @@ namespace CoreSystems
                     EntityId = ai.TopEntity.EntityId,
                     SenderId = MultiplayerId,
                     PType = PacketType.AimTargetUpdate,
-                    Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
+                    Pos = (Vector3)(fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition),
                     TargetId = fake.EntityId,
                 });
             }
@@ -1051,7 +1051,7 @@ namespace CoreSystems
                         EntityId = ai.TopEntity.EntityId,
                         SenderId = MultiplayerId,
                         PType = PacketType.AimTargetUpdate,
-                        Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
+                        Pos = (Vector3)(fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition),
                         TargetId = fake.EntityId,
                     }
                 });
@@ -1068,7 +1068,7 @@ namespace CoreSystems
                     EntityId = ai.TopEntity.EntityId,
                     SenderId = MultiplayerId,
                     PType = PacketType.PaintedTargetUpdate,
-                    Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
+                    Pos = (Vector3)(fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition),
                     TargetId = fake.EntityId,
                 });
             }
@@ -1082,7 +1082,7 @@ namespace CoreSystems
                         EntityId = ai.TopEntity.EntityId,
                         SenderId = MultiplayerId,
                         PType = PacketType.PaintedTargetUpdate,
-                        Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
+                        Pos = (Vector3)(fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition),
                         TargetId = fake.EntityId,
                     }
                 });

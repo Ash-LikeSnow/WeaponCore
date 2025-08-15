@@ -118,7 +118,7 @@ namespace CoreSystems.Support {
                     if (animationType == AnimationType.Movement)
                     {
                         HasMovement = true;
-                        FinalPos.Translation += translation;
+                        FinalPos.Translation += (Vector3)translation;
                     }
 
                     if (rotation != Matrix.Zero)

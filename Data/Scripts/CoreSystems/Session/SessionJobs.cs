@@ -281,7 +281,7 @@ namespace CoreSystems
                         if (player.Player.IdentityId == PlayerId && grid != null && !Settings.ClientConfig.StikcyPainter)
                         {
 
-                            var v3 = grid.LocalToGridInteger(painted.LocalPosition);
+                            var v3 = grid.LocalToGridInteger((Vector3)painted.LocalPosition);
                             MyCube cube;
                             if (!grid.TryGetCube(v3, out cube))
                             {

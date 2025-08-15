@@ -235,8 +235,8 @@ namespace CoreSystems.Support
             Vector3D blockStart = localStart / gridSize;
             Vector3D blockEnd = localEnd / gridSize;
 
-            Vector3 direction = SignNonZero(delta);
-            directionInt = SignIntNonZero(delta);
+            Vector3 direction = SignNonZero((Vector3)delta);
+            directionInt = SignIntNonZero((Vector3)delta);
             unsignedCurrent = GetGridPoint(ref blockStart, min, max) * directionInt;
             unsignedEnd = GetGridPoint(ref blockEnd, min, max) * directionInt;
             delta *= direction;

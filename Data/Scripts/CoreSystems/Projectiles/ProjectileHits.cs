@@ -597,7 +597,7 @@ namespace CoreSystems.Projectiles
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (p.Direction * distToTarget)) : p.LastPosition;
 
-            Session.I.SendFixedGunHitEvent(hit, comp.CoreEntity, info.ProHit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            Session.I.SendFixedGunHitEvent(hit, comp.CoreEntity, info.ProHit.Entity, intersectOrigin, (Vector3)vel, (Vector3)info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
             info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
@@ -1077,7 +1077,7 @@ namespace CoreSystems.Projectiles
             var matrixNormalizedInv = grid.PositionComp.WorldMatrixNormalizedInv;
             Vector3D result;
             Vector3D.Transform(ref sphere.Center, ref matrixNormalizedInv, out result);
-            var localSphere = new BoundingSphere(result, (float)sphere.Radius);
+            var localSphere = new BoundingSphere((Vector3)result, (float)sphere.Radius);
             var fieldType = ammoDef.Ewar.Type;
             var hitPos = sphere.Center;
             if (fatOnly)

@@ -54,7 +54,7 @@ namespace CoreSystems.Platform
 
                 if (Comp.Ai.VelocityUpdateTick != tick) {
                     Comp.Ai.TopEntityVolume.Center = Comp.TopEntity.PositionComp.WorldVolume.Center;
-                    Comp.Ai.TopEntityVel = Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    Comp.Ai.TopEntityVel = Comp.TopEntity.Physics?.LinearVelocity ?? Vector3.Zero;
                     Comp.Ai.IsStatic = Comp.TopEntity.Physics?.IsStatic ?? false;
                     Comp.Ai.VelocityUpdateTick = tick;
                 }
@@ -137,7 +137,7 @@ namespace CoreSystems.Platform
                     #endregion
 
                     if (aConst.HasBackKickForce && !Comp.Ai.IsStatic && !Comp.Ai.ShieldFortified && s.IsServer)
-                        Comp.TopEntity.Physics?.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, -muzzle.Direction * ActiveAmmoDef.AmmoDef.Const.BackKickForce, muzzle.Position, Vector3D.Zero);
+                        Comp.TopEntity.Physics?.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, (Vector3)(-muzzle.Direction * ActiveAmmoDef.AmmoDef.Const.BackKickForce), muzzle.Position, Vector3.Zero);
 
                     if (PlayTurretAv) {
                         if (System.BarrelEffect1 && muzzle.LastAv1Tick == 0 && !muzzle.Av1Looping) {
@@ -167,7 +167,7 @@ namespace CoreSystems.Platform
 
                         #region Pick projectile direction
                         if (System.WConst.DeviateShotAngleRads > 0 || reqDeviantMod) {
-                            var dirMatrix = Matrix.CreateFromDir(muzzle.Direction);
+                            var dirMatrix = Matrix.CreateFromDir((Vector3)muzzle.Direction);
                             var rnd1 = rnd.TurretRandom.NextDouble();
                             var rnd2 = rnd.TurretRandom.NextDouble();
                             var deviatePlus = !reqDeviantMod ? System.WConst.DeviateShotAngleRads + System.WConst.DeviateShotAngleRads :  System.WConst.DeviateShotAngleRads + System.WConst.DeviateShotAngleRads + ShootRequest.ExtraShotAngle + ShootRequest.ExtraShotAngle;
@@ -430,7 +430,7 @@ namespace CoreSystems.Platform
                 
                 if (MyParticlesManager.TryCreateParticleEffect(particle.Name, ref matrix, ref eInfo.Position, uint.MaxValue, out ejectEffect)) {
                     ejectEffect.UserScale = particle.Extras.Scale;
-                    ejectEffect.Velocity = eInfo.Direction * ActiveAmmoDef.AmmoDef.Ejection.Speed;
+                    ejectEffect.Velocity = (Vector3)(eInfo.Direction * ActiveAmmoDef.AmmoDef.Ejection.Speed);
                 }
             }
         }
@@ -500,7 +500,7 @@ namespace CoreSystems.Platform
                         rotation += new Vector3D(rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin, rand.NextDouble() * (rotMax - rotMin) + rotMin);
                     }
                 }
-                entity.Physics.SetSpeeds(parentSpeed + direction * (speed + speedVariance), rotation);
+                entity.Physics.SetSpeeds((Vector3)(parentSpeed + direction * (speed + speedVariance)), (Vector3)rotation);
             }
         }
 

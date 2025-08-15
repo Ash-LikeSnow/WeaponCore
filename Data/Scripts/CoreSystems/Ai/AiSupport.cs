@@ -491,7 +491,12 @@ namespace CoreSystems.Support
             TopEntity.Components.Remove<AiComponent>();
 
             if (Session.I.IsClient)
-                Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
+            {
+                if (Session.I.SeamlessEntID == TopEntity.EntityId)
+                    Session.I.SeamlessEntID = 0;
+                else
+                    Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
+            }
 
             Data.Repo.ActiveTerminal = 0;
             Charger.Clean();

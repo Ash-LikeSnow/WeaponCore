@@ -236,7 +236,7 @@ namespace CoreSystems.Support
                                 var hitInfo = new MyHitInfo
                                 {
                                     Position = av.Hit.SurfaceHit + (av.Direction * 0.01),
-                                    Normal = av.Direction,
+                                    Normal = (Vector3)av.Direction,
                                 };
                                 MyDecals.HandleAddDecal(av.Hit.Entity, hitInfo, Vector3.Zero, materialType, projectileMaterial, null, -1, voxelMaterial, false, MyDecalFlags.IgnoreOffScreenDeletion, MyAPIGateway.Session.GameplayFrameCounter + av.AmmoDef.AmmoGraphics.Decals.MaxAge);
                             }
@@ -468,7 +468,7 @@ namespace CoreSystems.Support
                                     toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
                                 }
 
-                                Vector3 dir = (toBeam - fromBeam);
+                                Vector3 dir = (Vector3)(toBeam - fromBeam);
                                 var length = dir.Length();
                                 if (length >= 0.1)
                                 {
@@ -649,7 +649,7 @@ namespace CoreSystems.Support
                 if (!Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                 {
                     var polyLine = new MyPolyLineD {
-                        LineDirectionNormalized = q.Direction,
+                        LineDirectionNormalized = (Vector3)q.Direction,
                         Point0 = q.StartPos,
                         Point1 = q.StartPos + q.Direction * q.Length,
                         Thickness = q.Width
@@ -711,7 +711,7 @@ namespace CoreSystems.Support
 
                 var polyLine = new MyPolyLineD
                 {
-                    LineDirectionNormalized = q.Up,
+                    LineDirectionNormalized = (Vector3)q.Up,
                     Point0 = q.StartPos,
                     Point1 = q.StartPos + q.Up * q.Width,
                     Thickness = q.Height
@@ -793,7 +793,7 @@ namespace CoreSystems.Support
 
                 var polyLine = new MyPolyLineD
                 {
-                    LineDirectionNormalized = q.Up,
+                    LineDirectionNormalized = (Vector3)q.Up,
                     Point0 = q.StartPos,
                     Point1 = q.StartPos + q.Up * q.Width,
                     Thickness = q.Height
@@ -866,7 +866,7 @@ namespace CoreSystems.Support
                 if (weapon.Comp.Ai.VelocityUpdateTick != Session.I.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = Session.I.Tick;
                 }
@@ -941,7 +941,7 @@ namespace CoreSystems.Support
                 if (weapon.Comp.Ai.VelocityUpdateTick != Session.I.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = Session.I.Tick;
                 }

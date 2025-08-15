@@ -42,14 +42,14 @@ namespace CoreSystems.Support
                 currTop = Vector3D.Transform(currTop, worldMatrix);
 
                 if (lineMaterial.HasValue)
-                    MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, currBottom, (currTop - currBottom), 1f, lineThickness, lineBlendType);
+                    MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, currBottom, (Vector3)(currTop - currBottom), 1f, lineThickness, lineBlendType);
 
                 if (i > 0)
                 {
                     if (lineMaterial.HasValue)
                     {
-                        MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, prevBottom, (currBottom - prevBottom), 1f, lineThickness, lineBlendType);
-                        MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, prevTop, (currTop - prevTop), 1f, lineThickness, lineBlendType);
+                        MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, prevBottom, (Vector3)(currBottom - prevBottom), 1f, lineThickness, lineBlendType);
+                        MyTransparentGeometry.AddLineBillboard(lineMaterial.Value, lineColor, prevTop, (Vector3)(currTop - prevTop), 1f, lineThickness, lineBlendType);
                     }
 
                     if (faceMaterial.HasValue)
@@ -67,10 +67,10 @@ namespace CoreSystems.Support
                         {
                             var color = faceColor.ToLinearRGB(); // HACK keeping color consistent with AddQuad() and AddLineBillboard()
 
-                            MyTransparentGeometry.AddTriangleBillboard(centerTop, currTop, prevTop, dir, dir, dir,
+                            MyTransparentGeometry.AddTriangleBillboard(centerTop, currTop, prevTop, (Vector3)dir, (Vector3)dir, (Vector3)dir,
                                 Vector2.Zero, Vector2.Zero, Vector2.Zero, faceMaterial.Value, 0, currTop, color, faceBlendType);
 
-                            MyTransparentGeometry.AddTriangleBillboard(centerBottom, currBottom, prevBottom, -dir, -dir, -dir,
+                            MyTransparentGeometry.AddTriangleBillboard(centerBottom, currBottom, prevBottom, (Vector3)(-dir), (Vector3)(-dir), (Vector3)(-dir),
                                 Vector2.Zero, Vector2.Zero, Vector2.Zero, faceMaterial.Value, 0, currBottom, color, faceBlendType);
                         }
                     }

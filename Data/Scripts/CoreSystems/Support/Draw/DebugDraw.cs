@@ -84,7 +84,7 @@ namespace CoreSystems.Support
         public static void DrawRay(RayD ray, Vector4 color, float width, float length = float.MaxValue)
         {
             var c = color;
-            MyTransparentGeometry.AddLineBillboard(_square, c, ray.Position, ray.Direction, length, width);
+            MyTransparentGeometry.AddLineBillboard(_square, c, ray.Position, (Vector3)ray.Direction, length, width);
         }
 
         public static void DrawBox(MyOrientedBoundingBoxD obb, Color color)

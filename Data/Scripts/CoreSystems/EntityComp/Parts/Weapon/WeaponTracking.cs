@@ -269,8 +269,8 @@ namespace CoreSystems.Platform
 
                     if (pTarget != null)
                     {
-                        targetLinVel = pTarget.Velocity;
-                        targetAccel = pTarget.Velocity - pTarget.PrevVelocity;
+                        targetLinVel = (Vector3)pTarget.Velocity;
+                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity);
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -344,8 +344,8 @@ namespace CoreSystems.Platform
 
                     if (pTarget != null)
                     {
-                        targetLinVel = pTarget.Velocity;
-                        targetAccel = pTarget.Velocity - pTarget.PrevVelocity;
+                        targetLinVel = (Vector3)pTarget.Velocity;
+                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity);
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -865,7 +865,7 @@ namespace CoreSystems.Platform
         {
             var testRay = new RayD(weaponPos, dir);
             Comp.Ai.TestShields.Clear();
-            var checkDistanceSqr = Vector3.DistanceSquared(targetPos, weaponPos);
+            var checkDistanceSqr = (float)Vector3D.DistanceSquared(targetPos, weaponPos);
 
             for (int i = 0; i < Comp.Ai.NearByFriendlyShields.Count; i++)
             {
