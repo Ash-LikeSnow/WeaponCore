@@ -36,8 +36,28 @@ namespace CoreSystems
                 Paused();
         }
 
+        private void SeamlessServerUnloaded() 
+        {
+            if (IsClient)
+                SeamlessEntID = ActiveControlBlock?.GetTopMostParent().EntityId ?? 0;
+        }
+
+        private void SeamlessServerLoaded()
+        {
+            if (IsClient)
+                QueueSeamless = true;
+        }
+
         public override void UpdateBeforeSimulation()
         {
+
+            if (QueueSeamless && Session?.Player?.Controller != null)
+            {
+                var controller = Session.Player.Controller;
+                controller.ControlledEntityChanged += OnPlayerController;
+                OnPlayerController(null, controller.ControlledEntity);
+                QueueSeamless = false;
+            }
 
             if (SuppressWc)
                 return;

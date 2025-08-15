@@ -422,6 +422,7 @@ namespace CoreSystems
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
 
+        internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;
         internal int ClientAvDivisor = 1;
@@ -509,6 +510,7 @@ namespace CoreSystems
         internal bool AntiSmartActive;
         internal bool DirtyGrid;
         internal bool AuthorConnected;
+        internal bool QueueSeamless;
 
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {
