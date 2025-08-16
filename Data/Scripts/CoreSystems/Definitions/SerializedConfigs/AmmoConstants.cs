@@ -1387,7 +1387,7 @@ namespace CoreSystems.Support
                 }
 
             }
-            var avgArmorModifier = GetAverageArmorModifier(a.DamageScales.Armor);
+            var avgArmorModifier = a.NoGridOrArmorScaling ? 1 : GetAverageArmorModifier(a.DamageScales.Armor);
 
             realShotsPerMin = (realShotsPerSec * 60);
             baseDps = BaseDamage * realShotsPerSec * avgArmorModifier;
@@ -1549,7 +1549,7 @@ namespace CoreSystems.Support
             fragDmg.X += (fAmmo.BaseDamage * frags) * sps;
             //fragDmg += 0;
             fragDmg.Y += (GetDetDmg(fAmmo) * frags) * sps;
-            float avgArmorModifier = GetAverageArmorModifier(fAmmo.DamageScales.Armor);
+            float avgArmorModifier = fAmmo.NoGridOrArmorScaling ? 1 : GetAverageArmorModifier(fAmmo.DamageScales.Armor);
 
             fragDmg *= avgArmorModifier;
 
