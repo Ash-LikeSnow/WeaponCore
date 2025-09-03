@@ -181,7 +181,9 @@ namespace CoreSystems.Api
         /// </summary>
         public void GetProjectilesLockedOnPos(MyEntity victim, ICollection<Vector3D> collection) =>
             _getProjectilesLockedOnPos?.Invoke(victim, collection);
-
+        /// <summary>
+        /// Returns a collection of all smart projectiles with ID, position, and age
+        /// </summary>
         public void GetAllSmartProjectiles(ICollection<MyTuple<ulong, Vector3D, int>> collection) =>
             _getAllSmartProjectiles?.Invoke(collection);
         public void GetSortedThreats(MyEntity shooter, ICollection<MyTuple<MyEntity, float>> collection) =>
