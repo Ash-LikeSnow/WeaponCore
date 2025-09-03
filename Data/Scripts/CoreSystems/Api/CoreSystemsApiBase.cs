@@ -58,7 +58,7 @@ namespace CoreSystems.Api
         private Func<MyEntity, long> _getPlayerController;
         private Func<MyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
         private Action<MyEntity, ICollection<Vector3D>> _getProjectilesLockedOnPos;
-        private Action<ICollection<MyTuple<ulong, Vector3D, int>>> _getAllSmartProjectiles;
+        private Action<ICollection<MyTuple<ulong, Vector3D, int, long>>> _getAllSmartProjectiles;
 
         private Func<MyDefinitionId, float> _getMaxPower;
 
@@ -182,9 +182,9 @@ namespace CoreSystems.Api
         public void GetProjectilesLockedOnPos(MyEntity victim, ICollection<Vector3D> collection) =>
             _getProjectilesLockedOnPos?.Invoke(victim, collection);
         /// <summary>
-        /// Returns a collection of all smart projectiles with ID, position, and age
+        /// Returns a collection of all smart projectiles with ID, position, age, and faction ID
         /// </summary>
-        public void GetAllSmartProjectiles(ICollection<MyTuple<ulong, Vector3D, int>> collection) =>
+        public void GetAllSmartProjectiles(ICollection<MyTuple<ulong, Vector3D, int, long>> collection) =>
             _getAllSmartProjectiles?.Invoke(collection);
         public void GetSortedThreats(MyEntity shooter, ICollection<MyTuple<MyEntity, float>> collection) =>
             _getSortedThreats?.Invoke(shooter, collection);
