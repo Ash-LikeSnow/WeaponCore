@@ -245,6 +245,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoCheckAmmoType", "No selected ammo, alternatives in inventory" },
                         { "ActionMaxRangeIncrease", "Increase Max Range" },
                         { "ActionMaxRangeDecrease", "Decrease Max Range" },
+                        { "WeaponInfoInsufficientPower", "INSUFFICIENT POWER!!!" },
                     }
                 },
                {

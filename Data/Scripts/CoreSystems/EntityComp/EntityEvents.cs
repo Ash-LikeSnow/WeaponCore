@@ -239,7 +239,12 @@ namespace CoreSystems.Support
 
             //Start of new formatting
             if (IdlePower > 0.01)
+            {
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
+
+                if (comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
+            }
 
             for (int i = 0; i < collection.Count; i++)
             {
@@ -275,7 +280,7 @@ namespace CoreSystems.Support
                 for (int i = 0; i < collection.Count; i++)
                 {
                     var w = collection[i];
-                    stringBuilder.Append($" {(collection.Count > 1 ? "\n{w.FriendlyName}" : string.Empty)}" +
+                    stringBuilder.Append($" {(collection.Count > 1 ? $"\n{w.FriendlyName}" : string.Empty)}" +
                         $"{(w.MinTargetDistance > 0 ? $"\n{Localization.GetText("WeaponInfoMinRange")}: {w.MinTargetDistance}{Localization.GetText("WeaponInfoMeter")}" : string.Empty)}" +
                         $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance}{Localization.GetText("WeaponInfoMeter")}" +
                         $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin:0.}{Localization.GetText("WeaponInfoPerMin")}");
