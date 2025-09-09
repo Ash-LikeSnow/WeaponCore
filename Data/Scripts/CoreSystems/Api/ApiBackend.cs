@@ -71,6 +71,7 @@ namespace CoreSystems.Api
                 ["GetProjectilesLockedOnBase"] = new Func<MyEntity, MyTuple<bool, int, int>>(GetProjectilesLockedOn),
                 ["GetProjectilesLockedOnPos"] = new Action<MyEntity, ICollection<Vector3D>>(GetProjectilesLockedOnPos),
                 ["GetProjectilesLockedOn"] = new Func<IMyEntity, MyTuple<bool, int, int>>(GetProjectilesLockedOnLegacy),
+                ["GetAllSmartProjectiles"] = new Action<ICollection<MyTuple<ulong, Vector3D, int, long>>>(GetAllSmartProjectiles),
                 ["SetAiFocusBase"] = new Func<MyEntity, MyEntity, int, bool>(SetAiFocus),
                 ["SetAiFocus"] = new Func<IMyEntity, IMyEntity, int, bool>(SetAiFocusLegacy),
                 ["GetShotsFiredBase"] = new Func<MyEntity, int, int>(GetShotsFired),
@@ -858,6 +859,19 @@ namespace CoreSystems.Api
                 {
                     if(proj.Value)
                         collection.Add(proj.Key.Position);
+                }
+            }
+            return;
+        }
+
+        private void GetAllSmartProjectiles(ICollection<MyTuple<ulong, Vector3D, int, long>> collection)
+        {
+            collection.Clear();
+            foreach (var p in Session.I.Projectiles.ActiveProjetiles)
+            {
+                if (p.Info.AmmoDef.Const.IsSmart)
+                {
+                    collection.Add(new MyTuple<ulong, Vector3D, int, long>(p.Info.Id, p.Position, p.Info.Age, p.Info.FactionId));
                 }
             }
             return;
