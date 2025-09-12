@@ -543,7 +543,7 @@ namespace CoreSystems.Control
 
         internal static void SliderWriterRof(IMyTerminalBlock block, StringBuilder builder)
         {
-            builder.Append(BlockUi.GetRof(block).ToString("N2"));
+            builder.Append((BlockUi.GetRof(block) * 100).ToString("N0") + "%");
         }
 
         internal static void KeyShootStringBuilder(IMyTerminalBlock block, StringBuilder builder)
@@ -896,7 +896,7 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddControl<T>(c);
             session.CustomControls.Add(c);
 
-            CreateCustomActions<T>.CreateSliderActionSet(session, c, name, 0, 1, .1f, visibleGetter, false);
+            CreateCustomActions<T>.CreateSliderActionSetROF(session, c, name, 0, 1, .1f, visibleGetter, false, minGetter);
             return c;
         }
 
