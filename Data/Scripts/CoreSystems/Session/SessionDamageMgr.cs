@@ -1050,7 +1050,7 @@ namespace CoreSystems
                     statComp.Health.Decrease(scaledDamage, null);
                 }
                 */
-                destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, IsServer, null, attackerId, extraInfo: info.AmmoDef.DamageScales.DamageType.Base == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash);
+                destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, IsServer, null, attackerId);
             }
 
             if (info.AmmoDef.Const.Mass > 0)
