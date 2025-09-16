@@ -81,8 +81,6 @@ namespace CoreSystems
             {
                 NerdShieldApiLoaded = true;
                 NSApi.LoadData();
-                KineticHash = MyStringHash.GetOrCompute("Kinetic");
-                EnergyHash = MyStringHash.GetOrCompute("Energy");
             }
 
             if (!CompsToStart.IsEmpty)
