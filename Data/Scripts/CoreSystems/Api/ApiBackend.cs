@@ -262,7 +262,10 @@ namespace CoreSystems.Api
 
         private float PbGetConstructEffectiveDps(long arg)
         {
-            return GetConstructEffectiveDps(MyEntities.GetEntityById(arg));
+            var ent = MyEntities.GetEntityById(arg);
+            if (ent == null)
+                return float.MinValue;
+            return GetConstructEffectiveDps(ent);
         }
 
         private void PbSetActiveAmmo(object arg1, int arg2, string arg3)
@@ -286,7 +289,10 @@ namespace CoreSystems.Api
 
         private float PbGetOptimalDps(long arg)
         {
-            return GetOptimalDps(MyEntities.GetEntityById(arg));
+            var ent = MyEntities.GetEntityById(arg);
+            if (ent == null)
+                return float.MinValue;
+            return GetOptimalDps(ent);
         }
 
         private bool PbHasCoreWeapon(object arg)
@@ -296,7 +302,10 @@ namespace CoreSystems.Api
 
         private bool PbHasGridAi(long arg)
         {
-            return HasGridAi(MyEntities.GetEntityById(arg));
+            var ent = MyEntities.GetEntityById(arg);
+            if (ent == null)
+                return false;
+            return HasGridAi(ent);
         }
 
         private float PbGetCurrentPower(object arg)
@@ -313,6 +322,8 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
+            if (target == null || block == null)
+                return null;
             return GetPredictedTargetPositionOffset((MyEntity) block, target, arg3);
         }
 
@@ -320,7 +331,8 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-
+            if (target == null || block == null)
+                return false;
             return CanShootTarget((MyEntity) block, target, arg3);
         }
 
@@ -328,7 +340,8 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-
+            if (target == null || block == null)
+                return false;
             return IsTargetAligned((MyEntity) block, target, arg3);
         }
 
@@ -336,7 +349,8 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-
+            if (target == null || block == null)
+                return new MyTuple<bool, Vector3D?>(false, null);
             return IsTargetAlignedExtendedOffset((MyEntity) block, target, arg3);
         }
 
@@ -377,7 +391,11 @@ namespace CoreSystems.Api
 
         private void PbSetWeaponTarget(object arg1, long arg2, int arg3)
         {
-            SetWeaponTarget((MyEntity) arg1, MyEntities.GetEntityById(arg2), arg3);
+            var block = (MyEntity)arg1;
+            var targ = MyEntities.GetEntityById(arg2);
+            if (block == null || targ == null)
+                return;
+            SetWeaponTarget(block, targ, arg3);
         }
 
         private MyDetectedEntityInfo PbGetWeaponTarget(object arg1, int arg2)
@@ -393,12 +411,18 @@ namespace CoreSystems.Api
 
         private bool PbSetAiFocus(object arg1, long arg2, int arg3)
         {
-            return SetAiFocus((MyEntity)arg1, MyEntities.GetEntityById(arg2), arg3);
+            var block = (MyEntity)arg1;
+            var targ = MyEntities.GetEntityById(arg2);
+            if (block == null || targ == null)
+                return false;
+            return SetAiFocus(block, targ, arg3);
         }
 
         private MyDetectedEntityInfo PbGetAiFocus(long arg1, int arg2)
         {
             var shooter = MyEntities.GetEntityById(arg1);
+            if (shooter == null)
+                return new MyDetectedEntityInfo();
             return GetEntityInfo(GetAiFocus(shooter, arg2), shooter);
         }
 
@@ -524,6 +548,9 @@ namespace CoreSystems.Api
 
         private MyTuple<bool, int, int> PbGetProjectilesLockedOn(long arg)
         {
+            var ent = MyEntities.GetEntityById(arg);
+            if (ent == null)
+                return new MyTuple<bool, int, int>(false, int.MinValue, int.MinValue);
             return GetProjectilesLockedOn(MyEntities.GetEntityById(arg));
         }
 
@@ -552,7 +579,8 @@ namespace CoreSystems.Api
 
             var block = arg1;
             var target = MyEntities.GetEntityById(arg2);
-
+            if (block == null || target == null)
+                return false;
             return IsTargetValid((MyEntity) block, target, arg3, arg4);
         }
 

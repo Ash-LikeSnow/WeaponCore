@@ -152,7 +152,7 @@ namespace CoreSystems
                     {
                         var info = collection[i];
                         if (!info.Block.IsDestroyed)
-                            info.Block.DoDamage(info.ScaledDamage, info.DamageType, IsServer, null, info.AttackerId, 0, info.DetonateAmmo);
+                            info.Block.DoDamage(info.ScaledDamage, info.DamageType, IsServer, null, info.AttackerId, 0, info.DetonateAmmo, info.ExtraInfo);
                     }
                     collection.Clear();
                 }
@@ -831,7 +831,7 @@ namespace CoreSystems
 
                                 if (!deadBlock || gridBlockCount < 2500)
                                 {
-                                    block.DoDamage(scaledDamage, damageType, IsServer, null, attackerId);
+                                    block.DoDamage(scaledDamage, damageType, IsServer, null, attackerId, extraInfo: t.AmmoDef.DamageScales.DamageType.Base == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash);
 
                                     var remainingHp = blockHp - scaledDamage;
 
@@ -866,7 +866,9 @@ namespace CoreSystems
                                     if (dInfo.DestroyBlocks.Count == 0)
                                         dInfo.DestroyTick = Tick + 10;
 
-                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo { Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage, DetonateAmmo = true });
+                                    var type = primaryDamage ? t.AmmoDef.DamageScales.DamageType.Base : t.AmmoDef.DamageScales.DamageType.Detonation;
+
+                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo { Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage, DetonateAmmo = true, ExtraInfo = (type == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash) });
                                 }
 
                                 if (GlobalDamageHandlerActive)

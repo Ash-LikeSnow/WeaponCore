@@ -269,17 +269,21 @@ namespace CoreSystems.Projectiles
             if (s.PickTarget || lockedTarget && !Info.IsFragment) TargetsSeen++;
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
 
-            var staticIsInRange = ai.ClosestStaticSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory;
-            var pruneStaticCheck = ai.ClosestPlanetSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory || ai.StaticEntityInRange;
-            PruneQuery = (aConst.DynamicGuidance && pruneStaticCheck) || aConst.FeelsGravity && staticIsInRange || !aConst.DynamicGuidance && !aConst.FeelsGravity && staticIsInRange ? MyEntityQueryType.Both : MyEntityQueryType.Dynamic;
-
-            if (ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= Info.MaxTrajectory * Info.MaxTrajectory)
-            {
+            if (Info.IsFragment)
                 PruneQuery = MyEntityQueryType.Both;
-            }
+            else
+            {
+                var staticIsInRange = ai.ClosestStaticSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory;
+                var pruneStaticCheck = ai.ClosestPlanetSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory || ai.StaticEntityInRange;
+                PruneQuery = (aConst.DynamicGuidance && pruneStaticCheck) || aConst.FeelsGravity && staticIsInRange || !aConst.DynamicGuidance && !aConst.FeelsGravity && staticIsInRange ? MyEntityQueryType.Both : MyEntityQueryType.Dynamic;
+                if (ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= Info.MaxTrajectory * Info.MaxTrajectory)
+                {
+                    PruneQuery = MyEntityQueryType.Both;
+                }
 
-            if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) 
-                CheckForNearVoxel(60);
+                if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) 
+                    CheckForNearVoxel(60);
+            }
 
             var desiredSpeed = (Direction * DesiredSpeed);
             var relativeSpeedCap = Info.ShooterVel + desiredSpeed;

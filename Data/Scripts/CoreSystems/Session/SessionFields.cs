@@ -369,8 +369,8 @@ namespace CoreSystems
         internal Task ITask = new Task();
         internal Task CTask = new Task();
         internal MyStringHash ShieldHash;
-        internal MyStringHash KineticHash;
-        internal MyStringHash EnergyHash;
+        internal MyStringHash KineticHash = MyStringHash.GetOrCompute("Kinetic");
+        internal MyStringHash EnergyHash = MyStringHash.GetOrCompute("Energy");
         internal MyStringHash CustomEntityHash;
 
         internal string TriggerEntityModel;

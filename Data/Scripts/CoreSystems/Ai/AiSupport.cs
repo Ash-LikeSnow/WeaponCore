@@ -320,7 +320,7 @@ namespace CoreSystems.Support
         {
             bool powered = false;
             var powerDist = (MyResourceDistributorComponent)ImyGridEntity.ResourceDistributor;
-            if (powerDist != null && powerDist.SourcesEnabled != MyMultipleEnabledEnum.NoObjects && powerDist.ResourceState != MyResourceStateEnum.NoPower)
+            if (powerDist != null)
             {
                 GridMaxPower = powerDist.MaxAvailableResourceByType(GId, GridEntity);
                 GridCurrentPower = powerDist.TotalRequiredInputByType(GId, GridEntity);
@@ -329,7 +329,7 @@ namespace CoreSystems.Support
                     var shieldPower = Session.I.SApi.GetPowerUsed(ShieldBlock);
                     GridCurrentPower -= shieldPower;
                 }
-                powered = true;
+                powered = GridMaxPower > 0;
             }
 
             if (!powered)

@@ -1098,6 +1098,7 @@ namespace CoreSystems
         public long AttackerId;
         public MyStringHash DamageType;
         public bool DetonateAmmo;
+        public MyStringHash ExtraInfo;
     }
 
     public class CustomHitInfo
