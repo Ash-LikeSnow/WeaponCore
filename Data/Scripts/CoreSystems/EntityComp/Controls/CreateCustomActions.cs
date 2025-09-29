@@ -199,7 +199,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionSubSystems"));
             action.Action = CustomActions.TerminActionCycleSubSystem;
             action.Writer = CustomActions.SubSystemWriter;
-            action.Enabled = TerminalHelpers.TrackGrids;
+            action.Enabled = TerminalHelpers.CanSetSubsystems;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -447,7 +447,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFocusSubSystem"));
             action.Action = CustomActions.TerminalActionToggleFocusSubSystem;
             action.Writer = CustomActions.FocusSubSystemWriter;
-            action.Enabled = TerminalHelpers.TrackGrids;
+            action.Enabled = TerminalHelpers.CanSetSubsystems;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

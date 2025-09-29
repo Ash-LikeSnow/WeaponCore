@@ -11,6 +11,7 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRageMath;
 using static CoreSystems.Platform.CorePlatform;
 using static CoreSystems.Session;
 
@@ -262,11 +263,23 @@ namespace CoreSystems.Support
                 var showName = w.ActiveAmmoDef.AmmoDef.Const.TerminalName != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
                 var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                 stringBuilder.Append($"\n\n" + w.System.PartName +
+                    $" {(w.Comp.ProhibitSubsystemChanges ? "\nSubsystem selection disabled by mod" : "")}  " +
                     shots +
                     $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + Localization.GetText("WeaponInfoSeconds") : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : Localization.GetText("WeaponInfoNoammo")))}" +
                     $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : w.Comp.MasterAi.DetectionInfo.SomethingInRange && (w.Target.CurrentState == Target.States.NotSet || w.Target.CurrentState == Target.States.Expired) ? Localization.GetText("WeaponTargNeedSelection") : w.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < w.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < w.MinTargetDistanceSqr) ? Localization.GetText("WeaponTargTooClose") : w.BaseComp.MasterAi.DetectionInfo.SomethingInRange ? Localization.GetText("WeaponTargRange") : Localization.GetText("WeaponTargFalse")) : string.Empty)}" +
-                    $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}" +
-                    endReturn);
+                    $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}");
+
+                if (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget && w.ActiveAmmoDef.AmmoDef.Trajectory.TargetLossDegree > 0)
+                {
+                    stringBuilder.Append($"\nMax Tracking Angle: {w.ActiveAmmoDef.AmmoDef.Trajectory.TargetLossDegree}º");
+                    if (w.Target.HasTarget)
+                    {
+                        var targetDir = Vector3D.Normalize(w.Target.TargetPos - w.GetScope.CachedPos);
+                        if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref w.GetScope.CachedDir, w.ActiveAmmoDef.AmmoDef.Const.TargetLossDegree))
+                            stringBuilder.Append($"\n  !! Target outside tracking arc !! \n  !! Projectile may not track !!");
+                    }
+                }
+                stringBuilder.Append(endReturn);
             }
                 
             if (HeatPerSecond > 0)

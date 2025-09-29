@@ -647,8 +647,8 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
+            if (!comp.ProhibitSubsystemChanges)
+                Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
         }
 
         internal static void ListSubSystems(List<MyTerminalControlComboBoxItem> subSystemList)
