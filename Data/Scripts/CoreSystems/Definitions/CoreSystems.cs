@@ -225,6 +225,7 @@ namespace CoreSystems.Support
         public readonly bool DropTargetUntilLoaded;
         public readonly bool NoVoxelLosCheck;
         public readonly bool AllowScopeOutsideObb;
+        public readonly bool ProhibitSubsystems;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -378,6 +379,7 @@ namespace CoreSystems.Support
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents, out EmissiveLookup);
             TrackProhibitLG = Values.HardPoint.Other.ProhibitLGTargeting;
             TrackProhibitSG = Values.HardPoint.Other.ProhibitSGTargeting;
+            ProhibitSubsystems = Values.HardPoint.Other.ProhibitSubsystemChanges;
             // CheckForBadAnimations();
 
             ApproximatePeakPower = WConst.IdlePower;

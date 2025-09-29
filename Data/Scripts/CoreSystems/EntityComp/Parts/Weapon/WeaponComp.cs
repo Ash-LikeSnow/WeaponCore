@@ -66,6 +66,7 @@ namespace CoreSystems.Platform
             internal bool DisableSupportingPD;
             internal bool ProhibitShotDelay;
             internal bool ProhibitBurstCount;
+            internal bool ProhibitSubsystemChanges;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {

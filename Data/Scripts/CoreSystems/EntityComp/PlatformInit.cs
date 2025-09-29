@@ -703,6 +703,7 @@ namespace CoreSystems.Platform
             w.Comp.DisableSupportingPD = w.Comp.DisableSupportingPD || ui.DisableSupportingPD;
             w.Comp.ProhibitShotDelay = w.Comp.ProhibitShotDelay || ui.ProhibitShotDelay;
             w.Comp.ProhibitBurstCount = w.Comp.ProhibitBurstCount || ui.ProhibitBurstCount;
+            w.Comp.ProhibitSubsystemChanges = w.Comp.ProhibitSubsystemChanges || w.System.ProhibitSubsystems;
             w.Comp.HasDrone = w.Comp.HasDrone || w.System.HasDrone;
             w.BaseComp.CanOverload = w.BaseComp.CanOverload || ui.EnableOverload;
             w.BaseComp.HasTurret = w.BaseComp.HasTurret || w.TurretAttached;
