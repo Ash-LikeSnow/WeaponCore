@@ -98,37 +98,25 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!_cachedPointerPos) InitPointerOffset(0.05);
             var cockPit = s.ActiveCockPit;
             Vector3D end;
-            if (s.UiInput.CameraBlockView)
+            if (s.UiInput.CameraBlockView || !s.UiInput.FirstPersonView)
             {
                 var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
                 AimPosition = offetPosition;
                 AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
                 end = offetPosition + (AimDirection * ai.MaxTargetingRange);
             }
-            else if (!s.UiInput.FirstPersonView)
+            else if (!s.UiInput.AltPressed && !s.UiInput.TurretBlockView && ai.IsGrid && cockPit != null)
             {
-                var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
-                AimPosition = offetPosition;
-                AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
-                end = offetPosition + (AimDirection * ai.MaxTargetingRange);
-
+                AimDirection = cockPit.PositionComp.WorldMatrixRef.Forward;
+                AimPosition = cockPit.PositionComp.WorldAABB.Center;
+                end = AimPosition + (AimDirection * s.TrackingAi.MaxTargetingRange);
             }
             else
             {
-                if (!s.UiInput.AltPressed && !s.UiInput.TurretBlockView && ai.IsGrid && cockPit != null)
-                {
-                    AimDirection = cockPit.PositionComp.WorldMatrixRef.Forward;
-                    AimPosition = cockPit.PositionComp.WorldAABB.Center;
-                    end = AimPosition + (AimDirection * s.TrackingAi.MaxTargetingRange);
-                }
-                else
-                {
-                    var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
-                    AimPosition = offetPosition;
-                    AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
-
-                    end = offetPosition + (AimDirection * ai.MaxTargetingRange);
-                }
+                var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
+                AimPosition = offetPosition;
+                AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
+                end = offetPosition + (AimDirection * ai.MaxTargetingRange);
             }
             var foundTarget = false;
             var possibleTarget = false;
@@ -139,6 +127,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var mark = s.UiInput.MouseButtonRightReleased && !ai.SmartHandheld || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
             var friendCheckVolume = ai.TopEntityVolume;
             friendCheckVolume.Radius *= 2;
+            
+            if (ai.MaxTargetingRange <= ai.TopEntityVolume.Radius)
+            {
+                manualTarget.Update(AimPosition + AimDirection * Session.I.SyncDist, s.Tick);
+                return false;
+            }
 
             var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;

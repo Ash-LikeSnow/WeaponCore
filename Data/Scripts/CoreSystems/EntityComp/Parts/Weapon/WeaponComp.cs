@@ -342,6 +342,7 @@ namespace CoreSystems.Platform
                 {
                     w.UpdateWeaponRange();
                 }
+                comp.ReCalculateMaxTargetingRange(comp.MaxDetectDistance);
             }
 
             internal static void SetRof(WeaponComponent comp)
