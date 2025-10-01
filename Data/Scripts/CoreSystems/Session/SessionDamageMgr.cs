@@ -823,7 +823,7 @@ namespace CoreSystems
                         {
                             try
                             {
-                                if (Session.IsServer && t.AmmoDef.Const.Mass > 0 && !currentGrid.IsStatic && !appliedImpulse && primaryDamage )
+                                if (Session.IsServer && t.AmmoDef.Const.Mass > 0 && !grid.IsStatic && !appliedImpulse && primaryDamage )
                                 {
                                     appliedImpulse = true;
                                     ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), (Vector3)hitEnt.Intersection.Direction, !t.AmmoDef.Const.IsBeamWeapon ? t.VelocityMagnitude * t.AmmoDef.Const.Mass : t.AmmoDef.Const.Mass);
