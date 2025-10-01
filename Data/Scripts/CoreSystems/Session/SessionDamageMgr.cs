@@ -44,6 +44,8 @@ namespace CoreSystems
                 if (!info.DoDamage && IsServer)
                     info.BaseDamagePool = 0;
 
+                if (info.AmmoDef.Const.Mass > 0)
+                    info.VelocityMagnitude = (float)p.Velocity.Length();
                 info.ProHits?.Clear();
 
                 var pExpiring = (int)p.State > 3;
@@ -350,9 +352,8 @@ namespace CoreSystems
                 if (info.AmmoDef.Const.Mass <= 0)
                     return;
 
-                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
-                if (Session.IsServer && !shield.CubeGrid.IsStatic && !SApi.IsFortified(shield))
-                    ApplyProjectileForce((MyEntity)shield.CubeGrid, hitEnt.HitPos.Value, (Vector3)hitEnt.Intersection.Direction, info.AmmoDef.Const.Mass * speed);
+                if (Session.IsServer && info.AmmoDef.Const.Mass > 0 && !shield.CubeGrid.IsStatic && !SApi.IsFortified(shield))
+                    ApplyProjectileForce((MyEntity)shield.CubeGrid, hitEnt.HitPos.Value, (Vector3)hitEnt.Intersection.Direction, !info.AmmoDef.Const.IsBeamWeapon ? info.VelocityMagnitude * info.AmmoDef.Const.Mass : info.AmmoDef.Const.Mass);
             }
             else if (!_shieldNull)
             {
@@ -822,11 +823,10 @@ namespace CoreSystems
                         {
                             try
                             {
-                                if (Session.IsServer && !appliedImpulse && primaryDamage && t.AmmoDef.Const.Mass > 0)
+                                if (Session.IsServer && t.AmmoDef.Const.Mass > 0 && !grid.IsStatic && !appliedImpulse && primaryDamage )
                                 {
                                     appliedImpulse = true;
-                                    var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed : 1;
-                                    ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), (Vector3)hitEnt.Intersection.Direction, (t.AmmoDef.Const.Mass * speed));
+                                    ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), (Vector3)hitEnt.Intersection.Direction, !t.AmmoDef.Const.IsBeamWeapon ? t.VelocityMagnitude * t.AmmoDef.Const.Mass : t.AmmoDef.Const.Mass);
                                 }
 
                                 if (!deadBlock || gridBlockCount < 2500)
@@ -1053,12 +1053,8 @@ namespace CoreSystems
                 destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, IsServer, null, attackerId);
             }
 
-            if (info.AmmoDef.Const.Mass > 0)
-            {
-                var speed = !info.AmmoDef.Const.IsBeamWeapon && info.AmmoDef.Const.DesiredProjectileSpeed > 0 ? info.AmmoDef.Const.DesiredProjectileSpeed : 1;
-                if (Session.IsServer)
-                    ApplyProjectileForce(entity, entity.PositionComp.WorldAABB.Center, (Vector3)hitEnt.Intersection.Direction, (info.AmmoDef.Const.Mass * speed));
-            }
+            if (Session.IsServer && info.AmmoDef.Const.Mass > 0)
+                ApplyProjectileForce(entity, entity.PositionComp.WorldAABB.Center, (Vector3)hitEnt.Intersection.Direction, !info.AmmoDef.Const.IsBeamWeapon ? info.VelocityMagnitude * info.AmmoDef.Const.Mass : info.AmmoDef.Const.Mass);
         }
 
         private void DamageProjectile(HitEntity hitEnt, ProInfo attacker)

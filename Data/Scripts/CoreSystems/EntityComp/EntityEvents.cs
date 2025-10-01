@@ -243,7 +243,7 @@ namespace CoreSystems.Support
             {
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
 
-                if (comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
+                if (comp.Cube.IsWorking && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
 
@@ -295,7 +295,7 @@ namespace CoreSystems.Support
                     var w = collection[i];
                     stringBuilder.Append($" {(collection.Count > 1 ? $"\n{w.FriendlyName}" : string.Empty)}" +
                         $"{(w.MinTargetDistance > 0 ? $"\n{Localization.GetText("WeaponInfoMinRange")}: {w.MinTargetDistance}{Localization.GetText("WeaponInfoMeter")}" : string.Empty)}" +
-                        $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance}{Localization.GetText("WeaponInfoMeter")}" +
+                        $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance:0.}{Localization.GetText("WeaponInfoMeter")}" +
                         $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin * comp.Data.Repo.Values.Set.RofModifier:0.}{Localization.GetText("WeaponInfoPerMin")}");
                     if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                     {
