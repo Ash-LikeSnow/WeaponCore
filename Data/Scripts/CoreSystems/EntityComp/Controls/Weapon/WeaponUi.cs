@@ -786,6 +786,8 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue);
             if (value != comp.Data.Repo.Values.Set.Overrides.CameraChannel)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    comp.Data.Repo.Values.Set.Overrides.CameraChannel = value;
                 Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", value, Session.I.PlayerId);
             }
         }
@@ -861,8 +863,6 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.SequenceId)
             {
-                if (Session.I.IsClient && Session.I.MpActive)
-                    values.Set.Overrides.SequenceId = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "SequenceId", roundedInt, Session.I.PlayerId);
             }
         }
@@ -884,8 +884,6 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.WeaponGroupId)
             {
-                if (Session.I.IsClient && Session.I.MpActive)
-                    values.Set.Overrides.WeaponGroupId = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "WeaponGroupId", roundedInt, Session.I.PlayerId);
             }
         }
