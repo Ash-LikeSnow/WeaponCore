@@ -21,14 +21,16 @@ namespace CoreSystems
 
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.RofModifier))
             {
-
+                comp.Data.Repo.Values.Set.RofModifier = newValue;
                 if (Session.I.IsServer)
                 {
-                    comp.Data.Repo.Values.Set.RofModifier = newValue;
                     Weapon.WeaponComponent.SetRof(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
                 }
                 else
                     Session.I.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRof);
+
             }
         }
 
@@ -40,11 +42,9 @@ namespace CoreSystems
 
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.Range))
             {
-
+                comp.Data.Repo.Values.Set.Range = newValue;
                 if (Session.I.IsServer)
                 {
-
-                    comp.Data.Repo.Values.Set.Range = newValue;
                     Weapon.WeaponComponent.SetRange(comp);
                     if (Session.I.MpActive)
                         Session.I.SendComp(comp);
@@ -807,6 +807,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstCount)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.BurstCount = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "BurstCount", roundedInt, Session.I.PlayerId);
             }
         }
@@ -828,6 +830,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstDelay)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.BurstDelay = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "BurstDelay", roundedInt, Session.I.PlayerId);
             }
         }
@@ -857,6 +861,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.SequenceId)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.SequenceId = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "SequenceId", roundedInt, Session.I.PlayerId);
             }
         }
@@ -878,6 +884,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.WeaponGroupId)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.WeaponGroupId = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "WeaponGroupId", roundedInt, Session.I.PlayerId);
             }
         }
