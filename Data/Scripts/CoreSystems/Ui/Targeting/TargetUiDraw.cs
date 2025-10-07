@@ -112,12 +112,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (Vector3D.Transform(targetCenter, s.Camera.ViewMatrix).Z < 0 && _reticleColor != Color.White)
                 {
                     var screenPos = s.Camera.WorldToScreen(ref targetCenter);
-                    var dotpos = new Vector2D(MathHelper.Clamp(screenPos.X, -0.98, 0.98), MathHelper.Clamp(screenPos.Y, -0.98, 0.98));
-                    var screenScale = 0.1 * s.ScaleFov;
-                    dotpos.X *= (float)(screenScale * Session.I.AspectRatio);
-                    dotpos.Y *= (float)screenScale;
-                    screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
-                    var radius = (float)(screenScale * MarkerSize());
+                    var radius = AdjustedScreenCoords(ref screenPos);
                     MyTransparentGeometry.AddBillboardOriented(_targetCircle, _reticleColor, screenPos, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
                 }
 
@@ -470,25 +465,57 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (MyEntities.TryGetEntityById(focus.Target, out target))
             {
 
-                var targetSphere = target.PositionComp.WorldVolume;
-                var targetCenter = targetSphere.Center;
+                var targetCenter = target.PositionComp.WorldVolume.Center;
                 var screenPos = s.Camera.WorldToScreen(ref targetCenter);
+                var radius = AdjustedScreenCoords(ref screenPos);
 
-                if (Vector3D.Transform(targetCenter, s.Camera.ViewMatrix).Z > 0)
-                {
-                    screenPos.X *= -1;
-                    screenPos.Y = -1;
-                }
-
-                var dotpos = new Vector2D(MathHelper.Clamp(screenPos.X, -0.98, 0.98), MathHelper.Clamp(screenPos.Y, -0.98, 0.98));
-                var screenScale = 0.1 * s.ScaleFov;
-                dotpos.X *= (float)(screenScale * Session.I.AspectRatio);
-                dotpos.Y *= (float)screenScale;
-                screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
-
-                var radius = (float) (screenScale * MarkerSize());
                 MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, (Vector3)s.CameraMatrix.Left, (Vector3)s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
             }
+        }
+
+        private float AdjustedScreenCoords(ref Vector3D screenPos)
+        {
+            var s = Session.I;
+            var dotPos = Vector2D.Zero;
+            if (screenPos.X > 1 || screenPos.X < -1 || screenPos.Y > 1 || screenPos.Y < -1 || screenPos.Z > 1)//Offscreen
+            {
+                if (screenPos.Z > 1)//Camera is between player and target
+                    screenPos *= -1;
+                if (Math.Abs(screenPos.X) > Math.Abs(screenPos.Y))
+                {
+                    if (screenPos.X < 0)//left edge
+                    {
+                        dotPos.X = -1f;
+                        dotPos.Y = (float)(screenPos.Y / -screenPos.X);
+                    }
+                    else//right edge
+                    {
+                        dotPos.X = 1f;
+                        dotPos.Y = (float)(screenPos.Y / screenPos.X);
+                    }
+                }
+                else
+                {
+                    if (screenPos.Y < 0)//bottom edge
+                    {
+                        dotPos.Y = -1;
+                        dotPos.X = (float)(screenPos.X / -screenPos.Y);
+                    }
+                    else//top edge
+                    {
+                        dotPos.Y = 1;
+                        dotPos.X = (float)(screenPos.X / screenPos.Y);
+                    }
+                }
+            }
+            else
+                dotPos = new Vector2D(MathHelper.Clamp(screenPos.X, -0.98, 0.98), MathHelper.Clamp(screenPos.Y, -0.98, 0.98));
+            var screenScale = 0.1 * s.ScaleFov;
+            dotPos.X *= (float)(screenScale * s.AspectRatio);
+            dotPos.Y *= (float)screenScale;
+            screenPos = Vector3D.Transform(new Vector3D(dotPos.X, dotPos.Y, -0.1), s.CameraMatrix);
+            var radius = (float)(screenScale * MarkerSize());
+            return radius;
         }
 
         private bool UpdateKeyInfo(bool detailedHud)

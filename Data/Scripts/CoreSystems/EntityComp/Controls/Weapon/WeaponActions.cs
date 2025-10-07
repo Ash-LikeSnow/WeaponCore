@@ -434,9 +434,9 @@ namespace CoreSystems.Control
 
             if (!MyUtils.IsEqual(curRange, comp.Data.Repo.Values.Set.Range))
             {
+                comp.Data.Repo.Values.Set.Range = curRange;
                 if (Session.I.IsServer)
                 {
-                    comp.Data.Repo.Values.Set.Range = curRange;
                     Weapon.WeaponComponent.SetRange(comp);
                     if (Session.I.MpActive)
                         Session.I.SendComp(comp);
@@ -481,9 +481,9 @@ namespace CoreSystems.Control
 
             if (!MyUtils.IsEqual(curRange, comp.Data.Repo.Values.Set.Range))
             {
+                comp.Data.Repo.Values.Set.Range = curRange;
                 if (Session.I.IsServer)
                 {
-                    comp.Data.Repo.Values.Set.Range = curRange;
                     Weapon.WeaponComponent.SetRange(comp);
                     if (Session.I.MpActive)
                         Session.I.SendComp(comp);
