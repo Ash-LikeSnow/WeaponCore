@@ -245,6 +245,14 @@ namespace CoreSystems.Support
                         { "ActionMaxRangeIncrease", "Increase Max Range" },
                         { "ActionMaxRangeDecrease", "Decrease Max Range" },
                         { "WeaponInfoInsufficientPower", "INSUFFICIENT POWER!!!" },
+                        //New
+                        { "WeaponInfoNoLarge", "Cannot target large grids!" },
+                        { "WeaponInfoNoSmall", "Cannot target small grids!" },
+                        { "WeaponInfoCenter", "This weapon aims at the center of grids" },
+                        { "WeaponInfoTrackingAngle", "Max Tracking Angle" },
+                        { "WeaponInfoNoSubsystem", "Subsystem selection disabled by mod" },
+                        { "WeaponInfoOutsideArc", "!! Target outside tracking arc !! \n  !! Projectile may not track !!" },
+
                     }
                 },
                {
