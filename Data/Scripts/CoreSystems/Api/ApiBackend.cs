@@ -540,10 +540,13 @@ namespace CoreSystems.Api
             var dict = (IDictionary<long, MyDetectedEntityInfo>)arg2;
 
             foreach (var i in _tmpTargetList)
-                dict[i.Item1.EntityId] = GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false, i.Item1), shooter);
+            {
+                var MDEI = GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false, i.Item1), shooter);
+                if (MDEI.EntityId == i.Item1.EntityId)
+                    dict[i.Item1.EntityId] = MDEI;
+            }
 
             _tmpTargetList.Clear();
-
         }
 
         private MyTuple<bool, int, int> PbGetProjectilesLockedOn(long arg)
