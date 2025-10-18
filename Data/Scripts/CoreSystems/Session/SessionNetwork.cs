@@ -215,6 +215,14 @@ namespace CoreSystems
                         ClientEwarBlocks(packetObj);
                         break;
                     }
+                    case PacketType.ShootingChanged:
+
+                        if (Settings.Enforcement.ProhibitShooting != ((ShootingChangedPacket)packetObj.Packet).Value)
+                        {
+                            Settings.Enforcement.ProhibitShooting = ((ShootingChangedPacket)packetObj.Packet).Value;
+                            ShowLocalNotify($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000, "White");
+                        }
+                        break;
                     case PacketType.Invalid:
                     {
                         Log.Line($"invalid packet: {packetObj.PacketSize} - {packetObj.Packet.PType}");
@@ -394,6 +402,30 @@ namespace CoreSystems
                     ServerTerminalMonitor(packetObj);
                     break;
                 }
+                case PacketType.ShootingChanged:
+                    if (MyAPIGateway.Session.IsUserAdmin(packet.SenderId) && MyAPIGateway.Multiplayer.IsServer)
+                    {
+                        Settings.Enforcement.ProhibitShooting = ((ShootingChangedPacket)packet).Value;
+
+                        if (!MyAPIGateway.Utilities.IsDedicated)
+                            ShowLocalNotify($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000, "White");
+
+                        PacketsToClient.Add(new PacketInfo
+                        {
+                            Packet = new ShootingChangedPacket
+                            {
+                                EntityId = 0,
+                                SenderId = MyAPIGateway.Multiplayer.MyId,
+                                PType = PacketType.ShootingChanged,
+                                Value = Settings.Enforcement.ProhibitShooting,
+                            },
+                            Entity = null,
+                            Function = null,
+                            SingleClient = false,
+                        });
+                        Log.Line($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}");
+                    }
+                    break;
                 default:
                     packetObj.Report.PacketValid = false;
                     Reporter.ReportData[PacketType.Invalid].Add(packetObj.Report);

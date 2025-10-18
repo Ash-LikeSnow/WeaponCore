@@ -163,7 +163,7 @@ namespace CoreSystems
                         var shoot = (anyShot || p.FinishShots || delayedFire);
                         var shotReady = canShoot && shoot;
 
-                        if (shotReady)
+                        if (shotReady && !Settings.Enforcement.ProhibitShooting)
                         {
                             p.Shoot();
                         }

@@ -167,6 +167,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoDelay", "Delay" },
                         { "WeaponInfoReloading", "Reloading" },
                         { "WeaponInfoLoS", "LoS" },
+                        { "WeaponInfoShootingDisabled", "Global Shooting Disabled!"},
                         { "WeaponTotalEffect", "Damage" },
                         { "WeaponTotalEffectAvgDps", "AvgDps" },
                         { "TerminalOverrideTitle", "Test Mode" },
