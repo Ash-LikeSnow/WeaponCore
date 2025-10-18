@@ -225,6 +225,12 @@ namespace CoreSystems.Support
             var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
             var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
             var advanced = (I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
+
+            if (I.Settings.Enforcement.ProhibitShooting)
+            {
+                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoShootingDisabled")}");
+            }
+
             if (HasServerOverrides)
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoServerModdedLine1")}\n")
                     .Append($"\n{Localization.GetText("WeaponInfoServerModdedLine2")}");
@@ -246,6 +252,8 @@ namespace CoreSystems.Support
                 if (comp.Cube.IsWorking && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
+
+           
 
             for (int i = 0; i < collection.Count; i++)
             {

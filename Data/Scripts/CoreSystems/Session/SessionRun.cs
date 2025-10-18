@@ -190,9 +190,12 @@ namespace CoreSystems
                 if (AcquireTargets.Count > 0) CheckAcquire();
                 DsUtil.Complete("acquire", true);
 
-                DsUtil.Start("shoot");
-                if (ShootingWeapons.Count > 0) ShootWeapons();
-                DsUtil.Complete("shoot", true);
+                if (!Settings?.Enforcement?.ProhibitShooting ?? true) // crashes otherwise in the first few ticks
+                {
+                    DsUtil.Start("shoot");
+                    if (ShootingWeapons.Count > 0) ShootWeapons();
+                    DsUtil.Complete("shoot", true);
+                }
             }
 
             if (!DedicatedServer && !InMenu) {
