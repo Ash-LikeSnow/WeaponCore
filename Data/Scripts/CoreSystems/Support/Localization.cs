@@ -167,6 +167,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoDelay", "Delay" },
                         { "WeaponInfoReloading", "Reloading" },
                         { "WeaponInfoLoS", "LoS" },
+                        { "WeaponInfoShootingDisabled", "Global Shooting Disabled!"},
                         { "WeaponTotalEffect", "Damage" },
                         { "WeaponTotalEffectAvgDps", "AvgDps" },
                         { "TerminalOverrideTitle", "Test Mode" },
@@ -245,6 +246,14 @@ namespace CoreSystems.Support
                         { "ActionMaxRangeIncrease", "Increase Max Range" },
                         { "ActionMaxRangeDecrease", "Decrease Max Range" },
                         { "WeaponInfoInsufficientPower", "INSUFFICIENT POWER!!!" },
+                        //New
+                        { "WeaponInfoNoLarge", "Cannot target large grids!" },
+                        { "WeaponInfoNoSmall", "Cannot target small grids!" },
+                        { "WeaponInfoCenter", "This weapon aims at the center of grids" },
+                        { "WeaponInfoTrackingAngle", "Max Tracking Angle" },
+                        { "WeaponInfoNoSubsystem", "Subsystem selection disabled by mod" },
+                        { "WeaponInfoOutsideArc", "!! Target outside tracking arc !! \n  !! Projectile may not track !!" },
+
                     }
                 },
                {

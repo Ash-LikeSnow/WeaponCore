@@ -1251,7 +1251,7 @@ namespace CoreSystems.Platform
                         var ammo = ammos[j];
                         if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
                         var ammoStr = ammo.AmmoDef.Const.TerminalName;
-                        if (wep.DelayedCycleId != -1 && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
+                        if (wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId] && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
                             ammoStr = "*" + ammo.AmmoDef.Const.TerminalName;
 
                         BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute(ammoStr) });

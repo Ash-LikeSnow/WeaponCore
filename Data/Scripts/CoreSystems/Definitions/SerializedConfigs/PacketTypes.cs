@@ -62,6 +62,7 @@ namespace CoreSystems
         RequestDroneSet,
         PingPong,
         HandWeaponDebug,
+        ShootingChanged,
     }
 
     #region packets
@@ -107,7 +108,7 @@ namespace CoreSystems
     //[ProtoInclude(43, typeof(HandWeaponDebugPacket))]
     [ProtoInclude(44, typeof(PingPacket))]
     [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
-
+    [ProtoInclude(46, typeof(ShootingChangedPacket))]
 
     public class Packet
     {
@@ -694,6 +695,18 @@ namespace CoreSystems
             base.CleanUp();
             Action = Trigger.Off;
             PlayerId = -1;
+        }
+    }
+
+    [ProtoContract]
+    public class ShootingChangedPacket : Packet
+    {
+        [ProtoMember(1)] internal bool Value;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Value = false;
         }
     }
 

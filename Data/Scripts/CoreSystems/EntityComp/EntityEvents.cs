@@ -225,19 +225,25 @@ namespace CoreSystems.Support
             var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
             var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
             var advanced = (I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
+
+            if (I.Settings.Enforcement.ProhibitShooting)
+            {
+                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoShootingDisabled")}");
+            }
+
             if (HasServerOverrides)
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoServerModdedLine1")}\n")
                     .Append($"\n{Localization.GetText("WeaponInfoServerModdedLine2")}");
 
             if (comp.PrimaryWeapon.System.TrackProhibitLG)
-                stringBuilder.Append($"\nCannot target large grids!");
+                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoNoLarge")}");
 
             if (comp.PrimaryWeapon.System.TrackProhibitSG)
-                stringBuilder.Append($"\nCannot target small grids!");
+                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoNoSmall")}");
 
             if (comp.PrimaryWeapon.System.TargetGridCenter)
-                stringBuilder.Append($"\nThis weapon aims at the center of grids");
-
+                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoCenter")}");
+            
             //Start of new formatting
             if (IdlePower > 0.01)
             {
@@ -246,6 +252,8 @@ namespace CoreSystems.Support
                 if (comp.Cube.IsWorking && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
+
+           
 
             for (int i = 0; i < collection.Count; i++)
             {
@@ -263,7 +271,7 @@ namespace CoreSystems.Support
                 var showName = w.ActiveAmmoDef.AmmoDef.Const.TerminalName != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
                 var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                 stringBuilder.Append($"\n\n" + w.System.PartName +
-                    $" {(w.Comp.ProhibitSubsystemChanges ? "\nSubsystem selection disabled by mod" : "")}  " +
+                    $" {(w.Comp.ProhibitSubsystemChanges ? $"\n{Localization.GetText("WeaponInfoNoSubsystem")}" : "")}  " +
                     shots +
                     $" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + Localization.GetText("WeaponInfoSeconds") : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : Localization.GetText("WeaponInfoNoammo")))}" +
                     $" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : w.Comp.MasterAi.DetectionInfo.SomethingInRange && (w.Target.CurrentState == Target.States.NotSet || w.Target.CurrentState == Target.States.Expired) ? Localization.GetText("WeaponTargNeedSelection") : w.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < w.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < w.MinTargetDistanceSqr) ? Localization.GetText("WeaponTargTooClose") : w.BaseComp.MasterAi.DetectionInfo.SomethingInRange ? Localization.GetText("WeaponTargRange") : Localization.GetText("WeaponTargFalse")) : string.Empty)}" +
@@ -271,12 +279,12 @@ namespace CoreSystems.Support
 
                 if (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget && w.ActiveAmmoDef.AmmoDef.Trajectory.TargetLossDegree > 0)
                 {
-                    stringBuilder.Append($"\nMax Tracking Angle: {w.ActiveAmmoDef.AmmoDef.Trajectory.TargetLossDegree}º");
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoTrackingAngle")}: {w.ActiveAmmoDef.AmmoDef.Trajectory.TargetLossDegree}º");
                     if (w.Target.HasTarget)
                     {
                         var targetDir = Vector3D.Normalize(w.Target.TargetPos - w.GetScope.CachedPos);
                         if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref w.GetScope.CachedDir, w.ActiveAmmoDef.AmmoDef.Const.TargetLossDegree))
-                            stringBuilder.Append($"\n  !! Target outside tracking arc !! \n  !! Projectile may not track !!");
+                            stringBuilder.Append($"\n  {Localization.GetText("WeaponInfoOutsideArc")}");
                     }
                 }
                 stringBuilder.Append(endReturn);
