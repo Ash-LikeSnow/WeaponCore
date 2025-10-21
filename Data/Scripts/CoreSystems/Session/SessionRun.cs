@@ -429,7 +429,7 @@ namespace CoreSystems
             {
                 var x = pair.Value;
                 var total = x.Primary + x.AOE + x.Shield + x.Projectile;
-                if (total>0)Log.Stats($"{x.TerminalName}, {x.WepCount}, {total}, {x.Primary}, {x.AOE}, {x.Shield}, {x.Projectile}", "dmgstats");
+                if (total>0)Log.Stats($"{x.TerminalName}\t{x.WepCount}\t{total}\t{x.Primary}\t{x.AOE}\t{x.Shield}\t{x.Projectile}\t", "dmgstats");
             }
             ApiServer.Unload();
 

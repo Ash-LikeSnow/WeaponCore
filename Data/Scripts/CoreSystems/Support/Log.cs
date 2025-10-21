@@ -113,20 +113,20 @@ namespace CoreSystems.Support
                 instance.TextWriter = MyAPIGateway.Utilities.WriteFileInLocalStorage(filename, typeof(LogInstance));
                 if (name == "wepstats")
                 {
-                    Stats("Name, MaxDist, MinDist, DevShotAngle, AimTolerance, AimLeadingPrediction, RotateRate, ElevateRate, IdlePower, RateOfFire, ReloadTime, HeatPerShot, MaxHeat, HeatSinkRate, ShotsInBurst, DelayAfterBurst, AmmoName", name);
+                    Stats("Name\tMaxDist\tMinDist\tDevShotAngle\tAimTolerance\tAimLeadingPrediction\tRotateRate\tElevateRate\tIdlePower\tRateOfFire\tReloadTime\tHeatPerShot\tMaxHeat\tHeatSinkRate\tShotsInBurst\tDelayAfterBurst\tAmmoName", name);
                 }
                 else if (name == "ammostats")
                 {
-                    Stats("Name, BaseDamage, BaseDamageType, AreaDamageType, DetDamageType, ShieldDamageType, LargeGridModifier, SmallGridModifier, ArmorModifier, LightArmorModifier, HeavyArmorModifier, NonArmorModifier, ShieldsModifier, ShieldBypass, " +
-                        "FragmentName, FragmentQuanty, FragmentDegrees, BBHRadius, BBHDamage, BBHDepth, BBHMaxAbsorb, BBHFalloff, EOLRadius, EOLDamage, EOLDepth, EOLMaxAbsorb, EOLFalloff, AccelPerSec, MaxSpeed, MaxTrajectory, MaxLifeTime", name);
+                    Stats("Name\tBaseDamage\tBaseDamageType\tAreaDamageType\tDetDamageType\tShieldDamageType\tLargeGridModifier\tSmallGridModifier\tArmorModifier\tLightArmorModifier\tHeavyArmorModifier\tNonArmorModifier\tShieldsModifier\tShieldBypass\t" +
+                        "FragmentName\tFragmentQuanty\tFragmentDegrees\tBBHRadius\tBBHDamage\tBBHDepth\tBBHMaxAbsorb\tBBHFalloff\tEOLRadius\tEOLDamage\tEOLDepth\tEOLMaxAbsorb\tEOLFalloff\tAccelPerSec\tMaxSpeed\tMaxTrajectory\tMaxLifeTime", name);
                 }
                 else if (name == "dmgstats")
                 {
-                    Stats("WeaponName, Quantity, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
+                    Stats("WeaponName\tQuantity\tTotalDamage\tPrimaryDamage\tAOEDamage\tShieldDamage\tProjectileDamage", name);
                 }
                 else if (name == "griddmgstats")
                 {
-                    Stats("GridName, MainOwner, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
+                    Stats("GridName\tMainOwner\tTotalDamage\tPrimaryDamage\tAOEDamage\tShieldDamage\tProjectileDamage", name);
                 }
                 else
                 {
