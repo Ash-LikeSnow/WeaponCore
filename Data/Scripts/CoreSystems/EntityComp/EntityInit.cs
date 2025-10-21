@@ -1,6 +1,8 @@
 ﻿using CoreSystems.Platform;
 using Sandbox.Game;
 using Sandbox.ModAPI;
+using System.Collections.Generic;
+using VRage.Game;
 using static CoreSystems.CompData;
 namespace CoreSystems.Support
 {
@@ -40,21 +42,8 @@ namespace CoreSystems.Support
                     InventoryInited = true;
                     return;
                 }
-
-                if (InventoryEntity is IMyConveyorSorter || CoreInventory.Constraint == null)
-                {
-                    CoreInventory.Constraint = new MyInventoryConstraint("ammo");
-                }
-
-                CoreInventory.Constraint.m_useDefaultIcon = false;
-                CoreInventory.Refresh();
-                CoreInventory.Constraint.Clear();
-
-                if (!string.IsNullOrEmpty(CustomIcon)) {
-                    var iconPath = Platform.Structure.ModPath + "\\Textures\\GUI\\Icons\\" + CustomIcon;
-                    CoreInventory.Constraint.Icon = iconPath;
-                    CoreInventory.Constraint.UpdateIcon();
-                }
+                var constraintList = new List<MyDefinitionId>();
+                var constraintNames = new List<string>();
                 if (Type == CompType.Weapon)
                 {
                     var collect = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
@@ -69,11 +58,37 @@ namespace CoreSystems.Support
                         }
                         for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                         {
-                            if (w.System.AmmoTypes[j].AmmoDef.Const.MagazineDef != null)
-                                CoreInventory.Constraint.Add(w.System.AmmoTypes[j].AmmoDef.Const.MagazineDef.Id);
+                            var ammo = w.System.AmmoTypes[j];
+                            if (ammo.AmmoDef.Const.MagazineDef != null)
+                            {
+                                constraintList.Add(ammo.AmmoDef.Const.MagazineDef.Id);
+                                if (ammo.AmmoDef.HardPointUsable && !constraintNames.Contains(ammo.AmmoDef.Const.MagazineDef.DisplayNameText))
+                                    constraintNames.Add(ammo.AmmoDef.Const.MagazineDef.DisplayNameText);
+                            }
                         }
                     }
                 }
+
+                var constraintName = "Ammo:";
+                constraintNames.Sort();
+                foreach (var name in constraintNames)
+                    constraintName += "\n  - " + name;
+
+                if (InventoryEntity is IMyConveyorSorter || CoreInventory.Constraint == null)
+                CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
+
+                CoreInventory.Constraint.m_useDefaultIcon = false;
+                CoreInventory.Refresh();
+                CoreInventory.Constraint.Clear();
+
+                if (!string.IsNullOrEmpty(CustomIcon)) {
+                    var iconPath = Platform.Structure.ModPath + "\\Textures\\GUI\\Icons\\" + CustomIcon;
+                    CoreInventory.Constraint.Icon = iconPath;
+                    CoreInventory.Constraint.UpdateIcon();
+                }
+
+                foreach (var constraint in constraintList)
+                    CoreInventory.Constraint.Add(constraint);
 
                 CoreInventory.Refresh();
 
