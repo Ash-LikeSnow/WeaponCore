@@ -877,7 +877,7 @@ namespace CoreSystems.Support
                 {
                     PlayerMap player;
                     var playerName = Session.I.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
-                    Log.Stats($"{Ai.TopEntity?.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAoeEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
+                    Log.Stats($"{Ai.TopEntity?.DisplayName}\t{playerName}\t{(long)TotalEffect}\t{TotalPrimaryEffect}\t{TotalAoeEffect}\t{TotalShieldEffect}\t{TotalProjectileEffect}\t", "griddmgstats");
                 }
 
                 if (WeaponGroups.Count > 0)
