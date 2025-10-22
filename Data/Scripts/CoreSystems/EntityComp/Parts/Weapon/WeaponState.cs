@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Hud;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
 namespace CoreSystems.Platform
@@ -226,12 +229,45 @@ namespace CoreSystems.Platform
                     CriticalOnDestruction(true);
                 }
             }
+            else if (cSet.Overrides.Armed && Comp.Slim.AccumulatedDamage > 0) //Mimics vanilla explosion being called for any bullet damage to warhead
+            {
+                CriticalOnDestruction(true);
+            }
+            else if (Comp.BombFuze == null)
+            {
+
+                var entity = new MyEntity { NeedsWorldMatrix = true, Physics = null };
+
+                entity.WorldMatrix = Comp.Cube.WorldMatrix;
+                entity.Init(new StringBuilder("BombMesh"), null, null, null, null);
+                entity.Render.CastShadows = false;
+                entity.IsPreview = true;
+                entity.Save = false;
+                entity.SyncFlag = false;
+                entity.RemoveFromGamePruningStructure();
+
+                MyEntities.Add(entity);
+                Comp.BombFuze = entity;
+
+                PhysicsSettings settings = MyAPIGateway.Physics.CreateSettingsForDetector(
+                    Comp.BombFuze, Comp._WHCallback, Comp.BombFuze.WorldMatrix, Vector3.Zero);
+                var model = (IMyModel)Comp.Cube.Model;
+                MyAPIGateway.Physics.CreateSpherePhysics(settings, model.BoundingSphere.Radius);
+                
+            }
+            else if (Comp.BombFuze != null)
+            {
+                var wm = Comp.Cube.WorldMatrix;
+                Comp.BombFuze.PositionComp.SetWorldMatrix(ref wm);
+            }
         }
 
         public void CriticalOnDestruction(bool force = false)
         {
             if ((force || Comp.Data.Repo.Values.Set.Overrides.Armed) && !Comp.CloseCondition)
             {
+                Comp.BombFuze?.Close();
+                Comp.BombFuze = null;
                 Comp.CloseCondition = true;
                 Session.I.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
             }

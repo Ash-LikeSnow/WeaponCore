@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
@@ -66,6 +67,8 @@ namespace CoreSystems.Platform
             internal bool DisableSupportingPD;
             internal bool ProhibitShotDelay;
             internal bool ProhibitBurstCount;
+            internal MyEntity BombFuze;
+            internal Action<IMyEntity, bool> _WHCallback => WHCallback;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {
@@ -148,7 +151,25 @@ namespace CoreSystems.Platform
                         if (w.Comp.TypeSpecific != CompTypeSpecific.SearchLight)
                             w.AimBarrel();
                     }
-                }
+                }              
+            }
+
+            internal void WHCallback(IMyEntity entity, bool hit)
+            {
+                if (entity == Cube.CubeGrid)
+                    return;
+
+                var cubeVelo = Cube.Physics?.LinearVelocity ?? Vector3.Zero;
+                var objVelo = entity.Physics?.LinearVelocity ?? Vector3.Zero;
+
+                if ((cubeVelo - objVelo).LengthSquared() > 25)
+                    Data.Repo.Values.State.CriticalReaction = true;
+            }
+
+            internal void ClearBombFuze()
+            {
+                BombFuze?.Close();
+                BombFuze = null;
             }
 
             internal void OnAddedToSceneWeaponTasks(bool firstRun)
@@ -631,6 +652,8 @@ namespace CoreSystems.Platform
                         o.ArmedTimer = v;
                         break;
                     case "Armed":
+                        if (o.Armed && !enabled)
+                            comp.ClearBombFuze();
                         o.Armed = enabled;
                         break;
                     case "Debug":
