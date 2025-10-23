@@ -77,6 +77,7 @@ namespace CoreSystems.Support
         internal uint FirstWaterHitTick;
         internal float ShieldResistMod = 1f;
         internal float ShieldBypassMod = 1f;
+        internal float VelocityMagnitude;
         internal ushort SyncedFrags;
         internal ushort SpawnDepth;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
@@ -164,6 +165,7 @@ namespace CoreSystems.Support
             MuzzleId = 0;
             LastTopTargetId = 0;
             FactionId = 0;
+            VelocityMagnitude = 0;
             Age = -1;
             RelativeAge = -1;
             PrevRelativeAge = -1;

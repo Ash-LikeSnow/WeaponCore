@@ -320,7 +320,7 @@ namespace CoreSystems.Support
         {
             bool powered = false;
             var powerDist = (MyResourceDistributorComponent)ImyGridEntity.ResourceDistributor;
-            if (powerDist != null && powerDist.SourcesEnabled != MyMultipleEnabledEnum.NoObjects && powerDist.ResourceState != MyResourceStateEnum.NoPower)
+            if (powerDist != null)
             {
                 GridMaxPower = powerDist.MaxAvailableResourceByType(GId, GridEntity);
                 GridCurrentPower = powerDist.TotalRequiredInputByType(GId, GridEntity);
@@ -329,7 +329,7 @@ namespace CoreSystems.Support
                     var shieldPower = Session.I.SApi.GetPowerUsed(ShieldBlock);
                     GridCurrentPower -= shieldPower;
                 }
-                powered = true;
+                powered = GridMaxPower > 0;
             }
 
             if (!powered)
@@ -491,7 +491,12 @@ namespace CoreSystems.Support
             TopEntity.Components.Remove<AiComponent>();
 
             if (Session.I.IsClient)
-                Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
+            {
+                if (Session.I.SeamlessEntID == TopEntity.EntityId)
+                    Session.I.SeamlessEntID = 0;
+                else
+                    Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
+            }
 
             Data.Repo.ActiveTerminal = 0;
             Charger.Clean();

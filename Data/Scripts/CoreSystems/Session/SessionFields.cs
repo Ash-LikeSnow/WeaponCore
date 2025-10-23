@@ -369,8 +369,8 @@ namespace CoreSystems
         internal Task ITask = new Task();
         internal Task CTask = new Task();
         internal MyStringHash ShieldHash;
-        internal MyStringHash KineticHash;
-        internal MyStringHash EnergyHash;
+        internal MyStringHash KineticHash = MyStringHash.GetOrCompute("Kinetic");
+        internal MyStringHash EnergyHash = MyStringHash.GetOrCompute("Energy");
         internal MyStringHash CustomEntityHash;
 
         internal string TriggerEntityModel;
@@ -422,6 +422,7 @@ namespace CoreSystems
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
 
+        internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;
         internal int ClientAvDivisor = 1;
@@ -509,6 +510,7 @@ namespace CoreSystems
         internal bool AntiSmartActive;
         internal bool DirtyGrid;
         internal bool AuthorConnected;
+        internal bool QueueSeamless;
 
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {

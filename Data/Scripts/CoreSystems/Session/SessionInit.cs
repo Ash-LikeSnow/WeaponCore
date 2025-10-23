@@ -81,8 +81,6 @@ namespace CoreSystems
             {
                 NerdShieldApiLoaded = true;
                 NSApi.LoadData();
-                KineticHash = MyStringHash.GetOrCompute("Kinetic");
-                EnergyHash = MyStringHash.GetOrCompute("Energy");
             }
 
             if (!CompsToStart.IsEmpty)
@@ -235,41 +233,42 @@ namespace CoreSystems
 
                     for (int y = 0; y < x.Ammos.Length; y++)
                     {
-                        var tempammostring = x.Ammos[y].AmmoRound + ", " + x.Ammos[y].BaseDamage + ", " + x.Ammos[y].DamageScales.DamageType.Base + ", " + x.Ammos[y].DamageScales.DamageType.AreaEffect + ", " + x.Ammos[y].DamageScales.DamageType.Detonation + ", " + x.Ammos[y].DamageScales.DamageType.Shield + ", " +
-                            x.Ammos[y].DamageScales.Grids.Large + ", " + x.Ammos[y].DamageScales.Grids.Small + ", " + x.Ammos[y].DamageScales.Armor.Armor + ", " + x.Ammos[y].DamageScales.Armor.Light + ", " + x.Ammos[y].DamageScales.Armor.Heavy + ", " + x.Ammos[y].DamageScales.Armor.NonArmor + ", " +
-                            x.Ammos[y].DamageScales.Shields.Modifier + ", " + x.Ammos[y].DamageScales.Shields.BypassModifier + ", ";
+                        var tempammostring = $"{x.Ammos[y].AmmoRound}\t{x.Ammos[y].BaseDamage}\t{x.Ammos[y].DamageScales.DamageType.Base}\t{x.Ammos[y].DamageScales.DamageType.AreaEffect}\t{x.Ammos[y].DamageScales.DamageType.Detonation}\t{x.Ammos[y].DamageScales.DamageType.Shield}\t" +
+                            $"{x.Ammos[y].DamageScales.Grids.Large}\t{x.Ammos[y].DamageScales.Grids.Small}\t{x.Ammos[y].DamageScales.Armor.Armor}\t{x.Ammos[y].DamageScales.Armor.Light}\t{x.Ammos[y].DamageScales.Armor.Heavy}\t{x.Ammos[y].DamageScales.Armor.NonArmor}\t" + 
+                            $"{x.Ammos[y].DamageScales.Shields.Modifier}\t{x.Ammos[y].DamageScales.Shields.BypassModifier}\t";
 
                         if (x.Ammos[y].Fragment.AmmoRound == "")
                         {
-                            tempammostring += "None, 0, 0, ";
+                            tempammostring += "None\t0\t0\t";
                         }
                         else
                         {
-                            tempammostring += x.Ammos[y].Fragment.AmmoRound + ", " + x.Ammos[y].Fragment.Fragments + ", " + x.Ammos[y].Fragment.Degrees + ", ";
+                            tempammostring += $"{x.Ammos[y].Fragment.AmmoRound}\t{x.Ammos[y].Fragment.Fragments}\t{x.Ammos[y].Fragment.Degrees}\t";
                         }
                         if (x.Ammos[y].AreaOfDamage.ByBlockHit.Enable == true)
                         {
-                            tempammostring += x.Ammos[y].AreaOfDamage.ByBlockHit.Radius + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Damage + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Depth + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Falloff + ", ";
+                            tempammostring += $"{x.Ammos[y].AreaOfDamage.ByBlockHit.Radius}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Damage}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Depth}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.MaxAbsorb}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Falloff}\t" +
+                                $"t";
                         }
                         else
                         {
-                            tempammostring += "0, 0, 0, 0, NoFallOff, ";
+                            tempammostring += "0\t0\t0\t0\tNoFallOff\t";
                         }
                         if (x.Ammos[y].AreaOfDamage.EndOfLife.Enable == true)
                         {
-                            tempammostring += x.Ammos[y].AreaOfDamage.EndOfLife.Radius + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Damage + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Depth + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Falloff + ", ";
+                            tempammostring += $"{x.Ammos[y].AreaOfDamage.EndOfLife.Radius}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Damage}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Depth}\t{x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Falloff}\t";
                         }
                         else
                         {
-                            tempammostring += "0, 0, 0, 0, NoFallOff, ";
+                            tempammostring += "0\t0\t0\t0\tNoFallOff\t";
                         }
-                        tempammostring += x.Ammos[y].Trajectory.AccelPerSec + ", " + x.Ammos[y].Trajectory.DesiredSpeed + ", " + x.Ammos[y].Trajectory.MaxTrajectory + ", " + x.Ammos[y].Trajectory.MaxLifeTime;
+                        tempammostring += $"{x.Ammos[y].Trajectory.AccelPerSec}\t{x.Ammos[y].Trajectory.DesiredSpeed}\t{x.Ammos[y].Trajectory.MaxTrajectory}\t{ x.Ammos[y].Trajectory.MaxLifeTime}";
                         Log.Stats($"{tempammostring}", "ammostats");
-                        tempammo = tempammo + "   " + x.Ammos[y].AmmoRound;
+                        tempammo = tempammo + "\t" + x.Ammos[y].AmmoRound;
                     }
 
-                    Log.Stats($"{x.HardPoint.PartName}, {x.Targeting.MaxTargetDistance}, {x.Targeting.MinTargetDistance}, {x.HardPoint.DeviateShotAngle}, {x.HardPoint.AimingTolerance}, {x.HardPoint.AimLeadingPrediction}, {x.HardPoint.HardWare.RotateRate}, {x.HardPoint.HardWare.ElevateRate}, {x.HardPoint.HardWare.IdlePower}, {x.HardPoint.Loading.RateOfFire}, " +
-                        $"{x.HardPoint.Loading.ReloadTime}, {x.HardPoint.Loading.HeatPerShot}, {x.HardPoint.Loading.MaxHeat}, {x.HardPoint.Loading.HeatSinkRate}, {x.HardPoint.Loading.ShotsInBurst}, {x.HardPoint.Loading.DelayAfterBurst}, {tempammo}","wepstats");
+                    Log.Stats($"{x.HardPoint.PartName}\t{x.Targeting.MaxTargetDistance}\t{x.Targeting.MinTargetDistance}\t{x.HardPoint.DeviateShotAngle}\t{x.HardPoint.AimingTolerance}\t{x.HardPoint.AimLeadingPrediction}\t{x.HardPoint.HardWare.RotateRate}\t{x.HardPoint.HardWare.ElevateRate}\t{x.HardPoint.HardWare.IdlePower}\t{x.HardPoint.Loading.RateOfFire}\t" +
+                        $"{x.HardPoint.Loading.ReloadTime}\t{x.HardPoint.Loading.HeatPerShot}\t{x.HardPoint.Loading.MaxHeat}\t{x.HardPoint.Loading.HeatSinkRate}\t{x.HardPoint.Loading.ShotsInBurst}\t{x.HardPoint.Loading.DelayAfterBurst}\t{tempammo}","wepstats");
                     if (!_subTypeMaps.ContainsKey(subTypeId))
                     {
                         _subTypeMaps[subTypeId] = new Dictionary<string, MyTuple<string, string, string, string>> { [partAttachmentId] = extraInfo };

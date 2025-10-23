@@ -21,14 +21,16 @@ namespace CoreSystems
 
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.RofModifier))
             {
-
+                comp.Data.Repo.Values.Set.RofModifier = newValue;
                 if (Session.I.IsServer)
                 {
-                    comp.Data.Repo.Values.Set.RofModifier = newValue;
                     Weapon.WeaponComponent.SetRof(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
                 }
                 else
                     Session.I.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRof);
+
             }
         }
 
@@ -40,11 +42,9 @@ namespace CoreSystems
 
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.Range))
             {
-
+                comp.Data.Repo.Values.Set.Range = newValue;
                 if (Session.I.IsServer)
                 {
-
-                    comp.Data.Repo.Values.Set.Range = newValue;
                     Weapon.WeaponComponent.SetRange(comp);
                     if (Session.I.MpActive)
                         Session.I.SendComp(comp);
@@ -647,8 +647,8 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
+            if (!comp.ProhibitSubsystemChanges)
+                Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
         }
 
         internal static void ListSubSystems(List<MyTerminalControlComboBoxItem> subSystemList)
@@ -786,6 +786,8 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue);
             if (value != comp.Data.Repo.Values.Set.Overrides.CameraChannel)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    comp.Data.Repo.Values.Set.Overrides.CameraChannel = value;
                 Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", value, Session.I.PlayerId);
             }
         }
@@ -807,6 +809,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstCount)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.BurstCount = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "BurstCount", roundedInt, Session.I.PlayerId);
             }
         }
@@ -828,6 +832,8 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstDelay)
             {
+                if (Session.I.IsClient && Session.I.MpActive)
+                    values.Set.Overrides.BurstDelay = roundedInt;
                 Weapon.WeaponComponent.RequestSetValue(comp, "BurstDelay", roundedInt, Session.I.PlayerId);
             }
         }

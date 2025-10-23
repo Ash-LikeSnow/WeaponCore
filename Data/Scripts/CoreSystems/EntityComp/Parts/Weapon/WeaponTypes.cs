@@ -1,6 +1,7 @@
 ﻿using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -82,6 +83,18 @@ namespace CoreSystems.Platform
                     {
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
+                        Weapon.PauseShoot = true;
+                        return;
+                    }
+
+                    var hitChar = hitTopEnt as IMyCharacter;
+                    if (hitChar != null)
+                    {
+                        var relation = MyIDModule.GetRelationPlayerBlock(Weapon.Comp.Cube.OwnerId, hitChar.ControllerInfo.ControllingIdentityId);
+                        if (!(relation == MyRelationsBetweenPlayerAndBlock.Friends || relation == MyRelationsBetweenPlayerAndBlock.Owner || relation == MyRelationsBetweenPlayerAndBlock.FactionShare))
+                            return;
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         Weapon.PauseShoot = true;
                         return;
                     }

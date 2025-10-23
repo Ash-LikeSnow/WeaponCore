@@ -69,6 +69,7 @@ namespace CoreSystems.Platform
             internal bool ProhibitBurstCount;
             internal MyEntity BombFuze;
             internal Action<IMyEntity, bool> _WHCallback => WHCallback;
+            internal bool ProhibitSubsystemChanges;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {
@@ -362,6 +363,7 @@ namespace CoreSystems.Platform
                 {
                     w.UpdateWeaponRange();
                 }
+                comp.ReCalculateMaxTargetingRange(comp.MaxDetectDistance);
             }
 
             internal static void SetRof(WeaponComponent comp)
@@ -1272,7 +1274,7 @@ namespace CoreSystems.Platform
                         var ammo = ammos[j];
                         if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
                         var ammoStr = ammo.AmmoDef.Const.TerminalName;
-                        if (wep.DelayedCycleId != -1 && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
+                        if (wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId] && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
                             ammoStr = "*" + ammo.AmmoDef.Const.TerminalName;
 
                         BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute(ammoStr) });

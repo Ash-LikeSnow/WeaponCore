@@ -36,8 +36,28 @@ namespace CoreSystems
                 Paused();
         }
 
+        private void SeamlessServerUnloaded() 
+        {
+            if (IsClient)
+                SeamlessEntID = ActiveControlBlock?.GetTopMostParent().EntityId ?? 0;
+        }
+
+        private void SeamlessServerLoaded()
+        {
+            if (IsClient)
+                QueueSeamless = true;
+        }
+
         public override void UpdateBeforeSimulation()
         {
+
+            if (QueueSeamless && Session?.Player?.Controller != null)
+            {
+                var controller = Session.Player.Controller;
+                controller.ControlledEntityChanged += OnPlayerController;
+                OnPlayerController(null, controller.ControlledEntity);
+                QueueSeamless = false;
+            }
 
             if (SuppressWc)
                 return;
@@ -170,9 +190,12 @@ namespace CoreSystems
                 if (AcquireTargets.Count > 0) CheckAcquire();
                 DsUtil.Complete("acquire", true);
 
-                DsUtil.Start("shoot");
-                if (ShootingWeapons.Count > 0) ShootWeapons();
-                DsUtil.Complete("shoot", true);
+                if (!Settings?.Enforcement?.ProhibitShooting ?? true) // crashes otherwise in the first few ticks
+                {
+                    DsUtil.Start("shoot");
+                    if (ShootingWeapons.Count > 0) ShootWeapons();
+                    DsUtil.Complete("shoot", true);
+                }
             }
 
             if (!DedicatedServer && !InMenu) {
@@ -406,7 +429,7 @@ namespace CoreSystems
             {
                 var x = pair.Value;
                 var total = x.Primary + x.AOE + x.Shield + x.Projectile;
-                if (total>0)Log.Stats($"{x.TerminalName}, {x.WepCount}, {total}, {x.Primary}, {x.AOE}, {x.Shield}, {x.Projectile}", "dmgstats");
+                if (total>0)Log.Stats($"{x.TerminalName}\t{x.WepCount}\t{total}\t{x.Primary}\t{x.AOE}\t{x.Shield}\t{x.Projectile}\t", "dmgstats");
             }
             ApiServer.Unload();
 

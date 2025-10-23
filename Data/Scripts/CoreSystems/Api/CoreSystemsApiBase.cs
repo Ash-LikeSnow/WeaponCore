@@ -58,6 +58,8 @@ namespace CoreSystems.Api
         private Func<MyEntity, long> _getPlayerController;
         private Func<MyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
         private Action<MyEntity, ICollection<Vector3D>> _getProjectilesLockedOnPos;
+        private Action<ICollection<MyTuple<ulong, Vector3D, int, long>>> _getAllSmartProjectiles;
+
         private Func<MyDefinitionId, float> _getMaxPower;
 
         private Func<MyEntity, float> _getOptimalDps;
@@ -179,6 +181,11 @@ namespace CoreSystems.Api
         /// </summary>
         public void GetProjectilesLockedOnPos(MyEntity victim, ICollection<Vector3D> collection) =>
             _getProjectilesLockedOnPos?.Invoke(victim, collection);
+        /// <summary>
+        /// Returns a collection of all smart projectiles with ID, position, age, and faction ID
+        /// </summary>
+        public void GetAllSmartProjectiles(ICollection<MyTuple<ulong, Vector3D, int, long>> collection) =>
+            _getAllSmartProjectiles?.Invoke(collection);
         public void GetSortedThreats(MyEntity shooter, ICollection<MyTuple<MyEntity, float>> collection) =>
             _getSortedThreats?.Invoke(shooter, collection);
         public void GetObstructions(MyEntity shooter, ICollection<MyEntity> collection) =>
@@ -587,6 +594,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetMaxPower", ref _getMaxPower);
             AssignMethod(delegates, "GetProjectilesLockedOnBase", ref _getProjectilesLockedOn);
             AssignMethod(delegates, "GetProjectilesLockedOnPos", ref _getProjectilesLockedOnPos);
+            AssignMethod(delegates, "GetAllSmartProjectiles", ref _getAllSmartProjectiles);
             AssignMethod(delegates, "GetAiFocusBase", ref _getAiFocus);
             AssignMethod(delegates, "SetAiFocusBase", ref _setAiFocus);
             AssignMethod(delegates, "ReleaseAiFocusBase", ref _releaseAiFocus);

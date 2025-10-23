@@ -799,11 +799,50 @@ namespace CoreSystems
                                         ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                                     else
                                         ShowLocalNotify("WeaponCore is now running in [SupportedMode]", 30000, "White");
-                                    if (Inited) Log.Line($"--Unsupported mode active: {Settings.Enforcement.UnsupportedMode}--");
+                                    if (Inited)
+                                        Log.Line($"--Unsupported mode active: {Settings.Enforcement.UnsupportedMode}--");
 
                                 }
 
                                 break;
+                            case "toggleshooting":
+                            case "ts":
+                                somethingUpdated = true;
+                                // validation is serverside as well
+                                if (MyAPIGateway.Session.MultiplayerAlive && MyAPIGateway.Session.IsUserAdmin(MyAPIGateway.Session.Player.SteamUserId))
+                                {
+                                    ShootingChangedPacket packet = new ShootingChangedPacket
+                                    {
+                                        EntityId = 0,
+                                        SenderId = MyAPIGateway.Multiplayer.MyId,
+                                        PType = PacketType.ShootingChanged,
+                                        Value = !Settings.Enforcement.ProhibitShooting,
+                                    };
+
+                                    if (IsServer)
+                                    {
+                                        Settings.Enforcement.ProhibitShooting = !Settings.Enforcement.ProhibitShooting;
+                                        ShowLocalNotify($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000, "White");
+                                        Log.Line($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}");
+                                        PacketsToClient.Add(new PacketInfo
+                                        {
+                                            Packet = packet
+                                        });
+                                    }
+                                    else
+                                    {
+                                        PacketsToServer.Add(packet);
+                                    }
+                                }
+                                else if (!MyAPIGateway.Session.MultiplayerAlive)
+                                {
+                                    Settings.Enforcement.ProhibitShooting = !Settings.Enforcement.ProhibitShooting;
+                                    ShowLocalNotify($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000, "White");
+                                    Log.Line($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}");
+                                }
+
+                                break;
+
                         }
                     }
                 }
@@ -1120,6 +1159,8 @@ namespace CoreSystems
                 else if (mod.PublishedFileId == 1931509062 || mod.PublishedFileId == 1995197719 || mod.PublishedFileId == 2006751214 || mod.PublishedFileId == 2015560129)
                     ReplaceVanilla = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\VanillaReplacement") || mod.Name.Contains("WCVanilla") || mod.FriendlyName != null && mod.FriendlyName.Contains("WCVanilla"))
+                    ReplaceVanilla = true;
+                else if (MyAPIGateway.Utilities.FileExistsInModLocation("Data\\WCVanilla.txt", mod))
                     ReplaceVanilla = true;
                 else if (mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390)
                     DebugVersion = true;

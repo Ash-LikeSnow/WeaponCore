@@ -81,7 +81,7 @@ namespace Scripts
                 Guidance = None, // None, Remote, TravelTo, Smart, DetectTravelTo, DetectSmart, DetectFixed
                 TargetLossDegree = 180f, // Degrees, Is pointed forward
                 MaxLifeTime = 300, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
-                DesiredSpeed = 400, // voxel phasing if you go above 5100
+                DesiredSpeed = 800, // voxel phasing if you go above 5100
                 MaxTrajectory = 800f, // Max Distance the projectile or beam can Travel.
                 SpeedVariance = Random(start: -5, end: 5), // subtracts value from DesiredSpeed. Be warned, you can make your projectile go backwards.
             },
@@ -588,7 +588,7 @@ namespace Scripts
             {
                 Guidance = None, // None, Remote, TravelTo, Smart, DetectTravelTo, DetectSmart, DetectFixed
                 MaxLifeTime = 420, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
-                DesiredSpeed = 400, // voxel phasing if you go above 5100
+                DesiredSpeed = 800, // voxel phasing if you go above 5100
                 MaxTrajectory = 800f, // Max Distance the projectile or beam can Travel.
                 SpeedVariance = Random(start: -5, end: 5), // subtracts value from DesiredSpeed. Be warned, you can make your projectile go backwards.
                 RangeVariance = Random(start: 0, end: 0), // subtracts value from MaxTrajectory

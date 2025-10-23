@@ -37,8 +37,8 @@ namespace CoreSystems.Control
 
             Separator<T>(session, "WC_sep2", HasTracking);
 
-            AddOnOffSwitchNoAction<T>(session, "SubSystems", Localization.GetText("TerminalSubSystemsTitle"), Localization.GetText("TerminalSubSystemsTooltip"), BlockUi.GetSubSystems, BlockUi.RequestSetSubSystems, true, TrackGrids);
-            AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystem, BlockUi.RequestSubSystem, BlockUi.ListSubSystems, TrackGrids);
+            AddOnOffSwitchNoAction<T>(session, "SubSystems", Localization.GetText("TerminalSubSystemsTitle"), Localization.GetText("TerminalSubSystemsTooltip"), BlockUi.GetSubSystems, BlockUi.RequestSetSubSystems, true, CanSetSubsystems);
+            AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystem, BlockUi.RequestSubSystem, BlockUi.ListSubSystems, CanSetSubsystems);
 
             AddOnOffSwitchNoAction<T>(session, "FocusFire", Localization.GetText("TerminalFocusFireTitle"), Localization.GetText("TerminalFocusFireTooltip"), BlockUi.GetFocusFire, BlockUi.RequestSetFocusFire, true, HasTrackingExceptCommSlave);
             AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, TrackGrids);
@@ -207,7 +207,12 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             return block is IMyTurretControlBlock || comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasAlternateUi;
         }
+        internal static bool CanSetSubsystems(IMyTerminalBlock block)
+        {
 
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            return block is IMyTurretControlBlock || comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasAlternateUi && !comp.ProhibitSubsystemChanges;
+        }
         internal static bool TrackProjectiles(IMyTerminalBlock block)
         {
 
@@ -543,7 +548,7 @@ namespace CoreSystems.Control
 
         internal static void SliderWriterRof(IMyTerminalBlock block, StringBuilder builder)
         {
-            builder.Append(BlockUi.GetRof(block).ToString("N2"));
+            builder.Append((BlockUi.GetRof(block) * 100).ToString("N0") + "%");
         }
 
         internal static void KeyShootStringBuilder(IMyTerminalBlock block, StringBuilder builder)
@@ -896,7 +901,7 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddControl<T>(c);
             session.CustomControls.Add(c);
 
-            CreateCustomActions<T>.CreateSliderActionSet(session, c, name, 0, 1, .1f, visibleGetter, false);
+            CreateCustomActions<T>.CreateSliderActionSetROF(session, c, name, 0, 1, .1f, visibleGetter, false, minGetter);
             return c;
         }
 

@@ -64,10 +64,9 @@ namespace CoreSystems
 
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.Range))
             {
-
+                comp.Data.Repo.Values.Set.Range = newValue;
                 if (Session.I.IsServer)
                 {
-                    comp.Data.Repo.Values.Set.Range = newValue;
                     //ControlSys.ControlComponent.SetRange(comp);
                     if (Session.I.MpActive)
                         Session.I.SendComp(comp);

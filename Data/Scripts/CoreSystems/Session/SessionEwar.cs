@@ -262,15 +262,13 @@ namespace CoreSystems
                     }
                 }
 
-                var scaledDamage = damagePool * damageScale;
+                var scaledDamage = damagePool * damageScale * block.BlockGeneralDamageModifier * grid.GridGeneralDamageModifier;
                 healthPool -= 1;
 
                 if (fieldType == Dot && IsServer)
                 {
                     if (scaledDamage < blockHp || gridBlockCount < 1000)
-                    {
                         block.DoDamage((float) scaledDamage, MyDamageType.Explosion, true, null, attackerId, 0, false);
-                    }
                     else
                     {
                         if (dInfo == null && !DeferredDestroy.TryGetValue(grid, out dInfo))
@@ -284,8 +282,6 @@ namespace CoreSystems
 
                         dInfo.DestroyBlocks.Add(new BlockDestroyInfo { Block = block, AttackerId = attackerId, DamageType = MyDamageType.Explosion, ScaledDamage = (float) scaledDamage, DetonateAmmo = false });
                     }
-
-                    //block.DoDamage((float) scaledDamage, MyDamageType.Explosion, sync, null, attackerId);
                     continue;
                 }
 
