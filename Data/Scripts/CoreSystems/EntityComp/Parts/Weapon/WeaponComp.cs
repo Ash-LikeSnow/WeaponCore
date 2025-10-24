@@ -10,6 +10,7 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Utils;
@@ -157,11 +158,11 @@ namespace CoreSystems.Platform
 
             internal void WHCallback(IMyEntity entity, bool hit)
             {
-                if (entity == Cube.CubeGrid)
+                if (entity == Cube.CubeGrid || entity is IMyCharacter)
                     return;
 
-                var cubeVelo = Cube.Physics?.LinearVelocity ?? Vector3.Zero;
-                var objVelo = entity.Physics?.LinearVelocity ?? Vector3.Zero;
+                var cubeVelo = Cube.CubeGrid.Physics?.LinearVelocity ?? Vector3.Zero;
+                var objVelo = entity.GetTopMostParent().Physics?.LinearVelocity ?? Vector3.Zero;
 
                 if ((cubeVelo - objVelo).LengthSquared() > 25)
                     Data.Repo.Values.State.CriticalReaction = true;
