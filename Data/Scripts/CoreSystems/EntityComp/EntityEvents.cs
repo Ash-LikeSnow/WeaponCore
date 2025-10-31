@@ -301,10 +301,15 @@ namespace CoreSystems.Support
                 for (int i = 0; i < collection.Count; i++)
                 {
                     var w = collection[i];
+                    var systemRate = w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin * comp.Data.Repo.Values.Set.RofModifier;
+                    var heatModifier = MathHelper.Lerp(1f, .25f, w.PartState.Heat / w.System.MaxHeat);
+                    systemRate *= w.CurrentlyDegrading ? heatModifier : 1;
+
                     stringBuilder.Append($" {(collection.Count > 1 ? $"\n{w.FriendlyName}" : string.Empty)}" +
                         $"{(w.MinTargetDistance > 0 ? $"\n{Localization.GetText("WeaponInfoMinRange")}: {w.MinTargetDistance}{Localization.GetText("WeaponInfoMeter")}" : string.Empty)}" +
                         $"\n{Localization.GetText("WeaponInfoMaxRange")}: {w.MaxTargetDistance:0.}{Localization.GetText("WeaponInfoMeter")}" +
-                        $"\n{Localization.GetText("WeaponInfoROF")}: {w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin * comp.Data.Repo.Values.Set.RofModifier:0.}{Localization.GetText("WeaponInfoPerMin")}");
+                        $"\n{Localization.GetText("WeaponInfoEROF")}: {systemRate:0.}{Localization.GetText("WeaponInfoPerMin")}" +
+                        $"\n{Localization.GetText("WeaponInfoROF")}: {w.RateOfFire:0.}{Localization.GetText("WeaponInfoPerMin")}");
                     if(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                     {
                         var targ = $"{Localization.GetText("WeaponInfoTargetLabel")}: ";

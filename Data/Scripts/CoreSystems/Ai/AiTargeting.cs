@@ -610,7 +610,7 @@ namespace CoreSystems.Support
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
-                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
+                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w || lp.Info.AmmoDef.Const.ScanRangeSqr != 0 && distSqr > lp.Info.AmmoDef.Const.ScanRangeSqr) continue;
 
                 var lpaConst = lp.Info.AmmoDef.Const;
 

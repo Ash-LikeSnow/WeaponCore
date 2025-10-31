@@ -189,6 +189,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoMinRange", "Min Range" },
                         { "WeaponInfoMaxRange", "Max Range" },
                         { "WeaponInfoROF", "RoF" },
+                        { "WeaponInfoEROF", "RoF (incl reload)" },
                         { "WeaponInfoMeter", "m" },
                         { "WeaponInfoTargetLabel", "Target" },
                         { "WeaponInfoPerMin", "/min" },
