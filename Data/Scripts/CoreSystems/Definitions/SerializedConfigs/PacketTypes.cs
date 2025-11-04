@@ -651,6 +651,8 @@ namespace CoreSystems
         [ProtoMember(6)] internal int WeaponId;
         [ProtoMember(7)] internal int AmmoIndex;
         [ProtoMember(8)] internal float MaxTrajectory;
+        [ProtoMember(9)] internal double RelativeAge;
+
 
         public override void CleanUp()
         {
@@ -662,6 +664,7 @@ namespace CoreSystems
             WeaponId = 0;
             AmmoIndex = 0;
             MaxTrajectory = 0;
+            RelativeAge = 0;
         }
     }
 

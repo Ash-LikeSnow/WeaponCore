@@ -94,6 +94,8 @@ namespace CoreSystems.Support
 
                         Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap?.GroupMap);
                         wComp.MasterOverrides = null;
+                        wComp.BombFuze?.Close();
+                        wComp.BombFuze = null;
                     }
 
                     PartCounter wCount;

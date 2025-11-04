@@ -83,7 +83,7 @@ namespace CoreSystems
                     for (int j = 0; j < wComp.Platform.Weapons.Count; j++)
                     {
                         var w = wComp.Platform.Weapons[j];
-                        if (w.CriticalReaction && !wComp.CloseCondition && (overrides.Armed || wValues.State.CountingDown || wValues.State.CriticalReaction))
+                        if (w.CriticalReaction && w.Comp.Cube.IsFunctional && !wComp.CloseCondition && (overrides.Armed || wValues.State.CountingDown || wValues.State.CriticalReaction))
                             w.CriticalMonitor();
                     }
                 }

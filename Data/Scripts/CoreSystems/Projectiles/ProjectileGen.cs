@@ -40,7 +40,7 @@ namespace CoreSystems.Projectiles
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
                 info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
-
+                info.RelativeAge = gen.RelativeAge;
                 target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
 
                 if (t == Kind.Client)
@@ -213,14 +213,26 @@ namespace CoreSystems.Projectiles
 
                         var cubeTarget = target.TargetObject as MyCubeBlock;
 
+                        // Targeting grid center (?) (maybe painter too?) of the currently checked grid
                         var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
+
+                        // Targeting a cube on the grid being checked
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid);
+                        
+                        // Target is not the currently checked grid, but is within TargetSphere and the targeted grid isn't an enemy
                         Ai.TargetInfo tInfo;
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
+                        
+                        // Catchall for fake targets (painter or cursor following)
                         var condition4 = target.TargetState == Target.TargetStates.IsFake;
-                        var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
-                        var condition6 = !notSmart && target.TargetObject is MyCubeGrid && targetSphere.Contains(target.TargetPos) == ContainmentType.Contains; //TargetGridCenter cases for subgrids
-                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition5 || condition6);
+                        
+                        // ScanRange limitation, appears to be non functional
+                        //var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
+                        
+                        // TargetGridCenter only for subgrids/support, position within grid center + MaxTargetingRange of the grid being checked
+                        var condition6 = !notSmart && target.TargetObject is MyCubeGrid && targetSphere.Contains(target.TargetPos) == ContainmentType.Contains;
+
+                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition6);
 
                         if (dumbAdd || validAi)
                         {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
@@ -9,6 +10,7 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Utils;
@@ -66,6 +68,8 @@ namespace CoreSystems.Platform
             internal bool DisableSupportingPD;
             internal bool ProhibitShotDelay;
             internal bool ProhibitBurstCount;
+            internal MyEntity BombFuze;
+            internal Action<IMyEntity, bool> _WHCallback => WHCallback;
             internal bool ProhibitSubsystemChanges;
 
             internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
@@ -149,7 +153,25 @@ namespace CoreSystems.Platform
                         if (w.Comp.TypeSpecific != CompTypeSpecific.SearchLight)
                             w.AimBarrel();
                     }
-                }
+                }              
+            }
+
+            internal void WHCallback(IMyEntity entity, bool hit)
+            {
+                if (entity == Cube.CubeGrid || entity is IMyCharacter)
+                    return;
+
+                var cubeVelo = Cube.CubeGrid.Physics?.LinearVelocity ?? Vector3.Zero;
+                var objVelo = entity.GetTopMostParent().Physics?.LinearVelocity ?? Vector3.Zero;
+
+                if ((cubeVelo - objVelo).LengthSquared() > 25)
+                    Data.Repo.Values.State.CriticalReaction = true;
+            }
+
+            internal void ClearBombFuze()
+            {
+                BombFuze?.Close();
+                BombFuze = null;
             }
 
             internal void OnAddedToSceneWeaponTasks(bool firstRun)
@@ -633,6 +655,8 @@ namespace CoreSystems.Platform
                         o.ArmedTimer = v;
                         break;
                     case "Armed":
+                        if (o.Armed && !enabled)
+                            comp.ClearBombFuze();
                         o.Armed = enabled;
                         break;
                     case "Debug":

@@ -401,6 +401,7 @@ namespace CoreSystems
                 Direction = direction,
                 Velocity = hitPacket.Velocity,
                 MaxTrajectory = hitPacket.MaxTrajectory,
+                RelativeAge = hitPacket.RelativeAge,
                 Type = NewProjectile.Kind.Client
             });
 

@@ -527,6 +527,7 @@ namespace CoreSystems.Support
         internal long PatternCycle;
         internal float MaxTrajectory;
         internal Kind Type;
+        internal double RelativeAge;
     }
 
     internal class Fragments
