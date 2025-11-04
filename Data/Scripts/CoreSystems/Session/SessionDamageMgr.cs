@@ -422,7 +422,7 @@ namespace CoreSystems
             var detActive = false;
             var earlyExit = false;
             var destroyed = 0;
-            var showHits = t.Weapon.System.WConst.DebugMode && !I.MpActive;
+            var showHits = t.Weapon.System.WConst.DebugMode;// && !I.MpActive;
             DeferredBlockDestroy dInfo = null;
             var aConst = t.AmmoDef.Const;
             var smallVsLargeBuff = 1f;

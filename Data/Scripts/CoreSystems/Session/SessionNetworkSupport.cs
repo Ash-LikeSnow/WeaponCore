@@ -819,7 +819,7 @@ namespace CoreSystems
             else Log.Line("SendOverRidesClientComp should only be called on clients");
         }
 
-        internal void SendFixedGunHitEvent(bool hit, MyEntity triggerEntity, MyEntity hitEnt, Vector3D origin, Vector3 velocity, Vector3 up, int muzzleId, int systemId, int ammoIndex, float maxTrajectory)
+        internal void SendFixedGunHitEvent(bool hit, MyEntity triggerEntity, MyEntity hitEnt, Vector3D origin, Vector3 velocity, Vector3 up, int muzzleId, int systemId, int ammoIndex, float maxTrajectory, double relativeAge)
         {
             if (triggerEntity == null || hitEnt == null && hit) return;
 
@@ -844,6 +844,7 @@ namespace CoreSystems
                     Velocity = velocity,
                     AmmoIndex = ammoIndex,
                     MaxTrajectory = maxTrajectory,
+                    RelativeAge = relativeAge
                 });
             }
         }

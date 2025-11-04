@@ -40,7 +40,7 @@ namespace CoreSystems.Projectiles
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
                 info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
-
+                info.RelativeAge = gen.RelativeAge;
                 target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
 
                 if (t == Kind.Client)

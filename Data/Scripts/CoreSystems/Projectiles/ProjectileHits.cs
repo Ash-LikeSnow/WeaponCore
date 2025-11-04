@@ -597,7 +597,7 @@ namespace CoreSystems.Projectiles
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (p.Direction * distToTarget)) : p.LastPosition;
 
-            Session.I.SendFixedGunHitEvent(hit, comp.CoreEntity, info.ProHit.Entity, intersectOrigin, (Vector3)vel, (Vector3)info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            Session.I.SendFixedGunHitEvent(hit, comp.CoreEntity, info.ProHit.Entity, intersectOrigin, (Vector3)vel, (Vector3)info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget), info.RelativeAge);
             info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
