@@ -74,7 +74,7 @@ namespace CoreSystems.Support
                 foreach (var name in constraintNames)
                     constraintName += "\n  - " + name;
 
-                if (InventoryEntity is IMyConveyorSorter || CoreInventory.Constraint == null)
+                //if (InventoryEntity is IMyConveyorSorter || CoreInventory.Constraint == null)
                 CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
 
                 CoreInventory.Constraint.m_useDefaultIcon = false;

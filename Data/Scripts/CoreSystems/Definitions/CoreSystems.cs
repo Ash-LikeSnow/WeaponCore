@@ -442,6 +442,9 @@ namespace CoreSystems.Support
 
             var nameLen = partName.Length;
             ShortName = nameLen > 21 ? partName.Remove(21, nameLen - 21) : PartName;
+
+            if (values.HardPoint.Ai.TurretAttached && AzimuthPartName.String == "None" || string.IsNullOrEmpty(AzimuthPartName.String) || ElevationPartName.String == "None" || string.IsNullOrEmpty(ElevationPartName.String))
+                Log.Line($"СобакоМальчик error detected with {PartName}, no azimuth or elevation subparts but TurretAttached is set to true.  Subparts may disappear on world reload");
         }
 
 
