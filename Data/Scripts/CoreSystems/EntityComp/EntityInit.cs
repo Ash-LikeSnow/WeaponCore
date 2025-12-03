@@ -4,6 +4,7 @@ using Sandbox.Game;
 using System.Collections.Generic;
 using VRage;
 using VRage.Game;
+using VRage.Game.ModAPI;
 using static CoreSystems.CompData;
 namespace CoreSystems.Support
 {
@@ -75,13 +76,10 @@ namespace CoreSystems.Support
                 foreach (var name in constraintNames)
                     constraintName += "\n  - " + name;
 
-                //if (InventoryEntity is IMyConveyorSorter || CoreInventory.Constraint == null)
                 CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
-
-                var wepDef = MyDefinitionManager.Static.GetCubeBlockDefinition(Id) as MyWeaponBlockDefinition;
+                var wepDef = ((IMyCubeBlock)Cube)?.SlimBlock?.BlockDefinition as MyWeaponBlockDefinition;
                 if (wepDef != null)
-                    CoreInventory.MaxVolume = (MyFixedPoint)wepDef.InventoryMaxVolume;                
-                
+                    CoreInventory.MaxVolume = (MyFixedPoint)wepDef.InventoryMaxVolume;                               
                 CoreInventory.Constraint.m_useDefaultIcon = false;
                 CoreInventory.Refresh();
                 CoreInventory.Constraint.Clear();
