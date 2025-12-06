@@ -1152,7 +1152,7 @@ namespace CoreSystems
                 if (!string.IsNullOrEmpty(modPath))
                     ModInfo.TryAdd(mod.GetPath(), mod);
 
-                if (mod.PublishedFileId == 1365616918 || mod.PublishedFileId == 2372872458 || mod.PublishedFileId == 3154379105)
+                if (mod.PublishedFileId == 1365616918 || mod.PublishedFileId == 2372872458 || mod.PublishedFileId == 3154379105 || mod.PublishedFileId == 3587786590)
                     ShieldMod = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\DefenseShields"))
                     ShieldMod = true;
