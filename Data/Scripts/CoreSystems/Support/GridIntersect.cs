@@ -17,7 +17,7 @@ namespace CoreSystems.Support
             Vector3I delta = end - start;
             Vector3I step = Vector3I.Sign(delta);
             delta *= step;
-            int max = delta.AbsMax();
+            long max = delta.AbsMax();
             hitPos = null;
             var gMinX = grid.Min.X;
             var gMinY = grid.Min.Y;

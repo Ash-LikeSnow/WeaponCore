@@ -1,6 +1,7 @@
 ﻿using CoreSystems.Platform;
 using Sandbox.Definitions;
 using Sandbox.Game;
+using Sandbox.ModAPI;
 using System.Collections.Generic;
 using VRage;
 using VRage.Game;
@@ -46,18 +47,20 @@ namespace CoreSystems.Support
                 }
                 var constraintList = new List<MyDefinitionId>();
                 var constraintNames = new List<string>();
+                var useWorldVolMult = false;
                 if (Type == CompType.Weapon)
                 {
                     var collect = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                     for (int i = 0; i < collect.Count; i++)
                     {
                         var w = collect[i];
-
                         if (w == null)
                         {
                             Log.Line("InventoryInit weapon null");
                             continue;
                         }
+                        if (w.System.Values.HardPoint.Loading.UseWorldInventoryVolumeMultiplier)
+                            useWorldVolMult = true;
                         for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                         {
                             var ammo = w.System.AmmoTypes[j];
@@ -70,7 +73,7 @@ namespace CoreSystems.Support
                         }
                     }
                 }
-
+                
                 var constraintName = "Ammo:";
                 constraintNames.Sort();
                 foreach (var name in constraintNames)
@@ -79,7 +82,7 @@ namespace CoreSystems.Support
                 CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
                 var wepDef = ((IMyCubeBlock)Cube)?.SlimBlock?.BlockDefinition as MyWeaponBlockDefinition;
                 if (wepDef != null)
-                    CoreInventory.MaxVolume = (MyFixedPoint)wepDef.InventoryMaxVolume;                               
+                    CoreInventory.MaxVolume = useWorldVolMult ? (MyFixedPoint)(wepDef.InventoryMaxVolume * MyAPIGateway.Session.BlocksInventorySizeMultiplier) : (MyFixedPoint)wepDef.InventoryMaxVolume;
                 CoreInventory.Constraint.m_useDefaultIcon = false;
                 CoreInventory.Refresh();
                 CoreInventory.Constraint.Clear();
