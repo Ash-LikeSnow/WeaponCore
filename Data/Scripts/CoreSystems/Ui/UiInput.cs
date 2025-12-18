@@ -99,13 +99,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             if (s.InGridAiBlock && !s.InMenu)
             {
                 var ai = s.TrackingAi;
+                var gamePadRT = MyAPIGateway.Input.IsJoystickAxisPressed(MyJoystickAxesEnum.ZRight);
+                var gamePadLTRel = MyAPIGateway.Input.IsNewJoystickAxisReleased(MyJoystickAxesEnum.ZLeft);
+                var gamePadLT = MyAPIGateway.Input.IsJoystickAxisPressed(MyJoystickAxesEnum.ZLeft);
+                var gamePadBumpers = MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J05) && MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J06);
+
                 MouseButtonPressed = MyAPIGateway.Input.IsAnyMousePressed();
                 MouseButtonLeftNewPressed = MyAPIGateway.Input.IsNewLeftMousePressed();
                 MouseButtonLeftReleased = MyAPIGateway.Input.IsNewLeftMouseReleased();
                 MouseButtonLeftWasPressed = ClientInputState.MouseButtonLeft;
 
-                MouseButtonRightNewPressed = MyAPIGateway.Input.IsNewRightMousePressed();
-                MouseButtonRightReleased = MyAPIGateway.Input.IsNewRightMouseReleased();
+                MouseButtonRightNewPressed = MyAPIGateway.Input.IsNewRightMousePressed() || gamePadLT;
+                MouseButtonRightReleased = MyAPIGateway.Input.IsNewRightMouseReleased() || gamePadLTRel;
                 MouseButtonRightWasPressed = ClientInputState.MouseButtonRight;
 
                 MouseButtonMenuNewPressed = MyAPIGateway.Input.IsNewMiddleMousePressed();
@@ -146,11 +151,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 else
                     MouseMenuTime = 0;
 
-                if (MouseButtonPressed)
+                if (MouseButtonPressed || gamePadRT || gamePadLT)
                 {
-                    ClientInputState.MouseButtonLeft = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Left);
+                    ClientInputState.MouseButtonLeft = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Left) || gamePadRT;
                     ClientInputState.MouseButtonMenu = MyAPIGateway.Input.IsMousePressed(MouseButtonMenu);
-                    ClientInputState.MouseButtonRight = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Right);
+                    ClientInputState.MouseButtonRight = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Right) || gamePadLT;
                 }
                 else
                 {
@@ -161,7 +166,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 if (s.MpActive)
                 {
-                    var shootButtonActive = ClientInputState.MouseButtonLeft || ClientInputState.MouseButtonRight;
+                    var shootButtonActive = ClientInputState.MouseButtonLeft || ClientInputState.MouseButtonRight || gamePadRT;
 
                     MouseShootWasOn = MouseShootOn;
                     if (( s.Tick - _lastInputUpdate >= 29) && shootButtonActive && !MouseShootOn)
@@ -191,7 +196,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                     LongShift = false;
                 }
 
-                AltPressed = MyAPIGateway.Input.IsAnyAltKeyPressed();
+                AltPressed = MyAPIGateway.Input.IsAnyAltKeyPressed() || gamePadBumpers;
                 CtrlPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.Control);
                 CtrlReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control);
                 KeyPrevPressed = AnyKeyPressed;
@@ -350,6 +355,23 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 CyclePrevKeyReleased = false;
             }
             if (MyAPIGateway.Input.IsNewKeyReleased(CyclePrevKey)) CyclePrevKeyReleased = true;
+
+            if (MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J05) && MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J06))
+            {
+                if (MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J10) && CycleNextKeyReleased)
+                {
+                    CycleNextKeyPressed = true;
+                    CycleNextKeyReleased = false;
+                }
+                if (MyAPIGateway.Input.IsNewJoystickButtonReleased(MyJoystickButtonsEnum.J10)) CycleNextKeyReleased = true;
+
+                if (MyAPIGateway.Input.IsJoystickButtonPressed(MyJoystickButtonsEnum.J09) && CyclePrevKeyReleased)
+                {
+                    CyclePrevKeyPressed = true;
+                    CyclePrevKeyReleased = false;
+                }
+                if (MyAPIGateway.Input.IsNewJoystickButtonReleased(MyJoystickButtonsEnum.J09)) CyclePrevKeyReleased = true;
+            }
 
             if (!ActionKeyPressed && BlackListActive1)
                 BlackList1(false);

@@ -287,7 +287,7 @@ namespace CoreSystems.Support
             AmmoTypes = weaponAmmoTypes;
             MaxAmmoVolume = Values.HardPoint.HardWare.InventorySize * (values.HardPoint.Loading.UseWorldInventoryVolumeMultiplier ? MyAPIGateway.Session.BlocksInventorySizeMultiplier : 1);
             FullAmmoVolume = MaxAmmoVolume * (values.HardPoint.Loading.InventoryFillAmount > 0 ? values.HardPoint.Loading.InventoryFillAmount : 0.75f);
-            LowAmmoVolume = MaxAmmoVolume * (values.HardPoint.Loading.InventoryLowAmount > 0 ? values.HardPoint.Loading.InventoryLowAmount : 0.25f); 
+            LowAmmoVolume = MaxAmmoVolume * (values.HardPoint.Loading.InventoryLowAmount > 0 ? values.HardPoint.Loading.InventoryLowAmount : 0.25f);
             CeaseFireDelay = values.HardPoint.DelayCeaseFire;
             DelayCeaseFire = CeaseFireDelay > 0;
             DelayToFire = values.HardPoint.Loading.DelayUntilFire;

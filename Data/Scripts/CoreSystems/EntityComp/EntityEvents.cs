@@ -249,7 +249,7 @@ namespace CoreSystems.Support
             {
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
 
-                if (comp.Cube.IsWorking && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
+                if (comp.Cube.IsFunctional && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
 

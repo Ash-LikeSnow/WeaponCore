@@ -380,11 +380,7 @@ namespace CoreSystems
 
                                             var weaponCsDef = MyDefinitionManager.Static.GetWeaponDefinition(wepBlockDef.WeaponDefinitionId);
 
-                                            if (weaponCsDef.WeaponAmmoDatas[0] == null)
-                                            {
-                                                Log.Line($"WeaponAmmoData is null, check the block sbc/type for {subTypeMap.Key}");
-                                            }
-                                            else
+                                            if (weaponCsDef.WeaponAmmoDatas[0] != null)
                                             {
                                                 weaponCsDef.WeaponAmmoDatas[0].RateOfFire = partDef.HardPoint.Loading.RateOfFire;
                                                 weaponCsDef.WeaponAmmoDatas[0].ShotsInBurst = partDef.HardPoint.Loading.ShotsInBurst;
