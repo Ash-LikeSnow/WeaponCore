@@ -255,7 +255,9 @@ namespace CoreSystems.Support
                         { "WeaponInfoNoSubsystem", "Subsystem selection disabled by mod" },
                         { "WeaponInfoOutsideArc", "!! Target outside tracking arc !! \n  !! Projectile may not track !!" },
                         { "WeaponInfoMaxReloadLabel", "Reloads Remaining/Total" },
-                        { "WeaponInfoMaxReloadsHit", "Max Reloads Used\n  !! Weapon inoperative !!" }
+                        { "WeaponInfoMaxReloadsHit", "Max Reloads Used\n  !! Weapon inoperative !!" },
+                        { "WeaponInfoMaxReloadsDrone", "Max Drones Deployed" },
+                        { "WeaponInfoMaxDroneLabel", "Drones Remaining/Max" }
 
                     }
                 },
