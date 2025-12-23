@@ -254,6 +254,8 @@ namespace CoreSystems.Support
                         { "WeaponInfoTrackingAngle", "Max Tracking Angle" },
                         { "WeaponInfoNoSubsystem", "Subsystem selection disabled by mod" },
                         { "WeaponInfoOutsideArc", "!! Target outside tracking arc !! \n  !! Projectile may not track !!" },
+                        { "WeaponInfoMaxReloadLabel", "Reloads Remaining/Total" },
+                        { "WeaponInfoMaxReloadsHit", "Max Reloads Used\n  !! Weapon inoperative !!" }
 
                     }
                 },
