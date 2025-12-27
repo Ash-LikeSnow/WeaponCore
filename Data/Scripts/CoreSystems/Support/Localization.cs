@@ -257,7 +257,8 @@ namespace CoreSystems.Support
                         { "WeaponInfoMaxReloadLabel", "Reloads Remaining/Total" },
                         { "WeaponInfoMaxReloadsHit", "Max Reloads Used\n  !! Weapon inoperative !!" },
                         { "WeaponInfoMaxReloadsDrone", "Max Drones Deployed" },
-                        { "WeaponInfoMaxDroneLabel", "Drones Remaining/Max" }
+                        { "WeaponInfoMaxDroneLabel", "Drones Remaining/Max" },
+                        { "WeaponInfoManualOnly", "!! No automatic aiming !!\n!! Aim disabled by modder !!" }
 
                     }
                 },
