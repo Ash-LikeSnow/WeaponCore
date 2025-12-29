@@ -110,6 +110,7 @@ namespace CoreSystems.Support
         public readonly int OffsetTime;
         public readonly uint FakeVoxelHitTicks;
         public readonly bool HasApproaches;
+        public readonly bool HasRefund;
         public readonly bool KeepAliveAfterTargetLoss;
         public readonly bool ArmedWhenHit;
         public readonly bool UseAimCone;
@@ -500,7 +501,7 @@ namespace CoreSystems.Support
             ShieldHeatScaler = MyUtils.IsZero(ammo.AmmoDef.DamageScales.Shields.HeatModifier) ? 1 : ammo.AmmoDef.DamageScales.Shields.HeatModifier;
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod, out ShieldAntiPenMod);
-            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool, out HasApproaches);
+            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool, out HasApproaches, out HasRefund);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale, out CharacterDmgScale);
@@ -843,15 +844,20 @@ namespace CoreSystems.Support
             proximitySqr = proximity * proximity;
         }
 
-        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool, out bool hasApproaches)
+        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool, out bool hasApproaches, out bool hasRefund)
         {
+            hasRefund = false;
             if (IsSmart && ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
             {
                 approachesCount = ammo.AmmoDef.Trajectory.Approaches.Length;
                 approaches = new ApproachConstants[approachesCount];
 
                 for (int i = 0; i < approaches.Length; i++)
+                {
                     approaches[i] = new ApproachConstants(ammo, i, wDef);
+                    if (approaches[i].Definition.ReloadRefund)
+                        hasRefund = true;
+                }
 
                 approachInfoPool = new Stack<ApproachInfo>(approachesCount);
                 hasApproaches = true;

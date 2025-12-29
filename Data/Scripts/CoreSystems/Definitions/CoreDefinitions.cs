@@ -577,6 +577,7 @@ namespace CoreSystems.Support
                 [ProtoMember(12)] internal int HomeElevation;
                 [ProtoMember(13)] internal CriticalDef CriticalReaction;
                 [ProtoMember(14)] internal float IdlePower;
+                [ProtoMember(15)] internal bool FixedInventorySize;
 
                 [ProtoContract]
                 public struct CriticalDef

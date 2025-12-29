@@ -2,6 +2,7 @@
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
 using VRage;
 using VRage.Game;
@@ -47,7 +48,7 @@ namespace CoreSystems.Support
                 }
                 var constraintList = new List<MyDefinitionId>();
                 var constraintNames = new List<string>();
-                var useWorldVolMult = false;
+                var fixedInvSize = false;
                 if (Type == CompType.Weapon)
                 {
                     var collect = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
@@ -59,8 +60,8 @@ namespace CoreSystems.Support
                             Log.Line("InventoryInit weapon null");
                             continue;
                         }
-                        if (w.System.Values.HardPoint.Loading.UseWorldInventoryVolumeMultiplier)
-                            useWorldVolMult = true;
+                        if (w.System.Values.HardPoint.HardWare.FixedInventorySize)
+                            fixedInvSize = true;
                         for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                         {
                             var ammo = w.System.AmmoTypes[j];
@@ -81,8 +82,11 @@ namespace CoreSystems.Support
 
                 CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
                 var wepDef = ((IMyCubeBlock)Cube)?.SlimBlock?.BlockDefinition as MyWeaponBlockDefinition;
+                var sorterDef = ((IMyCubeBlock)Cube)?.SlimBlock?.BlockDefinition as MyConveyorSorterDefinition;
                 if (wepDef != null)
-                    CoreInventory.MaxVolume = useWorldVolMult ? (MyFixedPoint)(wepDef.InventoryMaxVolume * MyAPIGateway.Session.BlocksInventorySizeMultiplier) : (MyFixedPoint)wepDef.InventoryMaxVolume;
+                    CoreInventory.MaxVolume = fixedInvSize ? (MyFixedPoint)wepDef.InventoryMaxVolume : (MyFixedPoint)wepDef.InventoryMaxVolume * MyAPIGateway.Session.BlocksInventorySizeMultiplier;
+                else if (sorterDef != null)
+                    CoreInventory.MaxVolume = fixedInvSize ? (MyFixedPoint)Math.Pow(sorterDef.InventorySize.X, 3) : (MyFixedPoint)Math.Pow(sorterDef.InventorySize.X, 3) * MyAPIGateway.Session.BlocksInventorySizeMultiplier;
                 CoreInventory.Constraint.m_useDefaultIcon = false;
                 CoreInventory.Refresh();
                 CoreInventory.Constraint.Clear();
