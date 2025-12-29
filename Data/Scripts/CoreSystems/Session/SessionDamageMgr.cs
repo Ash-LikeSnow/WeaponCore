@@ -670,27 +670,15 @@ namespace CoreSystems
                             {
                                 if (blockDef == null)
                                     blockDef = block.BlockDefinition;
-                                float modifier;
+                                float modifier = 1f;
                                 var found = aConst.CustomBlockDefinitionBasesToScales.TryGetValue(blockDef, out modifier);
-                                if (found)
+                                var inclusive = t.AmmoDef.DamageScales.Custom.SkipOthers == CustomScalesDef.SkipMode.Inclusive;
+                                var exclusive = t.AmmoDef.DamageScales.Custom.SkipOthers == CustomScalesDef.SkipMode.Exclusive;
+
+                                if ((t.AmmoDef.DamageScales.Custom.SkipOthers == CustomScalesDef.SkipMode.NoSkip || exclusive) && found)
                                     damageScale *= modifier;
-                                else
-                                    modifier = 1f;
-
-                                if (t.AmmoDef.DamageScales.Custom.SkipOthers != CustomScalesDef.SkipMode.NoSkip)
-                                {
-
-                                    var exclusive = t.AmmoDef.DamageScales.Custom.SkipOthers == CustomScalesDef.SkipMode.Exclusive;
-                                    if (exclusive && !found)
-                                        continue;
-
-                                    if (exclusive)
-                                        damageScale *= modifier;
-                                    else if (found)
-                                        continue;
-                                }
-                                else
-                                    damageScale *= modifier;
+                                else if ((exclusive && !found) || (inclusive && found))
+                                    continue;
                             }
 
                             if (GlobalDamageModifed)
