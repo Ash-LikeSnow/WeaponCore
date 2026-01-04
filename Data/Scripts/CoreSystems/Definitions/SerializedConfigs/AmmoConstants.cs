@@ -1125,7 +1125,7 @@ namespace CoreSystems.Support
             var ammoDef = ammo.AmmoDef;
             var weaponShotSound = !string.IsNullOrEmpty(system.Values.HardPoint.Audio.FiringSound);
             var ammoShotSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.ShotSound);
-            var useWeaponShotSound = !ammo.IsShrapnel && weaponShotSound && !ammoShotSound;
+            var useWeaponShotSound = !ammo.IsShrapnel && weaponShotSound && !ammoShotSound && !ammoDef.AmmoAudio.OverrideShotSound;
 
 
             rawShotSoundStr = useWeaponShotSound ? system.Values.HardPoint.Audio.FiringSound : ammoDef.AmmoAudio.ShotSound;

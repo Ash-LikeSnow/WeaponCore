@@ -1284,6 +1284,7 @@ namespace CoreSystems.Support
                 [ProtoMember(8)] internal string ShieldHitSound;
                 [ProtoMember(9)] internal string ShotSound;
                 [ProtoMember(10)] internal string WaterHitSound;
+                [ProtoMember(11)] internal bool OverrideShotSound;
             }
 
             [ProtoContract]
