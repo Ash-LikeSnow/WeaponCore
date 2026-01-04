@@ -670,6 +670,7 @@ namespace CoreSystems.Support
             [ProtoMember(33)] internal float BaseDamageCutoff;
             [ProtoMember(34)] internal bool IgnoreGrids;
             [ProtoMember(35)] internal bool AllowNegativeHeatModifier;
+            [ProtoMember(36)] internal int HeatNeededToFire;
 
 
             [ProtoContract]
