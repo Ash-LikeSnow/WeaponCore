@@ -270,9 +270,14 @@ namespace CoreSystems.Platform
 
                         PartState.Heat += HeatPShot;
                         Comp.CurrentHeat += HeatPShot;
-                        if (PartState.Heat >= System.MaxHeat || PartState.Overheated) {
+                        if ((PartState.Heat >= System.MaxHeat || PartState.Overheated) && !System.WConst.DisableOverheat)
+                        {
                             OverHeat();
                             break;
+                        }
+                        else if (System.WConst.DisableOverheat && PartState.Heat >= System.MaxHeat)
+                        {
+                            PartState.Heat = System.MaxHeat;
                         }
                     }
                     

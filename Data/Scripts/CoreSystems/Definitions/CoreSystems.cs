@@ -750,6 +750,7 @@ namespace CoreSystems.Support
         internal bool HasServerOverrides;
         internal bool FireSoundNoBurst;
         internal bool HasDrone;
+        internal bool DisableOverheat;
 
         internal WeaponConstants(WeaponDefinition values)
         {
@@ -771,6 +772,7 @@ namespace CoreSystems.Support
             AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
 
             HeatPerShot = values.HardPoint.Loading.HeatPerShot;
+            DisableOverheat = values.HardPoint.Loading.DisableOverheat;
             HeatSinkRate = values.HardPoint.Loading.HeatSinkRate;
 
             IdlePower = Math.Max(values.HardPoint.HardWare.IdlePower, 0.001f);

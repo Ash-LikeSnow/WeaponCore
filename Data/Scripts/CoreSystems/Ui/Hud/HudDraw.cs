@@ -326,7 +326,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         private void HasHeat(Weapon weapon, StackedWeaponInfo stackedInfo, ref Vector2D currWeaponDisplayPos, bool reset)
         {
             int heatBarIndex;
-            if (weapon.PartState.Overheated)
+            if (weapon.PartState.Overheated || (weapon.HeatPerc >= 0.95f && weapon.System.WConst.DisableOverheat))
             {
                 var index = Session.I.SCount < 30 ? 1 : 2;
                 heatBarIndex = HeatBarTexture.Length - 2;
