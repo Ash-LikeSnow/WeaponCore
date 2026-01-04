@@ -275,9 +275,13 @@ namespace CoreSystems.Platform
                             OverHeat();
                             break;
                         }
-                        else if (System.WConst.DisableOverheat && PartState.Heat >= System.MaxHeat)
+                        else if (System.WConst.DisableOverheat)
                         {
-                            PartState.Heat = System.MaxHeat;
+                            if (PartState.Heat >= System.MaxHeat)
+                                PartState.Heat = System.MaxHeat;
+
+                            if (Comp.CurrentHeat >= Comp.MaxHeat)
+                                Comp.CurrentHeat = Comp.MaxHeat;
                         }
                     }
                     
