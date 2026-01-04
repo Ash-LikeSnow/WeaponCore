@@ -497,7 +497,7 @@ namespace CoreSystems.Support
 
             var givenSpeed = AmmoModsFound && Overrides.DesiredSpeed.HasValue ? Math.Max(Overrides.DesiredSpeed.Value, 0f) : ammo.AmmoDef.Trajectory.DesiredSpeed;
             DesiredProjectileSpeed = !IsBeamWeapon ? givenSpeed : MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND;
-            HeatModifier = ammo.AmmoDef.HeatModifier > 0 ? ammo.AmmoDef.HeatModifier : 1;
+            HeatModifier = ammo.AmmoDef.HeatModifier > 0 || ammo.AmmoDef.AllowNegativeHeatModifier ? ammo.AmmoDef.HeatModifier : 1;
             ShieldHeatScaler = MyUtils.IsZero(ammo.AmmoDef.DamageScales.Shields.HeatModifier) ? 1 : ammo.AmmoDef.DamageScales.Shields.HeatModifier;
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod, out ShieldAntiPenMod);

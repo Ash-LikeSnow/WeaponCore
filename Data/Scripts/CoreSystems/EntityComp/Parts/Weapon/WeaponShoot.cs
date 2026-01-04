@@ -261,7 +261,7 @@ namespace CoreSystems.Platform
 
                     _muzzlesToFire.Add(MuzzleIdToName[current]);
 
-                    if (HeatPShot > 0) {
+                    if (HeatPShot > 0 || ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier) {
 
                         if (!HeatLoopRunning) {
                             s.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
