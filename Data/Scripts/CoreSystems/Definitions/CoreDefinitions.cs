@@ -667,6 +667,7 @@ namespace CoreSystems.Support
             [ProtoMember(31)] internal bool NoGridOrArmorScaling;
             [ProtoMember(32)] internal string TerminalName;
             [ProtoMember(33)] internal float BaseDamageCutoff;
+            [ProtoMember(34)] internal bool IgnoreGrids;
 
 
             [ProtoContract]

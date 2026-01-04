@@ -69,6 +69,7 @@ namespace CoreSystems.Projectiles
             }
 
             var ignoreVoxels = aDef.IgnoreVoxels && !aToggleVoxel || aToggleVoxel && !aDef.IgnoreVoxels;
+            var ignoreGrids = aDef.IgnoreGrids;
             var isGrid = ai.AiType == Ai.AiTypes.Grid;
             var closestFutureDistSqr = double.MaxValue;
 
@@ -154,7 +155,7 @@ namespace CoreSystems.Projectiles
                     if (shieldInfo == null)
                         shieldInfo = Session.I.SApi.MatchEntToShieldFastDetails(ent, true);
 
-                    if (shieldInfo != null && (firingCube == null || (selfDamage || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid)) && !goCritical))
+                    if (shieldInfo != null && (firingCube == null || (selfDamage || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid)) && !goCritical) && !ignoreGrids)
                     {
                         if (shieldInfo.Value.Item2.Item1)
                         {
@@ -379,98 +380,100 @@ namespace CoreSystems.Projectiles
                     else if (voxelState == VoxelIntersectBranch.DeferedMissUpdate || voxelState == VoxelIntersectBranch.DeferFullCheck)
                         FullVoxelCheck(p, voxel, voxelState, lineCheck);
                 }
-                else if (ent.Physics != null && !ent.Physics.IsPhantom && !ent.IsPreview && grid != null)
+                else if (ent.Physics != null && !ent.Physics.IsPhantom && !ent.IsPreview && grid != null && !ignoreGrids)
                 {
-                    if (grid != null)
+                    hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+                    hitEntity.Pool = pool;
+                    if (entIsSelf && !selfDamage)
                     {
-                        hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
-                        hitEntity.Pool = pool;
-                        if (entIsSelf && !selfDamage)
+                        if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
                         {
-                            if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
+                            MyCube cube;
+                            if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock))
                             {
-                                MyCube cube;
-                                if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock)) {
-                                    hitEntity.Clean();
-                                    continue;
-                                }
+                                hitEntity.Clean();
+                                continue;
                             }
+                        }
 
-                            if (!fieldActive)
+                        if (!fieldActive)
+                        {
+                            var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
+                            grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
+                            var cacheSlot = 0;
+                            if (hitEntity.Vector3ICache.Count > 0)
                             {
-                                var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
-                                grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
-                                var cacheSlot = 0;
-                                if (hitEntity.Vector3ICache.Count > 0)
+
+                                bool hitself = false;
+                                for (int j = 0; j < hitEntity.Vector3ICache.Count; j++)
                                 {
 
-                                    bool hitself = false;
-                                    for (int j = 0; j < hitEntity.Vector3ICache.Count; j++)
+                                    MyCube myCube;
+                                    if (grid.TryGetCube(hitEntity.Vector3ICache[j], out myCube))
                                     {
 
-                                        MyCube myCube;
-                                        if (grid.TryGetCube(hitEntity.Vector3ICache[j], out myCube))
+                                        if (goCritical || isGrid && ((IMySlimBlock)myCube.CubeBlock).Position != firingCube.Position)
                                         {
 
-                                            if (goCritical || isGrid && ((IMySlimBlock)myCube.CubeBlock).Position != firingCube.Position)
-                                            {
-
-                                                hitself = true;
-                                                cacheSlot = j;
-                                                break;
-                                            }
+                                            hitself = true;
+                                            cacheSlot = j;
+                                            break;
                                         }
                                     }
+                                }
 
-                                    if (!hitself) {
-                                        hitEntity.Clean();
-                                        continue;
-                                    }
+                                if (!hitself)
+                                {
+                                    hitEntity.Clean();
+                                    continue;
+                                }
 
-                                    IHitInfo hitInfo = null;
-                                    if (!goCritical)
+                                IHitInfo hitInfo = null;
+                                if (!goCritical)
+                                {
+
+                                    Session.I.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
+                                    var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
+                                    if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
                                     {
-
-                                        Session.I.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
-                                        var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
-                                        if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid)) {
-                                            hitEntity.Clean();
-                                            continue;
-                                        }
-                                    }
-
-                                    hitEntity.HitPos = hitInfo?.Position ?? beamFrom;
-                                    var posI = hitEntity.Vector3ICache[cacheSlot];
-                                    var block = grid.GetCubeBlock(hitEntity.Vector3ICache[cacheSlot]) as IMySlimBlock;
-                                    if (block != null) 
-                                        hitEntity.Blocks.Add(new HitEntity.RootBlocks { Block = block, QueryPos = posI });
-                                    else {
                                         hitEntity.Clean();
                                         continue;
                                     }
                                 }
-                                else {
+
+                                hitEntity.HitPos = hitInfo?.Position ?? beamFrom;
+                                var posI = hitEntity.Vector3ICache[cacheSlot];
+                                var block = grid.GetCubeBlock(hitEntity.Vector3ICache[cacheSlot]) as IMySlimBlock;
+                                if (block != null)
+                                    hitEntity.Blocks.Add(new HitEntity.RootBlocks { Block = block, QueryPos = posI });
+                                else
+                                {
                                     hitEntity.Clean();
                                     continue;
                                 }
                             }
+                            else
+                            {
+                                hitEntity.Clean();
+                                continue;
+                            }
                         }
-                        else
-                            grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
-
-                        if (!offensiveEwar && !fieldActive)
-                        {
-
-                            if (iShield != null && grid != null && grid.IsSameConstructAs(iShield.CubeGrid))
-                                hitEntity.DamageMulti = 16;
-
-                            hitEntity.EventType = Grid;
-                        }
-                        else if (!fieldActive)
-                            hitEntity.EventType = Effect;
-                        else
-                            hitEntity.EventType = Field;
                     }
+                    else
+                        grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
+
+                    if (!offensiveEwar && !fieldActive)
+                    {
+
+                        if (iShield != null && grid != null && grid.IsSameConstructAs(iShield.CubeGrid))
+                            hitEntity.DamageMulti = 16;
+
+                        hitEntity.EventType = Grid;
+                    }
+                    else if (!fieldActive)
+                        hitEntity.EventType = Effect;
+                    else
+                        hitEntity.EventType = Field;
                 }
                 else if (destroyable != null)
                 {
