@@ -1322,7 +1322,13 @@ namespace CoreSystems.Api
 
         private float GetMaxPower(MyDefinitionId weaponDef)
         {
-            return 0f; //Need to implement
+            CoreStructure structure;
+            if (Session.I.PartPlatforms.TryGetValue(weaponDef, out structure))
+            {
+                return structure.ActualPeakPowerCombined;
+            }
+
+            return 0f;
         }
 
         private static void ModOverrideLegacy(IMyEntity weaponBlock) => ModOverride((MyEntity) weaponBlock);
