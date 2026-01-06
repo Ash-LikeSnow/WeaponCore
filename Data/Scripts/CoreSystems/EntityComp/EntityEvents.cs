@@ -303,7 +303,7 @@ namespace CoreSystems.Support
                 {
                     var w = collection[i];
                     var systemRate = w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin * comp.Data.Repo.Values.Set.RofModifier;
-                    var heatModifier = MathHelper.Lerp(1f, .25f, w.PartState.Heat / w.System.MaxHeat);
+                    var heatModifier = MathHelper.Lerp(w.System.RofAt0Heat, w.System.RofAt100Heat, w.PartState.Heat / w.System.MaxHeat);
                     systemRate *= w.CurrentlyDegrading ? heatModifier : 1;
 
                     stringBuilder.Append($" {(collection.Count > 1 ? $"\n{w.FriendlyName}" : string.Empty)}" +

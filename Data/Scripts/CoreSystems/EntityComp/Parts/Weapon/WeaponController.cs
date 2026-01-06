@@ -4,6 +4,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.CoreComponent;
+using Sandbox.ModAPI;
 
 namespace CoreSystems.Platform
 {
@@ -291,14 +292,14 @@ namespace CoreSystems.Platform
                 LastHeat = PartState.Heat;
             }
 
-            if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * .8))
+            if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * System.HeatThresholdStart))
             {
                 CurrentlyDegrading = true;
                 UpdateRof();
             }
             else if (set && CurrentlyDegrading)
             {
-                if (PartState.Heat <= (System.MaxHeat * .4)) 
+                if (PartState.Heat <= (System.MaxHeat * System.HeatThresholdEnd)) 
                     CurrentlyDegrading = false;
 
                 UpdateRof();
@@ -330,7 +331,7 @@ namespace CoreSystems.Platform
         {
             var systemRate = System.WConst.RateOfFire * Comp.Data.Repo.Values.Set.RofModifier;
             var barrelRate = System.BarrelSpinRate * Comp.Data.Repo.Values.Set.RofModifier;
-            var heatModifier = MathHelper.Lerp(1f, .25f, PartState.Heat / System.MaxHeat);
+            var heatModifier = MathHelper.Lerp(System.RofAt0Heat, System.RofAt100Heat, PartState.Heat / System.MaxHeat);
 
             systemRate *= CurrentlyDegrading ? heatModifier : 1;
 

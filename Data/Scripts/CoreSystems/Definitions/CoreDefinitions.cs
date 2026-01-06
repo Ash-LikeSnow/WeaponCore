@@ -520,6 +520,19 @@ namespace CoreSystems.Support
                 [ProtoMember(27)] internal float InventoryLowAmount;
                 [ProtoMember(28)] internal bool UseWorldInventoryVolumeMultiplier;
                 [ProtoMember(29)] internal bool DisableOverheat;
+                [ProtoMember(30)] internal DegradeSettingsDef DegradeRofSettings;
+
+                [ProtoContract]
+                public struct DegradeSettingsDef
+                {
+                    [ProtoMember(1)] internal float HeatThresholdStart;
+                    [ProtoMember(2)] internal float HeatThresholdEnd;
+                    [ProtoMember(3)] internal float RofAt0Heat;
+                    [ProtoMember(4)] internal float RofAt100Heat;
+
+                    // if DegradeRof is active (heat went above HeatThresholdStart and has not went below HeatThresholdEnd,
+                    // then lerp between RofAt0Heat and RofAt100Heat using heat percentage.
+                }
             }
 
 

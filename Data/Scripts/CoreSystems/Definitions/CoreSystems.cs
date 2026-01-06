@@ -247,6 +247,10 @@ namespace CoreSystems.Support
         public readonly float NoAmmoSoundDistSqr;
         public readonly float HardPointAvMaxDistSqr;
         public readonly float ApproximatePeakPower;
+        public readonly float HeatThresholdStart;
+        public readonly float HeatThresholdEnd;
+        public readonly float RofAt0Heat;
+        public readonly float RofAt100Heat;
 
         public bool AnimationsInited;
 
@@ -369,7 +373,7 @@ namespace CoreSystems.Support
             AltScopeName = HasScope ? "subpart_" + Values.Assignments.Scope : string.Empty;
             PainterUseMaxTargeting = Values.HardPoint.Ai.PainterUseMaxTargeting;
             TurretMovements(out AzStep, out ElStep, out MinAzimuth, out MaxAzimuth, out MinElevation, out MaxElevation, out HomeAzimuth, out HomeElevation, out TurretMovement);
-            Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff);
+            Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff, out HeatThresholdStart, out HeatThresholdEnd, out RofAt0Heat, out RofAt100Heat);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
             Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
@@ -496,7 +500,7 @@ namespace CoreSystems.Support
             projectilesOnly = projectilesFirst && Values.Targeting.Threats.Length == 1;
         }
 
-        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown, out bool coolWhenOff)
+        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown, out bool coolWhenOff, out float heatThresholdStart, out float heatThresholdEnd, out float rofAt0Heat, out float rofAt100Heat)
         {
             coolWhenOff = Values.HardPoint.Loading.ProhibitCoolingWhenOff;
             degRof = Values.HardPoint.Loading.DegradeRof;
@@ -504,6 +508,26 @@ namespace CoreSystems.Support
             wepCoolDown = Values.HardPoint.Loading.Cooldown;
             if (wepCoolDown < 0) wepCoolDown = 0;
             if (wepCoolDown > .95f) wepCoolDown = .95f;
+
+            if (degRof)
+            {
+                heatThresholdStart = Values.HardPoint.Loading.DegradeRofSettings.HeatThresholdStart;
+                heatThresholdEnd = Values.HardPoint.Loading.DegradeRofSettings.HeatThresholdEnd;
+                rofAt0Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt0Heat;
+                rofAt100Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt100Heat;
+
+                if (heatThresholdStart < 0) heatThresholdStart = 0.8f;
+                if (heatThresholdEnd < 0) heatThresholdEnd = 0.4f;
+                if (rofAt0Heat < 0) rofAt0Heat = 1f;
+                if (rofAt100Heat < 0) rofAt100Heat = 0.25f;
+            }
+            else
+            {
+                heatThresholdStart = 0.8f;
+                heatThresholdEnd = 0.4f;
+                rofAt0Heat = 1f;
+                rofAt100Heat = 0.25f;
+            }
         }
 
         private void BarrelsAv(out bool barrelEffect1, out bool barrelEffect2, out float barrel1AvTicks, out float barrel2AvTicks, out int barrelSpinRate, out bool hasBarrelRotation)
