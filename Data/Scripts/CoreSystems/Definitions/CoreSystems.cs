@@ -247,6 +247,7 @@ namespace CoreSystems.Support
         public readonly float NoAmmoSoundDistSqr;
         public readonly float HardPointAvMaxDistSqr;
         public readonly float ApproximatePeakPower;
+        public readonly float WeaponAmmoMaxPowerMW; // no idea what approx. peak power is used for so make a new variable
         public readonly float HeatThresholdStart;
         public readonly float HeatThresholdEnd;
         public readonly float RofAt0Heat;
@@ -387,6 +388,7 @@ namespace CoreSystems.Support
             // CheckForBadAnimations();
 
             ApproximatePeakPower = WConst.IdlePower;
+            WeaponAmmoMaxPowerMW = 0;
 
             var ammoSelections = 0;
             for (int i = 0; i < AmmoTypes.Length; i++) // remap old configs
@@ -431,6 +433,11 @@ namespace CoreSystems.Support
 
                 if (aConst.ChargSize > ApproximatePeakPower)
                     ApproximatePeakPower = ammo.AmmoDef.Const.ChargSize;
+
+                if (aConst.PowerPerTick > WeaponAmmoMaxPowerMW && ammo.AmmoDef.HardPointUsable && (aConst.EnergyAmmo || aConst.IsHybrid))
+                {
+                    WeaponAmmoMaxPowerMW = ammo.AmmoDef.Const.PowerPerTick;
+                }
 
                 if (aConst.RequiresTarget)
                     requiresTarget = true;
