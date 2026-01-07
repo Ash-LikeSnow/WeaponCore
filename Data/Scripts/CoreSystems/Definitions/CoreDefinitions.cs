@@ -519,7 +519,7 @@ namespace CoreSystems.Support
                 [ProtoMember(26)] internal float InventoryFillAmount;
                 [ProtoMember(27)] internal float InventoryLowAmount;
                 [ProtoMember(28)] internal bool UseWorldInventoryVolumeMultiplier;
-                [ProtoMember(29)] internal bool DisableOverheat;
+                [ProtoMember(29)] internal bool AllowOverheatShooting;
                 [ProtoMember(30)] internal DegradeSettingsDef DegradeRofSettings;
                 [ProtoMember(31)] internal float HeatSinkRateOverheatMult;
 

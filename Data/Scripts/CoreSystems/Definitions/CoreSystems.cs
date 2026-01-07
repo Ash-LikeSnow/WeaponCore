@@ -806,7 +806,7 @@ namespace CoreSystems.Support
             AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
 
             HeatPerShot = values.HardPoint.Loading.HeatPerShot;
-            DisableOverheat = values.HardPoint.Loading.DisableOverheat;
+            DisableOverheat = values.HardPoint.Loading.AllowOverheatShooting;
             HeatSinkRate = values.HardPoint.Loading.HeatSinkRate;
 
             IdlePower = Math.Max(values.HardPoint.HardWare.IdlePower, 0.001f);
