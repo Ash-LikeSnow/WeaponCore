@@ -523,10 +523,10 @@ namespace CoreSystems.Support
                 rofAt0Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt0Heat;
                 rofAt100Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt100Heat;
 
-                if (heatThresholdStart < 0) heatThresholdStart = 0.8f;
-                if (heatThresholdEnd < 0) heatThresholdEnd = 0.4f;
-                if (rofAt0Heat < 0) rofAt0Heat = 1f;
-                if (rofAt100Heat < 0) rofAt100Heat = 0.25f;
+                if (heatThresholdStart < 0 || heatThresholdStart > 1f) heatThresholdStart = 0.8f;
+                if (heatThresholdEnd < 0 || heatThresholdEnd > 1f) heatThresholdEnd = 0.4f;
+                if (rofAt0Heat < 0) rofAt0Heat = 1f; // let this be >1 if user wants
+                if (rofAt100Heat < 0) rofAt100Heat = 0.25f; // let this be >1 if user wants
             }
             else
             {
