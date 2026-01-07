@@ -521,6 +521,7 @@ namespace CoreSystems.Support
                 [ProtoMember(28)] internal bool UseWorldInventoryVolumeMultiplier;
                 [ProtoMember(29)] internal bool DisableOverheat;
                 [ProtoMember(30)] internal DegradeSettingsDef DegradeRofSettings;
+                [ProtoMember(31)] internal float HeatSinkRateOverheatMult;
 
                 [ProtoContract]
                 public struct DegradeSettingsDef

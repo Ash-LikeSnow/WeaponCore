@@ -258,7 +258,8 @@ namespace CoreSystems.Platform
         {
             if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
             {
-                var hsRateMod = HsRate + (float)Comp.HeatLoss;
+
+                var hsRateMod = HsRate * (PartState.Overheated && System.HeatSinkRateOverheatMult != 0 ? System.HeatSinkRateOverheatMult : 1f) + (float)Comp.HeatLoss;
                 Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
                 PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
                 Comp.HeatLoss = 0;
@@ -311,6 +312,7 @@ namespace CoreSystems.Platform
                 if (Session.I.IsServer)
                 {
                     PartState.Overheated = false;
+
                     OverHeatCountDown = 0;
                     if (Session.I.MpActive)
                         Session.I.SendState(Comp);
