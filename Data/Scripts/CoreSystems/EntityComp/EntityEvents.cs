@@ -253,8 +253,7 @@ namespace CoreSystems.Support
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
 
-           
-
+            bool needsHeat = false;
             for (int i = 0; i < collection.Count; i++)
             {
                 var w = collection[i];
@@ -265,6 +264,9 @@ namespace CoreSystems.Support
                     shots += $"\n{Localization.GetText("WeaponInfoDrawOverMax")}: {SinkPower - IdlePower:0.00}/ {w.ActiveAmmoDef.AmmoDef.Const.PowerPerTick:0.00} {Localization.GetText("WeaponInfoMWLabel")}" +
                     $"\n{(chargeTime == 0 ? Localization.GetText("WeaponInfoPowerCharged") : Localization.GetText("WeaponInfoPowerChargedIn") + " " + chargeTime + Localization.GetText("WeaponInfoSeconds"))}";
                 }
+
+                if (w.ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier)
+                    needsHeat = true;
 
                 var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
                 var timeToLoad = (int)(w.ReloadEndTick - Session.I.Tick) / 60;
@@ -289,7 +291,7 @@ namespace CoreSystems.Support
                 stringBuilder.Append(endReturn);
             }
                 
-            if (HeatPerSecond > 0)
+            if (HeatPerSecond > 0 || CurrentHeat > 0)
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoHeatPerSecOverMax")}: {HeatPerSecond}/{MaxHeat}" +
                     $"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.} W ({(CurrentHeat / MaxHeat):P})");
                 
@@ -301,7 +303,7 @@ namespace CoreSystems.Support
                 {
                     var w = collection[i];
                     var systemRate = w.ActiveAmmoDef.AmmoDef.Const.RealShotsPerMin * comp.Data.Repo.Values.Set.RofModifier;
-                    var heatModifier = MathHelper.Lerp(1f, .25f, w.PartState.Heat / w.System.MaxHeat);
+                    var heatModifier = MathHelper.Lerp(w.System.RofAt0Heat, w.System.RofAt100Heat, w.PartState.Heat / w.System.MaxHeat);
                     systemRate *= w.CurrentlyDegrading ? heatModifier : 1;
 
                     stringBuilder.Append($" {(collection.Count > 1 ? $"\n{w.FriendlyName}" : string.Empty)}" +

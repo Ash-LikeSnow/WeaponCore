@@ -1144,7 +1144,12 @@ namespace CoreSystems
 
         internal static void ListControlModes(List<MyTerminalControlComboBoxItem> controlList)
         {
-            foreach (var sub in ControlList) controlList.Add(sub);
+            foreach (var sub in ControlList)
+            {
+                if (sub.Key != 2 || !Session.I.Settings.Enforcement.ProhibitHUDPainter)
+                    controlList.Add(sub);
+            }
+            
         }
 
         private static readonly List<MyTerminalControlComboBoxItem> ControlList = new List<MyTerminalControlComboBoxItem>

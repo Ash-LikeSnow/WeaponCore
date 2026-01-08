@@ -52,7 +52,7 @@ namespace CoreSystems.Platform
 
             bool selfHit = false;
             weapon.LastHitInfo = null;
-            if (checkSelfHit && target != null && !weapon.ActiveAmmoDef.AmmoDef.Const.SkipRayChecks)
+            if (checkSelfHit && target != null && !weapon.ActiveAmmoDef.AmmoDef.Const.SkipRayChecks && !weapon.ActiveAmmoDef.AmmoDef.IgnoreGrids)
             {
                 var testLine = new LineD(targetCenter, weapon.BarrelOrigin);
                 var predictedMuzzlePos = testLine.To + (-testLine.Direction * weapon.MuzzleDistToBarrelCenter);
@@ -885,6 +885,9 @@ namespace CoreSystems.Platform
 
         public bool MuzzleHitSelf()
         {
+            if (ActiveAmmoDef.AmmoDef.IgnoreGrids)
+                return false;
+
             for (int i = 0; i < Muzzles.Length; i++)
             {
                 var m = Muzzles[i];

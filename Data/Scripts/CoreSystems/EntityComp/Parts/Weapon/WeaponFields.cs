@@ -234,9 +234,8 @@ namespace CoreSystems.Platform
             {
                 var reloading = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient);
                 var overHeat = PartState.Overheated && OverHeatCountDown == 0;
-                var canShoot = !overHeat && !reloading ;
-                var shotReady = canShoot;
-                return shotReady;
+                var needsHeat = ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 ? PartState.Heat < ActiveAmmoDef.AmmoDef.HeatNeededToFire : false;
+                return !overHeat && !reloading && !needsHeat;
             }
         }
 

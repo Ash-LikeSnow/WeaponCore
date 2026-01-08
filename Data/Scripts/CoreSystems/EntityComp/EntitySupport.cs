@@ -168,12 +168,15 @@ namespace CoreSystems.Support
 
         internal void ReCalculateMaxTargetingRange(double maxRange)
         {
-            var expandedMaxTrajectory2 = maxRange + Ai.TopEntity.PositionComp.LocalVolume.Radius;
-            if (expandedMaxTrajectory2 > Ai.MaxTargetingRange)
+            if (Ai?.TopEntity?.PositionComp != null)
             {
+                var expandedMaxTrajectory2 = maxRange + Ai.TopEntity.PositionComp.LocalVolume.Radius;
+                if (expandedMaxTrajectory2 > Ai.MaxTargetingRange)
+                {
 
-                Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.I.Settings.Enforcement.MaxHudFocusDistance);
-                Ai.MaxTargetingRangeSqr = Ai.MaxTargetingRange * Ai.MaxTargetingRange;
+                    Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.I.Settings.Enforcement.MaxHudFocusDistance);
+                    Ai.MaxTargetingRangeSqr = Ai.MaxTargetingRange * Ai.MaxTargetingRange;
+                }
             }
         }
     }

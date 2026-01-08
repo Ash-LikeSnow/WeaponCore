@@ -4,6 +4,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.CoreComponent;
+using Sandbox.ModAPI;
 
 namespace CoreSystems.Platform
 {
@@ -257,7 +258,8 @@ namespace CoreSystems.Platform
         {
             if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
             {
-                var hsRateMod = HsRate + (float)Comp.HeatLoss;
+
+                var hsRateMod = HsRate * (PartState.Overheated && System.HeatSinkRateOverheatMult != 0 ? System.HeatSinkRateOverheatMult : 1f) + (float)Comp.HeatLoss;
                 Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
                 PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
                 Comp.HeatLoss = 0;
@@ -291,14 +293,14 @@ namespace CoreSystems.Platform
                 LastHeat = PartState.Heat;
             }
 
-            if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * .8))
+            if (set && System.DegRof && PartState.Heat >= (System.MaxHeat * System.HeatThresholdStart))
             {
                 CurrentlyDegrading = true;
                 UpdateRof();
             }
             else if (set && CurrentlyDegrading)
             {
-                if (PartState.Heat <= (System.MaxHeat * .4)) 
+                if (PartState.Heat <= (System.MaxHeat * System.HeatThresholdEnd)) 
                     CurrentlyDegrading = false;
 
                 UpdateRof();
@@ -310,6 +312,7 @@ namespace CoreSystems.Platform
                 if (Session.I.IsServer)
                 {
                     PartState.Overheated = false;
+
                     OverHeatCountDown = 0;
                     if (Session.I.MpActive)
                         Session.I.SendState(Comp);
@@ -330,7 +333,7 @@ namespace CoreSystems.Platform
         {
             var systemRate = System.WConst.RateOfFire * Comp.Data.Repo.Values.Set.RofModifier;
             var barrelRate = System.BarrelSpinRate * Comp.Data.Repo.Values.Set.RofModifier;
-            var heatModifier = MathHelper.Lerp(1f, .25f, PartState.Heat / System.MaxHeat);
+            var heatModifier = MathHelper.Lerp(System.RofAt0Heat, System.RofAt100Heat, PartState.Heat / System.MaxHeat);
 
             systemRate *= CurrentlyDegrading ? heatModifier : 1;
 

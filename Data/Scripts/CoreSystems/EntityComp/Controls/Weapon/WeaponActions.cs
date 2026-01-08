@@ -141,7 +141,11 @@ namespace CoreSystems.Control
                 return;
             
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.Control;
-            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
+            int value;
+            if (Session.I.Settings.Enforcement.ProhibitHUDPainter)
+                value = numValue == 1 ? 0 : 1;
+            else
+                value = numValue + 1 <= 2 ? numValue + 1 : 0;
 
             Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", value, Session.I.PlayerId);
         }

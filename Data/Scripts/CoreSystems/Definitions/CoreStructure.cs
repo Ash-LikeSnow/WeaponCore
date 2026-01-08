@@ -24,6 +24,7 @@ namespace CoreSystems.Support
         internal EnittyTypes EntityType;
         internal float ApproximatePeakPowerCombined;
         internal float ActualPeakPowerCombined;
+        internal float MaxPowerMW; // not touching the above 2's calculations so new var
         internal float CombinedIdlePower;
         internal int PowerPriority;
         internal enum EnittyTypes
@@ -51,6 +52,7 @@ namespace CoreSystems.Support
         internal int DefaultLeadGroup = 0;
         internal WeaponStructure(Session session, KeyValuePair<string, Dictionary<string, MyTuple<string, string, string, string>>> tDef, List<WeaponDefinition> wDefList, string modPath)
         {
+            MaxPowerMW = 0;
             Session = session;
             SubtypeId = tDef.Key;
             var map = tDef.Value;
@@ -205,6 +207,7 @@ namespace CoreSystems.Support
                 if (coreSystem.Values.HardPoint.Ai.TurretAttached && !TurretAttached)
                     TurretAttached = true;
                 ApproximatePeakPowerCombined += coreSystem.ApproximatePeakPower;
+                MaxPowerMW += coreSystem.WeaponAmmoMaxPowerMW;
                 CombinedIdlePower += coreSystem.WConst.IdlePower;
 
                 PartSystems.Add(partNameIdHash, coreSystem);

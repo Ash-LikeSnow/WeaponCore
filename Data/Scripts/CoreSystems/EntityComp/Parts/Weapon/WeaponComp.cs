@@ -580,6 +580,10 @@ namespace CoreSystems.Platform
                         break;
                     case "ControlModes":
                         o.Control = (ProtoWeaponOverrides.ControlModes)v;
+
+                        if (o.Control == ProtoWeaponOverrides.ControlModes.Painter && Session.I.Settings.Enforcement.ProhibitHUDPainter)
+                            o.Control = ProtoWeaponOverrides.ControlModes.Auto;
+
                         if (comp.TypeSpecific == CompTypeSpecific.Rifle)
                             Session.I.RequestNotify($"Targeting Mode [{o.Control}]", 3000, "White", playerId, true);
                         clearTargets = true;
