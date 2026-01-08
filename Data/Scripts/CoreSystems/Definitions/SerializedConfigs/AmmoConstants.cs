@@ -1364,14 +1364,13 @@ namespace CoreSystems.Support
             if (s.WConst.HeatPerShot * HeatModifier > 0)
             {
                 var heatGenPerSec = (s.WConst.HeatPerShot * HeatModifier * realShotsPerSec) - system.WConst.HeatSinkRate; //heat - cooldown
-                if (heatGenPerSec > 0)
+                if (heatGenPerSec > 0 && !system.DegRof && !system.WConst.DisableOverheat)
                 {
-
-                    var safeToOverheat = (l.MaxHeat - (l.MaxHeat * l.Cooldown)) / heatGenPerSec;
-                    var cooldownTime = (l.MaxHeat - (l.MaxHeat * l.Cooldown)) / system.WConst.HeatSinkRate;
+                    var safeToOverheat = (l.MaxHeat - (l.MaxHeat * l.Cooldown) - a.HeatNeededToFire) / heatGenPerSec;
+                    var cooldownTime = (l.MaxHeat - (l.MaxHeat * l.Cooldown + a.HeatNeededToFire)) / (system.WConst.HeatSinkRate * system.HeatSinkRateOverheatMult != 0 ? system.HeatSinkRateOverheatMult : 1f);
                     var timeHeatCycle = (safeToOverheat + cooldownTime);
 
-                    realShotsPerSec = (float) ((safeToOverheat / timeHeatCycle) * realShotsPerSec);
+                    realShotsPerSec = (float)((safeToOverheat / timeHeatCycle) * realShotsPerSec);
 
                     if ((mexLogLevel >= 1))
                     {
@@ -1389,9 +1388,28 @@ namespace CoreSystems.Support
 
                         Log.Line($"realShotsPerSec wHeat = {realShotsPerSec}");
                     }
-
                 }
-
+                else if (heatGenPerSec > 0 && system.DegRof && system.WConst.DisableOverheat)
+                {
+                    if (!EnergyAmmo && MagazineSize > 0 || IsHybrid)
+                    {
+                        realShotsPerSec = GetShotsPerSecondHeat(MagazineSize, wDef.HardPoint.Loading.MagsToLoad, s.WConst.RateOfFire, s.WConst.ReloadTime, s.BarrelsPerShot, l.TrajectilesPerBarrel, l.ShotsInBurst, l.DelayAfterBurst,
+                            l.DegradeRofSettings.RofAt0Heat, l.DegradeRofSettings.RofAt100Heat, l.DegradeRofSettings.HeatThresholdStart, l.DegradeRofSettings.HeatThresholdEnd, 
+                            s.WConst.HeatPerShot, (float)HeatModifier, system.WConst.HeatSinkRate, system.MaxHeat);
+                    }
+                    else if (EnergyAmmo && a.EnergyMagazineSize > 0)
+                    {
+                        realShotsPerSec = GetShotsPerSecondHeat(a.EnergyMagazineSize, 1, s.WConst.RateOfFire, s.WConst.ReloadTime, s.BarrelsPerShot, l.TrajectilesPerBarrel, l.ShotsInBurst, l.DelayAfterBurst,
+                            l.DegradeRofSettings.RofAt0Heat, l.DegradeRofSettings.RofAt100Heat, l.DegradeRofSettings.HeatThresholdStart, l.DegradeRofSettings.HeatThresholdEnd, 
+                            s.WConst.HeatPerShot, (float)HeatModifier, system.WConst.HeatSinkRate, system.MaxHeat);
+                    }
+                    else
+                    {
+                        realShotsPerSec = GetShotsPerSecondHeat(1, 1, s.WConst.RateOfFire, 0, s.BarrelsPerShot, l.TrajectilesPerBarrel, s.ShotsPerBurst, l.DelayAfterBurst,
+                            l.DegradeRofSettings.RofAt0Heat, l.DegradeRofSettings.RofAt100Heat, l.DegradeRofSettings.HeatThresholdStart, l.DegradeRofSettings.HeatThresholdEnd, 
+                            s.WConst.HeatPerShot, (float)HeatModifier, system.WConst.HeatSinkRate, system.MaxHeat);
+                    }
+                }
             }
             var avgArmorModifier = a.NoGridOrArmorScaling ? 1 : GetAverageArmorModifier(a.DamageScales.Armor);
 
@@ -1582,14 +1600,16 @@ namespace CoreSystems.Support
         {
             if (true) //WHy is this required ;_;
             {
-                if (magPerReload < 1) magPerReload = 1;
+                if (magPerReload < 1)
+                    magPerReload = 1;
                 var reloadsPerRoF = rof / ((magCapacity * magPerReload) / (float)barrelsPerShot);
                 var burstsPerRoF = shotsInBurst == 0 ? 0 : rof / (float)shotsInBurst;
                 var ticksReloading = reloadsPerRoF * reloadTime;
 
                 var ticksDelaying = burstsPerRoF * delayAfterBurst;
 
-                if (mexLogLevel > 0) Log.Line($"burstsPerRof={burstsPerRoF} reloadsPerRof={reloadsPerRoF} ticksReloading={ticksReloading} ticksDelaying={ticksDelaying}");
+                if (mexLogLevel > 0)
+                    Log.Line($"burstsPerRof={burstsPerRoF} reloadsPerRof={reloadsPerRoF} ticksReloading={ticksReloading} ticksDelaying={ticksDelaying}");
                 float shotsPerSecond = rof / (60f + (ticksReloading / 60) + (ticksDelaying / 60));
             }
 
@@ -1632,6 +1652,119 @@ namespace CoreSystems.Support
             return shotsPerSecondV2 * trajectilesPerBarrel;
         }
 
+        private float GetShotsPerSecondHeat(int magCapacity, int magPerReload, int rof, int reloadTime, int barrelsPerShot, int trajectilesPerBarrel, int shotsInBurst, int delayAfterBurst,
+            float rofScalar0, float rofScalar100, float degradeStart, float degradeEnd, int heatPerShod, float heatModifier, float heatSinkRate, int maxHeat)
+        {
+            if (magPerReload < 1)
+                magPerReload = 1;
+
+            var totMagCap = magCapacity * magPerReload;
+
+            // How many times will the weapon shoot per magazine
+            var shotsPerMagazine = totMagCap == 1 ? 0 : (Math.Ceiling((float)totMagCap / barrelsPerShot) - 1);
+
+            // How many bursts per magazine
+            var burstPerMagazine = shotsInBurst == 0 ? 0 : Math.Ceiling(((float)totMagCap / (float)shotsInBurst) - 1); // how many bursts per magazine
+
+            //Case of no reload time
+            if (reloadTime == 0)
+            {
+                // if reload and burst is zero then just assume the gun is always firing at 100% heat
+                if (delayAfterBurst == 0)
+                    return GetShotsPerSecond(magCapacity, magPerReload, (int)(rof * rofScalar100), reloadTime, barrelsPerShot, trajectilesPerBarrel, shotsInBurst, delayAfterBurst);
+
+                shotsPerMagazine = totMagCap == 1 ? 0 : (Math.Ceiling((float)totMagCap / barrelsPerShot));
+                burstPerMagazine = shotsInBurst == 0 ? 0 : Math.Ceiling(((float)totMagCap / shotsInBurst));
+            }
+
+
+            // rough approximation - calculate heat generated per burst/reload
+            var heatGenPerSec = (heatPerShod * heatModifier * rof / 60f) - heatSinkRate;
+
+            // rough approximation for everything here
+            if (delayAfterBurst != 0)
+            {
+                // in seconds - time spent on burst
+                var timeBurst = (burstPerMagazine == 0 ? 0 : burstPerMagazine * ((float)delayAfterBurst)) / 60f;
+
+                rof = RofModBurstOrReload(rof, delayAfterBurst, rofScalar0, rofScalar100, degradeStart, degradeEnd, heatSinkRate, maxHeat, heatGenPerSec, timeBurst);
+            }
+
+            // then we do ^ again, with the modified ROF accounting for burst
+            // accounting for both at the same time is really complicated but this in theory approximates it well enough
+            if (reloadTime != 0)
+            {
+                //in seconds - time spent shooting magazine
+                var timeShots = (shotsPerMagazine == 0 ? 0 : shotsPerMagazine * ((float)3600 / rof)) / 60f;
+
+                rof = RofModBurstOrReload(rof, reloadTime, rofScalar0, rofScalar100, degradeStart, degradeEnd, heatSinkRate, maxHeat, heatGenPerSec, timeShots);
+            }
+            
+
+            return GetShotsPerSecond(magCapacity, magPerReload, rof, reloadTime, barrelsPerShot, trajectilesPerBarrel, shotsInBurst, delayAfterBurst);
+            
+        }
+
+        private static int RofModBurstOrReload(int rof, int delayAfterBurst, float rofScalar0, float rofScalar100, float degradeStart, float degradeEnd, float heatSinkRate, int maxHeat, float heatGenPerSec, double timeBurst)
+        {
+            var heatBurst = heatGenPerSec * timeBurst;
+            var heatBurstCooldown = heatSinkRate * delayAfterBurst / 60f;
+
+            var totalHeatBurst = heatBurst - heatBurstCooldown;
+
+            // case of burst generates heat but fully cools down before delay ends
+            if (totalHeatBurst <= 0)
+            {
+                var heatBurstPercentage = heatBurst / maxHeat;
+
+                // case of heat actually goes above the Start percentage
+                // therefore, assume that ROF is the weighted average of the starting ROF and ending ROF, with the weight of the starting ROF
+                // being the percentage of heat before start in heatBurstPercentage, and ending ROF being 1 - that value
+                if (heatBurstPercentage > degradeStart)
+                {
+                    var rofWeight = degradeStart / heatBurstPercentage;
+
+                    var endROF = MathHelper.Lerp(rofScalar0, rofScalar100, heatBurstPercentage);
+                    rof = (int)(rof * rofWeight + endROF * (1 - rofWeight));
+                }
+                // otherwise do nothing because heat will never go above the start value and so ROF does not change
+
+            }
+            // case of burst generates heat and does not fully cool down
+            else if (totalHeatBurst > 0)
+            {
+                // take the average weighted by roughly when MaxHeat is reached
+                // assume equal weight when MaxHeat is reached at the end of the burst, and weight more towards MaxHeat
+
+                var startHeat = maxHeat - heatBurstCooldown;
+                var startHeatPercentage = startHeat / maxHeat;
+
+                // weight
+                // tends to zero as heatBurst overpowers cooldown
+                var maxHeatPercentage = 1 - (heatBurst - heatBurstCooldown) / heatBurst;
+                var maxHeatWeight = maxHeatPercentage / 2f; // normalize to 0-0.5 so equal weight when heatBurst ~= heatBurstCooldown
+
+                if (startHeatPercentage < degradeEnd)
+                {
+
+                    // assume that ROF is the weighted average of the ROF of MaxHeat - heatBurstCooldown and ROF at 1.0, with the weight of the ending ROF
+                    // being the percentage of heat above end in heatBurstPercentage, and starting ROF being 1 - that value
+                    var rofWeight = (1 - degradeEnd) / (1 - startHeatPercentage);
+
+                    rof = (int)(rof * rofScalar100 * rofWeight * (1 - maxHeatWeight) + rof * (1 - rofWeight) * maxHeatWeight);
+                }
+                else
+                {
+                    // if it never goes below the End value then just weighted average between start and end ROF depending on MaxHeatPercentage
+                    var startROF = MathHelper.Lerp(rofScalar0, rofScalar100, startHeatPercentage);
+                    var endROF = MathHelper.Lerp(rofScalar0, rofScalar100, startHeatPercentage);
+
+                    rof = (int)(startROF * maxHeatWeight + endROF * (1 - maxHeatWeight));
+                }
+            }
+
+            return rof;
+        }
 
         private float GetDetDmg(AmmoDef a)
         {
