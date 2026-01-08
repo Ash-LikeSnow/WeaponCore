@@ -154,7 +154,8 @@ namespace CoreSystems
 
                         var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
                         var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
-                        var canShoot = !overHeat && !reloading;
+                        var needsHeat = p.ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 && p.PartState.Heat < p.ActiveAmmoDef.AmmoDef.HeatNeededToFire;
+                        var canShoot = !overHeat && !reloading && !needsHeat;
 
                         var autoShot = pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
                         var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
@@ -763,8 +764,9 @@ namespace CoreSystems
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
+                        var needsHeat = w.ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 && w.PartState.Heat < w.ActiveAmmoDef.AmmoDef.HeatNeededToFire;
 
-                        var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
+                        var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady && !needsHeat;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;

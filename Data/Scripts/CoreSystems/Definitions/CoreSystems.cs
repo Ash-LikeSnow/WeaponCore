@@ -247,6 +247,12 @@ namespace CoreSystems.Support
         public readonly float NoAmmoSoundDistSqr;
         public readonly float HardPointAvMaxDistSqr;
         public readonly float ApproximatePeakPower;
+        public readonly float WeaponAmmoMaxPowerMW; // no idea what approx. peak power is used for so make a new variable
+        public readonly float HeatThresholdStart;
+        public readonly float HeatThresholdEnd;
+        public readonly float RofAt0Heat;
+        public readonly float RofAt100Heat;
+        public readonly float HeatSinkRateOverheatMult;
 
         public bool AnimationsInited;
 
@@ -369,7 +375,7 @@ namespace CoreSystems.Support
             AltScopeName = HasScope ? "subpart_" + Values.Assignments.Scope : string.Empty;
             PainterUseMaxTargeting = Values.HardPoint.Ai.PainterUseMaxTargeting;
             TurretMovements(out AzStep, out ElStep, out MinAzimuth, out MaxAzimuth, out MinElevation, out MaxElevation, out HomeAzimuth, out HomeElevation, out TurretMovement);
-            Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff);
+            Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff, out HeatThresholdStart, out HeatThresholdEnd, out RofAt0Heat, out RofAt100Heat, out HeatSinkRateOverheatMult);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
             Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
@@ -383,6 +389,7 @@ namespace CoreSystems.Support
             // CheckForBadAnimations();
 
             ApproximatePeakPower = WConst.IdlePower;
+            WeaponAmmoMaxPowerMW = 0;
 
             var ammoSelections = 0;
             for (int i = 0; i < AmmoTypes.Length; i++) // remap old configs
@@ -427,6 +434,11 @@ namespace CoreSystems.Support
 
                 if (aConst.ChargSize > ApproximatePeakPower)
                     ApproximatePeakPower = ammo.AmmoDef.Const.ChargSize;
+
+                if (aConst.PowerPerTick > WeaponAmmoMaxPowerMW && ammo.AmmoDef.HardPointUsable && (aConst.EnergyAmmo || aConst.IsHybrid))
+                {
+                    WeaponAmmoMaxPowerMW = ammo.AmmoDef.Const.PowerPerTick;
+                }
 
                 if (aConst.RequiresTarget)
                     requiresTarget = true;
@@ -496,14 +508,36 @@ namespace CoreSystems.Support
             projectilesOnly = projectilesFirst && Values.Targeting.Threats.Length == 1;
         }
 
-        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown, out bool coolWhenOff)
+        private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown, out bool coolWhenOff, out float heatThresholdStart, out float heatThresholdEnd, out float rofAt0Heat, out float rofAt100Heat, out float heatSinkRateOverheatMult)
         {
             coolWhenOff = Values.HardPoint.Loading.ProhibitCoolingWhenOff;
             degRof = Values.HardPoint.Loading.DegradeRof;
             maxHeat = Values.HardPoint.Loading.MaxHeat;
             wepCoolDown = Values.HardPoint.Loading.Cooldown;
+            heatSinkRateOverheatMult = Values.HardPoint.Loading.HeatSinkRateOverheatMult;
+
             if (wepCoolDown < 0) wepCoolDown = 0;
             if (wepCoolDown > .95f) wepCoolDown = .95f;
+
+            if (degRof)
+            {
+                heatThresholdStart = Values.HardPoint.Loading.DegradeRofSettings.HeatThresholdStart;
+                heatThresholdEnd = Values.HardPoint.Loading.DegradeRofSettings.HeatThresholdEnd;
+                rofAt0Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt0Heat;
+                rofAt100Heat = Values.HardPoint.Loading.DegradeRofSettings.RofAt100Heat;
+
+                if (heatThresholdStart <= 0 || heatThresholdStart > 1f) heatThresholdStart = 0.8f;
+                if (heatThresholdEnd <= 0 || heatThresholdEnd > 1f) heatThresholdEnd = 0.4f;
+                if (rofAt0Heat <= 0) rofAt0Heat = 1f; // let this be >1 if user wants
+                if (rofAt100Heat <= 0) rofAt100Heat = 0.25f; // let this be >1 if user wants
+            }
+            else
+            {
+                heatThresholdStart = 0.8f;
+                heatThresholdEnd = 0.4f;
+                rofAt0Heat = 1f;
+                rofAt100Heat = 0.25f;
+            }
         }
 
         private void BarrelsAv(out bool barrelEffect1, out bool barrelEffect2, out float barrel1AvTicks, out float barrel2AvTicks, out int barrelSpinRate, out bool hasBarrelRotation)
@@ -750,6 +784,7 @@ namespace CoreSystems.Support
         internal bool HasServerOverrides;
         internal bool FireSoundNoBurst;
         internal bool HasDrone;
+        internal bool DisableOverheat;
 
         internal WeaponConstants(WeaponDefinition values)
         {
@@ -771,6 +806,7 @@ namespace CoreSystems.Support
             AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
 
             HeatPerShot = values.HardPoint.Loading.HeatPerShot;
+            DisableOverheat = values.HardPoint.Loading.AllowOverheatShooting;
             HeatSinkRate = values.HardPoint.Loading.HeatSinkRate;
 
             IdlePower = Math.Max(values.HardPoint.HardWare.IdlePower, 0.001f);

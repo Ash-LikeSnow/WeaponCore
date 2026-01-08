@@ -261,7 +261,7 @@ namespace CoreSystems.Platform
 
                     _muzzlesToFire.Add(MuzzleIdToName[current]);
 
-                    if (HeatPShot > 0) {
+                    if (HeatPShot > 0 || ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier) {
 
                         if (!HeatLoopRunning) {
                             s.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
@@ -270,9 +270,18 @@ namespace CoreSystems.Platform
 
                         PartState.Heat += HeatPShot;
                         Comp.CurrentHeat += HeatPShot;
-                        if (PartState.Heat >= System.MaxHeat || PartState.Overheated) {
+                        if ((PartState.Heat >= System.MaxHeat || PartState.Overheated) && !System.WConst.DisableOverheat)
+                        {
                             OverHeat();
                             break;
+                        }
+                        else if (System.WConst.DisableOverheat)
+                        {
+                            if (PartState.Heat >= System.MaxHeat)
+                                PartState.Heat = System.MaxHeat;
+
+                            if (Comp.CurrentHeat >= Comp.MaxHeat)
+                                Comp.CurrentHeat = Comp.MaxHeat;
                         }
                     }
                     
