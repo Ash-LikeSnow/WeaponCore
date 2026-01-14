@@ -1364,10 +1364,10 @@ namespace CoreSystems.Support
             if (s.WConst.HeatPerShot * HeatModifier > 0)
             {
                 var heatGenPerSec = (s.WConst.HeatPerShot * HeatModifier * realShotsPerSec) - system.WConst.HeatSinkRate; //heat - cooldown
-                if (heatGenPerSec > 0 && !system.DegRof && !system.WConst.DisableOverheat)
+                if (heatGenPerSec > 0 && !system.WConst.DisableOverheat)
                 {
                     var safeToOverheat = (l.MaxHeat - (l.MaxHeat * l.Cooldown) - a.HeatNeededToFire) / heatGenPerSec;
-                    var cooldownTime = (l.MaxHeat - (l.MaxHeat * l.Cooldown + a.HeatNeededToFire)) / (system.WConst.HeatSinkRate * system.HeatSinkRateOverheatMult != 0 ? system.HeatSinkRateOverheatMult : 1f);
+                    var cooldownTime = (l.MaxHeat - (l.MaxHeat * l.Cooldown + a.HeatNeededToFire)) / (system.WConst.HeatSinkRate * (system.HeatSinkRateOverheatMult != 0 ? system.HeatSinkRateOverheatMult : 1f));
                     var timeHeatCycle = (safeToOverheat + cooldownTime);
 
                     realShotsPerSec = (float)((safeToOverheat / timeHeatCycle) * realShotsPerSec);
