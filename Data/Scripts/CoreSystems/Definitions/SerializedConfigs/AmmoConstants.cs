@@ -62,6 +62,7 @@ namespace CoreSystems.Support
         public readonly MyPhysicalInventoryItem AmmoItem;
         public readonly MyPhysicalInventoryItem EjectItem;
         public readonly Vector3D FragOffset;
+        public readonly Vector2D FragOffsetRot;
         public readonly EwarType EwarType;
         public readonly Texture TracerMode;
         public readonly Texture TrailMode;
@@ -229,6 +230,7 @@ namespace CoreSystems.Support
         public readonly bool SkipRayChecks;
         public readonly bool RequiresTarget;
         public readonly bool HasAdvFragOffset;
+        public readonly bool HasAdvFragOffsetRotation;
         public readonly bool DetonationSound;
         public readonly bool CanReportTargetStatus;
         public readonly bool VoxelSound;
@@ -468,7 +470,7 @@ namespace CoreSystems.Support
 
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
 
-            Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmedWhenHit, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
+            Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmedWhenHit, out FragOnEnd, out HasAdvFragOffset, out FragOffset, out HasAdvFragOffsetRotation, out FragOffsetRot);
             TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone, out FragProximitySqr);
 
             ArmorCoreActive = Session.I.ArmorCoreActive;
@@ -806,7 +808,7 @@ namespace CoreSystems.Support
             alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1 || tracerAlwaysDraw || trailAlwaysDraw;
         }
 
-        private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnEolArmed, out bool armWhenHit, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset)
+        private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnEolArmed, out bool armWhenHit, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset, out bool hasFragOffsetRot, out Vector2D fragOffsetRot)
         {
             hasFragmentOffset = !MyUtils.IsZero(ammo.AmmoDef.Fragment.Offset);
             hasNegFragmentOffset = ammo.AmmoDef.Fragment.Offset < 0;
@@ -823,6 +825,11 @@ namespace CoreSystems.Support
             fragOnEnd = !FragOnEolArmed && (!ammo.AmmoDef.Fragment.TimedSpawns.Enable || armWhenHit) && HasFragment;
             hasFragOffset = !Vector3D.IsZero(ammo.AmmoDef.Fragment.AdvOffset);
             fragOffset = ammo.AmmoDef.Fragment.AdvOffset;
+            hasFragOffsetRot = ammo.AmmoDef.Fragment.AdvRotationOffset != Vector2D.Zero;
+            fragOffsetRot = new Vector2D(
+                MathHelper.ToRadians(ammo.AmmoDef.Fragment.AdvRotationOffset.X),
+                MathHelper.ToRadians(ammo.AmmoDef.Fragment.AdvRotationOffset.Y)
+                );
         }
 
         private void TimedSpawn(WeaponSystem.AmmoType ammo, out bool timedFragments, out int startTime, out int interval, out int maxSpawns, out int groupSize, out int groupDelay, out double proximity, out bool hasProximity, out bool parentDies, out bool pointAtTarget, out bool hasGroup, out PointTypes pointType, out float directAimCone, out bool useAimCone, out double proximitySqr)

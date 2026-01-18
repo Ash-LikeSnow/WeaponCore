@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
@@ -3603,16 +3604,29 @@ namespace CoreSystems.Projectiles
 
 
                 spawn = true;
-
-                if (fragAmmoDef.Const.HasAdvFragOffset)
+                if (fragAmmoDef.Const.HasAdvFragOffset || fragAmmoDef.Const.HasAdvFragOffsetRotation)
                 {
                     MatrixD matrix;
                     MatrixD.CreateWorld(ref Position, ref Direction, ref Info.OriginUp, out matrix);
+                    if (fragAmmoDef.Const.HasAdvFragOffset)
+                    {
+                       
+                        Vector3D advOffSet;
+                        var offSet = fragAmmoDef.Const.FragOffset;
+                        Vector3D.Rotate(ref offSet, ref matrix, out advOffSet);
+                        newOrigin += advOffSet;
+                    }
 
-                    Vector3D advOffSet;
-                    var offSet = fragAmmoDef.Const.FragOffset;
-                    Vector3D.Rotate(ref offSet, ref matrix, out advOffSet);
-                    newOrigin += advOffSet;
+                    if (fragAmmoDef.Const.HasAdvFragOffsetRotation)
+                    {
+                        // unsure if this can be done in a more efficient way
+                        var rotOffset = fragAmmoDef.Const.FragOffsetRot;
+                        if (fragAmmoDef.Const.FragOffsetRot.X != 0)
+                            pointDir = pointDir.Rotate(matrix.Up, fragAmmoDef.Const.FragOffsetRot.X);
+
+                        if (fragAmmoDef.Const.FragOffsetRot.Y != 0)
+                            pointDir = pointDir.Rotate(matrix.Right, fragAmmoDef.Const.FragOffsetRot.Y);
+                    }
                 }
 
                 var projectiles = Session.I.Projectiles;
