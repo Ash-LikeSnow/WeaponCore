@@ -458,50 +458,25 @@ namespace CoreSystems
             const string wolf = "SpaceWolf";
             foreach (var item in Players) {
 
-                var pLevel = item.Value.Player.PromoteLevel;
                 var playerId = item.Key;
                 var player = item.Value.Player;
+
+                if (player == null)
+                    continue;
+
                 var wasAdmin = Admins.ContainsKey(playerId);
+                var character = player.Character;
 
-                if (pLevel == MyPromoteLevel.Admin || pLevel == MyPromoteLevel.Owner || pLevel == MyPromoteLevel.SpaceMaster) {
-
-                    var character = player.Character;
-                    var isAdmin = false;
-                    if (character != null ) {
-                        if (character.Definition.Id.SubtypeName.Equals(wolf) || character.Definition.Id.SubtypeName.StartsWith(spider)) continue;
-
-                        if (MySafeZone.CheckAdminIgnoreSafezones(player.SteamUserId))
-                            isAdmin = true;
-                        else {
-
-                            foreach (var gridAi in EntityAIs.Values) {
-
-                                if (gridAi.Targets.ContainsKey((MyEntity)character) && gridAi.CompBase.Count > 0 && (gridAi.WeaponComps.Count > 0 || gridAi.UpgradeComps.Count > 0 || gridAi.SupportComps.Count > 0 || gridAi.ControlComps.Count > 0)) {
-                                    
-                                    var access = false;
-                                    foreach (var comp in gridAi.CompBase) {
-
-                                        if (!comp.Value.IsBlock)
-                                            continue;
-
-                                        access = ((IMyTerminalBlock)comp.Key).HasPlayerAccess(playerId);
-                                        break;
-                                    }
-
-                                    if (access && MyIDModule.GetRelationPlayerBlock(playerId, gridAi.AiOwner) == MyRelationsBetweenPlayerAndBlock.Enemies) {
-                                        isAdmin = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (isAdmin) {
-                            Admins[playerId] = character;
-                            AdminMap[character] = player;
-                            continue;
-                        }
-                    }
+                MyAdminSettingsEnum settings;
+                if (character != null && MyAPIGateway.Session.TryGetAdminSettings(player.SteamUserId, out settings)
+                    && (settings.HasFlag(MyAdminSettingsEnum.Untargetable)
+                    /*|| settings.HasFlag(MyAdminSettingsEnum.IgnoreSafeZones)
+                    || settings.HasFlag(MyAdminSettingsEnum.UseTerminals)*/
+                    ))
+                {
+                    Admins[playerId] = character;
+                    AdminMap[character] = player;
+                    continue;
                 }
 
                 if (wasAdmin)
@@ -929,7 +904,7 @@ namespace CoreSystems
                     Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
 
                 Log.Line(listOfNames);
-
+                MyLog.Default.WriteLine((Settings.Enforcement.UnsupportedMode ? "Unsupported Mode" : "Supported Mode") + "\n" + listOfNames);
             }
             else
             {
@@ -948,14 +923,17 @@ namespace CoreSystems
                         ShowLocalNotify("The incompatible weapons listed above have been [SCHEDULED FOR REMOVAL IN 60 SECONDS]", 30000, "Red");
                         ShowLocalNotify("If this is not acceptable either type [/wc unsupportedmode] or quit [WITHOUT SAVING] and uninstall all WC related mods", 30000, "Red");
                     }
-
+                    Log.Line(listOfNames);
+                    MyLog.Default.WriteLine(listOfNames);
                 }
                 else
                 {
                     ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                     ShowLocalNotify(listOfNames, 30000, "White");
                     Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
+                    MyLog.Default.WriteLine("Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
                     Log.Line(listOfNames);
+                    MyLog.Default.WriteLine(listOfNames);
                 }
 
             }
