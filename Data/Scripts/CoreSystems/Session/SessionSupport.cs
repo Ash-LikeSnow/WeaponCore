@@ -904,7 +904,7 @@ namespace CoreSystems
                     Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
 
                 Log.Line(listOfNames);
-
+                MyLog.Default.WriteLine((Settings.Enforcement.UnsupportedMode ? "Unsupported Mode" : "Supported Mode") + "\n" + listOfNames);
             }
             else
             {
@@ -923,14 +923,17 @@ namespace CoreSystems
                         ShowLocalNotify("The incompatible weapons listed above have been [SCHEDULED FOR REMOVAL IN 60 SECONDS]", 30000, "Red");
                         ShowLocalNotify("If this is not acceptable either type [/wc unsupportedmode] or quit [WITHOUT SAVING] and uninstall all WC related mods", 30000, "Red");
                     }
-
+                    Log.Line(listOfNames);
+                    MyLog.Default.WriteLine(listOfNames);
                 }
                 else
                 {
                     ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                     ShowLocalNotify(listOfNames, 30000, "White");
                     Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
+                    MyLog.Default.WriteLine("Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
                     Log.Line(listOfNames);
+                    MyLog.Default.WriteLine(listOfNames);
                 }
 
             }
