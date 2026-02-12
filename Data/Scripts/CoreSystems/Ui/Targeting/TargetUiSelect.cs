@@ -410,9 +410,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             while (count++ < loop)
             {
                 entity = _sortedMasterList[_currentIdx];
+                Ai masterAi;
+                if (Session.I.EntityToMasterAi.TryGetValue(entity, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+                    entity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
+                
                 if (entity == null || entity.MarkedForClose )
-                {
                     return false;
+
+                if (ai.Construct.Data.Repo.FocusData.Target == entity.EntityId)
+                {
+                    if (++_currentIdx >= loop)
+                        _currentIdx = 0;
+
+                    continue;
                 }
 
                 if (VoxelInLos(ai, entity))

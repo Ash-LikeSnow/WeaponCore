@@ -4,6 +4,7 @@ using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Utils;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
 
@@ -144,7 +145,15 @@ namespace CoreSystems.Support
                 }
                 else
                 {
-                    StateChange(true, tData.EntityId == -2 ? States.Fake : States.Acquired);
+                    try
+                    {
+                        StateChange(true, tData.EntityId == -2 ? States.Fake : States.Acquired);
+                    }
+                    catch (Exception e)
+                    {
+                        MyLog.Default.WriteLine($"ERROR! {w.BaseComp.Cube.DebugName} {w.BaseComp.Cube.BlockDefinition.Id.SubtypeName}\n TargetState:{TargetState} w TargetState: {w.Target.TargetState} passed ID: {tData.EntityId} TargetObj null? {TargetObject == null} ent found? {MyEntities.TryGetEntityById(tData.EntityId, out targetEntity, true)}  \n\n {e}");
+                        throw e;
+                    }   
                     if (w.Target.TargetState == TargetStates.None && tData.EntityId != 0)
                         w.TargetData.SyncTarget(w);
 
