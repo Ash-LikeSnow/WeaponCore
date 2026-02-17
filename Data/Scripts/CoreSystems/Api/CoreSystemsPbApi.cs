@@ -512,8 +512,8 @@ namespace CoreSystems.Api
         /// <param name="weapon"></param>
         /// <param name="weaponId"></param>
         /// <returns><see cref="int"/> Current ammo </returns>
-        public string GetAmmoCount(Sandbox.ModAPI.Ingame.IMyTerminalBlock weapon, int weaponId) =>
-            _getActiveAmmo?.Invoke(weapon, weaponId) ?? null;
+        public int GetAmmoCount(Sandbox.ModAPI.Ingame.IMyTerminalBlock weapon, int weaponId) =>
+            _getAmmoCount?.Invoke(weapon, weaponId) ?? -1;
 
         /// <summary>
         /// Sets the active ammo name of <paramref name="weaponId"/> on <paramref name="weapon"/> to <see cref="string"/> <paramref name="ammoType"/>.

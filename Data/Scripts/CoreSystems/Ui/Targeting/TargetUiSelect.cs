@@ -92,218 +92,206 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private MyEntity _firstStageEnt;
         internal bool SelectTarget(bool manualSelect = true, bool firstStage = false, bool checkOnly = false)
         {
-            var step = "Start";
             var foundTarget = false;
-            try
+            var s = Session.I;
+            var ai = s.TrackingAi;
+            if (s.Tick - MasterUpdateTick > 120 || MasterUpdateTick < 120 && _masterTargets.Count == 0)
+                BuildMasterCollections(ai);
+            if (!_cachedPointerPos) InitPointerOffset(0.05);
+            var cockPit = s.ActiveCockPit;
+            Vector3D end;
+            if (s.UiInput.CameraBlockView || !s.UiInput.FirstPersonView)
             {
-                var s = Session.I;
-                var ai = s.TrackingAi;
-                if (s.Tick - MasterUpdateTick > 120 || MasterUpdateTick < 120 && _masterTargets.Count == 0)
-                    BuildMasterCollections(ai);
-                if (!_cachedPointerPos) InitPointerOffset(0.05);
-                var cockPit = s.ActiveCockPit;
-                Vector3D end;
-                if (s.UiInput.CameraBlockView || !s.UiInput.FirstPersonView)
-                {
-                    var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
-                    AimPosition = offetPosition;
-                    AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
-                    end = offetPosition + (AimDirection * ai.MaxTargetingRange);
-                }
-                else if (!s.UiInput.AltPressed && !s.UiInput.TurretBlockView && ai.IsGrid && cockPit != null)
-                {
-                    AimDirection = cockPit.PositionComp.WorldMatrixRef.Forward;
-                    AimPosition = cockPit.PositionComp.WorldAABB.Center;
-                    end = AimPosition + (AimDirection * s.TrackingAi.MaxTargetingRange);
-                }
-                else
-                {
-                    var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
-                    AimPosition = offetPosition;
-                    AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
-                    end = offetPosition + (AimDirection * ai.MaxTargetingRange);
-                }
-                //Move found target up
-                step = "var pop 1";
+                var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
+                AimPosition = offetPosition;
+                AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
+                end = offetPosition + (AimDirection * ai.MaxTargetingRange);
+            }
+            else if (!s.UiInput.AltPressed && !s.UiInput.TurretBlockView && ai.IsGrid && cockPit != null)
+            {
+                AimDirection = cockPit.PositionComp.WorldMatrixRef.Forward;
+                AimPosition = cockPit.PositionComp.WorldAABB.Center;
+                end = AimPosition + (AimDirection * s.TrackingAi.MaxTargetingRange);
+            }
+            else
+            {
+                var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
+                AimPosition = offetPosition;
+                AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
+                end = offetPosition + (AimDirection * ai.MaxTargetingRange);
+            }
 
-                var possibleTarget = false;
-                var rayOnlyHitSelf = false;
-                var rayHitSelf = false;
-                var manualTarget = Session.I.PlayerDummyTargets[Session.I.PlayerId].ManualTarget;
-                var paintTarget = Session.I.PlayerDummyTargets[Session.I.PlayerId].PaintedTarget;
-                var mark = s.UiInput.MouseButtonRightReleased && !ai.SmartHandheld || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
-                var friendCheckVolume = ai.TopEntityVolume;
-                friendCheckVolume.Radius *= 2;
-                step = "var pop 2";
+            var possibleTarget = false;
+            var rayOnlyHitSelf = false;
+            var rayHitSelf = false;
+            var manualTarget = Session.I.PlayerDummyTargets[Session.I.PlayerId].ManualTarget;
+            var paintTarget = Session.I.PlayerDummyTargets[Session.I.PlayerId].PaintedTarget;
+            var mark = s.UiInput.MouseButtonRightReleased && !ai.SmartHandheld || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
+            var friendCheckVolume = ai.TopEntityVolume;
+            friendCheckVolume.Radius *= 2;
 
-                if (ai.MaxTargetingRange <= ai.TopEntityVolume.Radius)
+            if (ai.MaxTargetingRange <= ai.TopEntityVolume.Radius)
+            {
+                manualTarget.Update(AimPosition + AimDirection * Session.I.SyncDist, s.Tick);
+                return false;
+            }
+
+            var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
+            MyEntity closestEnt = null;
+            MyEntity rootEntity = null;
+            if (ai.MyPlanet != null && s.UiInput.AltPressed && Session.I.Tick10)
+            {
+                var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > s.PreFetchMaxDist ? AimPosition + AimDirection * s.PreFetchMaxDist : end);
+                try
                 {
-                    manualTarget.Update(AimPosition + AimDirection * Session.I.SyncDist, s.Tick);
-                    return false;
-                }
-
-                var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
-                MyEntity closestEnt = null;
-                MyEntity rootEntity = null;
-                if (ai.MyPlanet != null && s.UiInput.AltPressed && Session.I.Tick10)
-                {
-                    step = "planet prefetch ray";
-
-                    var rayLine = new LineD(AimPosition, ai.MaxTargetingRange > s.PreFetchMaxDist ? AimPosition + AimDirection * s.PreFetchMaxDist : end);
                     ai.MyPlanet.PrefetchShapeOnRay(ref rayLine);
                 }
-                Session.I.Physics.CastRay(AimPosition, end, _hitInfo);
-
-                step = "iterate hits";
-
-                for (int i = 0; i < _hitInfo.Count; i++)
+                catch (Exception e)
                 {
-
-                    var hit = _hitInfo[i];
-                    var hitVoxel = hit.HitEntity is IMyVoxelBase;
-                    if (hitVoxel)
-                    {
-                        end = hit.Position;
-                        break;
-                    }
-                    closestEnt = hit.HitEntity.GetTopMostParent() as MyEntity;
-                    if (closestEnt == null)
-                        continue;
-
-
-                    if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt))
-                    {
-                        rayHitSelf = true;
-                        rayOnlyHitSelf = true;
-                        continue;
-                    }
-
-                    if (rayOnlyHitSelf) rayOnlyHitSelf = false;
-
-                    Ai masterAi;
-                    if (s.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
-                        rootEntity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
-                    else
-                        rootEntity = closestEnt;
-
-                    var hitGrid = closestEnt as MyCubeGrid;
-                    var character = closestEnt as IMyCharacter;
-
-                    if (hitGrid != null && ((uint)hitGrid.Flags & 0x20000000) > 0) continue;
-
-                    if (manualSelect)
-                    {
-                        if (character == null && hitGrid == null || !_masterTargets.ContainsKey(rootEntity))
-                        {
-                            continue;
-                        }
-                        if (firstStage)
-                        {
-                            _firstStageEnt = closestEnt;
-                            possibleTarget = true;
-                        }
-                        else
-                        {
-                            if (closestEnt == _firstStageEnt)
-                            {
-
-                                if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, rootEntity))
-                                    paintTarget.Update(hit.Position, s.Tick, closestEnt);
-
-                                if (!checkOnly)
-                                {
-                                    s.SetTarget(rootEntity, ai);
-                                }
-                                possibleTarget = true;
-                            }
-
-                            _firstStageEnt = null;
-                        }
-
-                        return possibleTarget;
-                    }
-
-                    if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt) || closestEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
-                        continue;
-
-                    foundTarget = true;
-                    if (!checkOnly)
-                        manualTarget.Update(hit.Position, s.Tick, closestEnt);
-                    break;
-                }
-
-                if (rayHitSelf)
-                {
-                    step = "ray hit self";
-
-                    ReticleOnSelfTick = s.Tick;
-                    ReticleAgeOnSelf++;
-                    if (rayOnlyHitSelf && !mark && !checkOnly)
-                        manualTarget.Update(end, s.Tick);
-                }
-                else ReticleAgeOnSelf = 0;
-                step = "raycheck";
-
-                Vector3D hitPos;
-                bool foundOther = false;
-                if (!foundTarget && RayCheckTargets(AimPosition, AimDirection, out closestEnt, out rootEntity, out hitPos, out foundOther, !manualSelect))
-                {
-                    foundTarget = true;
-                    if (manualSelect)
-                    {
-                        if (firstStage)
-                            _firstStageEnt = closestEnt;
-                        else
-                        {
-                            if (!checkOnly && closestEnt == _firstStageEnt)
-                                s.SetTarget(rootEntity, ai);
-
-                            _firstStageEnt = null;
-                        }
-
-                        return true;
-                    }
-                    if (!checkOnly)
-                        manualTarget.Update(hitPos, s.Tick, closestEnt);
-                }
-                step = "!manualSelect";
-                if (!manualSelect)
-                {
-                    MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>();
-                    var activeColor = rootEntity != null && !_masterTargets.TryGetValue(rootEntity, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
-
-                    var voxel = closestEnt as MyVoxelBase;
-                    var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
-                    var playerIgnore = dumbHand && (tInfo.Item2 != TargetControl.None && tInfo.Item3 != MyRelationsBetweenPlayerAndBlock.Enemies);
-
-                    _reticleColor = closestEnt != null && (voxel == null && !playerIgnore) ? activeColor : Color.White;
-                    if (dumbHand && _reticleColor == Color.DeepSkyBlue)
-                        _reticleColor = Color.White;
-
-                    if (voxel == null)
-                    {
-                        LastSelectableTick = Session.I.Tick;
-                        LastSelectedEntity = closestEnt;
-                    }
-
-                    if (!foundTarget && !checkOnly)
-                    {
-                        if (mark)
-                        {
-                            paintTarget.Update(end, s.Tick);
-                        }
-                        else
-                        {
-                            manualTarget.Update(end, s.Tick);
-                        }
-                    }
+                    var msg = $"Captured crash in Prefetch Shape on Ray";
+                    Log.Line(msg);
+                    MyLog.Default.WriteLine(msg);
                 }
             }
-            catch (Exception e)
+            Session.I.Physics.CastRay(AimPosition, end, _hitInfo);
+
+            for (int i = 0; i < _hitInfo.Count; i++)
             {
-                Log.Line($"Crash in SelectTarget: {step} \n {e}");
-                MyLog.Default.WriteLine($"Crash in SelectTarget: {step}");
-                throw e;
+
+                var hit = _hitInfo[i];
+                var hitVoxel = hit.HitEntity is IMyVoxelBase;
+                if (hitVoxel)
+                {
+                    end = hit.Position;
+                    break;
+                }
+                closestEnt = hit.HitEntity.GetTopMostParent() as MyEntity;
+                if (closestEnt == null)
+                    continue;
+
+
+                if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt))
+                {
+                    rayHitSelf = true;
+                    rayOnlyHitSelf = true;
+                    continue;
+                }
+
+                if (rayOnlyHitSelf) rayOnlyHitSelf = false;
+
+                Ai masterAi;
+                if (s.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+                    rootEntity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
+                else
+                    rootEntity = closestEnt;
+
+                var hitGrid = closestEnt as MyCubeGrid;
+                var character = closestEnt as IMyCharacter;
+
+                if (hitGrid != null && ((uint)hitGrid.Flags & 0x20000000) > 0) continue;
+
+                if (manualSelect)
+                {
+                    if (character == null && hitGrid == null || !_masterTargets.ContainsKey(rootEntity))
+                    {
+                        continue;
+                    }
+                    if (firstStage)
+                    {
+                        _firstStageEnt = closestEnt;
+                        possibleTarget = true;
+                    }
+                    else
+                    {
+                        if (closestEnt == _firstStageEnt)
+                        {
+
+                            if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, rootEntity))
+                                paintTarget.Update(hit.Position, s.Tick, closestEnt);
+
+                            if (!checkOnly)
+                            {
+                                s.SetTarget(rootEntity, ai);
+                            }
+                            possibleTarget = true;
+                        }
+
+                        _firstStageEnt = null;
+                    }
+
+                    return possibleTarget;
+                }
+
+                if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt) || closestEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
+                    continue;
+
+                foundTarget = true;
+                if (!checkOnly)
+                    manualTarget.Update(hit.Position, s.Tick, closestEnt);
+                break;
+            }
+
+            if (rayHitSelf)
+            {
+                ReticleOnSelfTick = s.Tick;
+                ReticleAgeOnSelf++;
+                if (rayOnlyHitSelf && !mark && !checkOnly)
+                    manualTarget.Update(end, s.Tick);
+            }
+            else ReticleAgeOnSelf = 0;
+
+            Vector3D hitPos;
+            bool foundOther = false;
+            if (!foundTarget && RayCheckTargets(AimPosition, AimDirection, out closestEnt, out rootEntity, out hitPos, out foundOther, !manualSelect))
+            {
+                foundTarget = true;
+                if (manualSelect)
+                {
+                    if (firstStage)
+                        _firstStageEnt = closestEnt;
+                    else
+                    {
+                        if (!checkOnly && closestEnt == _firstStageEnt)
+                            s.SetTarget(rootEntity, ai);
+
+                        _firstStageEnt = null;
+                    }
+
+                    return true;
+                }
+                if (!checkOnly)
+                    manualTarget.Update(hitPos, s.Tick, closestEnt);
+            }
+            if (!manualSelect)
+            {
+                MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>();
+                var activeColor = rootEntity != null && !_masterTargets.TryGetValue(rootEntity, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
+
+                var voxel = closestEnt as MyVoxelBase;
+                var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
+                var playerIgnore = dumbHand && (tInfo.Item2 != TargetControl.None && tInfo.Item3 != MyRelationsBetweenPlayerAndBlock.Enemies);
+
+                _reticleColor = closestEnt != null && (voxel == null && !playerIgnore) ? activeColor : Color.White;
+                if (dumbHand && _reticleColor == Color.DeepSkyBlue)
+                    _reticleColor = Color.White;
+
+                if (voxel == null)
+                {
+                    LastSelectableTick = Session.I.Tick;
+                    LastSelectedEntity = closestEnt;
+                }
+
+                if (!foundTarget && !checkOnly)
+                {
+                    if (mark)
+                    {
+                        paintTarget.Update(end, s.Tick);
+                    }
+                    else
+                    {
+                        manualTarget.Update(end, s.Tick);
+                    }
+                }
             }
             return foundTarget;
         }
@@ -422,9 +410,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             while (count++ < loop)
             {
                 entity = _sortedMasterList[_currentIdx];
+                Ai masterAi;
+                if (Session.I.EntityToMasterAi.TryGetValue(entity, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+                    entity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
+                
                 if (entity == null || entity.MarkedForClose )
-                {
                     return false;
+
+                if (ai.Construct.Data.Repo.FocusData.Target == entity.EntityId)
+                {
+                    if (++_currentIdx >= loop)
+                        _currentIdx = 0;
+
+                    continue;
                 }
 
                 if (VoxelInLos(ai, entity))

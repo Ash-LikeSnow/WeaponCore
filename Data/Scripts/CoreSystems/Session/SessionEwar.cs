@@ -307,11 +307,11 @@ namespace CoreSystems
                         {
                             if (blockState.Endtick != maxTick)
                             {
-                                var size = (duration + 1);
-                                var diff = blockState.Endtick + size;
-                                var scaler = (maxTick - diff) + 1;
+                                var diff = blockState.Endtick + (duration + 1);
+                                var extra = diff - maxTick;
+                                var scaler = 1f - ((float)extra / (duration + 1));
                                 if (scaler > 0)
-                                    damagePool -= ((blockHp * damageScale) / scaler);
+                                    damagePool -= ((blockHp * damageScale) * scaler);
                             }
                             blockState.Health = 0;
                             blockState.Endtick = maxTick;

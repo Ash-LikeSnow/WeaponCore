@@ -698,6 +698,9 @@ namespace CoreSystems.Projectiles
                 else
                     commandedAccel = Direction * accelMpsMulti;
 
+                if (double.IsNaN(commandedAccel.X))
+                    commandedAccel = Direction * accelMpsMulti;
+
                 var offset = false;
                 if (aConst.OffsetTime > 0)
                 {
