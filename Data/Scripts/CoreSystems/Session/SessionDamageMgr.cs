@@ -498,7 +498,8 @@ namespace CoreSystems
                             switch (t.AmmoDef.DamageScales.Shields.Type)
                             {
                                 case ShieldDef.ShieldType.Default:
-                                    nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridSizeBuff;
+                                    nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridSizeBuff
+                                        * (largeGrid ? t.AmmoDef.DamageScales.Grids.Large : t.AmmoDef.DamageScales.Grids.Small);
                                     nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
                                     break;
                                 case ShieldDef.ShieldType.Bypass:
