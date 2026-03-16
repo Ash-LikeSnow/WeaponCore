@@ -487,22 +487,26 @@ namespace CoreSystems
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
                 if (NerdShieldApiLoaded && NerdShieldAPI.IsReady)
-                    if(currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid))
+                {
+                    if (currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid))
                     {
                         currentGrid = rootBlock.CubeGrid;
                         HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
 
-                        switch (t.AmmoDef.DamageScales.Shields.Type)
+                        if (!t.AmmoDef.NoGridOrArmorScaling)
                         {
-                            case ShieldDef.ShieldType.Default:
-                                nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
-                                break;
-                            case ShieldDef.ShieldType.Bypass:
-                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                                break;
+                            switch (t.AmmoDef.DamageScales.Shields.Type)
+                            {
+                                case ShieldDef.ShieldType.Default:
+                                    nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridSizeBuff;
+                                    nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
+                                    break;
+                                case ShieldDef.ShieldType.Bypass:
+                                    nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                                    break;
+                            }
                         }
-                        if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+                        if (!t.AmmoDef.NoGridOrArmorScaling && t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
                             NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
                                 -basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
                         else
@@ -515,6 +519,7 @@ namespace CoreSystems
                     {
                         currentGrid = rootBlock.CubeGrid; // duplicated because doing it before would invalidate the nullcheck above
                     }
+                }
 
                 if (!detRequested)
                 {
