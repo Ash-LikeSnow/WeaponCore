@@ -1550,7 +1550,7 @@ namespace CoreSystems.Support
                     var tempDmg = GetShrapnelDamage(fragmentAmmo, parentFragments, shotsPerSec, parentFragments);
                     var fragFrags = 1.0f;
                     if (parentAmmo.Fragment.Fragments > 0) fragFrags = parentAmmo.Fragment.Fragments;
-                    if (parentAmmo.Fragment.TimedSpawns.Enable)
+                    if (parentAmmo.Fragment.TimedSpawns.Enable && parentAmmo.Fragment.TimedSpawns.GroupSize > 0)
                     {
                         var b = parentAmmo.Fragment.TimedSpawns;
 
