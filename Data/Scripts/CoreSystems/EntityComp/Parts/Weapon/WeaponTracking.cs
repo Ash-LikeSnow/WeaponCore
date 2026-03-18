@@ -382,7 +382,8 @@ namespace CoreSystems.Platform
                 w.EventTriggerStateChanged(EventTriggers.TargetRanged25, true);
 
             var targetDir = targetPos - w.MyPivotPos;
-            var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (w.Comp.ManualMode || w.Comp.PainterMode && rangeToTargetSqr <= (w.System.PainterUseMaxTargeting ? w.MaxTargetDistanceSqr : w.ActiveAmmoDef.AmmoDef.Const.MaxTrajectorySqr) && rangeToTargetSqr >= w.MinTargetDistanceSqr || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
+            var painterInRange = w.Comp.PainterMode && rangeToTargetSqr <= (w.System.PainterUseMaxTargeting ? w.MaxTargetDistanceSqr : w.ActiveAmmoDef.AmmoDef.Const.MaxTrajectorySqr) && rangeToTargetSqr >= w.MinTargetDistanceSqr;
+            var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (w.Comp.ManualMode || painterInRange || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
             var locked = true;
             var isTracking = false;
 
@@ -435,7 +436,7 @@ namespace CoreSystems.Platform
             targetLock = isTracking && w.Target.IsAligned;
 
 
-            if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera || w.Comp.FakeMode || session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
+            if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera || w.Comp.ManualMode || painterInRange || session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
                 return true;
 
             var rayCheckTest = isTracking && (isAligned || locked) && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && !w.System.DisableLosCheck && (session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
