@@ -501,7 +501,7 @@ namespace CoreSystems.Projectiles
                 var hadTarget = HadTarget != HadTargetState.None;
                 var clientSync = aConst.FullSync && Session.I.AdvSyncClient;
 
-                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
+                var gaveUpChase = !w.Comp.ManualMode && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                 bool validEntity = false;
                 if (Info.Target.TargetState == Target.TargetStates.IsEntity) {

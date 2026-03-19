@@ -556,7 +556,10 @@ namespace CoreSystems.Support
                 frag.Ai = info.Ai;
                 frag.AmmoDef = ammoDef;
                 if (guidance)
+                {
                     frag.DummyTargets = info.Storage.DummyTargets;
+                    frag.ManualMode = info.Storage.ManualMode;
+                }
 
                 frag.SyncId = info.SyncId;
                 frag.SyncedFrags = ++info.SyncedFrags;
@@ -647,7 +650,10 @@ namespace CoreSystems.Support
                 p.Gravity = frag.Gravity;
 
                 if (aConst.IsDrone || aConst.IsSmart)
+                {
+                    info.Storage.ManualMode = frag.ManualMode;
                     info.Storage.DummyTargets = frag.DummyTargets;
+                }
 
                 if (session.AdvSync)
                 {
@@ -693,6 +699,7 @@ namespace CoreSystems.Support
         public bool DoDamage;
         public bool AcquiredEntity;
         public bool IgnoreShield;
+        public bool ManualMode;
         public Target.TargetStates TargetState;
         public float Radial;
         internal int SceneVersion;
