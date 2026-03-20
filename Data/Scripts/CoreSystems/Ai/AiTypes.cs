@@ -266,6 +266,8 @@ namespace CoreSystems.Support
                             FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, TmpEntity.PositionComp.WorldMatrixRef);
                             FakeInfo.LinearVelocity = TmpEntity.Physics.LinearVelocity;
                             FakeInfo.Acceleration = TmpEntity.Physics.LinearAcceleration;
+                            if (Type == FakeType.Painted)
+                                FakeInfo.EntityID = TmpEntity.GetTopMostParent().EntityId;
                         }
                         else if (Type == FakeType.Painted && EntityId != 0)
                         {
@@ -307,6 +309,7 @@ namespace CoreSystems.Support
                 public Vector3D WorldPosition;
                 public Vector3 LinearVelocity;
                 public Vector3 Acceleration;
+                public long EntityID;
             }
         }
 

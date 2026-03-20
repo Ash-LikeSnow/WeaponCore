@@ -210,7 +210,7 @@ namespace CoreSystems.Support
                 TargetState = TargetStates.IsProjectile;
             else if (isFakeTarget)
                 TargetState = TargetStates.IsFake;
-            else if (TargetObject  is MyEntity)
+            else if (TargetObject is MyEntity)
                 TargetState = TargetStates.IsEntity;
             else
                 TargetState = TargetStates.None;
@@ -219,11 +219,12 @@ namespace CoreSystems.Support
         }
 
 
-        internal void SetFake(uint expiredTick, Vector3D pos, Vector3D targetingOrigin)
+        internal void SetFake(uint expiredTick, Vector3D pos, Vector3D targetingOrigin, long entityID)
         {
             Reset(expiredTick, States.Fake, false);
             TargetState = TargetStates.IsFake;
             TargetPos = pos;
+            TopEntityId = entityID;
             StateChange(true, States.Fake);
         }
 

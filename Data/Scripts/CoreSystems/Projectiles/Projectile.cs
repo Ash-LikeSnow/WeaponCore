@@ -340,7 +340,18 @@ namespace CoreSystems.Projectiles
             {
                 Session.I.MonitoredProjectiles[Info.Id] = this;
                 for (int j = 0; j < monitor.Count; j++)
-                    monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
+                {
+                    try
+                    {
+                        monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
+                    }
+                    catch (Exception e)
+                    {
+                        var msg = $"!!! WC Projectile Monitor Exception !!! \n {e}";
+                        Log.Line(msg);
+                        MyLog.Default.WriteLine(msg);
+                    }
+                }
             }
         }
         #endregion
@@ -501,7 +512,7 @@ namespace CoreSystems.Projectiles
                 var hadTarget = HadTarget != HadTargetState.None;
                 var clientSync = aConst.FullSync && Session.I.AdvSyncClient;
 
-                var gaveUpChase = !w.Comp.ManualMode && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
+                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                 bool validEntity = false;
                 if (Info.Target.TargetState == Target.TargetStates.IsEntity) {

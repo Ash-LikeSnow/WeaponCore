@@ -213,7 +213,7 @@ namespace CoreSystems.Projectiles
 
                         var cubeTarget = target.TargetObject as MyCubeBlock;
 
-                        // Targeting grid center (?) (maybe painter too?) of the currently checked grid
+                        // Targeting grid center or painter of the currently checked grid
                         var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
 
                         // Targeting a cube on the grid being checked
@@ -223,12 +223,12 @@ namespace CoreSystems.Projectiles
                         Ai.TargetInfo tInfo;
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         
-                        // Catchall for fake targets (painter or cursor following)
-                        var condition4 = target.TargetState == Target.TargetStates.IsFake;
-                        
+                        // Manual only
+                        var condition4 = target.TargetState == Target.TargetStates.IsFake && target.TopEntityId == 0;
+
                         // ScanRange limitation, appears to be non functional
                         //var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
-                        
+
                         // TargetGridCenter only for subgrids/support, position within grid center + MaxTargetingRange of the grid being checked
                         var condition6 = !notSmart && target.TargetObject is MyCubeGrid && targetSphere.Contains(target.TargetPos) == ContainmentType.Contains;
 

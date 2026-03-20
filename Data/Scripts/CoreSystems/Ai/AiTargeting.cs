@@ -66,7 +66,7 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget1))
                 {
-                    w.Target.SetFake(Session.I.Tick, predictedPos, w.MyPivotPos);
+                    w.Target.SetFake(Session.I.Tick, predictedPos, w.MyPivotPos, fakeInfo.EntityID);
                     if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
                         foundTarget = true;
                 }

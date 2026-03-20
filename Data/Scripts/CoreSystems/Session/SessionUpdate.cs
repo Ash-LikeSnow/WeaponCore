@@ -497,6 +497,14 @@ namespace CoreSystems
                             wComp.TakeOwnerShip(cValues.State.PlayerId);
                     }
 
+                    Ai.FakeTargets fakeTargets = null;
+                    if (cMode == ProtoWeaponOverrides.ControlModes.Manual || cMode == ProtoWeaponOverrides.ControlModes.Painter)
+                        PlayerDummyTargets.TryGetValue(wValues.State.PlayerId, out fakeTargets);
+
+                    wComp.PainterMode = fakeTargets != null && cMode == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.EntityId != 0;
+                    wComp.UserControlled = cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0;
+                    wComp.FakeMode = wComp.ManualMode || wComp.PainterMode;
+
                     if (HandlesInput) {
 
                         if (IsClient && ai.TopEntityMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
@@ -518,6 +526,9 @@ namespace CoreSystems
                             var manual = controllingWeapon || pControl.ShareControl && validManualModes && (((wComp.HasTurret && wComp.HasAim) || wComp.HasRequireTarget || ai.ControlComp != null) || !IdToCompMap.ContainsKey(pControl.EntityId));
                             var playerAim = activePlayer && manual;
                             var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+                            var rangeToTargetSqr = wComp.PainterMode ? Vector3D.DistanceSquared(fakeTargets.PaintedTarget.FakeInfo.WorldPosition, wComp.PrimaryWeapon.MyPivotPos) : 0;
+                            var painterInRange = wComp.PainterMode && rangeToTargetSqr <= (wComp.PrimaryWeapon.System.PainterUseMaxTargeting ? wComp.PrimaryWeapon.MaxTargetDistanceSqr : wComp.PrimaryWeapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectorySqr) && rangeToTargetSqr >= wComp.PrimaryWeapon.MinTargetDistanceSqr;
+                            
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
                             
@@ -528,7 +539,7 @@ namespace CoreSystems
                                 TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
-                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
+                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu && (wComp.PainterMode ? painterInRange : true);
                             var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
@@ -552,13 +563,7 @@ namespace CoreSystems
                         }
                     }
 
-                    Ai.FakeTargets fakeTargets = null;
-                    if (cMode == ProtoWeaponOverrides.ControlModes.Manual || cMode == ProtoWeaponOverrides.ControlModes.Painter)
-                        PlayerDummyTargets.TryGetValue(wValues.State.PlayerId, out fakeTargets);
 
-                    wComp.PainterMode = fakeTargets != null && cMode == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.EntityId != 0;
-                    wComp.UserControlled = cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0;
-                    wComp.FakeMode = wComp.ManualMode || wComp.PainterMode;
 
                     var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
                     var noShootDelay = wComp.ShootManager.ShootDelay == 0 || wComp.ShootManager.ShootDelay != 0 && wComp.ShootManager.ShootDelay-- == 0;
