@@ -28,7 +28,6 @@ namespace CoreSystems.Api
 
         internal ApiBackend()
         {
-
             ModApiMethods = new Dictionary<string, Delegate>
             {
                 ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallbackLegacy),
@@ -162,7 +161,12 @@ namespace CoreSystems.Api
                 ["RegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(RegisterEventMonitorCallback),
                 ["UnRegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(UnRegisterEventMonitorCallback),
 
+                // Trajectory Prediction
+                ["RegisterTrajectoryPredictionShipVelocityConstraint"] = new Action<Func<MyCubeGrid, MyTuple<double, bool>>>(RegisterTrajectoryPredictionShipVelocityConstraint),
+                ["RegisterTrajectoryPredictionShipAccelEstimator"] = new Action<Func<MyCubeGrid, Vector3D>>(RegisterTrajectoryPredictionShipAccelEstimator),
+                ["RegisterTrajectoryPredictionExternalForce"] = new Action<Func<MyCubeGrid, Vector3D, Vector3D, Vector3D>>(RegisterTrajectoryPredictionExternalForce)
             };
+            
             PbApiMethods = new Dictionary<string, Delegate> 
             {
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
@@ -222,9 +226,7 @@ namespace CoreSystems.Api
             }
 
             _safeDictionary = builder.ToImmutable();
-
         }
-
 
         internal void PbInit()
         {
@@ -1808,6 +1810,39 @@ namespace CoreSystems.Api
                 Session.I.GlobalDamageHandlerActive = true;
                 Session.I.SystemWideDamageRegistrants[modId] = oldEventReq;
             }
+        }
+        
+        // Max Speed, Apply After Step
+        private static void RegisterTrajectoryPredictionShipVelocityConstraint(Func<MyCubeGrid, MyTuple<double, bool>> constraint)
+        {
+            if (Session.I.TrajectoryPredictionShipVelocityConstraint != null)
+            {
+                throw new Exception("Duplicate ship velocity constraint!");
+            }
+            
+            Session.I.TrajectoryPredictionShipVelocityConstraint = constraint;
+        }
+
+        // Thruster accel
+        private static void RegisterTrajectoryPredictionShipAccelEstimator(Func<MyCubeGrid, Vector3D> estimator)
+        {
+            if (Session.I.TrajectoryPredictionShipAccelEstimator != null)
+            {
+                throw new Exception("Duplicate ship accel estimator!");
+            }
+
+            Session.I.TrajectoryPredictionShipAccelEstimator = estimator;
+        }
+
+        // Position, Velocity, Force
+        private static void RegisterTrajectoryPredictionExternalForce(Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> force)
+        {
+            if (Session.I.TrajectoryPredictionExternalForce != null)
+            {
+                throw new Exception("Duplicate trajectory prediction external force!");
+            }
+            
+            Session.I.TrajectoryPredictionExternalForce = force;
         }
     }
 }
