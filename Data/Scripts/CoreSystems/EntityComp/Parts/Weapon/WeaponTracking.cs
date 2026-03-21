@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -651,7 +652,7 @@ namespace CoreSystems.Platform
             bool basicPrediction = false, 
             bool trackAngular = false)
         {
-            DsDebugDraw.DrawSphere(new BoundingSphereD(targetPos, 5.0), Color.Violet);
+            //DsDebugDraw.DrawSphere(new BoundingSphereD(targetPos, 5.0), Color.Violet);
             
             valid = false;
             Vector3D aimPoint;
@@ -736,10 +737,17 @@ namespace CoreSystems.Platform
                     return targetPos;*/
 
                 valid = true;
-                return TestAimPredictionGrid(
+
+                var sw = Stopwatch.StartNew();
+                var result = TestAimPredictionGrid(
                     targetGrid,
                     ref targetPos, ref targetVel, 
                     ref shooterPos, ref shooterVel, projectileMaxSpeed);
+                var time = sw.Elapsed.TotalMilliseconds;
+
+               // MyAPIGateway.Utilities.ShowMessage("Time", $"Time: {time * 1000:F}us");
+                
+                return result;
             }
             else
             {
@@ -912,97 +920,6 @@ namespace CoreSystems.Platform
             }
         }
         
-        public struct WeaponInfo
-        {
-            public readonly Vector3D P0;
-            public readonly Vector3D V0;
-            public readonly double M;
-
-            public WeaponInfo(Vector3D p0, Vector3D v0, double m)
-            {
-                P0 = p0;
-                V0 = v0;
-                M = m;
-            }
-        }
-        
-        private static KeyValuePair<KineticState, double>? IntersectionAnalyzer(
-            Vector3D a, Vector3D b,
-            double t0, double dt,
-            ref WeaponInfo weapon)
-        {
-            var d = b - a;
-            var u = weapon.V0 - d / dt;
-            var w = weapon.P0 - a + d * t0 / dt;
-            
-            // ReSharper disable InconsistentNaming
-            var A = Vector3D.Dot(u, u) - weapon.M * weapon.M;
-            var B = 2 * Vector3D.Dot(u, w);
-            var C = Vector3D.Dot(w, w);
-            // ReSharper restore InconsistentNaming
-
-            var delta = B * B - 4.0 * A * C;
-
-            if (delta < 0.0)
-            {
-                return null;
-            }
-
-            delta = Math.Sqrt(delta);
-            var t1 = (-B - delta) / (2 * A);
-            var t2 = (-B + delta) / (2 * A);
-
-            var t = double.PositiveInfinity;
-
-            if (t1 > t0 && t1 <= t0 + dt)
-            {
-                t = Math.Min(t, t1);
-            }
-
-            if (t2 > t0 && t2 <= t0 + dt)
-            {
-                t = Math.Min(t, t2);
-            }
-
-            if (double.IsPositiveInfinity(t))
-            {
-                return null;
-            }
-            
-            // The position of the enemy craft:
-            var positionEstimate = a + d * (t - t0) / dt;
-            
-            // The actual launch direction:
-            var directionEstimate = -(u * t + w) / (weapon.M * t); 
-
-            return new KeyValuePair<KineticState, double>(new KineticState(positionEstimate, directionEstimate), t);
-        }
-
-        private static void GetVelocityConstraint(MyCubeGrid grid, out double maxSpeed, out bool applyAfterStep)
-        {
-            if (Session.I.TrajectoryPredictionShipVelocityConstraint != null)
-            {
-                var tuple = Session.I.TrajectoryPredictionShipVelocityConstraint.Invoke(grid);
-
-                maxSpeed = tuple.Item1;
-                applyAfterStep = tuple.Item2;
-                return;
-            }
-            
-            maxSpeed = grid.GridSizeEnum == MyCubeSize.Large 
-                ? MyDefinitionManager.Static.EnvironmentDefinition.LargeShipMaxSpeed 
-                : MyDefinitionManager.Static.EnvironmentDefinition.SmallShipMaxSpeed;
-
-            applyAfterStep = true;
-        }
-
-        private static void EstimateThrustAccel(MyCubeGrid grid, out Vector3D driveAccelWorld)
-        {
-            driveAccelWorld = Session.I.TrajectoryPredictionShipAccelEstimator == null
-                ? (Vector3D)grid.Physics.LinearAcceleration
-                : Session.I.TrajectoryPredictionShipAccelEstimator.Invoke(grid);
-        }
-        
         private static Vector3D TestAimPredictionGrid(
             MyCubeGrid targetGrid,
             ref Vector3D targetPos, 
@@ -1013,13 +930,27 @@ namespace CoreSystems.Platform
         {
             double maxSpeed;
             bool applyMaxSpeedAfterStep;
-            GetVelocityConstraint(targetGrid, out maxSpeed, out applyMaxSpeedAfterStep);
+            if (Session.I.TrajectoryPredictionShipVelocityConstraint != null)
+            {
+                var tuple = Session.I.TrajectoryPredictionShipVelocityConstraint.Invoke(targetGrid);
+                maxSpeed = tuple.Item1;
+                applyMaxSpeedAfterStep = tuple.Item2;
+            }
+            else
+            {
+                maxSpeed = targetGrid.GridSizeEnum == MyCubeSize.Large 
+                    ? MyDefinitionManager.Static.EnvironmentDefinition.LargeShipMaxSpeed 
+                    : MyDefinitionManager.Static.EnvironmentDefinition.SmallShipMaxSpeed;
+
+                applyMaxSpeedAfterStep = true;
+            }
 
             var maxSpeedSqr = maxSpeed * maxSpeed;
             
-            Vector3D targetDriveAccelWorld;
-            EstimateThrustAccel(targetGrid, out targetDriveAccelWorld);
-            
+            var targetDriveAccelWorld = Session.I.TrajectoryPredictionShipAccelEstimator == null
+                ? (Vector3D)targetGrid.Physics.LinearAcceleration
+                : Session.I.TrajectoryPredictionShipAccelEstimator.Invoke(targetGrid);
+
             const double dt = 1.0 / 60.0;
             
             var targetFixedPoint = targetGrid.Physics.CenterOfMassWorld;
@@ -1035,38 +966,69 @@ namespace CoreSystems.Platform
             
             var currentX = new KineticState(targetFixedPoint, targetVel);
             var previousX = new KineticState();
-            
-            var weaponInfo = new WeaponInfo(weaponPos, weaponVel, muzzleSpeed);
-
             var externalForceFunction = Session.I.TrajectoryPredictionExternalForce;
+           
+            //var initialDistance = (targetPos - weaponPos).Length();
+            //var maxClosingSpeed = muzzleSpeed + maxSpeed; 
+            //var minInterceptTime = initialDistance / maxClosingSpeed;
+    //
+            //var minimumAnalysisStep = Math.Max(1, (int)(minInterceptTime / dt) - 2);
+            
             for (var step = 0; step < 1000; step++)
             {
                 if (step > 0)
                 {
-                    var kvp = IntersectionAnalyzer(
-                        previousX.Translation + previousTargetOffsetWorld, 
-                        currentX.Translation + targetOffsetWorld,
-                        step * dt - dt, dt,
-                        ref weaponInfo
-                    );
+                    var a = previousX.Translation + previousTargetOffsetWorld;
+                    var t0 = step * dt - dt;
+                    var d = currentX.Translation + targetOffsetWorld - a;
+                    var u = weaponVel - d / dt;
+                    var w1 = weaponPos - a + d * t0 / dt;
+            
+                    // ReSharper disable InconsistentNaming
+                    var A = Vector3D.Dot(u, u) - muzzleSpeed * muzzleSpeed;
+                    var B = 2 * Vector3D.Dot(u, w1);
+                    var C = Vector3D.Dot(w1, w1);
+                    // ReSharper restore InconsistentNaming
 
-                    if (kvp.HasValue)
+                    var delta = B * B - 4.0 * A * C;
+
+                    if (delta >= 0.0)
                     {
-                        var solution = kvp.Value.Key;
-                        var timeToIntercept = kvp.Value.Value;
-    
-                        var aimDistance = muzzleSpeed * timeToIntercept;
-                        var aimPoint = weaponPos + solution.LinearVelocity * aimDistance;
+                        delta = Math.Sqrt(delta);
+                        var t1 = (-B - delta) / (2 * A);
+                        var t2 = (-B + delta) / (2 * A);
 
-                        MyAPIGateway.Utilities.ShowMessage("A", $"Found in {step}");
+                        var t = double.PositiveInfinity;
+
+                        if (t1 > t0 && t1 <= t0 + dt)
+                        {
+                            t = Math.Min(t, t1);
+                        }
+
+                        if (t2 > t0 && t2 <= t0 + dt)
+                        {
+                            t = Math.Min(t, t2);
+                        }
+
+                        if (!double.IsPositiveInfinity(t))
+                        {
+                            //var positionEstimate = a + d * (t - t0) / dt;
+            
+                            // The actual launch direction:
+                            var directionEstimate = -(u * t + w1) / (muzzleSpeed * t); 
+                            
+                            var aimPoint = weaponPos + directionEstimate * (muzzleSpeed * t);
+
+                            //MyAPIGateway.Utilities.ShowMessage("A", $"Found in {step}");
                         
-                        DsDebugDraw.DrawSphere(new BoundingSphereD(solution.Translation, 5.0), Color.Green);
+                            //DsDebugDraw.DrawSphere(new BoundingSphereD(solution.Translation, 5.0), Color.Green);
 
-                        return aimPoint;
+                            return aimPoint;
+                        }
                     }
                     
-                    DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
-                }
+                    //DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
+                }   
                 
                 previousX = currentX;
                 previousTargetOffsetWorld = targetOffsetWorld;
