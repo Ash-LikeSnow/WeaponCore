@@ -640,7 +640,7 @@ namespace CoreSystems.Platform
             }
             return false;
         }
-
+ 
         internal static Vector3D TrajectoryEstimation(
             Weapon weapon,
             Vector3D targetPos,
@@ -697,7 +697,38 @@ namespace CoreSystems.Platform
             
             Vector3D deltaPosNorm;
 
-            var targetGrid = (weapon.Target.TargetObject as MyCubeBlock)?.CubeGrid;
+            MyCubeGrid targetGrid = null;
+            var target = weapon.Target;
+            var overrides = weapon.Comp.Data.Repo.Values.Set.Overrides;
+            if (overrides.Control == ProtoWeaponOverrides.ControlModes.Auto)
+            {
+                var tEntity = target.TargetObject as MyEntity;
+
+                if (tEntity is MyCubeGrid)
+                {
+                    targetGrid = (MyCubeGrid)tEntity;
+                }
+                else if (tEntity is MyCubeBlock)
+                {
+                    targetGrid = ((MyCubeBlock)tEntity).CubeGrid;
+                }
+            }
+            else if (overrides.Control == ProtoWeaponOverrides.ControlModes.Painter)
+            {
+                Ai.FakeTargets fakeTargets;
+                if (Session.I.PlayerDummyTargets.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out fakeTargets))
+                {
+                    if (!Session.I.Settings.Enforcement.ProhibitHUDPainter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero)
+                    {
+                        var entityId = fakeTargets.PaintedTarget.EntityId;
+                        
+                        if (entityId > 0 || entityId < -2)
+                        {
+                            targetGrid = MyEntities.GetEntityById(entityId) as MyCubeGrid;
+                        }
+                    }
+                }
+            }
             
             if (trackAngular && targetGrid != null && targetGrid.Physics != null && !targetGrid.Closed)
             {
