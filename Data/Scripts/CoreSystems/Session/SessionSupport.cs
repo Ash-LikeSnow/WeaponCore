@@ -853,7 +853,7 @@ namespace CoreSystems
                     }
 
                     if (cube.BlockDefinition?.Id.SubtypeName != null)
-                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
+                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName + " (" + cube.BlockDefinition.Context.ModName + ")");                    
 
                     if (DedicatedServer)
                     {
