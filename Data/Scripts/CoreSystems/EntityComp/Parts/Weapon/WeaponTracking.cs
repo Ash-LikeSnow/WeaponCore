@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -602,6 +600,7 @@ namespace CoreSystems.Platform
                 DsDebugDraw.DrawLine(line, hit ? Color.Red : Color.Blue, 0.05f);
             }
         }
+        
         public static bool QuarticSolver(ref double timeToIntercept, Vector3D relativePosition, Vector3D relativeVelocity, Vector3D acceleration, double projectileSpeed, double[] coefficients, double tolerance = 1e-3, int maxIterations = 10)
         {
             var oneOverSpeedSq = projectileSpeed > 0 ? 1.0 / (projectileSpeed * projectileSpeed) : 0;
@@ -641,13 +640,160 @@ namespace CoreSystems.Platform
             }
             return false;
         }
- 
+
+        /// <summary>
+        ///     Spatial information about a weapon and its target.
+        /// </summary>
+        private struct TrajectoryPredictionShootingFrame
+        {
+            public Vector3D TargetPos, TargetVel;
+            public Vector3D ShooterPos, ShooterVel;
+
+            public Vector3D Dr, Dv;
+            public double Distance;
+            public Vector3D Los;
+
+            public static TrajectoryPredictionShootingFrame Calculate(
+                ref Vector3D targetPos, ref Vector3D targetVel,
+                ref Vector3D shooterPos, ref Vector3D shooterVel)
+            {
+                var dr = targetPos - shooterPos;
+                var dv = targetVel - shooterVel;
+                var distance = dr.Length();
+                var los = dr / distance;
+
+                return new TrajectoryPredictionShootingFrame
+                {
+                    TargetPos = targetPos, TargetVel = targetVel,
+                    ShooterPos = shooterPos, ShooterVel = shooterVel,
+                    Dr = dr, Dv = dv,
+                    Distance = distance,
+                    Los = los
+                };
+            }
+            
+            /// <summary>
+            ///     Calculates a crude time-to-intercept using the first-order information.
+            /// </summary>
+            /// <param name="muzzleSpeed"></param>
+            /// <param name="tti"></param>
+            /// <returns></returns>
+            public bool CalculateCrudeTti(double muzzleSpeed, out double tti)
+            {
+                double closingSpeed;
+                Vector3D.Dot(ref Dv, ref Los, out closingSpeed);
+                
+                tti = muzzleSpeed * muzzleSpeed - (Dv - closingSpeed * Los).LengthSquared();
+
+                if (tti <= 0.0)
+                {
+                    tti = double.PositiveInfinity;
+                    return false;
+                }
+
+                double closingDistance;
+                Vector3D.Dot(ref Dr, ref Los, out closingDistance);
+                tti =  closingDistance / (Math.Sqrt(tti) - closingSpeed);
+                
+                if (tti <= 0.0)
+                {
+                    tti = double.PositiveInfinity;
+                    return false;                
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Extracted target information for a weapon.
+        ///     Used to choose a target-specific prediction algorithm (curently only for grids). 
+        /// </summary>
+        private struct TrajectoryPredictionTargetDescription
+        {
+            /// <summary>
+            ///     The top type of the target.
+            /// </summary>
+            public enum TargetType
+            {
+                /// <summary>
+                ///     The type is either a smart or could not be determined.
+                /// </summary>
+                Unknown,
+                /// <summary>
+                ///     The target is either a painted grid or a targeted block on a grid.
+                /// </summary>
+                Grid
+            }
+
+            public readonly TargetType Type;
+            public readonly MyCubeGrid GridTarget;
+
+            public TrajectoryPredictionTargetDescription(Weapon weapon)
+            {
+                Type = TargetType.Unknown;
+                GridTarget = null;
+                
+                switch (weapon.Comp.Data.Repo.Values.Set.Overrides.Control)
+                {
+                    case ProtoWeaponOverrides.ControlModes.Auto:
+                    {
+                        var tEntity = weapon.Target.TargetObject as MyEntity;
+
+                        if (tEntity is MyCubeGrid)
+                        {
+                            Type = TargetType.Grid;
+                            GridTarget = (MyCubeGrid)tEntity;
+                        }
+                        else if (tEntity is MyCubeBlock)
+                        {
+                            GridTarget = ((MyCubeBlock)tEntity).CubeGrid;
+
+                            if (GridTarget != null)
+                            {
+                                Type = TargetType.Grid;
+                            }
+                        }
+
+                        break;
+                    }
+                    case ProtoWeaponOverrides.ControlModes.Painter:
+                    {
+                        Ai.FakeTargets fakeTargets;
+                        if (Session.I.PlayerDummyTargets.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out fakeTargets))
+                        {
+                            if (!Session.I.Settings.Enforcement.ProhibitHUDPainter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero)
+                            {
+                                var entityId = fakeTargets.PaintedTarget.EntityId;
+                        
+                                if (entityId > 0 || entityId < -2)
+                                {
+                                    GridTarget = MyEntities.GetEntityById(entityId) as MyCubeGrid;
+
+                                    if (GridTarget != null)
+                                    {
+                                        Type = TargetType.Grid;
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                    case ProtoWeaponOverrides.ControlModes.Manual:
+                    default:
+                        // Ignored
+                        break;
+                }
+            }
+        }
+        
         internal static Vector3D TrajectoryEstimation(
             Weapon weapon,
-            Vector3D targetPos,
-            Vector3D targetVel, 
-            Vector3D targetAcc,
-            Vector3D shooterPos,
+            Vector3D targetPos0,
+            Vector3D targetVel0, 
+            Vector3D targetAccel0,
+            Vector3D shooterPos0,
             out bool valid,
             bool basicPrediction = false, 
             bool trackAngular = false)
@@ -655,7 +801,6 @@ namespace CoreSystems.Platform
             //DsDebugDraw.DrawSphere(new BoundingSphereD(targetPos, 5.0), Color.Violet);
             
             valid = false;
-            Vector3D aimPoint;
             var weaponComp = weapon.Comp;
             var ai = weaponComp.Ai;
             var session = Session.I;
@@ -669,11 +814,11 @@ namespace CoreSystems.Platform
                 ai.VelocityUpdateTick = session.Tick;
             }
             
-            var shooterVel = (Vector3D)weapon.Comp.Ai.TopEntityVel;
+            var shooterVel0 = (Vector3D)weapon.Comp.Ai.TopEntityVel;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
-            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAcc.LengthSquared() < 2.5; //equal to approx 1.58 m/s
+            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAccel0.LengthSquared() < 2.5; //equal to approx 1.58 m/s
 
             if (updateGravity && session.Tick - weapon.GravityTick > 119)
             {
@@ -684,230 +829,182 @@ namespace CoreSystems.Platform
                 weapon.GravityLength = weapon.GravityUnitDir.Normalize();
             }
             else if (!updateGravity)
+            {
                 weapon.GravityPoint = Vector3D.Zero;
+            }
 
             #endregion
 
-            Vector3D deltaVel = targetVel - shooterVel;
-
-            double deltaLength;
-            double initialTti;
-            Vector3D deltaPos = targetPos - shooterPos;
-            if (Vector3D.IsZero(deltaPos))
-                return targetPos;
-            
-            Vector3D deltaPosNorm;
-
-            MyCubeGrid targetGrid = null;
-            var target = weapon.Target;
-            var overrides = weapon.Comp.Data.Repo.Values.Set.Overrides;
-            if (overrides.Control == ProtoWeaponOverrides.ControlModes.Auto)
+            if (targetPos0.Equals(shooterPos0, 1e-3))
             {
-                var tEntity = target.TargetObject as MyEntity;
-
-                if (tEntity is MyCubeGrid)
-                {
-                    targetGrid = (MyCubeGrid)tEntity;
-                }
-                else if (tEntity is MyCubeBlock)
-                {
-                    targetGrid = ((MyCubeBlock)tEntity).CubeGrid;
-                }
-            }
-            else if (overrides.Control == ProtoWeaponOverrides.ControlModes.Painter)
-            {
-                Ai.FakeTargets fakeTargets;
-                if (Session.I.PlayerDummyTargets.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out fakeTargets))
-                {
-                    if (!Session.I.Settings.Enforcement.ProhibitHUDPainter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero)
-                    {
-                        var entityId = fakeTargets.PaintedTarget.EntityId;
-                        
-                        if (entityId > 0 || entityId < -2)
-                        {
-                            targetGrid = MyEntities.GetEntityById(entityId) as MyCubeGrid;
-                        }
-                    }
-                }
+                // Something invalid going on:
+                return targetPos0;
             }
             
-            if (trackAngular && targetGrid != null && targetGrid.Physics != null && !targetGrid.Closed)
+            var frame0 = TrajectoryPredictionShootingFrame.Calculate(
+                ref targetPos0, ref targetVel0,
+                ref shooterPos0, ref shooterVel0
+            );
+            
+            double crudeTti;
+            if (!frame0.CalculateCrudeTti(projectileMaxSpeed, out crudeTti))
             {
-                /*if (!ComputeAngular(targCube.CubeGrid, ai, ammoDef, ref targetPos, ref shooterPos, ref targetAcc, ref deltaVel, projectileMaxSpeed, out deltaLength, out initialTti, out deltaPos, out deltaPosNorm))
-                    return targetPos;*/
+                // Probably best not to bother:
+                return targetPos0;
+            }
 
-                valid = true;
+            // Extracts the target object from the weapon's state:
+            var targetDescription = new TrajectoryPredictionTargetDescription(weapon);
+            
+            // The max number of steps the advanced trajectory prediction can use:
+            const int stepsBudget = 300;
+            
+            var attemptAdvancedPrediction =
+                // We'd have to introduce the ammo's accel into the intersection analyzer, which is the "correct" solution.
+                // That would likely imply changing the intersection analyzer to a quartic solver.
+                // It's good enough to just approximate it like the old ways, maybe.
+                //ammoDef.Const.AmmoSkipAccel &&
+                trackAngular &&
+                crudeTti * 60 <= stepsBudget &&
+                targetDescription.Type == TrajectoryPredictionTargetDescription.TargetType.Grid &&
+                targetDescription.GridTarget?.Physics != null &&
+                !targetDescription.GridTarget.Closed;
+            
+            // The approximate frame at intercept time.
+            // Used for the later gravity calculation.
+            TrajectoryPredictionShootingFrame interceptFrame;
+            
+            KineticState targetPointStateTemp;
+            double tti;
+            
+            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, stepsBudget, projectileMaxSpeed, out targetPointStateTemp, out tti))
+            {
+                // The same approximation used previously:
+                if (!ammoDef.Const.AmmoSkipAccel && tti > 0)
+                {
+                    var projectileAccelTime = projectileMaxSpeed / ammoDef.Const.AccelInMetersPerSec;
+                    var timePenalty = projectileAccelTime / tti;
+                    
+                    tti += timePenalty; 
+                    
+                    var dvIntercept = targetPointStateTemp.LinearVelocity - shooterVel0;
+                    targetPointStateTemp.Translation += dvIntercept * timePenalty;
+                }
 
-                var sw = Stopwatch.StartNew();
-                var result = TestAimPredictionGrid(
-                    targetGrid,
-                    ref targetPos, ref targetVel, 
-                    ref shooterPos, ref shooterVel, projectileMaxSpeed);
-                var time = sw.Elapsed.TotalMilliseconds;
-
-               // MyAPIGateway.Utilities.ShowMessage("Time", $"Time: {time * 1000:F}us");
-                
-                return result;
+                interceptFrame = TrajectoryPredictionShootingFrame.Calculate(
+                    ref targetPointStateTemp.Translation, ref targetPointStateTemp.LinearVelocity,
+                    ref shooterPos0, ref shooterVel0
+                );
             }
             else
             {
-                if (Vector3D.IsUnit(ref deltaPos))
+                // Fallback to old logic:
+                tti = crudeTti;
+                
+                if (useSimple)
                 {
-                    deltaPosNorm = deltaPos;
-                    deltaLength = 1;
+                    var aimPoint = frame0.TargetPos + tti * frame0.Dv;
+                    
+                    interceptFrame = TrajectoryPredictionShootingFrame.Calculate(
+                        ref aimPoint, ref frame0.TargetVel,
+                        ref frame0.ShooterPos, ref frame0.ShooterVel
+                    );
                 }
                 else
                 {
-                    deltaPosNorm = deltaPos;
-                    deltaLength = deltaPosNorm.Normalize();
-                }
+                    var advTti = tti;
+                 
+                    var finalTti = QuarticSolver(
+                        ref advTti, 
+                        frame0.Dr, frame0.Dv,
+                        targetAccel0,
+                        projectileMaxSpeed, ai.QuadraticCoefficientsStorage
+                    ) ? advTti : tti;
+                    
+                    var projectileAccelTime = ammoDef.Const.AmmoSkipAccel 
+                        ? 0.0 
+                        : projectileMaxSpeed / ammoDef.Const.AccelInMetersPerSec;
+                    
+                    var timePenalty = projectileAccelTime > 0
+                        ? projectileAccelTime / finalTti 
+                        : 0;
 
-                double closingSpeed;
-                Vector3D.Dot(ref deltaVel, ref deltaPosNorm, out closingSpeed);
-                initialTti = (projectileMaxSpeed * projectileMaxSpeed) - (deltaVel - (closingSpeed * deltaPosNorm)).LengthSquared();
-
-                if (initialTti <= 0)
-                    return targetPos;
-
-                double closingDistance;
-                Vector3D.Dot(ref deltaPos, ref deltaPosNorm, out closingDistance);
-                initialTti = closingDistance / (Math.Sqrt(initialTti) - closingSpeed);
-
-                if (initialTti <= 0)
-                    return targetPos;
+                    var aimPoint = frame0.TargetPos + (finalTti + timePenalty) * frame0.Dv;
+                    
+                    interceptFrame = TrajectoryPredictionShootingFrame.Calculate(
+                        ref aimPoint, ref frame0.TargetVel,
+                        ref frame0.ShooterPos, ref frame0.ShooterVel
+                    );
+                }   
             }
 
             valid = true;
-            if (useSimple)
+            
+            if (!updateGravity || MyUtils.IsZero(weapon.GravityPoint))
             {
-                aimPoint = targetPos + initialTti * (targetVel - shooterVel);
-            }
-            else
-            {
-                var advTti = initialTti;
-                var projAccelTime = ammoDef.Const.DesiredProjectileSpeed / ammoDef.Const.AccelInMetersPerSec;
-                var usedTti = QuarticSolver(ref advTti, deltaPos, deltaVel, targetAcc, ammoDef.Const.DesiredProjectileSpeed, ai.QuadraticCoefficientsStorage) ? advTti : initialTti;
-                aimPoint = targetPos + (usedTti + (ammoDef.Const.AmmoSkipAccel ? 0 : (projAccelTime / usedTti))) * (targetVel - shooterVel);
+                return interceptFrame.TargetPos;
             }
             
             var gravityOffset = Vector3D.Zero;
-            if (updateGravity && !MyUtils.IsZero(weapon.GravityPoint))
+            var gravityDirDotLos = Vector3D.Dot(weapon.GravityUnitDir, interceptFrame.Los);
+            var targetAngle = Math.Acos(MathHelperD.Clamp(gravityDirDotLos, -1.0, +1.0)); // Always clamp before calling arccos, the value can drift, BD! (speaking from experience, unfortunately)
+
+            if (targetAngle >= MathHelperD.PiOver2) 
             {
-                var gravPointDot = Vector3D.Dot(weapon.GravityUnitDir, deltaPosNorm);
-                var targetAngle = Math.Acos(gravPointDot);
-                double elevationDifference;
-                if (targetAngle >= 1.5708) //Target is above weapon
+                //Target is above weapon:
+                targetAngle -= MathHelperD.PiOver2; // angle - 90deg
+            }
+            else
+            {
+                //Target is below weapon:
+                targetAngle = MathHelperD.PiOver2 - targetAngle; // 90deg - angle
+            }
+
+            var elevationDifference = -Math.Sin(targetAngle) * interceptFrame.Distance;
+            var horizontalDistance = Math.Sqrt(interceptFrame.Distance * interceptFrame.Distance - elevationDifference * elevationDifference);
+
+            var g = -(weapon.GravityLength * ammoDef.Const.GravityMultiplier);
+            var v = projectileMaxSpeed;
+            var h = elevationDifference;
+            var d = horizontalDistance;
+
+            var angleCheck = v * v * v * v - 2.0 * (v * v) * -h * g - g * g * (d * d);
+
+            if (angleCheck <= 0)
+            {
+                valid = false;
+            }
+            else
+            {
+                var angleSqrt = Math.Sqrt(angleCheck);
+                var angle1 = -Math.Atan((v * v + angleSqrt) / (g * d));//Higher angle
+                var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d));//Lower angle. Try angle 2 first (the lower one)
+
+                var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
+                gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
+
+                if (angle1 < MathHelperD.PiOver2)
                 {
-                    targetAngle -= 1.5708; //angle-90
-                    elevationDifference = -Math.Sin(targetAngle) * deltaLength;
-                }
-                else //Target is below weapon
-                {
-                    targetAngle = 1.5708 - targetAngle; //90-angle
-                    elevationDifference = -Math.Sin(targetAngle) * deltaLength;
-                }
-                var horizontalDistance = Math.Sqrt(deltaLength * deltaLength - elevationDifference * elevationDifference);
+                    var targetAimPoint = interceptFrame.TargetPos + gravityOffset;
+                    var targetDirection = targetAimPoint - shooterPos0;
 
-                var g = -(weapon.GravityLength * ammoDef.Const.GravityMultiplier);
-                var v = projectileMaxSpeed;
-                var h = elevationDifference;
-                var d = horizontalDistance;
-
-                var angleCheck = (v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d);
-
-                if (angleCheck <= 0)
-                    valid = false;
-                else
-                {
-                    var angleSqrt = Math.Sqrt(angleCheck);
-                    var angle1 = -Math.Atan((v * v + angleSqrt) / (g * d));//Higher angle
-                    var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d));//Lower angle                //Try angle 2 first (the lower one)
-
-                    var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
-                    gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
-
-                    if (angle1 < 1.57)
+                    bool isTracking;
+                    if (!weapon.RotorTurretTracking && weapon.TurretController && !WeaponLookAt(weapon, ref targetDirection, interceptFrame.Distance * interceptFrame.Distance, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
                     {
-                        var targetAimPoint = aimPoint + gravityOffset;
-                        var targetDirection = targetAimPoint - shooterPos;
-
-                        bool isTracking;
-                        if (!weapon.RotorTurretTracking && weapon.TurretController && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
-                        {
-                            verticalDistance = Math.Tan(angle1) * horizontalDistance;
-                            gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
-                        }
-                        else if (weapon.RotorTurretTracking && weapon.Comp.Ai.ControlComp != null && !RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
-                        {
-                            verticalDistance = Math.Tan(angle1) * horizontalDistance;
-                            gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
-                        }
+                        verticalDistance = Math.Tan(angle1) * horizontalDistance;
+                        gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
+                    }
+                    else if (weapon.RotorTurretTracking && weapon.Comp.Ai.ControlComp != null && !RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, interceptFrame.Distance * interceptFrame.Distance))
+                    {
+                        verticalDistance = Math.Tan(angle1) * horizontalDistance;
+                        gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                     }
                 }
             }
-            return aimPoint + gravityOffset;
+            
+            return interceptFrame.TargetPos + gravityOffset;
         }
-
-
-        private static bool ComputeAngular(MyCubeGrid grid, Ai ai, WeaponDefinition.AmmoDef ammoDef, ref Vector3D targetPos, ref Vector3D shooterPos, ref Vector3D targetAcc, ref Vector3D deltaVel, double projectileMaxSpeed, out double deltaLength, out double initialTti, out Vector3D deltaPos, out Vector3D deltaPosNorm)
-        {
-            // deltaPos computed twice, once before and once after Angular estimation.  We just return usedTti as initialTti since it should always be superior.
-            deltaPos = targetPos - shooterPos;
-
-            if (Vector3D.IsUnit(ref deltaPos))
-            {
-                deltaPosNorm = deltaPos;
-                deltaLength = 1;
-            }
-            else
-            {
-                deltaPosNorm = deltaPos;
-                deltaLength = deltaPosNorm.Normalize();
-            }
-
-            double closingSpeed;
-            Vector3D.Dot(ref deltaVel, ref deltaPosNorm, out closingSpeed);
-            initialTti = (projectileMaxSpeed * projectileMaxSpeed) - (deltaVel - (closingSpeed * deltaPosNorm)).LengthSquared();
-
-            if (initialTti <= 0)
-                return false;
-
-            double closingDistance;
-            Vector3D.Dot(ref deltaPos, ref deltaPosNorm, out closingDistance);
-            initialTti = closingDistance / (Math.Sqrt(initialTti) - closingSpeed);
-
-            if (initialTti <= 0)
-                return false;
-
-            var advTti = initialTti;
-            var usedTti = QuarticSolver(ref advTti, deltaPos, deltaVel, targetAcc, ammoDef.Const.DesiredProjectileSpeed, ai.QuadraticCoefficientsStorage) ? advTti : initialTti;
-            var targCom = grid.Physics.CenterOfMassWorld;
-            var targAngVel = grid.Physics.AngularVelocity; //Radians per second
-            var targAngVelLen = targAngVel.Normalize();
-            var angleTravelled = targAngVelLen * usedTti;
-            var dirFromCom = targetPos - targCom;
-            var distFromCom = dirFromCom.Normalize();
-            var matrix = MatrixD.CreateFromAxisAngle(targAngVel, angleTravelled);
-            var matrixRot = Vector3D.Rotate(dirFromCom, matrix);
-            initialTti = usedTti;
-
-            if (initialTti <= 0)
-                return false;
-
-            // re-run since we changed the targetPos
-            targetPos = targCom + matrixRot * distFromCom;
-
-            deltaPos = targetPos - shooterPos;
-            if (Vector3D.IsZero(deltaPos))
-                deltaLength = 0;
-            else if (Vector3D.IsUnit(ref deltaPos))
-                deltaLength = 1;
-            else
-                deltaLength = deltaPosNorm.Normalize();
-
-            return true;
-        }
-
+        
         public struct KineticState
         {
             public Vector3D Translation;
@@ -920,14 +1017,19 @@ namespace CoreSystems.Platform
             }
         }
         
-        private static Vector3D TestAimPredictionGrid(
+        private static bool AdvancedGridAimPrediction(
             MyCubeGrid targetGrid,
             ref Vector3D targetPos, 
             ref Vector3D targetVel, 
             ref Vector3D weaponPos,
             ref Vector3D weaponVel,
-            double muzzleSpeed)
+            int budget,
+            double muzzleSpeed,
+            out KineticState targetPointState,
+            out double t)
         {
+            const double dt = 1.0 / 60.0;
+            
             double maxSpeed;
             bool applyMaxSpeedAfterStep;
             if (Session.I.TrajectoryPredictionShipVelocityConstraint != null)
@@ -950,8 +1052,6 @@ namespace CoreSystems.Platform
             var targetDriveAccelWorld = Session.I.TrajectoryPredictionShipAccelEstimator == null
                 ? (Vector3D)targetGrid.Physics.LinearAcceleration
                 : Session.I.TrajectoryPredictionShipAccelEstimator.Invoke(targetGrid);
-
-            const double dt = 1.0 / 60.0;
             
             var targetFixedPoint = targetGrid.Physics.CenterOfMassWorld;
             var targetOffsetWorld = targetPos - targetFixedPoint;
@@ -967,14 +1067,8 @@ namespace CoreSystems.Platform
             var currentX = new KineticState(targetFixedPoint, targetVel);
             var previousX = new KineticState();
             var externalForceFunction = Session.I.TrajectoryPredictionExternalForce;
-           
-            //var initialDistance = (targetPos - weaponPos).Length();
-            //var maxClosingSpeed = muzzleSpeed + maxSpeed; 
-            //var minInterceptTime = initialDistance / maxClosingSpeed;
-    //
-            //var minimumAnalysisStep = Math.Max(1, (int)(minInterceptTime / dt) - 2);
             
-            for (var step = 0; step < 1000; step++)
+            for (var step = 0; step <= budget; step++) // Budget + 1 steps
             {
                 if (step > 0)
                 {
@@ -985,20 +1079,47 @@ namespace CoreSystems.Platform
                     var w1 = weaponPos - a + d * t0 / dt;
             
                     // ReSharper disable InconsistentNaming
+                    // Honestly it would be best if we made a linear solver if A ~= 0. Maybe later
                     var A = Vector3D.Dot(u, u) - muzzleSpeed * muzzleSpeed;
                     var B = 2 * Vector3D.Dot(u, w1);
                     var C = Vector3D.Dot(w1, w1);
                     // ReSharper restore InconsistentNaming
-
                     var delta = B * B - 4.0 * A * C;
 
-                    if (delta >= 0.0)
+                    bool hasRoot;
+                    if (delta < 0.0)
+                    {
+                        hasRoot = false;
+                    }
+                    else
+                    {
+                        var t1Frame = t0 + dt;
+                        var f0 = A * t0 * t0 + B * t0 + C;
+                        var f1 = A * t1Frame * t1Frame + B * t1Frame + C;
+
+                        // If the sign changed over this interval, the interval contains the root:
+                        hasRoot = (f0 <= 0.0 && f1 >= 0.0) || (f0 >= 0.0 && f1 <= 0.0);
+
+                        if (!hasRoot)
+                        {
+                            // If the sign didn't change, it's still possible for the function to have both roots inside this interval.
+                            // To check this, we verify the signs of the function at the two ends against the sign of the function at the vertex:
+                            var tVertex = -B / (2.0 * A);
+                            if (tVertex > t0 && tVertex < t1Frame)
+                            {
+                                var fVertex = -delta / (4.0 * A);
+                                hasRoot = (f0 <= 0.0 && fVertex >= 0.0) || (f0 >= 0.0 && fVertex <= 0.0);
+                            }
+                        }
+                    }
+                    
+                    if (hasRoot)
                     {
                         delta = Math.Sqrt(delta);
-                        var t1 = (-B - delta) / (2 * A);
-                        var t2 = (-B + delta) / (2 * A);
+                        var t1 = (-B - delta) / (2.0 * A);
+                        var t2 = (-B + delta) / (2.0 * A);
 
-                        var t = double.PositiveInfinity;
+                        t = double.PositiveInfinity;
 
                         if (t1 > t0 && t1 <= t0 + dt)
                         {
@@ -1012,18 +1133,20 @@ namespace CoreSystems.Platform
 
                         if (!double.IsPositiveInfinity(t))
                         {
+                            // Target GRID position:
                             //var positionEstimate = a + d * (t - t0) / dt;
             
                             // The actual launch direction:
-                            var directionEstimate = -(u * t + w1) / (muzzleSpeed * t); 
-                            
-                            var aimPoint = weaponPos + directionEstimate * (muzzleSpeed * t);
+                            var directionEstimate = -(u * t + w1) / (muzzleSpeed * t);
 
-                            //MyAPIGateway.Utilities.ShowMessage("A", $"Found in {step}");
-                        
+                            targetPointState = new KineticState(
+                                weaponPos + directionEstimate * (muzzleSpeed * t),
+                                (currentX.Translation - previousX.Translation) / dt
+                            );
+                            
                             //DsDebugDraw.DrawSphere(new BoundingSphereD(solution.Translation, 5.0), Color.Green);
 
-                            return aimPoint;
+                            return true;
                         }
                     }
                     
@@ -1060,8 +1183,11 @@ namespace CoreSystems.Platform
                 targetOffsetWorld = Vector3D.Transform(targetOffsetWorld, rotIncr);
                 targetDriveAccelWorld = Vector3D.Transform(targetDriveAccelWorld, rotIncr);
             }
+
+            targetPointState = new KineticState(targetPos, targetVel);
+            t = double.PositiveInfinity;
             
-            return targetPos;
+            return false;
         }
         
         public void ManualShootRayCallBack(IHitInfo hitInfo)
