@@ -818,7 +818,9 @@ namespace CoreSystems.Platform
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
-            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targetAccel0.LengthSquared() < 2.5; //equal to approx 1.58 m/s
+            var targAccelSqr = targetAccel0.LengthSquared();
+            var targVelSqr = targetVel0.LengthSquared();
+            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targAccelSqr < 2.5; //equal to approx 1.58 m/s
 
             if (updateGravity && session.Tick - weapon.GravityTick > 119)
             {
@@ -864,8 +866,10 @@ namespace CoreSystems.Platform
                 trackAngular &&
                 targetDescription.Type == TrajectoryPredictionTargetDescription.TargetType.Grid &&
                 targetDescription.GridTarget?.Physics != null &&
-                !targetDescription.GridTarget.Closed;
-            
+                !targetDescription.GridTarget.Closed &&
+                targAccelSqr > 100 && //10 m/s
+                targVelSqr > 100; //10 m/s
+
             // The approximate frame at intercept time.
             // Used for the later gravity calculation.
             TrajectoryPredictionShootingFrame interceptFrame;
@@ -1067,14 +1071,13 @@ namespace CoreSystems.Platform
 
             for (var step = 0; step <= budget; step++) // Budget + 1 steps
             {
-                var a = previousX.Translation + previousTargetOffsetWorld;
-                var t0 = step * dt - dt;
-                var d = currentX.Translation + targetOffsetWorld - a;
-                var u = weaponVel - d / dt;
-                var w1 = weaponPos - a + d * t0 / dt;
-
                 if (step >= start)
                 {
+                    var a = previousX.Translation + previousTargetOffsetWorld;
+                    var t0 = step * dt - dt;
+                    var d = currentX.Translation + targetOffsetWorld - a;
+                    var u = weaponVel - d / dt;
+                    var w1 = weaponPos - a + d * t0 / dt;
                     // ReSharper disable InconsistentNaming
                     // Honestly it would be best if we made a linear solver if A ~= 0. Maybe later
                     var A = Vector3D.Dot(u, u) - muzzleSpeed * muzzleSpeed;
@@ -1140,15 +1143,15 @@ namespace CoreSystems.Platform
                                 weaponPos + directionEstimate * (muzzleSpeed * t),
                                 (currentX.Translation - previousX.Translation) / dt
                             );
-                            MyAPIGateway.Utilities.ShowMessage("A", $"Found in {start}/{step}/{budget} used {step-start}");
+                            //MyAPIGateway.Utilities.ShowMessage("A", $"Found in {start}/{step}/{budget} used {step-start}");
 
-                            DsDebugDraw.DrawSphere(new BoundingSphereD(targetPointState.Translation, 5.0), Color.Green);
+                            //DsDebugDraw.DrawSphere(new BoundingSphereD(targetPointState.Translation, 5.0), Color.Green);
 
                             return true;
                         }
                     }
 
-                    DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
+                    //DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
                 }   
                 
                 previousX = currentX;
