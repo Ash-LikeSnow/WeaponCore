@@ -612,6 +612,10 @@ namespace CoreSystems
 
         public static T CastProhibit<T>(T ptr, object val) => (T) val;
 
+        internal Func<MyCubeGrid, MyTuple<double, bool>> TrajectoryPredictionShipVelocityConstraint;
+        internal Func<MyCubeGrid, Vector3D> TrajectoryPredictionShipAccelEstimator;
+        internal Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> TrajectoryPredictionExternalForce;
+        
         public Session()
         {
             I = this;

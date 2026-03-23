@@ -99,6 +99,10 @@ namespace CoreSystems.Api
         private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _removeScanTargetsAction;
         private Action<Func<IMyTerminalBlock, int, MyEntity, bool>> _setValidateWeaponTargetFunc;
 
+        private Action<Func<MyCubeGrid, MyTuple<double, bool>>> _registerTrajectoryPredictionShipVelocityConstraint;
+        private Action<Func<MyCubeGrid, Vector3D>> _registerTrajectoryPredictionShipAccelEstimator;
+        private Action<Func<MyCubeGrid, Vector3D, Vector3D, Vector3D>> _registerTrajectoryPredictionExternalForce;
+        
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
 
@@ -526,6 +530,38 @@ namespace CoreSystems.Api
         public readonly List<WcApiDef.WeaponDefinition> WeaponDefinitions = new List<WcApiDef.WeaponDefinition>();
 
         /// <summary>
+        ///     Registers a max speed constraint for the ship.
+        ///     Can only be called once.
+        ///     First value is the max speed, and second value indicates whether the max speed should be applied after the velocity step.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionShipVelocityConstraint(Func<MyCubeGrid, MyTuple<double, bool>> function)
+        {
+            _registerTrajectoryPredictionShipVelocityConstraint?.Invoke(function);
+        }
+
+        /// <summary>
+        ///     Registers a thrust estimator for the ship. It returns the acceleration the engines would produce if no other external forces and constraints existed. 
+        ///     Can only be called once.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionShipAccelEstimator(Func<MyCubeGrid, Vector3D> function)
+        {
+            _registerTrajectoryPredictionShipAccelEstimator?.Invoke(function);
+        }
+
+        /// <summary>
+        ///     Registers a dynamic force acting on the ship.
+        ///     The parameters are the estimated position and velocity of the grid, and the result is the external force acting on the ship.
+        ///     Can only be called once.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionExternalForce(Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> function)
+        {
+            _registerTrajectoryPredictionExternalForce?.Invoke(function);
+        }
+        
+        /// <summary>
         /// Ask CoreSystems to send the API methods.
         /// <para>Throws an exception if it gets called more than once per session without <see cref="Unload"/>.</para>
         /// </summary>
@@ -677,6 +713,10 @@ namespace CoreSystems.Api
                 foreach (var byteArray in byteArrays)
                     WeaponDefinitions.Add(MyAPIGateway.Utilities.SerializeFromBinary<WcApiDef.WeaponDefinition>(byteArray));
             }
+
+            AssignMethod(delegates, "RegisterTrajectoryPredictionShipVelocityConstraint", ref _registerTrajectoryPredictionShipVelocityConstraint);
+            AssignMethod(delegates, "RegisterTrajectoryPredictionShipAccelEstimator", ref _registerTrajectoryPredictionShipAccelEstimator);
+            AssignMethod(delegates, "RegisterTrajectoryPredictionExternalForce",  ref _registerTrajectoryPredictionExternalForce);
         }
 
         private void AssignMethod<T>(IReadOnlyDictionary<string, Delegate> delegates, string name, ref T field)
@@ -785,7 +825,5 @@ namespace CoreSystems.Api
                 SystemWideDamageEvents,
             }
         }
-
     }
-
 }
