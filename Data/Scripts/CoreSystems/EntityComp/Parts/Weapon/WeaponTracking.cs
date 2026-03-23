@@ -855,17 +855,13 @@ namespace CoreSystems.Platform
 
             // Extracts the target object from the weapon's state:
             var targetDescription = new TrajectoryPredictionTargetDescription(weapon);
-            
-            // The max number of steps the advanced trajectory prediction can use:
-            const int stepsBudget = 300;
-            
+
             var attemptAdvancedPrediction =
                 // We'd have to introduce the ammo's accel into the intersection analyzer, which is the "correct" solution.
                 // That would likely imply changing the intersection analyzer to a quartic solver.
                 // It's good enough to just approximate it like the old ways, maybe.
                 //ammoDef.Const.AmmoSkipAccel &&
                 trackAngular &&
-                crudeTti * 60 <= stepsBudget &&
                 targetDescription.Type == TrajectoryPredictionTargetDescription.TargetType.Grid &&
                 targetDescription.GridTarget?.Physics != null &&
                 !targetDescription.GridTarget.Closed;
@@ -877,7 +873,7 @@ namespace CoreSystems.Platform
             KineticState targetPointStateTemp;
             double tti;
             
-            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, stepsBudget, projectileMaxSpeed, out targetPointStateTemp, out tti))
+            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, ammoDef.Const.MaxLifeTime > 0 && ammoDef.Const.MaxLifeTime != int.MaxValue ? ammoDef.Const.MaxLifeTime : (int)(ammoDef.Const.MaxTrajectory / projectileMaxSpeed * 60 * 1.2), (int)(crudeTti * 60 * 0.8) , projectileMaxSpeed, out targetPointStateTemp, out tti))
             {
                 // The same approximation used previously:
                 if (!ammoDef.Const.AmmoSkipAccel && tti > 0)
@@ -1024,6 +1020,7 @@ namespace CoreSystems.Platform
             ref Vector3D weaponPos,
             ref Vector3D weaponVel,
             int budget,
+            int start,
             double muzzleSpeed,
             out KineticState targetPointState,
             out double t)
@@ -1067,17 +1064,17 @@ namespace CoreSystems.Platform
             var currentX = new KineticState(targetFixedPoint, targetVel);
             var previousX = new KineticState();
             var externalForceFunction = Session.I.TrajectoryPredictionExternalForce;
-            
+
             for (var step = 0; step <= budget; step++) // Budget + 1 steps
             {
-                if (step > 0)
+                var a = previousX.Translation + previousTargetOffsetWorld;
+                var t0 = step * dt - dt;
+                var d = currentX.Translation + targetOffsetWorld - a;
+                var u = weaponVel - d / dt;
+                var w1 = weaponPos - a + d * t0 / dt;
+
+                if (step >= start)
                 {
-                    var a = previousX.Translation + previousTargetOffsetWorld;
-                    var t0 = step * dt - dt;
-                    var d = currentX.Translation + targetOffsetWorld - a;
-                    var u = weaponVel - d / dt;
-                    var w1 = weaponPos - a + d * t0 / dt;
-            
                     // ReSharper disable InconsistentNaming
                     // Honestly it would be best if we made a linear solver if A ~= 0. Maybe later
                     var A = Vector3D.Dot(u, u) - muzzleSpeed * muzzleSpeed;
@@ -1112,7 +1109,7 @@ namespace CoreSystems.Platform
                             }
                         }
                     }
-                    
+
                     if (hasRoot)
                     {
                         delta = Math.Sqrt(delta);
@@ -1135,7 +1132,7 @@ namespace CoreSystems.Platform
                         {
                             // Target GRID position:
                             //var positionEstimate = a + d * (t - t0) / dt;
-            
+
                             // The actual launch direction:
                             var directionEstimate = -(u * t + w1) / (muzzleSpeed * t);
 
@@ -1143,14 +1140,15 @@ namespace CoreSystems.Platform
                                 weaponPos + directionEstimate * (muzzleSpeed * t),
                                 (currentX.Translation - previousX.Translation) / dt
                             );
-                            
-                            //DsDebugDraw.DrawSphere(new BoundingSphereD(solution.Translation, 5.0), Color.Green);
+                            MyAPIGateway.Utilities.ShowMessage("A", $"Found in {start}/{step}/{budget} used {step-start}");
+
+                            DsDebugDraw.DrawSphere(new BoundingSphereD(targetPointState.Translation, 5.0), Color.Green);
 
                             return true;
                         }
                     }
-                    
-                    //DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
+
+                    DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
                 }   
                 
                 previousX = currentX;
