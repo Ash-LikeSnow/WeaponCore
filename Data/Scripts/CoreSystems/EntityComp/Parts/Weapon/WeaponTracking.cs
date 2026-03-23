@@ -867,8 +867,10 @@ namespace CoreSystems.Platform
                 targetDescription.Type == TrajectoryPredictionTargetDescription.TargetType.Grid &&
                 targetDescription.GridTarget?.Physics != null &&
                 !targetDescription.GridTarget.Closed &&
-                targAccelSqr > 100 && //10 m/s
-                targVelSqr > 100; //10 m/s
+                (
+                    targetDescription.GridTarget.Physics.AngularVelocity.LengthSquared() > 0.0003 ||
+                    (targAccelSqr > 100 && targVelSqr > 100)
+                );
 
             // The approximate frame at intercept time.
             // Used for the later gravity calculation.
