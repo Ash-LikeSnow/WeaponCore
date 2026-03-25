@@ -879,7 +879,7 @@ namespace CoreSystems.Platform
             KineticState targetPointStateTemp;
             double tti;
             
-            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, ammoDef.Const.MaxLifeTime > 0 && ammoDef.Const.MaxLifeTime != int.MaxValue ? ammoDef.Const.MaxLifeTime : (int)(ammoDef.Const.MaxTrajectory / projectileMaxSpeed * 60 * 1.2), (int)(crudeTti * 60 * 0.8) , projectileMaxSpeed, out targetPointStateTemp, out tti))
+            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, (int)(crudeTti * 60 * 1.2), (int)(crudeTti * 60 * 0.8) , projectileMaxSpeed, out targetPointStateTemp, out tti))
             {
                 // The same approximation used previously:
                 if (!ammoDef.Const.AmmoSkipAccel && tti > 0)
