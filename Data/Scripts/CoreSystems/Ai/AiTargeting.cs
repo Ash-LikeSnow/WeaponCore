@@ -621,7 +621,7 @@ namespace CoreSystems.Support
                 var targetRadius = lpaConst.CollisionSize;
                 if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
 
-                var lpAccel = lp.Velocity - lp.PrevVelocity;
+                var lpAccel = lp.Velocity - lp.PrevVelocity1;
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
