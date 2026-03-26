@@ -1009,7 +1009,6 @@ namespace CoreSystems.Support
             var checkPower = overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && !focusedTarget || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled; 
             if (system.TargetSubSystems)
             {
-                
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
 
@@ -1028,10 +1027,10 @@ namespace CoreSystems.Support
                                 w.Top5.Clear();
 
                             w.LastTop5BlockType = bt;
-                            if (GetClosestHitableBlockOfType(w, subSystemList, target, info, targetLinVel, targetAccel, ref waterSphere, p, checkPower))
+                            if (GetClosestHitableBlockOfType(w, subSystemList, target, info, targetLinVel, targetAccel, ref waterSphere, p, bt, checkPower))
                                 return true;
                         }
-                        else if (FindRandomBlock(w, target, info, subSystemList, ref waterSphere, ref xRnd, p, checkPower)) return true;
+                        else if (FindRandomBlock(w, target, info, subSystemList, ref waterSphere, ref xRnd, p, bt, checkPower)) return true;
                     }
 
                     if (overRides.FocusSubSystem) break;
@@ -1040,11 +1039,13 @@ namespace CoreSystems.Support
                 if (system.OnlySubSystems || overRides.FocusSubSystem && overRides.SubSystem != Any) return false;
             }
             TopMap topMap;
-            return Session.I.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
+            return Session.I.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, Any, checkPower);
         }
 
-        private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower)
+        private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, BlockTypes bt, bool checkPower)
         {
+            var modApiCustomization = Session.I.SubsystemTargetingCustomization;
+            
             var totalBlocks = subSystemList.Count;
             var system = w.System;
             var ai = w.Comp.MasterAi;
@@ -1118,8 +1119,27 @@ namespace CoreSystems.Support
                 var block = subSystemList[card];
 
                 if (block.MarkedForClose || checkPower && !(block is IMyWarhead) && !block.IsWorking) continue;
-
                 s.BlockChecks++;
+
+                // Inline to keep the profiler happy:
+                if (modApiCustomization != null)
+                {
+                    var blockedByMod = false;
+                    for (var filterIndex = 0; filterIndex < modApiCustomization.Filters.Length; filterIndex++)
+                    {
+                        if (!modApiCustomization.Filters[filterIndex].Predicate.Invoke(w.Comp.Cube, w.PartId, block, (int)bt))
+                        {
+                            blockedByMod = true;
+                            break;
+                        }
+                    }
+
+                    if (blockedByMod)
+                    {
+                        continue;
+                    }
+                }
+                
                 var blockPos = block.PositionComp.WorldAABB.Center;
 
                 double rayDist;
@@ -1343,8 +1363,10 @@ namespace CoreSystems.Support
         }
 
 
-        internal static bool GetClosestHitableBlockOfType(Weapon w, ConcurrentCachingList<MyCubeBlock> cubes, Target target, TargetInfo info, Vector3D targetLinVel, Vector3D targetAccel, ref BoundingSphereD waterSphere, Projectile p, bool checkPower = true)
+        internal static bool GetClosestHitableBlockOfType(Weapon w, ConcurrentCachingList<MyCubeBlock> cubes, Target target, TargetInfo info, Vector3D targetLinVel, Vector3D targetAccel, ref BoundingSphereD waterSphere, Projectile p, BlockTypes bt, bool checkPower = true)
         {
+            var modApiCustomization = Session.I.SubsystemTargetingCustomization;
+            
             var minValue = double.MaxValue;
             var minValue0 = double.MaxValue;
             var minValue1 = double.MaxValue;
@@ -1383,7 +1405,6 @@ namespace CoreSystems.Support
 
             for (int i = 0; i < cubes.Count + top5Count; i++)
             {
-
                 Session.I.BlockChecks++;
                 var index = i < top5Count ? i : i - top5Count;
                 var cube = i < top5Count ? top5[index] : cubes[index];
@@ -1392,7 +1413,26 @@ namespace CoreSystems.Support
                 if (grid == null || grid.MarkedForClose) continue;
                 if (cube.MarkedForClose || cube == newEntity || cube == newEntity0 || cube == newEntity1 || cube == newEntity2 || cube == newEntity3 || checkPower && !(cube is IMyWarhead) && !cube.IsWorking)
                     continue;
+                
+                // Inline to keep the profiler happy:
+                if (modApiCustomization != null)
+                {
+                    var blockedByMod = false;
+                    for (var filterIndex = 0; filterIndex < modApiCustomization.Filters.Length; filterIndex++)
+                    {
+                        if (!modApiCustomization.Filters[filterIndex].Predicate.Invoke(w.Comp.Cube, w.PartId, cube, (int)bt))
+                        {
+                            blockedByMod = true;
+                            break;
+                        }
+                    }
 
+                    if (blockedByMod)
+                    {
+                        continue;
+                    }
+                }
+                
                 var cubePos = grid.GridIntegerToWorld(cube.Position);
                 var range = cubePos - weaponPos;
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
@@ -1402,7 +1442,6 @@ namespace CoreSystems.Support
 
                 if (test < minValue3)
                 {
-
                     IHitInfo hit = null;
 
                     var best = test < minValue;

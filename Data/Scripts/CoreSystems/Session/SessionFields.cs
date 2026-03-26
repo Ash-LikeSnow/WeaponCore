@@ -342,6 +342,10 @@ namespace CoreSystems
         /// WcApi function for checking if a weapon's target is allowed. Defaults true if null.
         /// </summary>
         internal Func<IMyTerminalBlock, int, MyEntity, bool> ValidateWeaponTargetFunc = null;
+        /// <summary>
+        /// WcApi filters for the subsystem blocks. Left null until a mod registers a filter.
+        /// </summary>
+        internal ApiBackend.ModApiSubsystemTargetingCustomization SubsystemTargetingCustomization = null;
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
