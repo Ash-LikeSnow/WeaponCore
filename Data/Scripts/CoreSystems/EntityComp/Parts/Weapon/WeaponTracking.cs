@@ -1646,26 +1646,54 @@ namespace CoreSystems.Platform
 
         internal bool ValidSubSystemTarget(MyCubeBlock cube, WeaponDefinition.TargetingDef.BlockTypes subsystem)
         {
+            bool isValid;
+            
             switch (subsystem)
             {
                 case WeaponDefinition.TargetingDef.BlockTypes.Jumping:
-                    return cube is MyJumpDrive || cube is IMyDecoy;
+                    isValid = cube is MyJumpDrive || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Offense:
-                    return cube is IMyGunBaseUser || cube is MyConveyorSorter && Session.I.PartPlatforms.ContainsKey(cube.BlockDefinition.Id) || cube is IMyWarhead || cube is IMyDecoy;
+                    isValid = cube is IMyGunBaseUser || cube is MyConveyorSorter && Session.I.PartPlatforms.ContainsKey(cube.BlockDefinition.Id) || cube is IMyWarhead || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Power:
-                    return cube is IMyPowerProducer || cube is IMyDecoy;
+                    isValid = cube is IMyPowerProducer || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Production:
-                    return cube is IMyProductionBlock || cube is IMyUpgradeModule && Session.I.VanillaUpgradeModuleHashes.Contains(cube.BlockDefinition.Id.SubtypeName) || cube is IMyDecoy;
+                    isValid = cube is IMyProductionBlock || cube is IMyUpgradeModule && Session.I.VanillaUpgradeModuleHashes.Contains(cube.BlockDefinition.Id.SubtypeName) || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Steering:
                     var cockpit = cube as MyCockpit;
-                    return cube is MyGyro || cockpit != null && cockpit.EnableShipControl || cube is IMyDecoy;
+                    isValid = cube is MyGyro || cockpit != null && cockpit.EnableShipControl || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Thrust:
-                    return cube is MyThrust || cube is IMyDecoy;
+                    isValid = cube is MyThrust || cube is IMyDecoy;
+                    break;
                 case WeaponDefinition.TargetingDef.BlockTypes.Utility:
-                    return !(cube is IMyProductionBlock) && cube is IMyUpgradeModule || cube is IMyRadioAntenna || cube is IMyLaserAntenna || cube is MyRemoteControl || cube is IMyShipToolBase || cube is IMyMedicalRoom || cube is IMyCameraBlock || cube is IMyDecoy; 
+                    isValid = !(cube is IMyProductionBlock) && cube is IMyUpgradeModule || cube is IMyRadioAntenna || cube is IMyLaserAntenna || cube is MyRemoteControl || cube is IMyShipToolBase || cube is IMyMedicalRoom || cube is IMyCameraBlock || cube is IMyDecoy; 
+                    break;
                 default:
                     return false;
             }
+
+            if (!isValid || Session.I.SubsystemTargetingCustomization == null)
+            {
+                return isValid;
+            }
+
+            // ReSharper disable once ForCanBeConvertedToForeach
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            for (var index = 0; index < Session.I.SubsystemTargetingCustomization.Filters.Length; index++)
+            {
+                var filter = Session.I.SubsystemTargetingCustomization.Filters[index];
+
+                if (!filter.Predicate.Invoke(Comp.Cube, PartId, cube, (int)subsystem))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         internal void InitTracking()

@@ -359,6 +359,23 @@ namespace CoreSystems.Support
                             stringBuilder.Append(otherAmmo);
                     }
                 }
+
+                // Mod API Subsystem filters:
+                var subsystemCustomization = I.SubsystemTargetingCustomization;
+                if (subsystemCustomization != null)
+                {
+                    stringBuilder.AppendLine();
+                    
+                    foreach (var filter in subsystemCustomization.Filters)
+                    {
+                        var limits = filter.UserDisplaySupplier.Invoke(comp.Cube);
+
+                        if (!string.IsNullOrWhiteSpace(limits))
+                        {
+                            stringBuilder.AppendLine(limits);
+                        }
+                    }
+                }
             }
         }
 
