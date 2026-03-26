@@ -356,7 +356,8 @@ namespace CoreSystems.Platform
                 }
                 if (Vector3D.IsZero(targetLinVel, 5E-03)) targetLinVel = Vector3.Zero;
                 if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
-
+                if (w.PosChangedTick != Session.I.SimulationCount)
+                    w.UpdatePivotPos();
                 targetPos = TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, w.MyPivotPos,  out validEstimate, false, baseData.Set.Overrides.AngularTracking);
                 w.Target.ValidEstimate = validEstimate;
             }
@@ -382,7 +383,6 @@ namespace CoreSystems.Platform
             else if (r25 && (w.PrevRangeEvent != EventTriggers.TargetRanged25 || !w.RangeEventActive))
                 w.EventTriggerStateChanged(EventTriggers.TargetRanged25, true);
 
-            var targetDir = targetPos - w.MyPivotPos;
             var painterInRange = w.Comp.PainterMode && rangeToTargetSqr <= (w.System.PainterUseMaxTargeting ? w.MaxTargetDistanceSqr : w.ActiveAmmoDef.AmmoDef.Const.MaxTrajectorySqr) && rangeToTargetSqr >= w.MinTargetDistanceSqr;
             var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (w.Comp.ManualMode || painterInRange || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
             var locked = true;
@@ -390,6 +390,7 @@ namespace CoreSystems.Platform
 
             if (readyToTrack && w.PosChangedTick != Session.I.SimulationCount)
                 w.UpdatePivotPos();
+            var targetDir = targetPos - w.MyPivotPos;
 
             if (readyToTrack && baseData.State.Control != ProtoWeaponState.ControlMode.Camera)
             {
@@ -870,7 +871,7 @@ namespace CoreSystems.Platform
             var weaponComp = weapon.Comp;
             var ai = weaponComp.Ai;
             var session = Session.I;
-            
+            var debug = weapon.System.DebugMode;
             #region Must Have Updates
             if (ai.VelocityUpdateTick != session.Tick)
             {
@@ -928,7 +929,7 @@ namespace CoreSystems.Platform
             var algorithmToTry = targetDescription.DecidePredictionAlgorithm(
                 targAccelSqr, targVelSqr,
                 allowAdvancedGridAlgorithm: trackAngular, // Also, should basicPrediction be introduced here?
-                allowAdvancedProjectileAlgorithm: trackAngular // TODO use the configured option
+                allowAdvancedProjectileAlgorithm: weapon.System.UseLimitlessPDSolver
             );
 
             // The approximate frame at intercept time.
@@ -944,13 +945,13 @@ namespace CoreSystems.Platform
                 (algorithmToTry == TrajectoryPredictionTargetDescription.PredictionAlgorithm.AdvancedGrid && 
                     CalculateAdvancedGridAimPrediction(
                         targetDescription.GridTarget, ref targetPos0, ref targetVel0,
-                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed, 
+                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed, debug,
                         out targetPointStateTemp, out tti)
                     ) || 
                 (algorithmToTry == TrajectoryPredictionTargetDescription.PredictionAlgorithm.AdvancedProjectile && 
                     CalculateAdvancedPdAimPrediction(
                         targetDescription.ProjectileTarget, ref targetPos0, ref targetVel0,
-                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed,
+                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed, debug,
                         out targetPointStateTemp, out tti)
                     )
                 )
@@ -1099,7 +1100,7 @@ namespace CoreSystems.Platform
             }
         }
 
-        private static bool CalculateAdvancedGridAimPrediction(MyCubeGrid targetGrid, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, out KineticState targetPointState, out double t)
+        private static bool CalculateAdvancedGridAimPrediction(MyCubeGrid targetGrid, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, bool debug, out KineticState targetPointState, out double t)
         {
             const double dt = 1.0 / 60.0;
             
@@ -1225,11 +1226,9 @@ namespace CoreSystems.Platform
                             return true;
                         }
                     }
-
-                    //DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
                 }
 
-                if (step > 0)
+                if (debug && step > 0)
                 {
                     DsDebugDraw.DrawLine(
                         new LineD(previousX.Translation + previousTargetOffsetWorld, currentX.Translation + targetOffsetWorld),
@@ -1275,7 +1274,7 @@ namespace CoreSystems.Platform
             return false;
         }
         
-        private static bool CalculateAdvancedPdAimPrediction(Projectile targetProjectile, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, out KineticState targetPointState, out double t)
+        private static bool CalculateAdvancedPdAimPrediction(Projectile targetProjectile, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, bool debug, out KineticState targetPointState, out double t)
         {
             const double dt = 1.0 / 60.0;
 
@@ -1404,7 +1403,7 @@ namespace CoreSystems.Platform
                     }
                 }
 
-                if (step > 0)
+                if (debug && step > 0)
                 {
                     DsDebugDraw.DrawLine(
                         new LineD(previousX.Translation, currentX.Translation),
