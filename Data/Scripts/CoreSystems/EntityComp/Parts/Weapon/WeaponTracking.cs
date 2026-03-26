@@ -271,7 +271,7 @@ namespace CoreSystems.Platform
                     if (pTarget != null)
                     {
                         targetLinVel = (Vector3)pTarget.Velocity;
-                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity);
+                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity1);
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -346,7 +346,7 @@ namespace CoreSystems.Platform
                     if (pTarget != null)
                     {
                         targetLinVel = (Vector3)pTarget.Velocity;
-                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity);
+                        targetAccel = (Vector3)(pTarget.Velocity - pTarget.PrevVelocity1);
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -717,44 +717,75 @@ namespace CoreSystems.Platform
             public enum TargetType
             {
                 /// <summary>
-                ///     The type is either a smart or could not be determined.
+                ///     The type could not be determined.
                 /// </summary>
                 Unknown,
+                /// <summary>
+                ///     The target is a projectile.
+                /// </summary>
+                Projectile,
                 /// <summary>
                 ///     The target is either a painted grid or a targeted block on a grid.
                 /// </summary>
                 Grid
             }
 
+            public enum PredictionAlgorithm
+            {
+                /// <summary>
+                ///     The previous no-assumption targeting algorithm should be used.
+                /// </summary>
+                Crude,
+                /// <summary>
+                ///     The advanced anti-projectile-twisting algorithm should be used.
+                /// </summary>
+                AdvancedProjectile,
+                /// <summary>
+                ///     The advanced anti-dodging algorithm should be used.
+                /// </summary>
+                AdvancedGrid
+            }
+            
             public readonly TargetType Type;
             public readonly MyCubeGrid GridTarget;
+            public readonly Projectile ProjectileTarget;
 
             public TrajectoryPredictionTargetDescription(Weapon weapon)
             {
                 Type = TargetType.Unknown;
                 GridTarget = null;
+                ProjectileTarget = null;
                 
                 switch (weapon.Comp.Data.Repo.Values.Set.Overrides.Control)
                 {
                     case ProtoWeaponOverrides.ControlModes.Auto:
                     {
-                        var tEntity = weapon.Target.TargetObject as MyEntity;
+                        ProjectileTarget = weapon.Target.TargetObject as Projectile;
 
-                        if (tEntity is MyCubeGrid)
+                        if (ProjectileTarget != null)
                         {
-                            Type = TargetType.Grid;
-                            GridTarget = (MyCubeGrid)tEntity;
+                            Type = TargetType.Projectile;
                         }
-                        else if (tEntity is MyCubeBlock)
+                        else
                         {
-                            GridTarget = ((MyCubeBlock)tEntity).CubeGrid;
+                            var tEntity = weapon.Target.TargetObject as MyEntity;
 
-                            if (GridTarget != null)
+                            if (tEntity is MyCubeGrid)
                             {
                                 Type = TargetType.Grid;
+                                GridTarget = (MyCubeGrid)tEntity;
+                            }
+                            else if (tEntity is MyCubeBlock)
+                            {
+                                GridTarget = ((MyCubeBlock)tEntity).CubeGrid;
+
+                                if (GridTarget != null)
+                                {
+                                    Type = TargetType.Grid;
+                                }
                             }
                         }
-
+                        
                         break;
                     }
                     case ProtoWeaponOverrides.ControlModes.Painter:
@@ -786,6 +817,43 @@ namespace CoreSystems.Platform
                         break;
                 }
             }
+
+            public PredictionAlgorithm DecidePredictionAlgorithm(double targAccelSqr, double targVelSqr, bool allowAdvancedProjectileAlgorithm, bool allowAdvancedGridAlgorithm)
+            {
+                switch (Type)
+                {
+                    case TargetType.Projectile:
+                    {
+                        var attemptAdvancedProjectilePrediction =
+                            allowAdvancedProjectileAlgorithm &&
+                            ProjectileTarget != null &&
+                            ProjectileTarget.PrevVelocity1.LengthSquared() > 100.0 &&
+                            ProjectileTarget.PrevVelocity0.LengthSquared() > 100.0;
+
+                        return attemptAdvancedProjectilePrediction
+                            ? PredictionAlgorithm.AdvancedProjectile
+                            : PredictionAlgorithm.Crude;
+                    }
+                    case TargetType.Grid:
+                    {
+                        var attemptAdvancedGridPrediction =
+                            allowAdvancedGridAlgorithm &&
+                            GridTarget?.Physics != null &&
+                            !GridTarget.Closed &&
+                            (
+                                GridTarget.Physics.AngularVelocity.LengthSquared() > 0.0003 ||
+                                (targAccelSqr > 100 && targVelSqr > 100)
+                            );
+
+                        return attemptAdvancedGridPrediction
+                            ? PredictionAlgorithm.AdvancedGrid
+                            : PredictionAlgorithm.Crude;
+                    }
+                    case TargetType.Unknown:
+                    default:
+                        return PredictionAlgorithm.Crude;
+                }
+            }
         }
         
         internal static Vector3D TrajectoryEstimation(
@@ -798,8 +866,6 @@ namespace CoreSystems.Platform
             bool basicPrediction = false, 
             bool trackAngular = false)
         {
-            //DsDebugDraw.DrawSphere(new BoundingSphereD(targetPos, 5.0), Color.Violet);
-            
             valid = false;
             var weaponComp = weapon.Comp;
             var ai = weaponComp.Ai;
@@ -848,7 +914,7 @@ namespace CoreSystems.Platform
                 ref shooterPos0, ref shooterVel0
             );
             
-            double crudeTti;
+            double crudeTti; // Used for bounds estimation and basic prediction
             if (!frame0.CalculateCrudeTti(projectileMaxSpeed, out crudeTti))
             {
                 // Probably best not to bother:
@@ -857,36 +923,45 @@ namespace CoreSystems.Platform
 
             // Extracts the target object from the weapon's state:
             var targetDescription = new TrajectoryPredictionTargetDescription(weapon);
-
-            var attemptAdvancedPrediction =
-                // We'd have to introduce the ammo's accel into the intersection analyzer, which is the "correct" solution.
-                // That would likely imply changing the intersection analyzer to a quartic solver.
-                // It's good enough to just approximate it like the old ways, maybe.
-                //ammoDef.Const.AmmoSkipAccel &&
-                trackAngular &&
-                targetDescription.Type == TrajectoryPredictionTargetDescription.TargetType.Grid &&
-                targetDescription.GridTarget?.Physics != null &&
-                !targetDescription.GridTarget.Closed &&
-                (
-                    targetDescription.GridTarget.Physics.AngularVelocity.LengthSquared() > 0.0003 ||
-                    (targAccelSqr > 100 && targVelSqr > 100)
-                );
+            
+            // Determines which prediction algorithm to run based on available information and weapon config:
+            var algorithmToTry = targetDescription.DecidePredictionAlgorithm(
+                targAccelSqr, targVelSqr,
+                allowAdvancedGridAlgorithm: trackAngular, // Also, should basicPrediction be introduced here?
+                allowAdvancedProjectileAlgorithm: trackAngular // TODO use the configured option
+            );
 
             // The approximate frame at intercept time.
             // Used for the later gravity calculation.
             TrajectoryPredictionShootingFrame interceptFrame;
             
+            // Kinetic state of the target point at intercept time, for the advanced algorithm.
+            // For grids, the velocity is not exactly taken inside the target's frame (velocity due to rotation of target is discarded).
             KineticState targetPointStateTemp;
             double tti;
             
-            if (attemptAdvancedPrediction && AdvancedGridAimPrediction(targetDescription.GridTarget, ref targetPos0, ref targetVel0, ref shooterPos0, ref shooterVel0, (int)(crudeTti * 60 * 1.2), (int)(crudeTti * 60 * 0.8) , projectileMaxSpeed, out targetPointStateTemp, out tti))
+            if (
+                (algorithmToTry == TrajectoryPredictionTargetDescription.PredictionAlgorithm.AdvancedGrid && 
+                    CalculateAdvancedGridAimPrediction(
+                        targetDescription.GridTarget, ref targetPos0, ref targetVel0,
+                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed, 
+                        out targetPointStateTemp, out tti)
+                    ) || 
+                (algorithmToTry == TrajectoryPredictionTargetDescription.PredictionAlgorithm.AdvancedProjectile && 
+                    CalculateAdvancedPdAimPrediction(
+                        targetDescription.ProjectileTarget, ref targetPos0, ref targetVel0,
+                        ref shooterPos0, ref shooterVel0, crudeTti, projectileMaxSpeed,
+                        out targetPointStateTemp, out tti)
+                    )
+                )
             {
-                // The same approximation used previously:
-                if (!ammoDef.Const.AmmoSkipAccel && tti > 0)
+                // The same approximation for accelerating projectiles that was used previously:
+                if (!ammoDef.Const.AmmoSkipAccel && tti > 0.0)
                 {
                     var projectileAccelTime = projectileMaxSpeed / ammoDef.Const.AccelInMetersPerSec;
                     var timePenalty = projectileAccelTime / tti;
                     
+                    // ReSharper disable once RedundantAssignment
                     tti += timePenalty; 
                     
                     var dvIntercept = targetPointStateTemp.LinearVelocity - shooterVel0;
@@ -896,7 +971,7 @@ namespace CoreSystems.Platform
                 interceptFrame = TrajectoryPredictionShootingFrame.Calculate(
                     ref targetPointStateTemp.Translation, ref targetPointStateTemp.LinearVelocity,
                     ref shooterPos0, ref shooterVel0
-                );
+                );            
             }
             else
             {
@@ -944,6 +1019,7 @@ namespace CoreSystems.Platform
             
             if (!updateGravity || MyUtils.IsZero(weapon.GravityPoint))
             {
+                // No gravity to take into account:
                 return interceptFrame.TargetPos;
             }
             
@@ -965,10 +1041,12 @@ namespace CoreSystems.Platform
             var elevationDifference = -Math.Sin(targetAngle) * interceptFrame.Distance;
             var horizontalDistance = Math.Sqrt(interceptFrame.Distance * interceptFrame.Distance - elevationDifference * elevationDifference);
 
+            // ReSharper disable InlineTemporaryVariable
             var g = -(weapon.GravityLength * ammoDef.Const.GravityMultiplier);
             var v = projectileMaxSpeed;
             var h = elevationDifference;
             var d = horizontalDistance;
+            // ReSharper restore InlineTemporaryVariable
 
             var angleCheck = v * v * v * v - 2.0 * (v * v) * -h * g - g * g * (d * d);
 
@@ -979,8 +1057,8 @@ namespace CoreSystems.Platform
             else
             {
                 var angleSqrt = Math.Sqrt(angleCheck);
-                var angle1 = -Math.Atan((v * v + angleSqrt) / (g * d));//Higher angle
-                var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d));//Lower angle. Try angle 2 first (the lower one)
+                var angle1 = -Math.Atan((v * v + angleSqrt) / (g * d)); //Higher angle
+                var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d)); //Lower angle. Try angle 2 first (the lower one)
 
                 var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
@@ -1006,6 +1084,8 @@ namespace CoreSystems.Platform
             
             return interceptFrame.TargetPos + gravityOffset;
         }
+
+        #region Advanced Trajectory Estimation Algorithms
         
         public struct KineticState
         {
@@ -1018,18 +1098,8 @@ namespace CoreSystems.Platform
                 LinearVelocity = linearVelocity;
             }
         }
-        
-        private static bool AdvancedGridAimPrediction(
-            MyCubeGrid targetGrid,
-            ref Vector3D targetPos, 
-            ref Vector3D targetVel, 
-            ref Vector3D weaponPos,
-            ref Vector3D weaponVel,
-            int budget,
-            int start,
-            double muzzleSpeed,
-            out KineticState targetPointState,
-            out double t)
+
+        private static bool CalculateAdvancedGridAimPrediction(MyCubeGrid targetGrid, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, out KineticState targetPointState, out double t)
         {
             const double dt = 1.0 / 60.0;
             
@@ -1070,6 +1140,10 @@ namespace CoreSystems.Platform
             var currentX = new KineticState(targetFixedPoint, targetVel);
             var previousX = new KineticState();
             var externalForceFunction = Session.I.TrajectoryPredictionExternalForce;
+
+            // Reasonable bounds for the solution:
+            var start = Math.Max((int)(crudeTti * 60 * 0.8), 1);
+            var budget = Math.Max((int)(crudeTti * 60 * 1.2), 5);
 
             for (var step = 0; step <= budget; step++) // Budget + 1 steps
             {
@@ -1145,16 +1219,24 @@ namespace CoreSystems.Platform
                                 weaponPos + directionEstimate * (muzzleSpeed * t),
                                 (currentX.Translation - previousX.Translation) / dt
                             );
+                            
                             //MyAPIGateway.Utilities.ShowMessage("A", $"Found in {start}/{step}/{budget} used {step-start}");
-
-                            //DsDebugDraw.DrawSphere(new BoundingSphereD(targetPointState.Translation, 5.0), Color.Green);
 
                             return true;
                         }
                     }
 
                     //DsDebugDraw.DrawLine(new LineD(previousX.Translation, currentX.Translation), Color.Red.ToVector4(), 2.5f);
-                }   
+                }
+
+                if (step > 0)
+                {
+                    DsDebugDraw.DrawLine(
+                        new LineD(previousX.Translation + previousTargetOffsetWorld, currentX.Translation + targetOffsetWorld),
+                        Color.Red.ToVector4(),
+                        2.5f
+                    );
+                }
                 
                 previousX = currentX;
                 previousTargetOffsetWorld = targetOffsetWorld;
@@ -1192,6 +1274,170 @@ namespace CoreSystems.Platform
             
             return false;
         }
+        
+        private static bool CalculateAdvancedPdAimPrediction(Projectile targetProjectile, ref Vector3D targetPos, ref Vector3D targetVel, ref Vector3D weaponPos, ref Vector3D weaponVel, double crudeTti, double muzzleSpeed, out KineticState targetPointState, out double t)
+        {
+            const double dt = 1.0 / 60.0;
+
+            var targetAccel0 = (targetProjectile.PrevVelocity1 - targetProjectile.PrevVelocity0) / dt;
+            var targetAccel1 = (targetVel - targetProjectile.PrevVelocity1) / dt;
+
+            var targetAccel0N = targetAccel0.Length();
+            var targetAccel1N = targetAccel1.Length();
+            
+            if (targetAccel0N < 1.0 || targetAccel1N < 1.0)
+            {
+                targetPointState = new KineticState(targetPos, targetVel);
+                t = double.PositiveInfinity;
+                return false;
+            }
+
+            var e0 = targetAccel0 / targetAccel0N;
+            var e1 = targetAccel1 / targetAccel1N;
+            
+            // Twist axis:
+            var w = Vector3D.Cross(e0, e1);
+            var sinTheta = MathHelperD.Clamp(w.Length(), 0.0, 1.0);
+
+            if (sinTheta < 1e-6)
+            {
+                targetPointState = new KineticState(targetPos, targetVel);
+                t = double.PositiveInfinity;
+                return false;
+            }
+
+            w /= sinTheta;
+            
+            var cosTheta = MathHelperD.Clamp(Vector3D.Dot(e0, e1), -1.0, 1.0);
+            
+            var maxSpeed = targetProjectile.MaxSpeed;
+            var maxSpeedSqr = maxSpeed * maxSpeed;
+            
+            var targetAccelWorld = targetAccel1;
+            
+            var currentX = new KineticState(targetPos, targetVel);
+            var previousX = new KineticState();
+
+            // Reasonable bounds for the solution:
+            var start = Math.Max((int)(crudeTti * 60 * 0.8), 1);
+            var budget = Math.Max((int)(crudeTti * 60 * 1.2), 5);
+            
+            for (var step = 0; step <= budget; step++) // Budget + 1 steps
+            {
+                if (step > start)
+                {
+                    var a = previousX.Translation;
+                    var t0 = step * dt - dt;
+                    var d = currentX.Translation - a;
+                    var u = weaponVel - d / dt;
+                    var w1 = weaponPos - a + d * t0 / dt;
+                    // ReSharper disable InconsistentNaming
+                    // Honestly it would be best if we made a linear solver if A ~= 0. Maybe later
+                    var A = Vector3D.Dot(u, u) - muzzleSpeed * muzzleSpeed;
+                    var B = 2 * Vector3D.Dot(u, w1);
+                    var C = Vector3D.Dot(w1, w1);
+                    // ReSharper restore InconsistentNaming
+                    var delta = B * B - 4.0 * A * C;
+
+                    bool hasRoot;
+                    if (delta < 0.0)
+                    {
+                        hasRoot = false;
+                    }
+                    else
+                    {
+                        var t1Frame = t0 + dt;
+                        var f0 = A * t0 * t0 + B * t0 + C;
+                        var f1 = A * t1Frame * t1Frame + B * t1Frame + C;
+
+                        // If the sign changed over this interval, the interval contains the root:
+                        hasRoot = (f0 <= 0.0 && f1 >= 0.0) || (f0 >= 0.0 && f1 <= 0.0);
+
+                        if (!hasRoot)
+                        {
+                            // If the sign didn't change, it's still possible for the function to have both roots inside this interval.
+                            // To check this, we verify the signs of the function at the two ends against the sign of the function at the vertex:
+                            var tVertex = -B / (2.0 * A);
+                            if (tVertex > t0 && tVertex < t1Frame)
+                            {
+                                var fVertex = -delta / (4.0 * A);
+                                hasRoot = (f0 <= 0.0 && fVertex >= 0.0) || (f0 >= 0.0 && fVertex <= 0.0);
+                            }
+                        }
+                    }
+
+                    if (hasRoot)
+                    {
+                        delta = Math.Sqrt(delta);
+                        var t1 = (-B - delta) / (2.0 * A);
+                        var t2 = (-B + delta) / (2.0 * A);
+
+                        t = double.PositiveInfinity;
+
+                        if (t1 > t0 && t1 <= t0 + dt)
+                        {
+                            t = Math.Min(t, t1);
+                        }
+
+                        if (t2 > t0 && t2 <= t0 + dt)
+                        {
+                            t = Math.Min(t, t2);
+                        }
+
+                        if (!double.IsPositiveInfinity(t))
+                        {
+                            // Target GRID position:
+                            //var positionEstimate = a + d * (t - t0) / dt;
+
+                            // The actual launch direction:
+                            var directionEstimate = -(u * t + w1) / (muzzleSpeed * t);
+
+                            targetPointState = new KineticState(
+                                weaponPos + directionEstimate * (muzzleSpeed * t),
+                                (currentX.Translation - previousX.Translation) / dt
+                            );
+                            
+                            //MyAPIGateway.Utilities.ShowMessage("A", $"Found in {start}/{step}/{budget} used {step-start}");
+
+                            return true;
+                        }
+                    }
+                }
+
+                if (step > 0)
+                {
+                    DsDebugDraw.DrawLine(
+                        new LineD(previousX.Translation, currentX.Translation),
+                        Color.Red.ToVector4(),
+                        2.5f
+                    );
+                }
+                
+                previousX = currentX;
+                
+                currentX.LinearVelocity += targetAccelWorld * dt;
+                currentX.Translation += currentX.LinearVelocity * dt;
+
+                if (currentX.LinearVelocity.LengthSquared() > maxSpeedSqr)
+                {
+                    currentX.LinearVelocity = currentX.LinearVelocity.Normalized() * maxSpeed;
+                }
+                
+                // Rotates using the rotation formula. We can do this since it's a 2DOF rotation.
+                var r1 = targetAccelWorld * cosTheta;
+                var r2 = Vector3D.Cross(w, targetAccelWorld) * sinTheta;
+                var r3 = w * (Vector3D.Dot(w, targetAccelWorld) * (1.0 - cosTheta));
+
+                targetAccelWorld = r1 + r2 + r3;
+            }
+
+            targetPointState = new KineticState(targetPos, targetVel);
+            t = double.PositiveInfinity;
+            
+            return false;
+        }
+        
+        #endregion
         
         public void ManualShootRayCallBack(IHitInfo hitInfo)
         {

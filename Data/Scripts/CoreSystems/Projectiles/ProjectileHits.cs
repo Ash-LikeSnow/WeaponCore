@@ -592,7 +592,7 @@ namespace CoreSystems.Projectiles
             var aConst = p.Info.AmmoDef.Const;
 
             var isBeam = aConst.IsBeamWeapon;
-            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
+            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity1;
 
             var firstHitEntity = hit ? info.HitList[0] : null;
             var hitDist = hit ? firstHitEntity?.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
@@ -660,7 +660,8 @@ namespace CoreSystems.Projectiles
 
                 info.ExpandingEwarField = true;
                 p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                p.PrevVelocity = p.Velocity;
+                p.PrevVelocity0 = p.PrevVelocity1;
+                p.PrevVelocity1 = p.Velocity;
                 p.Velocity = Vector3D.Zero;
                 info.ProHit.LastHit = p.Position;
                 info.HitList.Clear();

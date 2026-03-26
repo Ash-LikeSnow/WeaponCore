@@ -257,7 +257,7 @@ namespace CoreSystems.Projectiles
                                 if (p.VelocityLengthSqr > maxSpeedSqr)
                                     newVel = p.Direction * curMaxSpeed;
                                 else
-                                    info.TotalAcceleration += (newVel - p.PrevVelocity);
+                                    info.TotalAcceleration += (newVel - p.PrevVelocity1);
 
                                 if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                                     newVel = p.Velocity;
