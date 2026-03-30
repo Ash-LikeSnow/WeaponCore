@@ -232,6 +232,7 @@ namespace CoreSystems
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
         internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
         internal readonly ConcurrentDictionary<ulong, ApproachStageDebug> ApproachStageChangeDebug = new ConcurrentDictionary<ulong, ApproachStageDebug>();
+        internal readonly ConcurrentDictionary<object, PersistentDebugDraw> PersistentDebugDraws = new ConcurrentDictionary<object, PersistentDebugDraw>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
