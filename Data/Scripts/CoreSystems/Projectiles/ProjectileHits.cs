@@ -474,7 +474,7 @@ namespace CoreSystems.Projectiles
                         crBeam = new LineD(beamFrom + weaponVel * dt, beamTo - (targetVel - weaponVel) * dt);
                         
                         grid.RayCastCells(crBeam.From, crBeam.To, hitEntity.Vector3ICache, null, true, true);
-                       
+                        /*
                         var txWorldTargetCr = MatrixD.Invert(grid.WorldMatrix);
                         var beamFromTarget = Vector3D.Transform(beamFrom, txWorldTargetCr);
                         var beamToTarget = Vector3D.Transform(beamTo, txWorldTargetCr);
@@ -521,6 +521,7 @@ namespace CoreSystems.Projectiles
                                 }
                             }
                         });
+                        */
                     }
 
                     if (!offensiveEwar && !fieldActive)
