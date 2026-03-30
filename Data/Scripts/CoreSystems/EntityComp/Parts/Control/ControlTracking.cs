@@ -70,7 +70,7 @@ namespace CoreSystems.Platform
                 topAi.RotorTargetPosition = targetCenter;
             }
             else
-                topAi.RotorTargetPosition = Weapon.TrajectoryEstimation(weapon, targetCenter, targetVel, targetAcc, shooterPos, out valid, false, cValues.Set.Overrides.AngularTracking);
+                topAi.RotorTargetPosition = Weapon.TrajectoryEstimation(weapon, targetCenter, targetVel, targetAcc, shooterPos, out valid);
             targetDirection = Vector3D.Normalize(topAi.RotorTargetPosition - shooterPos);
             return valid && Vector3D.DistanceSquared(topAi.RotorTargetPosition, shooterPos) < maxRangeSqr;
         }

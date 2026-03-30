@@ -397,19 +397,6 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddAction<T>(action);
             session.CustomActions.Add(action);
         }
-        public static void CreateAngularTracking(Session session)
-        {
-            var action = MyAPIGateway.TerminalControls.CreateAction<T>("AngularTracking");
-            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder(Localization.GetText("TrackAngular"));
-            action.Action = CustomActions.TerminalActionToggleAngularTracking;
-            action.Writer = CustomActions.AngularTrackingWriter;
-            action.Enabled = TerminalHelpers.TrackGrids;
-            action.ValidForGroups = true;
-
-            MyAPIGateway.TerminalControls.AddAction<T>(action);
-            session.CustomActions.Add(action);
-        }
 
         internal static void CreateObjectiveMode(Session session)
         {

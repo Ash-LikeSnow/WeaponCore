@@ -32,7 +32,7 @@ namespace CoreSystems.Platform
 
             var validEstimate = true;
             if (prediction != Prediction.Off && !weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
-                targetPos = TrajectoryEstimation(weapon, targetCenter, targetLinVel, targetAccel, weapon.MyPivotPos, out validEstimate, true);
+                targetPos = TrajectoryEstimation(weapon, targetCenter, targetLinVel, targetAccel, weapon.MyPivotPos, out validEstimate);
             else
                 targetPos = targetCenter;
             var targetDir = targetPos - weapon.MyPivotPos;
@@ -100,7 +100,7 @@ namespace CoreSystems.Platform
                 var accel = targParent.Physics.LinearAcceleration;
                 bool validEstimate;
                 if (!weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
-                    targetPos = TrajectoryEstimation(weapon, targetPos, vel, accel, weapon.Comp.Cube.PositionComp.WorldAABB.Center, out validEstimate, false, weapon.Comp.Data.Repo.Values.Set.Overrides.AngularTracking);
+                    targetPos = TrajectoryEstimation(weapon, targetPos, vel, accel, weapon.Comp.Cube.PositionComp.WorldAABB.Center, out validEstimate);
             }
             return targetPos;
         }
@@ -122,7 +122,7 @@ namespace CoreSystems.Platform
             var validEstimate = true;
 
             if (!weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
-                targetPos = TrajectoryEstimation(weapon, obb.Center, vel, accel, weapon.MyPivotPos, out validEstimate, false, weapon.Comp.Data.Repo.Values.Set.Overrides.AngularTracking);
+                targetPos = TrajectoryEstimation(weapon, obb.Center, vel, accel, weapon.MyPivotPos, out validEstimate);
             else
                 targetPos = obb.Center;
 
@@ -180,7 +180,7 @@ namespace CoreSystems.Platform
             var validEstimate = true;
             
             if (prediction != Prediction.Off && !weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
-                targetPos = TrajectoryEstimation(weapon, obb.Center, targetLinVel, targetAccel, weapon.MyPivotPos,  out validEstimate, true);
+                targetPos = TrajectoryEstimation(weapon, obb.Center, targetLinVel, targetAccel, weapon.MyPivotPos,  out validEstimate);
             else
                 targetPos = obb.Center;
 
@@ -358,7 +358,7 @@ namespace CoreSystems.Platform
                 if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
                 if (w.PosChangedTick != Session.I.SimulationCount)
                     w.UpdatePivotPos();
-                targetPos = TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, w.MyPivotPos,  out validEstimate, false, baseData.Set.Overrides.AngularTracking);
+                targetPos = TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, w.MyPivotPos,  out validEstimate);
                 w.Target.ValidEstimate = validEstimate;
             }
             else
@@ -838,7 +838,6 @@ namespace CoreSystems.Platform
                     case TargetType.Grid:
                     {
                         var attemptAdvancedGridPrediction =
-                            allowAdvancedGridAlgorithm &&
                             GridTarget?.Physics != null &&
                             !GridTarget.Closed &&
                             (
@@ -863,9 +862,7 @@ namespace CoreSystems.Platform
             Vector3D targetVel0, 
             Vector3D targetAccel0,
             Vector3D shooterPos0,
-            out bool valid,
-            bool basicPrediction = false, 
-            bool trackAngular = false)
+            out bool valid)
         {
             valid = false;
             var weaponComp = weapon.Comp;
@@ -887,7 +884,7 @@ namespace CoreSystems.Platform
             var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
             var targAccelSqr = targetAccel0.LengthSquared();
             var targVelSqr = targetVel0.LengthSquared();
-            var useSimple = basicPrediction || ammoDef.Const.AmmoSkipAccel || targAccelSqr < 2.5; //equal to approx 1.58 m/s
+            var useSimple = ammoDef.Const.AmmoSkipAccel || targAccelSqr < 2.5; //equal to approx 1.58 m/s
 
             if (updateGravity && session.Tick - weapon.GravityTick > 119)
             {
@@ -928,8 +925,8 @@ namespace CoreSystems.Platform
             // Determines which prediction algorithm to run based on available information and weapon config:
             var algorithmToTry = targetDescription.DecidePredictionAlgorithm(
                 targAccelSqr, targVelSqr,
-                allowAdvancedGridAlgorithm: trackAngular, // Also, should basicPrediction be introduced here?
-                allowAdvancedProjectileAlgorithm: weapon.System.UseLimitlessPDSolver
+                allowAdvancedGridAlgorithm: (int)weapon.System.Prediction > 1,
+                allowAdvancedProjectileAlgorithm: (int)weapon.System.Prediction > 1 && weapon.System.UseLimitlessPDSolver
             );
 
             // The approximate frame at intercept time.
