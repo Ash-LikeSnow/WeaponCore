@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -28,7 +29,6 @@ namespace CoreSystems.Api
 
         internal ApiBackend()
         {
-
             ModApiMethods = new Dictionary<string, Delegate>
             {
                 ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallbackLegacy),
@@ -162,7 +162,16 @@ namespace CoreSystems.Api
                 ["RegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(RegisterEventMonitorCallback),
                 ["UnRegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(UnRegisterEventMonitorCallback),
 
+                // Trajectory Prediction
+                ["RegisterTrajectoryPredictionShipVelocityConstraint"] = new Action<Func<MyCubeGrid, MyTuple<double, bool>>>(RegisterTrajectoryPredictionShipVelocityConstraint),
+                ["RegisterTrajectoryPredictionShipAccelEstimator"] = new Action<Func<MyCubeGrid, Vector3D>>(RegisterTrajectoryPredictionShipAccelEstimator),
+                ["RegisterTrajectoryPredictionExternalForce"] = new Action<Func<MyCubeGrid, Vector3D, Vector3D, Vector3D>>(RegisterTrajectoryPredictionExternalForce),
+                
+                // Subsystem Targeting Overrides
+                ["RegisterSubsystemBlockFilter"] = new Action<string, Func<MyCubeBlock, string>, Func<MyCubeBlock, int, MyCubeBlock, int, bool>>(RegisterSubsystemBlockFilter),
+                ["RemoveSubsystemBlockFilter"] = new Func<string, bool>(RemoveSubsystemBlockFilter)
             };
+            
             PbApiMethods = new Dictionary<string, Delegate> 
             {
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
@@ -222,9 +231,7 @@ namespace CoreSystems.Api
             }
 
             _safeDictionary = builder.ToImmutable();
-
         }
-
 
         internal void PbInit()
         {
@@ -1808,6 +1815,136 @@ namespace CoreSystems.Api
                 Session.I.GlobalDamageHandlerActive = true;
                 Session.I.SystemWideDamageRegistrants[modId] = oldEventReq;
             }
+        }
+        
+        // Max Speed, Apply After Step
+        private static void RegisterTrajectoryPredictionShipVelocityConstraint(Func<MyCubeGrid, MyTuple<double, bool>> constraint)
+        {
+            if (Session.I.TrajectoryPredictionShipVelocityConstraint != null)
+            {
+                throw new Exception("Duplicate ship velocity constraint!");
+            }
+            
+            Session.I.TrajectoryPredictionShipVelocityConstraint = constraint;
+        }
+
+        // Thruster accel
+        private static void RegisterTrajectoryPredictionShipAccelEstimator(Func<MyCubeGrid, Vector3D> estimator)
+        {
+            if (Session.I.TrajectoryPredictionShipAccelEstimator != null)
+            {
+                throw new Exception("Duplicate ship accel estimator!");
+            }
+
+            Session.I.TrajectoryPredictionShipAccelEstimator = estimator;
+        }
+
+        // Position, Velocity, Accel
+        private static void RegisterTrajectoryPredictionExternalForce(Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> accel)
+        {
+            if (Session.I.TrajectoryPredictionExternalForce != null)
+            {
+                throw new Exception("Duplicate trajectory prediction external force!");
+            }
+            
+            Session.I.TrajectoryPredictionExternalForce = accel;
+        }
+
+        internal sealed class ModApiSubsystemTargetingCustomization
+        {
+            /// <summary>
+            ///     Represents a predicate added by a mod. Has an ID which allows compat.
+            /// </summary>
+            public struct SubsystemFilter
+            {
+                /// <summary>
+                ///     Unique ID, from the mod that registered the filter.
+                /// </summary>
+                public readonly string ModificationId;
+                /// <summary>
+                ///     Supplier for a message displayed to the user, to indicate the imposed limits.
+                /// </summary>
+                public readonly Func<MyCubeBlock, string> UserDisplaySupplier;
+                /// <summary>
+                ///     The actual predicate, which is added at after WC checks.
+                ///     If it returns false, the targeted block is discarded.
+                /// </summary>
+                public readonly Func<MyCubeBlock, int, MyCubeBlock, int, bool> Predicate;
+                
+                public SubsystemFilter(string modificationId, Func<MyCubeBlock, string> userDisplaySupplier, Func<MyCubeBlock, int, MyCubeBlock, int, bool> predicate)
+                {
+                    ModificationId = modificationId;
+                    UserDisplaySupplier = userDisplaySupplier;
+                    Predicate = predicate;
+                }
+            }
+
+            public SubsystemFilter[] Filters = Array.Empty<SubsystemFilter>();
+
+            /// <summary>
+            ///     Adds a filter. If there is a filter with the same name already, an exception is thrown.
+            /// </summary>
+            /// <param name="filter"></param>
+            /// <exception cref="Exception">Thrown if there is a filter with the same name already.</exception>
+            public void Register(SubsystemFilter filter)
+            {
+                if (Filters.Any(x => x.ModificationId == filter.ModificationId))
+                {
+                    throw new Exception($"Duplicate ModAPI subsystem filter ID \"{filter.ModificationId}\"");
+                }
+
+                var list = Filters.ToList();
+                list.Add(filter);
+                Filters = list.ToArray();
+            }
+
+            /// <summary>
+            ///     Tries to remove a filter by its ID.
+            /// </summary>
+            /// <param name="filterId">The ID the filter was registered with.</param>
+            /// <returns>True, if the filter was found and removed. Otherwise, false.</returns>
+            public bool RemoveById(string filterId)
+            {
+                var list = Filters.ToList();
+                var removed = list.RemoveAll(x => x.ModificationId.Equals(filterId)) > 0;
+                Filters = list.ToArray();
+                return removed;
+            }
+        }
+
+        // display: Weapon block, returns player-readable limits 
+        // predicate: Weapon Block, Part ID, Enemy Block, WeaponDefinition.TargetingDef.BlockTypes, returns false if the block is not allowed
+        private static void RegisterSubsystemBlockFilter(
+            string filterId,
+            Func<MyCubeBlock, string> display,
+            Func<MyCubeBlock, int, MyCubeBlock, int, bool> predicate)
+        {
+            if (Session.I.SubsystemTargetingCustomization == null)
+            {
+                Session.I.SubsystemTargetingCustomization = new ModApiSubsystemTargetingCustomization();
+            }
+
+            Session.I.SubsystemTargetingCustomization.Register(new ModApiSubsystemTargetingCustomization.SubsystemFilter(filterId, display, predicate));
+        }
+
+        private static bool RemoveSubsystemBlockFilter(string filterId)
+        {
+            if (Session.I.SubsystemTargetingCustomization == null)
+            {
+                return false;
+            }
+
+            var result = Session.I.SubsystemTargetingCustomization.RemoveById(filterId);
+            
+            if (result)
+            {
+                if (Session.I.SubsystemTargetingCustomization.Filters.Length == 0)
+                {
+                    Session.I.SubsystemTargetingCustomization = null;
+                }
+            }
+
+            return result;
         }
     }
 }

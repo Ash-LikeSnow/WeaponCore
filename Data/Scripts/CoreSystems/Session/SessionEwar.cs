@@ -20,7 +20,7 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        private readonly Dictionary<MyCubeGrid, Dictionary<EwarType, GridEffect>> _gridEffects = new Dictionary<MyCubeGrid, Dictionary<EwarType, GridEffect>>(128);
+        internal readonly Dictionary<MyCubeGrid, Dictionary<EwarType, GridEffect>> _gridEffects = new Dictionary<MyCubeGrid, Dictionary<EwarType, GridEffect>>(128);
         internal readonly MyConcurrentPool<Dictionary<EwarType, GridEffect>> GridEffectsPool = new MyConcurrentPool<Dictionary<EwarType, GridEffect>>(128, effect => effect.Clear());
         internal readonly MyConcurrentPool<GridEffect> GridEffectPool = new MyConcurrentPool<GridEffect>(128, effect => effect.Clean());
         internal readonly Dictionary<long, BlockState> EffectedCubes = new Dictionary<long, BlockState>();
@@ -233,9 +233,6 @@ namespace CoreSystems
                     var d = ammoDef.DamageScales;
                     if (d.MaxIntegrity > 0 && blockHp > d.MaxIntegrity || blockHp <= 0) continue;
 
-                    if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
-                    else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
-
                     MyDefinitionBase blockDef = null;
                     if (aConst.ArmorScaling)
                     {
@@ -260,8 +257,12 @@ namespace CoreSystems
                         if (found) damageScale *= modifier;
                         else if (ammoDef.DamageScales.Custom.IgnoreAllOthers) continue;
                     }
+                    if (aConst.GridScaling)
+                    {
+                        if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
+                        else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
+                    }
                 }
-
                 var scaledDamage = damagePool * damageScale * block.BlockGeneralDamageModifier * grid.GridGeneralDamageModifier;
                 healthPool -= 1;
 

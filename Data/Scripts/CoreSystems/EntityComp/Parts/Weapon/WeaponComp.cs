@@ -672,9 +672,6 @@ namespace CoreSystems.Platform
                     case "Override":
                         o.Override = enabled;
                         break;
-                    case "AngularTracking":
-                        o.AngularTracking = enabled;
-                        break;
                     case "LargeGrid":
                         o.LargeGrid = enabled;
                         clearTargets = true;

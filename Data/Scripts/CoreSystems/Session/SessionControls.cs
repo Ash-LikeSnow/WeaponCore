@@ -220,7 +220,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
-            CreateCustomActions<T>.CreateAngularTracking(session);
+            //CreateCustomActions<T>.CreateAngularTracking(session);
             CreateCustomActions<T>.CreateControlModes(session);
             CreateCustomActions<T>.CreateObjectiveMode(session);
             CreateCustomActions<T>.CreateMovementState(session);
@@ -553,7 +553,6 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
             "WC_Shoot",
-            "WC_AngularTracking",
             "WC_Repel",
             "WC_Unowned",
             "WC_Supporting PD",
@@ -579,7 +578,6 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>
         {
             "WC_Shoot",
-            "AngularTracking",
             "WC_RepelMode",
             //"ShootToggle",
             "ObjectiveMode",

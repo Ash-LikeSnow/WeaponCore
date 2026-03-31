@@ -180,6 +180,7 @@ namespace CoreSystems.Support
         public readonly bool DegRof;
         public readonly bool ProhibitCoolingWhenOff;
         public readonly bool PainterUseMaxTargeting;
+        public readonly bool UseLimitlessPDSolver;
         public readonly bool TrackProjectile;
         public readonly bool DisableSupportingPD;
         public readonly bool ScanTrackOnly;
@@ -374,6 +375,7 @@ namespace CoreSystems.Support
             HasScope = !string.IsNullOrEmpty(Values.Assignments.Scope);
             AltScopeName = HasScope ? "subpart_" + Values.Assignments.Scope : string.Empty;
             PainterUseMaxTargeting = Values.HardPoint.Ai.PainterUseMaxTargeting;
+            UseLimitlessPDSolver = values.HardPoint.Ai.UseLimitlessPDSolver;
             TurretMovements(out AzStep, out ElStep, out MinAzimuth, out MaxAzimuth, out MinElevation, out MaxElevation, out HomeAzimuth, out HomeElevation, out TurretMovement);
             Heat(out DegRof, out MaxHeat, out WepCoolDown, out ProhibitCoolingWhenOff, out HeatThresholdStart, out HeatThresholdEnd, out RofAt0Heat, out RofAt100Heat, out HeatSinkRateOverheatMult);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);

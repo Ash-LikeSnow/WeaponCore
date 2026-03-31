@@ -232,6 +232,7 @@ namespace CoreSystems
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
         internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
         internal readonly ConcurrentDictionary<ulong, ApproachStageDebug> ApproachStageChangeDebug = new ConcurrentDictionary<ulong, ApproachStageDebug>();
+        internal readonly ConcurrentDictionary<object, PersistentDebugDraw> PersistentDebugDraws = new ConcurrentDictionary<object, PersistentDebugDraw>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
@@ -342,6 +343,10 @@ namespace CoreSystems
         /// WcApi function for checking if a weapon's target is allowed. Defaults true if null.
         /// </summary>
         internal Func<IMyTerminalBlock, int, MyEntity, bool> ValidateWeaponTargetFunc = null;
+        /// <summary>
+        /// WcApi filters for the subsystem blocks. Left null until a mod registers a filter.
+        /// </summary>
+        internal ApiBackend.ModApiSubsystemTargetingCustomization SubsystemTargetingCustomization = null;
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
@@ -612,6 +617,10 @@ namespace CoreSystems
 
         public static T CastProhibit<T>(T ptr, object val) => (T) val;
 
+        internal Func<MyCubeGrid, MyTuple<double, bool>> TrajectoryPredictionShipVelocityConstraint;
+        internal Func<MyCubeGrid, Vector3D> TrajectoryPredictionShipAccelEstimator;
+        internal Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> TrajectoryPredictionExternalForce;
+        
         public Session()
         {
             I = this;

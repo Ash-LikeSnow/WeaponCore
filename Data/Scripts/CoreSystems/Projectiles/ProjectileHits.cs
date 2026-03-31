@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Support;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
@@ -240,6 +241,10 @@ namespace CoreSystems.Projectiles
                 var voxel = ent as MyVoxelBase;
                 var destroyable = ent as IMyDestroyableObject;
 
+                // Beam recomputed for continuous collision resolution.
+                // Calculated below, when the target is an enemy grid.
+                var crBeam = p.Beam;
+                
                 if (voxel != null && voxel == voxel?.RootVoxel && !ignoreVoxels)
                 {
                     VoxelIntersectBranch voxelState = VoxelIntersectBranch.None;
@@ -460,7 +465,64 @@ namespace CoreSystems.Projectiles
                         }
                     }
                     else
-                        grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
+                    {
+                        const double dt = 1.0 / 60.0;
+                        var targetVel = (Vector3D)grid.Physics.LinearVelocity;
+                        var weaponVel = p.Info.ShooterVel;
+                        
+                        // Continuous collision detection @home:
+                        crBeam = new LineD(beamFrom + weaponVel * dt, beamTo - (targetVel - weaponVel) * dt);
+                        
+                        grid.RayCastCells(crBeam.From, crBeam.To, hitEntity.Vector3ICache, null, true, true);
+                        /*
+                        var txWorldTargetCr = MatrixD.Invert(grid.WorldMatrix);
+                        var beamFromTarget = Vector3D.Transform(beamFrom, txWorldTargetCr);
+                        var beamToTarget = Vector3D.Transform(beamTo, txWorldTargetCr);
+                        var crBeamFromTarget = Vector3D.Transform(crBeam.From, txWorldTargetCr);
+                        var crBeamToTarget = Vector3D.Transform(crBeam.To, txWorldTargetCr);
+
+                        var cells = hitEntity.Vector3ICache.ToList();
+                        Session.PersistentDebugDraw.GetOrAttachForEntity(grid, p.Info.Id, int.MaxValue).With(() =>
+                        {
+                            var txTargetWorld = grid.WorldMatrix;
+                            
+                            // Previous WC resolution:
+                            DsDebugDraw.DrawLine(
+                                Vector3D.Transform(beamFromTarget, txTargetWorld),
+                                Vector3D.Transform(beamToTarget, txTargetWorld),
+                                Color.Red.ToVector4(),
+                                0.25f
+                            );
+                            
+                            // New collision resolution:
+                            DsDebugDraw.DrawLine(
+                                Vector3D.Transform(crBeamFromTarget, txTargetWorld),
+                                Vector3D.Transform(crBeamToTarget, txTargetWorld),
+                                Color.White.ToVector4(),
+                                0.25f
+                            );
+
+                            var blocks = new HashSet<IMySlimBlock>();
+                            foreach (var vector3I in cells)
+                            {
+                                var slim = (grid as IMyCubeGrid).GetCubeBlock(vector3I);
+
+                                if (slim != null && blocks.Add(slim))
+                                {
+                                    var gridSize = grid.GridSize;
+                                    
+                                    var obb = new MyOrientedBoundingBoxD(new BoundingBoxD(
+                                        slim.Min * gridSize - gridSize / 2f,
+                                        slim.Max * gridSize + gridSize / 2f),
+                                        grid.WorldMatrix
+                                    );
+                                    
+                                    DsDebugDraw.DrawBox(obb, Color.White);
+                                }
+                            }
+                        });
+                        */
+                    }
 
                     if (!offensiveEwar && !fieldActive)
                     {
@@ -493,7 +555,7 @@ namespace CoreSystems.Projectiles
                         hitEntity.Info = info;
                         hitEntity.Entity = hitEnt;
                         hitEntity.ShieldEntity = ent;
-                        hitEntity.Intersection = p.Beam;
+                        hitEntity.Intersection = crBeam;
                         hitEntity.SphereCheck = !lineCheck;
                         hitEntity.PruneSphere = p.PruneSphere;
                         hitEntity.SelfHit = entIsSelf;
@@ -592,7 +654,7 @@ namespace CoreSystems.Projectiles
             var aConst = p.Info.AmmoDef.Const;
 
             var isBeam = aConst.IsBeamWeapon;
-            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
+            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity1;
 
             var firstHitEntity = hit ? info.HitList[0] : null;
             var hitDist = hit ? firstHitEntity?.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
@@ -660,7 +722,8 @@ namespace CoreSystems.Projectiles
 
                 info.ExpandingEwarField = true;
                 p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                p.PrevVelocity = p.Velocity;
+                p.PrevVelocity0 = p.PrevVelocity1;
+                p.PrevVelocity1 = p.Velocity;
                 p.Velocity = Vector3D.Zero;
                 info.ProHit.LastHit = p.Position;
                 info.HitList.Clear();

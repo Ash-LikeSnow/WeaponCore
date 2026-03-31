@@ -35,8 +35,9 @@ namespace CoreSystems.Projectiles
         internal Vector3D Direction;
 
         internal Vector3D LastPosition;
-        internal Vector3D Velocity;
-        internal Vector3D PrevVelocity;
+        internal Vector3D PrevVelocity0; // Step N-2
+        internal Vector3D PrevVelocity1; // Step N-1
+        internal Vector3D Velocity; // Step N (current step)
         internal Vector3D TravelMagnitude;
         internal Vector3D TargetPosition;
         internal Vector3D OffsetTarget;
@@ -340,7 +341,18 @@ namespace CoreSystems.Projectiles
             {
                 Session.I.MonitoredProjectiles[Info.Id] = this;
                 for (int j = 0; j < monitor.Count; j++)
-                    monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
+                {
+                    try
+                    {
+                        monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
+                    }
+                    catch (Exception e)
+                    {
+                        var msg = $"!!! WC Projectile Monitor Exception !!! \n {e}";
+                        Log.Line(msg);
+                        MyLog.Default.WriteLine(msg);
+                    }
+                }
             }
         }
         #endregion
@@ -792,9 +804,10 @@ namespace CoreSystems.Projectiles
                 proposedVel = Direction * speedCap;
             }
             else
-                Info.TotalAcceleration += (proposedVel - PrevVelocity);
+                Info.TotalAcceleration += (proposedVel - PrevVelocity1);
 
-            PrevVelocity = Velocity;
+            PrevVelocity0 = PrevVelocity1;
+            PrevVelocity1 = Velocity;
             if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                 proposedVel = Velocity;
 
@@ -3350,7 +3363,8 @@ namespace CoreSystems.Projectiles
             if (!Info.ExpandingEwarField && Info.AmmoDef.Const.EwarField && (VelocityLengthSqr <= 0 || EndState == EndStates.AtMaxRange) && !Info.AmmoDef.Const.IsMine)
             {
                 Info.ExpandingEwarField = true;
-                PrevVelocity = Velocity;
+                PrevVelocity0 = PrevVelocity1;
+                PrevVelocity1 = Velocity;
                 Velocity = Vector3D.Zero;
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                 DeaccelRate = 0;

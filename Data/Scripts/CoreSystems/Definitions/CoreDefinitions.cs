@@ -566,6 +566,7 @@ namespace CoreSystems.Support
                 [ProtoMember(8)] internal int DefaultLeadGroup;
                 [ProtoMember(9)] internal bool TargetGridCenter;
                 [ProtoMember(10)] internal bool PainterUseMaxTargeting;
+                [ProtoMember(11)] internal bool UseLimitlessPDSolver;
             }
 
             [ProtoContract]
