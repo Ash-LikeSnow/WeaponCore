@@ -329,18 +329,6 @@ namespace CoreSystems.Control
             Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", newValue, Session.I.PlayerId);
         }
 
-        internal static void TerminalActionToggleAngularTracking(IMyTerminalBlock blk)
-        {
-            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            var newBool = !comp.Data.Repo.Values.Set.Overrides.AngularTracking;
-            var newValue = newBool ? 1 : 0;
-
-            Weapon.WeaponComponent.RequestSetValue(comp, "AngularTracking", newValue, Session.I.PlayerId);
-        }
-
         internal static void TerminalActionToggleFocusTargets(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -708,17 +696,6 @@ namespace CoreSystems.Control
             else
                 sb.Append(Localization.GetText("ActionStateOff"));
         }
-
-        internal static void AngularTrackingWriter(IMyTerminalBlock blk, StringBuilder sb)
-        {
-            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            if (comp.Data.Repo.Values.Set.Overrides.AngularTracking)
-                sb.Append(Localization.GetText("ActionStateOn"));
-            else
-                sb.Append(Localization.GetText("ActionStateOff"));
-        }
-
 
         internal static void FocusTargetsWriter(IMyTerminalBlock blk, StringBuilder sb)
         {

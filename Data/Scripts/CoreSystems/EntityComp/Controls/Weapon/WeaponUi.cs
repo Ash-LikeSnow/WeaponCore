@@ -349,21 +349,6 @@ namespace CoreSystems
             Weapon.WeaponComponent.RequestSetValue(comp, "Override", value, Session.I.PlayerId);
         }
 
-        internal static bool GetAngularTracking(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
-            return comp.Data.Repo.Values.Set.Overrides.AngularTracking;
-        }
-
-        internal static void RequestAngularTracking(IMyTerminalBlock block, bool newValue)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "AngularTracking", value, Session.I.PlayerId);
-        }
         internal static bool GetUnowned(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

@@ -647,7 +647,7 @@ namespace CoreSystems
         [ProtoMember(31)] public bool AiEnabled = true;
         [ProtoMember(32), DefaultValue(true)] public bool LargeGrid = true;
         [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
-        [ProtoMember(34)] public bool AngularTracking;
+        //[ProtoMember(34)] public bool AngularTracking; // Deprecated
         [ProtoMember(35), DefaultValue(true)] public bool SupportingPD = true;
         [ProtoMember(36), DefaultValue(ObjectiveModes.Default)] public ObjectiveModes ObjectiveMode = ObjectiveModes.Default;
 

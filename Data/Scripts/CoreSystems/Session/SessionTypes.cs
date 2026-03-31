@@ -881,7 +881,151 @@ namespace CoreSystems
             internal Vector3D Position;
             internal uint CreateTick;
         }
+        
+        internal abstract class PersistentDebugDraw
+        {
+            public object ReuseToken { get; }
+            
+            private readonly int _removeAfter;
+            private readonly uint _startTick;
+            
+            public PersistentDebugDraw(object reuseToken, int removeAfter)
+            {
+                ReuseToken = reuseToken;
+                _removeAfter = removeAfter;
+                _startTick = I.Tick;
+            }
+            
+            public bool RenderAndKeepAlive()
+            {
+                if (I.Tick - _startTick > _removeAfter)
+                {
+                    return false;
+                }
 
+                return RenderAndKeepAliveCore();
+            }
+
+            protected abstract bool RenderAndKeepAliveCore();
+            
+            public virtual void OnDestroy() { }
+
+            private static bool TokensMatch(object a, object b)
+            {
+                if (a == null && b != null || a != null && b == null)
+                {
+                    return false;
+                }
+
+                if (a == null)
+                {
+                    return true;
+                }
+
+                return a.Equals(b);
+            }
+            
+            public static EntityDebug<T> GetOrAttachForEntity<T>(T target, object reuseToken = null, int removeAfter = 10 * 60) where T : MyEntity
+            {
+                var result = (EntityDebug<T>) I.PersistentDebugDraws.AddOrUpdate(target, o =>  new EntityDebug<T>(target, reuseToken, removeAfter), (o, previous) =>
+                {
+                    var previousEntityDraw = previous as EntityDebug<T>;
+                    
+                    if (previousEntityDraw != null && TokensMatch(previousEntityDraw.ReuseToken, reuseToken))
+                    {
+                        return previous;
+                    }
+                    
+                    previous.OnDestroy();
+                    return new EntityDebug<T>(target, reuseToken, removeAfter);
+                });
+                
+                return result;
+            }
+            
+            public sealed class EntityDebug<TEntity> : PersistentDebugDraw<TEntity> where TEntity : MyEntity
+            {
+                public EntityDebug(TEntity context, object reuseToken, int removeAfter) : base(context, reuseToken, removeAfter) { }
+                protected override IDisposable CreateUsageRegion() => Context.Pin();
+                protected override bool IsContextDestroyed() => Context.Closed || Context.MarkedForClose;
+            }
+        }
+
+        internal abstract class PersistentDebugDraw<TContext> : PersistentDebugDraw
+        {
+            public TContext Context { get; }
+            private readonly List<Func<TContext, bool>> _renderers = new List<Func<TContext, bool>>();
+            private readonly object _renderersLock = new object();
+            
+            public PersistentDebugDraw(TContext context, object reuseToken, int removeAfter) : base(reuseToken, removeAfter)
+            {
+                Context = context;
+            }
+            
+            public PersistentDebugDraw<TContext> With(Func<TContext, bool> draw)
+            {
+                lock (_renderersLock)
+                {
+                    _renderers.Add(draw);
+                }
+             
+                return this;
+            }
+
+            public PersistentDebugDraw<TContext> With(Action<TContext> draw) => With(x =>
+            {
+                draw.Invoke(x);
+                return true;
+            });
+
+            public PersistentDebugDraw<TContext> With(Action draw) => With(x =>
+            {
+                draw.Invoke();
+                return true;
+            });
+
+            public void Clear()
+            {
+                lock (_renderersLock)
+                {
+                    _renderers.Clear();
+                }
+            }
+            
+            protected virtual IDisposable CreateUsageRegion()
+            {
+                return null;
+            }
+
+            protected virtual bool IsContextDestroyed()
+            {
+                return false;
+            }
+            
+            protected override bool RenderAndKeepAliveCore()
+            {
+                var region = CreateUsageRegion();
+                
+                try
+                {
+                    if (IsContextDestroyed())
+                    {
+                        return false;
+                    }
+                    
+                    lock (_renderersLock)
+                    {
+                        _renderers.RemoveAll(x => !x.Invoke(Context));
+                        return _renderers.Count > 0;
+                    }
+                }
+                finally
+                {
+                    region?.Dispose();    
+                }
+            }
+        }
+        
         internal struct TickLatency
         {
             internal float CurrentLatency;

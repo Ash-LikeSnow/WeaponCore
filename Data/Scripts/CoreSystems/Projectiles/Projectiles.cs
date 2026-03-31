@@ -84,7 +84,7 @@ namespace CoreSystems.Projectiles
             if (Session.I.EffectedCubes.Count > 0)
                 Session.I.ApplyGridEffect();
 
-            if (Session.I.Tick60)
+            if (Session.I._gridEffects.Count > 0)
                 Session.I.GridEffects();
 
             if (Session.I.IsClient && (Session.I.CurrentClientEwaredCubes.Count > 0 || Session.I.ActiveEwarCubes.Count > 0) && (Session.I.ClientEwarStale || Session.I.Tick120))
@@ -257,7 +257,7 @@ namespace CoreSystems.Projectiles
                                 if (p.VelocityLengthSqr > maxSpeedSqr)
                                     newVel = p.Direction * curMaxSpeed;
                                 else
-                                    info.TotalAcceleration += (newVel - p.PrevVelocity);
+                                    info.TotalAcceleration += (newVel - p.PrevVelocity1);
 
                                 if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                                     newVel = p.Velocity;

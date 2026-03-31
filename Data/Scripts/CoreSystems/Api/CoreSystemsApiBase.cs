@@ -99,6 +99,13 @@ namespace CoreSystems.Api
         private Action<Action<MyCubeGrid, BoundingSphereD, List<MyEntity>>> _removeScanTargetsAction;
         private Action<Func<IMyTerminalBlock, int, MyEntity, bool>> _setValidateWeaponTargetFunc;
 
+        private Action<Func<MyCubeGrid, MyTuple<double, bool>>> _registerTrajectoryPredictionShipVelocityConstraint;
+        private Action<Func<MyCubeGrid, Vector3D>> _registerTrajectoryPredictionShipAccelEstimator;
+        private Action<Func<MyCubeGrid, Vector3D, Vector3D, Vector3D>> _registerTrajectoryPredictionExternalForce;
+        
+        private Action<string, Func<MyCubeBlock, string>, Func<MyCubeBlock, int, MyCubeBlock, int, bool>> _registerSubsystemBlockFilter;
+        private Func<string, bool> _removeSubsystemBlockFilter;
+        
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
 
@@ -526,6 +533,63 @@ namespace CoreSystems.Api
         public readonly List<WcApiDef.WeaponDefinition> WeaponDefinitions = new List<WcApiDef.WeaponDefinition>();
 
         /// <summary>
+        ///     Registers a max speed constraint for the ship.
+        ///     Can only be called once.
+        ///     First value is the max speed, and second value indicates whether the max speed should be applied after the velocity step.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionShipVelocityConstraint(Func<MyCubeGrid, MyTuple<double, bool>> function)
+        {
+            _registerTrajectoryPredictionShipVelocityConstraint?.Invoke(function);
+        }
+
+        /// <summary>
+        ///     Registers a thrust estimator for the ship. It returns the acceleration the engines would produce if no other external forces and constraints existed. 
+        ///     Can only be called once.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionShipAccelEstimator(Func<MyCubeGrid, Vector3D> function)
+        {
+            _registerTrajectoryPredictionShipAccelEstimator?.Invoke(function);
+        }
+
+        /// <summary>
+        ///     Registers a dynamic force acting on the ship.
+        ///     The parameters are the estimated position and velocity of the grid, and the result is the external force acting on the ship.
+        ///     Can only be called once.
+        /// </summary>
+        /// <param name="function"></param>
+        public void RegisterTrajectoryPredictionExternalForce(Func<MyCubeGrid, Vector3D, Vector3D, Vector3D> function)
+        {
+            _registerTrajectoryPredictionExternalForce?.Invoke(function);
+        }
+
+        /// <summary>
+        ///     Registers a filter for targeted blocks, which is applied after the normal WC selection.
+        /// </summary>
+        /// <param name="filterId">An unique ID for the filter. Used by other mods (for example, a server's core mod) to remove the filter, if needed.</param>
+        /// <param name="display">A method which returns the filters applied to the specific weapon block, in a player-readable format. This must include everything. The results are appended to the end of the weapon terminal's output.</param>
+        /// <param name="predicate">
+        ///     The predicate itself.
+        ///     The first parameter is the weapon block, the second parameter is the part ID, the third parameter is the targeted block, the third parameter is the subsystem type.
+        ///     Return false if the block will be blacklisted. This method must yield consistent results, and all blacklisted targets must show up in the display supplier!
+        /// </param>
+        public void RegisterSubsystemBlockFilter(string filterId, Func<MyCubeBlock, string> display, Func<MyCubeBlock, int, MyCubeBlock, int, bool> predicate)
+        {
+            _registerSubsystemBlockFilter.Invoke(filterId, display, predicate);
+        }
+
+        /// <summary>
+        ///     Removes a subsystem block filter. Useful for servers; if a mod registers their own filter for the weapons, and the server wishes to remove or tweak it, this API can be used to remove the mod's filter.
+        /// </summary>
+        /// <param name="filterId">The ID of the filter.</param>
+        /// <returns>True, if the filter was found and removed. Otherwise, false.</returns>
+        public bool RemoveSubsystemFilter(string filterId)
+        {
+            return _removeSubsystemBlockFilter.Invoke(filterId);
+        }
+        
+        /// <summary>
         /// Ask CoreSystems to send the API methods.
         /// <para>Throws an exception if it gets called more than once per session without <see cref="Unload"/>.</para>
         /// </summary>
@@ -574,7 +638,7 @@ namespace CoreSystems.Api
         public void ApiAssign(IReadOnlyDictionary<string, Delegate> delegates, bool getWeaponDefinitions = false)
         {
             _apiInit = (delegates != null);
-            /// base methods
+            // Base methods
             AssignMethod(delegates, "GetAllWeaponDefinitions", ref _getAllWeaponDefinitions);
             AssignMethod(delegates, "GetCoreWeapons", ref _getCoreWeapons);
             AssignMethod(delegates, "GetNpcSafeWeapons", ref _getNpcSafeWeapons);
@@ -677,6 +741,14 @@ namespace CoreSystems.Api
                 foreach (var byteArray in byteArrays)
                     WeaponDefinitions.Add(MyAPIGateway.Utilities.SerializeFromBinary<WcApiDef.WeaponDefinition>(byteArray));
             }
+
+            AssignMethod(delegates, "RegisterTrajectoryPredictionShipVelocityConstraint", ref _registerTrajectoryPredictionShipVelocityConstraint);
+            AssignMethod(delegates, "RegisterTrajectoryPredictionShipAccelEstimator", ref _registerTrajectoryPredictionShipAccelEstimator);
+            AssignMethod(delegates, "RegisterTrajectoryPredictionExternalForce",  ref _registerTrajectoryPredictionExternalForce);
+            
+            // Subsystem filtering
+            AssignMethod(delegates, "RegisterSubsystemBlockFilter", ref _registerSubsystemBlockFilter);
+            AssignMethod(delegates, "RemoveSubsystemBlockFilter", ref _removeSubsystemBlockFilter);
         }
 
         private void AssignMethod<T>(IReadOnlyDictionary<string, Delegate> delegates, string name, ref T field)
@@ -785,7 +857,5 @@ namespace CoreSystems.Api
                 SystemWideDamageEvents,
             }
         }
-
     }
-
 }
