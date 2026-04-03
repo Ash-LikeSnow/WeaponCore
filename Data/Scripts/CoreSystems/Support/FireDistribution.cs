@@ -20,6 +20,37 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
     /// </summary>
     internal sealed class FireDistributionManager
     {
+        // Would be kind of a mess to inline this one, won't lie
+        public static bool IsValidPdc(Weapon w)
+        {
+            var system = w.System;
+            var comp = w.Comp;
+
+            if (system == null || comp == null)
+            {
+                return false;
+            }
+
+            var mOverrides = comp.MasterOverrides;
+    
+            if (mOverrides == null) 
+            {
+                return false;
+            }
+            
+            if (!((system.TrackProjectile || comp.Ai?.ControlComp != null) && mOverrides.Projectiles && !system.FocusOnly))
+            {
+                return false;
+            }
+
+            if (comp.IsBlock && comp.FunctionalBlock != null)
+            {
+                return comp.FunctionalBlock.Enabled && comp.FunctionalBlock.IsFunctional; 
+            }
+
+            return true;
+        }
+        
         public readonly Ai MasterAi;
         private readonly FireDistributionSystem[] _systems;
         
@@ -29,7 +60,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
             _systems = new FireDistributionSystem[]
             {
-                new ClosestTargetingFireDistributionSystem(this)
+                new ClosestTargetingFireDistributionSystem(this),
+                new MaximumSpreadTargetingFireDistributionSystem(this)
             };
         }
 
@@ -478,11 +510,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     
                     if (currentTargetProjectile != assignedProjectile)
                     {   
-                        Log($"Active: reassign {currentTargetProjectile} -> {assignedProjectile}");
-                        
                         // We assign it.
                         // The target acquisition will run, and the weapon will get its assignment via AcquireProjectile.
-                        weaponRef.FastTargetResetTick = currentTick + 1;
+                        weaponRef.FastTargetResetTick = currentTick + 2;
                     }
                 }
             }
@@ -795,7 +825,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (w.System.ClosestFirst)
+                    if (FireDistributionManager.IsValidPdc(w) && w.System.ClosestFirst)
                     {
                         yield return w;
                     }
@@ -809,7 +839,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             {
                 var weapon = Weapons[weaponIndex];
 
-                if (!weapon.Ref.System.ClosestFirst)
+                if (!FireDistributionManager.IsValidPdc(weapon.Ref) || !weapon.Ref.System.ClosestFirst)
                 {
                     return false;
                 }
@@ -820,7 +850,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
         public override bool IsValidWeapon(Weapon weapon)
         {
-            return weapon.System.ClosestFirst;
+            return FireDistributionManager.IsValidPdc(weapon) && weapon.System.ClosestFirst;
         }
 
         #endregion
@@ -844,6 +874,107 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     threats[j + 1] = threats[j];
                     j--;
+                }
+                
+                threats[j + 1] = key;
+            }
+            
+            ComputeAssignments();
+        }
+    }
+
+    /// <summary>
+    ///     Fire distribution system that tries to distribute fire evenly, using seekers.
+    /// </summary>
+    internal sealed class MaximumSpreadTargetingFireDistributionSystem : FireDistributionSystem
+    {
+        public MaximumSpreadTargetingFireDistributionSystem(FireDistributionManager manager) : base(manager)
+        {
+            
+        }
+
+        #region Weapon List Acquisition
+        
+        protected override IEnumerable<Weapon> ScanForValidWeapons()
+        {
+            var weaponComps = Manager.MasterAi.WeaponComps;
+            
+            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
+            {
+                var comp = weaponComps[componentIndex];
+                
+                // We would check the terminal here, if the DF is enabled
+                // BD pls add
+                
+                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
+                {
+                    var w = comp.Collection[weaponIndex];
+                    
+                    if (FireDistributionManager.IsValidPdc(w) && !w.System.ClosestFirst)
+                    {
+                        yield return w;
+                    }
+                }
+            }
+        }
+
+        protected override bool IsCurrentWeaponListStillValid()
+        {
+            for (var weaponIndex = 0; weaponIndex < Weapons.Count; weaponIndex++)
+            {
+                var weapon = Weapons[weaponIndex];
+
+                if (!FireDistributionManager.IsValidPdc(weapon.Ref) || weapon.Ref.System.ClosestFirst)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override bool IsValidWeapon(Weapon weapon)
+        {
+            return FireDistributionManager.IsValidPdc(weapon) && !weapon.System.ClosestFirst;
+        }
+
+        #endregion
+
+        protected override void SetupTickStartCore()
+        {
+            // Another fucking local sort because the profiler would (probably) catch the comparer...
+            var threats = Network.Threats;
+            var count = threats.Count;
+    
+            for (var i = 1; i < count; i++)
+            {
+                var key = threats[i];
+                var keySeekers = key.Ref.Seekers.Count;
+                
+                // The torps will enter range with 0 seekers, we use a secondary heuristic here:
+                var keyDist = key.DistanceToGridCenter; 
+                var j = i - 1;
+        
+                while (j >= 0)
+                {
+                    var compSeekers = threats[j].Ref.Seekers.Count;
+                    
+                    // Sort primarily by lowest seekers so we spread the fire to everything:
+                    if (compSeekers > keySeekers)
+                    {
+                        threats[j + 1] = threats[j];
+                        j--;
+                    }
+                    // If seekers are tied, sort by closest distance:
+                    else if (compSeekers == keySeekers && threats[j].DistanceToGridCenter > keyDist)
+                    {
+                        threats[j + 1] = threats[j];
+                        j--;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
                 
                 threats[j + 1] = key;

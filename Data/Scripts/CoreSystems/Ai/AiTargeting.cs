@@ -762,10 +762,6 @@ namespace CoreSystems.Support
                             Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                             var shortDist = hitDist;
                             var origDist = hitDist;
-                            if (isFromManager)
-                            {
-                                MyAPIGateway.Utilities.ShowMessage("AcquireProjectile", $"W {w.Comp.TerminalBlock?.CustomName} - acq1");
-                            }
                             target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                             target.TransferTo(w.Target, Session.I.Tick);
                             return true;
@@ -790,10 +786,6 @@ namespace CoreSystems.Support
                         var origDist = hitDist;
                         target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                         target.TransferTo(w.Target, Session.I.Tick);
-                        if (isFromManager)
-                        {
-                            MyAPIGateway.Utilities.ShowMessage("AcquireProjectile", $"W {w.Comp.TerminalBlock?.CustomName} - acq2");
-                        }
                         return true;
                     }
                 }
