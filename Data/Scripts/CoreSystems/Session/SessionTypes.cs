@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using ProtoBuf;
 using Sandbox.Game;
@@ -924,30 +925,67 @@ namespace CoreSystems
 
                 return a.Equals(b);
             }
-            
-            public static EntityDebug<T> GetOrAttachForEntity<T>(T target, object reuseToken = null, int removeAfter = 10 * 60) where T : MyEntity
+
+            private static TDebug GetOrAttachFor<TDebug, TContext>(TContext target, object reuseToken, Func<TDebug> factory) where TDebug : PersistentDebugDraw<TContext>
             {
-                var result = (EntityDebug<T>) I.PersistentDebugDraws.AddOrUpdate(target, o =>  new EntityDebug<T>(target, reuseToken, removeAfter), (o, previous) =>
+                var result = (TDebug) I.PersistentDebugDraws.AddOrUpdate(target, o => factory(), (o, previous) =>
                 {
-                    var previousEntityDraw = previous as EntityDebug<T>;
+                    var previousCast = previous as TDebug;
                     
-                    if (previousEntityDraw != null && TokensMatch(previousEntityDraw.ReuseToken, reuseToken))
+                    if (previousCast != null && TokensMatch(previousCast.ReuseToken, reuseToken))
                     {
                         return previous;
                     }
                     
                     previous.OnDestroy();
-                    return new EntityDebug<T>(target, reuseToken, removeAfter);
+                    return factory();
                 });
                 
                 return result;
+            }
+
+            public static OrdinaryDebug<T> GetOrAttachForOrdinary<T>(T target, object reuseToken = null, int removeAfter = 60 * 60)
+            {
+                return GetOrAttachFor(target, reuseToken, () => new OrdinaryDebug<T>(target, reuseToken, removeAfter));
+            }
+            
+            public static EntityDebug<T> GetOrAttachForEntity<T>(T target, object reuseToken = null, int removeAfter = 10 * 60) where T : MyEntity
+            {
+                return GetOrAttachFor(target, reuseToken, () => new EntityDebug<T>(target, reuseToken, removeAfter));
+            }
+            
+            public static ProDebug GetOrAttachForPro(Projectile target, object reuseToken = null, int removeAfter = 10 * 60)
+            {
+                return GetOrAttachFor(target, reuseToken, () => new ProDebug(target, reuseToken, removeAfter));
+            }
+
+            public sealed class OrdinaryDebug<T> : PersistentDebugDraw<T>
+            {
+                public OrdinaryDebug(T context, object reuseToken, int removeAfter) : base(context, reuseToken, removeAfter) { }
+              
+                protected override IDisposable CreateUsageRegion() => null;
+                protected override bool IsContextDestroyed() => false;
             }
             
             public sealed class EntityDebug<TEntity> : PersistentDebugDraw<TEntity> where TEntity : MyEntity
             {
                 public EntityDebug(TEntity context, object reuseToken, int removeAfter) : base(context, reuseToken, removeAfter) { }
+              
                 protected override IDisposable CreateUsageRegion() => Context.Pin();
                 protected override bool IsContextDestroyed() => Context.Closed || Context.MarkedForClose;
+            }
+
+            public sealed class ProDebug : PersistentDebugDraw<Projectile>
+            {
+                private readonly ulong _projectileId;
+
+                public ProDebug(Projectile context, object reuseToken, int removeAfter) : base(context, reuseToken, removeAfter)
+                {
+                    _projectileId = context.Info.Id;
+                }
+                
+                protected override IDisposable CreateUsageRegion() => null;
+                protected override bool IsContextDestroyed() => Context.State != Projectile.ProjectileState.Alive || Context.Info.Id != _projectileId;
             }
         }
 
