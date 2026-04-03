@@ -32,6 +32,7 @@ namespace CoreSystems.Support
 
                             WeaponIdx.Add(wComp,  WeaponComps.Count);
                             WeaponComps.Add(wComp);
+                            WeaponCompsVersion++;
                             
                             if (wComp.HasArming || wComp.IsBomb)
                                 CriticalComps.Add(wComp);
@@ -59,6 +60,7 @@ namespace CoreSystems.Support
 
                             var wCompMaxWepRange = wComp.MaxDetectDistance;
                             WeaponComps.RemoveAtFast(weaponIdx);
+                            WeaponCompsVersion++;
 
                             if (wComp.HasArming || wComp.IsBomb)
                                 CriticalComps.Remove(wComp);
@@ -518,6 +520,7 @@ namespace CoreSystems.Support
             TrackingComps.Clear();
             PlayerControl.Clear();
             WeaponComps.Clear();
+            WeaponCompsVersion = 0;
             CriticalComps.Clear();
             UpgradeComps.Clear();
             SupportComps.Clear();

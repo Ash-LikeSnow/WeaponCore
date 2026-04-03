@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage;
 using VRageMath;
 // ReSharper disable LoopCanBeConvertedToQuery
@@ -17,7 +17,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
     internal sealed class FireDistributionManager
     {
         public readonly Ai MasterAi;
-
         private readonly FireDistributionSystem _closestSystem;
         
         public FireDistributionManager(Ai masterAi)
@@ -27,19 +26,22 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             _closestSystem = new ClosestTargetingFireDistributionSystem(this, GetClosestWeaponsIterable);
         }
 
+        /// <summary>
+        ///     Gets the weapon list for <see cref="_closestSystem"/>.
+        /// </summary>
+        /// <returns></returns>
         private IEnumerable<Weapon> GetClosestWeaponsIterable()
         {
             for (var componentIndex = 0; componentIndex < MasterAi.WeaponComps.Count; componentIndex++)
             {
                 var comp = MasterAi.WeaponComps[componentIndex];
-
                 // We would check the terminal here, if the DF is enabled
                 // BD pls add
                 
                 for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
                 {
                     var w = comp.Collection[weaponIndex];
-
+                    
                     if (w.System.ClosestFirst)
                     {
                         yield return w;
@@ -84,6 +86,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             
             public int Index;
         }
+
+        private int _weaponCompsVersion = -1;
         
         protected readonly FireDistributionManager Manager;
         private readonly Func<IEnumerable<Weapon>> _weaponListSupplier;
@@ -97,7 +101,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         private readonly FastResourceLock _lock = new FastResourceLock();
        
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
-
         protected readonly Dictionary<Weapon, int> IndexByWeapon = new Dictionary<Weapon, int>();
         
         protected bool[] WeaponsAssigned { get; private set; } = Array.Empty<bool>();
@@ -109,6 +112,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         public uint LastUpdateTick { get; private set; } = uint.MaxValue;
         
         // P.S. depending on how often this runs, we may want to have a dedicated loop that clears those references.
+
+        protected static void Log(string message) => MyAPIGateway.Utilities.ShowMessage("FDS", message);
         
         /// <summary>
         ///     Runs the algorithm for the first time in a tick, if necessary.
@@ -130,31 +135,41 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                     var weapons = Weapons;
                     var indexByWeapon = IndexByWeapon;
-                    weapons.Clear();
-                    indexByWeapon.Clear();
-                    
-                    foreach (var weapon in _weaponListSupplier.Invoke())
-                    {
-                        var index = weapons.Count;
-                        
-                        weapons.Add(new LogicalWeapon
-                        {
-                            Ref = weapon,
-                            TurnCostMultiplier = 1.0f, // Todo read sliders
-                            WeaponValue = 1.0f,
-                            Index = index
-                        });
-                        
-                        indexByWeapon.Add(weapon, index);
-                    }
 
-                    if (weapons.Count > WeaponsAssigned.Length)
+                    // TODO once the terminal toggle for it is added, we need to first scan them to make sure it's still enabled on all of them
+                    // Also, this doesn't run unless we receive updates (obviously). We need the active loop
+                    if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion)
                     {
-                        WeaponsAssigned = new bool[weapons.Count];
-                    }
-                    else
-                    {
-                        Array.Clear(WeaponsAssigned, 0, Weapons.Count);
+                        Log($"Update comps {_weaponCompsVersion} -> {Manager.MasterAi.WeaponCompsVersion}");
+                        
+                        weapons.Clear();
+                        indexByWeapon.Clear();
+                    
+                        foreach (var weapon in _weaponListSupplier.Invoke())
+                        {
+                            var index = weapons.Count;
+                        
+                            weapons.Add(new LogicalWeapon
+                            {
+                                Ref = weapon,
+                                TurnCostMultiplier = 1.0f, // Todo read sliders
+                                WeaponValue = 1.0f,
+                                Index = index
+                            });
+                        
+                            indexByWeapon.Add(weapon, index);
+                        }
+
+                        if (weapons.Count > WeaponsAssigned.Length)
+                        {
+                            WeaponsAssigned = new bool[weapons.Count];
+                        }
+                        else
+                        {
+                            Array.Clear(WeaponsAssigned, 0, Weapons.Count);
+                        }   
+                        
+                        _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
                     }
                         
                     Assignments.Clear();
@@ -166,7 +181,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         Network.TrimUnreachableThreats();
                         Network.SortRepositoriesByAngleCost();
                         
-                        InitialRun();
+                        TickSetup();
                     }
                     else
                     {
@@ -186,7 +201,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         ///     Runs the algorithm the first time in a tick.
         ///     The weapon settings, target positions and states are considered constant throughout the tick.
         /// </summary>
-        protected abstract void InitialRun();
+        protected abstract void TickSetup();
 
         /// <summary>
         ///     Called when a weapon finds it cannot shoot the assigned target, after that issue has already been marked.
@@ -199,9 +214,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             return new Accessor(this, weapon, _lock);
         }
         
+        /// <summary>
+        ///     Accessor that can be called in parallel to interact with the manager:
+        ///         - Fetching assignments for the weapon
+        ///         - Marking an assignment as invalid (cannot shoot it)
+        ///         - Recalculating after that
+        /// </summary>
         public struct Accessor
         {
-            public bool IsValid;
+            public readonly bool IsValid;
             
             private readonly FireDistributionSystem _system;
             private readonly Weapon _weapon;
@@ -273,6 +294,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
+        // Not strictly necessary because we dispose of it, it's not reused
         public virtual void CleanUp()
         {
             Weapons.Clear();
@@ -560,9 +582,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         }
 
         /// <summary>
-        ///     Sorts the threats by distance ascending (so, highest threat to lowest threat).
+        ///     Sorts the threats by distance ascending (so, highest threat to the lowest threat).
         /// </summary>
-        protected override void InitialRun()
+        protected override void TickSetup()
         {
             Network.Threats.SortNoAlloc(CompareThreatsByDistance);
             
