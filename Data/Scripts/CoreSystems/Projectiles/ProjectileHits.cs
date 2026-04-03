@@ -60,6 +60,13 @@ namespace CoreSystems.Projectiles
             var aAvoidSelf = false;
             var aAvoidTarget = false;
             var aPhaseSelf = false;
+            
+            // Drift calculation only for dumb fire projectiles launched by a turret or fixed weapon.
+            // P.S. The best solution would be fixing it upstream. Maybe in the future?
+            var driftCompensationVelocity = p.Info.IsFragment || aConst.IsSmart || !aConst.AmmoSkipAccel 
+                ? Vector3D.Zero
+                : p.Info.ShooterVel;
+            
             if (s.ApproachInfo != null && s.ApproachInfo.Active)
             {
                 var approach = aConst.Approaches[s.RequestedStage];
@@ -467,13 +474,18 @@ namespace CoreSystems.Projectiles
                     else
                     {
                         var targetVel = (Vector3D)grid.Physics.LinearVelocity;
-                        var weaponVel = p.Info.ShooterVel;
-                        
+
                         // Continuous collision detection @home:
-                        crBeam = new LineD(beamFrom + weaponVel * Session.I.DeltaStepConst, beamTo - (targetVel - weaponVel) * Session.I.DeltaStepConst);
-                        
+                        crBeam = new LineD(
+                            beamFrom + driftCompensationVelocity * Session.I.DeltaStepConst,
+                            beamTo - (targetVel - driftCompensationVelocity) * Session.I.DeltaStepConst
+                        );
+
                         grid.RayCastCells(crBeam.From, crBeam.To, hitEntity.Vector3ICache, null, true, true);
+
                         /*
+                        MyAPIGateway.Utilities.ShowMessage("A", $"iF: {p.Info.IsFragment}, wv: {driftCompensationVelocity.Length():F}, tv: {targetVel.Length():F}, d1: {Vector3D.Distance(beamFrom, crBeam.From):F}, d2: {Vector3D.Distance(beamTo, crBeam.To):F}");
+                        
                         var txWorldTargetCr = MatrixD.Invert(grid.WorldMatrix);
                         var beamFromTarget = Vector3D.Transform(beamFrom, txWorldTargetCr);
                         var beamToTarget = Vector3D.Transform(beamTo, txWorldTargetCr);
@@ -481,7 +493,7 @@ namespace CoreSystems.Projectiles
                         var crBeamToTarget = Vector3D.Transform(crBeam.To, txWorldTargetCr);
 
                         var cells = hitEntity.Vector3ICache.ToList();
-                        Session.PersistentDebugDraw.GetOrAttachForEntity(grid, p.Info.Id, int.MaxValue).With(() =>
+                        Session.PersistentDebugDraw.GetOrAttachForEntity(grid, null, int.MaxValue).With(() =>
                         {
                             var txTargetWorld = grid.WorldMatrix;
                             
@@ -519,8 +531,7 @@ namespace CoreSystems.Projectiles
                                     DsDebugDraw.DrawBox(obb, Color.White);
                                 }
                             }
-                        });
-                        */
+                        });*/
                     }
 
                     if (!offensiveEwar && !fieldActive)
@@ -633,8 +644,7 @@ namespace CoreSystems.Projectiles
                  *  - We don't have a capsule shape, because they are not needed, but the same type of logic can stated for them, although the needed algorithm would be a bit larger.
                  */
                 
-                var weaponVel = p.Info.ShooterVel;
-                var dp = p.LastPosition + p.Info.ShooterVel * Session.I.DeltaStepConst - targetProjectile.LastPosition;
+                var dp = p.LastPosition + driftCompensationVelocity * Session.I.DeltaStepConst - targetProjectile.LastPosition;
                 var dv = (p.Position - p.LastPosition - targetProjectile.Position + targetProjectile.LastPosition) / Session.I.DeltaStepConst;
 
                 double closestApproachDistanceSqr; // Inside the [0, dt] range
