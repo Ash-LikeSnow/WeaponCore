@@ -102,9 +102,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, int> IndexByWeapon = new Dictionary<Weapon, int>();
         protected bool[] IsWeaponAssigned = Array.Empty<bool>();
-        
         protected readonly Dictionary<Weapon, Projectile> Assignments = new Dictionary<Weapon, Projectile>();
-        
         public readonly ThreatGraph Network = new ThreatGraph();
         
         public uint LastUpdateTick { get; private set; } = uint.MaxValue;
@@ -113,12 +111,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
         protected static void Log(string message) => MyAPIGateway.Utilities.ShowMessage("FDS", message);
 
+        // P.S. It doesn't just use a single predicate method because of profiler...
+        #region Weapon List Acquisition
+        
         /// <summary>
         ///     Gets the valid weapons from the weapon comps, to rebuild the weapon list.
         ///     The condition <see cref="IsValidWeapon"/> must be true for each returned result.
         /// </summary>
         /// <returns></returns>
         protected abstract IEnumerable<Weapon> ScanForValidWeapons();
+
+        /// <summary>
+        ///     Checks if the existing weapon list is still valid. It may be invalidated when settings change.
+        /// </summary>
+        /// <returns></returns>
+        protected abstract bool IsCurrentWeaponListStillValid();
 
         /// <summary>
         ///     Checks if this manager handles the specified weapon.
@@ -128,85 +135,90 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// <returns>True if this system handles the specified weapon. Otherwise, false.</returns>
         public abstract bool IsValidWeapon(Weapon weapon);
         
+        #endregion
+        
         /// <summary>
         ///     Runs the algorithm for the first time in a tick, if necessary.
         /// </summary>
-        private void SetupInitialRun()
+        private void SetupTickStart()
         {
             var sessionTick = Session.I.Tick;
 
-            if (LastUpdateTick != sessionTick)
+            if (LastUpdateTick == sessionTick)
             {
-                _lock.AcquireExclusive();
+                return;
+            }
+            
+            _lock.AcquireExclusive();
 
-                try
+            try
+            {
+                if (LastUpdateTick == sessionTick)
                 {
-                    if (LastUpdateTick == sessionTick)
+                    return;
+                }
+
+                var weapons = Weapons;
+                var indexByWeapon = IndexByWeapon;
+
+                // Also, this doesn't run unless we receive updates (obviously). We need the active loop
+                if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion || !IsCurrentWeaponListStillValid())
+                {
+                    Log($"Update comps {_weaponCompsVersion} -> {Manager.MasterAi.WeaponCompsVersion}");
+                        
+                    weapons.Clear();
+                    indexByWeapon.Clear();
+                    
+                    foreach (var weapon in ScanForValidWeapons())
                     {
-                        return;
+                        var index = weapons.Count;
+                        
+                        weapons.Add(new LogicalWeapon
+                        {
+                            Ref = weapon,
+                            TurnCostMultiplier = 1.0f,
+                            WeaponValue = 1.0f,
+                            Index = index
+                        });
+                        
+                        indexByWeapon.Add(weapon, index);
                     }
 
-                    var weapons = Weapons;
-                    var indexByWeapon = IndexByWeapon;
-
-                    // TODO once the terminal toggle for it is added, we need to first scan them to make sure it's still enabled on all of them
-                    // Also, this doesn't run unless we receive updates (obviously). We need the active loop
-                    if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion)
+                    if (weapons.Count > IsWeaponAssigned.Length)
                     {
-                        Log($"Update comps {_weaponCompsVersion} -> {Manager.MasterAi.WeaponCompsVersion}");
-                        
-                        weapons.Clear();
-                        indexByWeapon.Clear();
-                    
-                        foreach (var weapon in ScanForValidWeapons())
-                        {
-                            var index = weapons.Count;
-                        
-                            weapons.Add(new LogicalWeapon
-                            {
-                                Ref = weapon,
-                                TurnCostMultiplier = 1.0f, // Todo read sliders
-                                WeaponValue = 1.0f,
-                                Index = index
-                            });
-                        
-                            indexByWeapon.Add(weapon, index);
-                        }
-
-                        if (weapons.Count > IsWeaponAssigned.Length)
-                        {
-                            IsWeaponAssigned = new bool[weapons.Count];
-                        }
-                        else
-                        {
-                            Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
-                        }   
-                        
-                        _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
-                    }
-                        
-                    Assignments.Clear();
-                    var grid = Manager.MasterAi.GridEntity;
-                    
-                    if (grid != null && weapons.Count > 0 && Network.LoadProjectilesFromMasterAi(Manager.MasterAi, grid) > 0)
-                    {
-                        Network.InitializeRoughWeapons(weapons, grid);
-                        Network.TrimUnreachableThreats();
-                        Network.SortRepositoriesByAngleCost();
-                        
-                        TickSetup();
+                        IsWeaponAssigned = new bool[weapons.Count];
                     }
                     else
                     {
-                        Network.ClearBands();
-                    }
+                        Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
+                    }   
                         
-                    LastUpdateTick = sessionTick;
+                    _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
                 }
-                finally
+                        
+                // TODO read the cost overrides here
+                
+                Assignments.Clear();
+                var grid = Manager.MasterAi.GridEntity;
+                    
+                if (grid != null && weapons.Count > 0 && Network.LoadProjectilesFromMasterAi(Manager.MasterAi, grid) > 0)
                 {
-                    _lock.ReleaseExclusive();
+                    Network.InitializeRoughWeapons(weapons, grid);
+                    Network.TrimUnreachableThreats();
+                    Network.SortRepositoriesByAngleCost();
+                    
+                    SetupTickStartCore();
                 }
+                else
+                {
+                    Network.ClearBands();
+                }
+                        
+                LastUpdateTick = sessionTick;
+            }
+            finally
+            {
+                _lock.ReleaseExclusive();
             }
         }
 
@@ -214,7 +226,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         ///     Runs the algorithm the first time in a tick.
         ///     The weapon settings, target positions and states are considered constant throughout the tick.
         /// </summary>
-        protected abstract void TickSetup();
+        protected abstract void SetupTickStartCore();
 
         /// <summary>
         ///     Clears the assignments and the flags.
@@ -228,11 +240,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// <summary>
         ///     Called when a weapon finds it cannot shoot the assigned target, after that issue has already been marked.
         /// </summary>
-        protected abstract void Recalculate();
+        protected abstract void ComputeAssignments();
         
         public Accessor CreateAccessor(Weapon weapon)
         {
-            SetupInitialRun();
+            SetupTickStart();
             return new Accessor(this, weapon, _lock);
         }
         
@@ -307,7 +319,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 
                 try
                 {
-                    _system.Recalculate();                   
+                    _system.ComputeAssignments();                   
                 }
                 finally
                 {   
@@ -602,6 +614,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             
         }
 
+        #region Weapon List Acquisition
+        
         protected override IEnumerable<Weapon> ScanForValidWeapons()
         {
             var weaponComps = Manager.MasterAi.WeaponComps;
@@ -625,15 +639,32 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
+        protected override bool IsCurrentWeaponListStillValid()
+        {
+            for (var weaponIndex = 0; weaponIndex < Weapons.Count; weaponIndex++)
+            {
+                var weapon = Weapons[weaponIndex];
+
+                if (!weapon.Ref.System.ClosestFirst)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public override bool IsValidWeapon(Weapon weapon)
         {
             return weapon.System.ClosestFirst;
         }
 
+        #endregion
+
         /// <summary>
         ///     Sorts the threats by distance ascending (so, highest threat to the lowest threat).
         /// </summary>
-        protected override void TickSetup()
+        protected override void SetupTickStartCore()
         {
             // Another fucking local sort because the profiler would (probably) catch the comparer...
             var threats = Network.Threats;
@@ -654,18 +685,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 threats[j + 1] = key;
             }
             
-            TargetAssignment();
-        }
-
-        protected override void Recalculate()
-        {
-            TargetAssignment();
+            ComputeAssignments();
         }
 
         /// <summary>
         ///     Fast suboptimal greedy target assignment.
         /// </summary>
-        private void TargetAssignment()
+        protected override void ComputeAssignments()
         {
             ClearAssignmentState();
             
