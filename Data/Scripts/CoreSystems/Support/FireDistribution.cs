@@ -78,12 +78,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             ///     Value set by the player. The larger it is, the fewer of these weapons are assigned to a torp.
             /// </summary>
             public float WeaponValue;
+
+            /// <summary>
+            ///     Value set by the player. This is the minimum duration to wait before assigning a new target.
+            ///     It is to prevent the weapon juking without being able to fire.
+            /// </summary>
+            public int MinimumLockDuration;
             
             // Temporary value used by the local sort. Invalid to access anywhere else!
             public float TempCurrentTurnCost;
             
             /// <summary>
-            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssigned"/>.
+            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/>.
             /// </summary>
             public int Index;
         }
@@ -101,7 +107,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, int> IndexByWeapon = new Dictionary<Weapon, int>();
-        protected bool[] IsWeaponAssigned = Array.Empty<bool>();
+        protected bool[] IsWeaponAssignedToAnything = Array.Empty<bool>();
         protected readonly Dictionary<Weapon, Projectile> Assignments = new Dictionary<Weapon, Projectile>();
         public readonly ThreatGraph Network = new ThreatGraph();
         
@@ -178,25 +184,26 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             Ref = weapon,
                             TurnCostMultiplier = 1.0f,
                             WeaponValue = 1.0f,
+                            MinimumLockDuration = 20,
                             Index = index
                         });
                         
                         indexByWeapon.Add(weapon, index);
                     }
 
-                    if (weapons.Count > IsWeaponAssigned.Length)
+                    if (weapons.Count > IsWeaponAssignedToAnything.Length)
                     {
-                        IsWeaponAssigned = new bool[weapons.Count];
+                        IsWeaponAssignedToAnything = new bool[weapons.Count];
                     }
                     else
                     {
-                        Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
+                        Array.Clear(IsWeaponAssignedToAnything, 0, Weapons.Count);
                     }   
                         
                     _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
                 }
                         
-                // TODO read the cost overrides here
+                // TODO read all the sliders here
                 
                 Assignments.Clear();
                 var grid = Manager.MasterAi.GridEntity;
@@ -234,13 +241,106 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected void ClearAssignmentState()
         {
             Assignments.Clear();
-            Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
+            Array.Clear(IsWeaponAssignedToAnything, 0, Weapons.Count);
         }
-        
+
         /// <summary>
         ///     Called when a weapon finds it cannot shoot the assigned target, after that issue has already been marked.
+        ///     Uses a fast greedy (suboptimal) assignment algorithm.
         /// </summary>
-        protected abstract void ComputeAssignments();
+        protected virtual void ComputeAssignments()
+        {
+             ClearAssignmentState();
+            
+            var weapons = Weapons;
+            var weaponsCount = Weapons.Count;
+            var threats = Network.Threats;
+            var isAssigned = IsWeaponAssignedToAnything;
+            var currentTick = Session.I.Tick;
+
+            // Unassigned weapons left. Used to early-exit.
+            var weaponsRemaining = weaponsCount;
+            
+            // Merge the current game state into the representation we have:
+            for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
+            {
+                var weapon = weapons[weaponIndex];
+                var weaponTarget = weapon.Ref.Target;
+                
+                if (weaponTarget != null && weaponTarget.TargetObject != null) // need some help here. What conditions do we impose here to make sure the target is not expired or something?
+                {
+                    var targetProjectile = weaponTarget.TargetObject as Projectile;
+
+                    if (targetProjectile != null)
+                    {
+                        if (targetProjectile.State == Projectile.ProjectileState.Alive && currentTick - weapon.Ref.Target.ChangeTick < weapon.MinimumLockDuration)
+                        {
+                            // If true, then the weapon must keep the current target locked; we are not allowed to reassign.
+                            // We will write it in our datastructure:
+                            Assignments.Add(weapon.Ref, targetProjectile);
+                            isAssigned[weapon.Index] = true;
+                            --weaponsRemaining;
+                        }
+                        
+                        // else, we are free to reassign
+                    }
+                    else
+                    {
+                        // It's aiming for something (maybe grids), so we will make sure we skip it in calculations:
+                        isAssigned[weapon.Index] = true;
+                        --weaponsRemaining;
+                    }
+                }
+            }
+            
+            // Greedily assign whatever we can:
+            for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
+            {
+                var threat = threats[threatIndex];
+
+                var remainingThreatValue = 1.0f;
+                
+                // Apply committed weapons.
+                // These are the weapons whose locks we cannot change yet.
+                for (var candidateWeaponIndex = 0; candidateWeaponIndex < threat.WeaponCandidates.Count; candidateWeaponIndex++)
+                {
+                    var candidateWeapon = threat.WeaponCandidates[candidateWeaponIndex];
+
+                    Projectile projectileCommitted;
+                    if (isAssigned[candidateWeapon.Index] && Assignments.TryGetValue(candidateWeapon.Ref, out projectileCommitted) && projectileCommitted == threat.Ref)
+                    {
+                        remainingThreatValue -= candidateWeapon.WeaponValue;
+                    }
+                }
+                
+                if (remainingThreatValue <= 0.0f || Math.Abs(remainingThreatValue) < 1e-4)
+                {
+                    // The torpedo is fully engaged by the committed weapons
+                    continue;
+                }
+                
+                for (var candidateWeaponIndex = 0; candidateWeaponIndex < threat.WeaponCandidates.Count; candidateWeaponIndex++)
+                {
+                    var candidateWeapon = threat.WeaponCandidates[candidateWeaponIndex];
+
+                    if (isAssigned[candidateWeapon.Index])
+                    {
+                        continue;
+                    }
+
+                    remainingThreatValue -= candidateWeapon.WeaponValue;
+                    
+                    Assignments.Add(candidateWeapon.Ref, threat.Ref);
+                    isAssigned[candidateWeapon.Index] = true;
+                    weaponsRemaining--;
+                    
+                    if (remainingThreatValue <= 0.0f || Math.Abs(remainingThreatValue) < 1e-4)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
         
         public Accessor CreateAccessor(Weapon weapon)
         {
@@ -686,46 +786,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
             
             ComputeAssignments();
-        }
-
-        /// <summary>
-        ///     Fast suboptimal greedy target assignment.
-        /// </summary>
-        protected override void ComputeAssignments()
-        {
-            ClearAssignmentState();
-            
-            var threats = Network.Threats;
-            var isAssigned = IsWeaponAssigned;
-
-            var weaponsRemaining = Weapons.Count;
-
-            for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
-            {
-                var threat = threats[threatIndex];
-
-                var remainingThreatValue = 1.0f;
-
-                for (var candidateWeaponIndex = 0; candidateWeaponIndex < threat.WeaponCandidates.Count; candidateWeaponIndex++)
-                {
-                    var candidateWeapon = threat.WeaponCandidates[candidateWeaponIndex];
-
-                    if (isAssigned[candidateWeapon.Index])
-                    {
-                        continue;
-                    }
-
-                    remainingThreatValue -= candidateWeapon.WeaponValue;
-                    
-                    Assignments.Add(candidateWeapon.Ref, threat.Ref);
-                    isAssigned[candidateWeapon.Index] = true;
-                    
-                    if (remainingThreatValue <= 0.0f || Math.Abs(remainingThreatValue) < 1e-4)
-                    {
-                        break;
-                    }
-                }
-            }
         }
     }
 }
