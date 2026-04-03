@@ -487,7 +487,10 @@ namespace CoreSystems.Support
         internal void CleanUp()
         {
             AiCloseTick = Session.I.Tick;
-
+            
+            _fireDistributionManager?.CleanUp();
+            _fireDistributionManager = null;
+            
             TopEntity.Components.Remove<AiComponent>();
 
             if (Session.I.IsClient)

@@ -13,6 +13,7 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 using static CoreSystems.Platform.Weapon;
 
@@ -208,6 +209,28 @@ namespace CoreSystems.Support
         private readonly List<MyEntity> _possibleTargets = new List<MyEntity>();
         private uint _pCacheTick;
 
+        private FireDistributionManager _fireDistributionManager;
+
+        internal bool GetFireDistributionManager(out FireDistributionManager manager)
+        {
+            lock (this)
+            {
+                if (!IsGrid || GridEntity == null)
+                {
+                    manager = null;
+                    return false;
+                }
+
+                if (_fireDistributionManager == null)
+                {
+                    _fireDistributionManager = new FireDistributionManager(this);
+                }
+
+                manager = _fireDistributionManager;
+                return true;
+            }
+        }
+        
         public Ai()
         {
             AiComp = new AiComponent(this);
