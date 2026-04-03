@@ -16,6 +16,7 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 
 namespace CoreSystems
 {
@@ -836,6 +837,31 @@ namespace CoreSystems
 
             }
 
+            if (I.Tick10)
+            {
+                // Parallel dispatch for fire distribution:
+                foreach (var kvp in EntityAIs)
+                {
+                    var ai = kvp.Value;
+
+                    FireDistributionManager manager;
+                    if (ai.HasFireDistributionManager() && ai.GetFireDistributionManager(out manager))
+                    {
+                        PendingFireDistributionManagers.Add(manager);
+                    }
+                }
+
+                if (PendingFireDistributionManagers.Count > 0)
+                {
+                    MyAPIGateway.Parallel.ForEach(PendingFireDistributionManagers, manager =>
+                    {
+                        manager.ActiveLoop();
+                    });
+                    
+                    PendingFireDistributionManagers.Clear();
+                }
+            }
+            
             if (DbTask.IsComplete && DbsToUpdate.Count > 0 && !DbUpdating)
                 UpdateDbsInQueue();
         }

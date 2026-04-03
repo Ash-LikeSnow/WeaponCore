@@ -53,6 +53,17 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             
             return new FireDistributionSystem.Accessor();
         }
+
+        /// <summary>
+        ///     Executes the active loop on all systems.
+        /// </summary>
+        public void ActiveLoop()
+        {
+            for (var systemIndex = 0; systemIndex < _systems.Length; systemIndex++)
+            {
+                _systems[systemIndex].ActiveLoop();
+            }
+        }
         
         // Not strictly necessary because we discard the whole manager, it's not reused
         public void CleanUp()
@@ -428,6 +439,59 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
+        /// <summary>
+        ///     Periodically computes assignments. If the assignment differs from the PDC's current target, then it is guaranteed the minimum lock time condition is met, and we should attempt reassignment of the PDC.
+        /// </summary>
+        public void ActiveLoop()
+        {
+            // Will compute assignments:
+            SetupTickStart();
+            
+            _lock.AcquireShared();
+
+            try
+            {
+                // Now, we need to see which weapons don't match the calculated assignments.
+                var weapons = Weapons;
+                var weaponsCount = weapons.Count;
+                var currentTick = Session.I.Tick;
+                
+                for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
+                {
+                    var logicalWeapon = weapons[weaponIndex];
+                    var weaponRef = logicalWeapon.Ref;
+
+                    if (!IsWeaponAssignedToAnything[logicalWeapon.Index]) 
+                    {
+                        // Skip if we don't know anything about the weapon:
+                        continue;
+                    }
+
+                    Projectile assignedProjectile;
+                    if (!Assignments.TryGetValue(weaponRef, out assignedProjectile))
+                    {
+                        continue;
+                    }
+                
+                    var weaponTarget = weaponRef.Target;
+                    var currentTargetProjectile = weaponTarget?.TargetObject as Projectile;
+                    
+                    if (currentTargetProjectile != assignedProjectile)
+                    {   
+                        Log($"Active: reassign {currentTargetProjectile} -> {assignedProjectile}");
+                        
+                        // We assign it.
+                        // The target acquisition will run, and the weapon will get its assignment via AcquireProjectile.
+                        weaponRef.FastTargetResetTick = currentTick + 1;
+                    }
+                }
+            }
+            finally
+            {
+                _lock.ReleaseShared();   
+            }
+        }
+        
         public virtual void CleanUp()
         {
             Weapons.Clear();

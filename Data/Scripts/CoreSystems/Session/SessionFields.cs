@@ -28,6 +28,7 @@ using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.WeaponSystem;
@@ -159,6 +160,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
         internal readonly ConcurrentDictionary<MyCubeGrid, TopMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, TopMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
+        internal readonly List<FireDistributionManager> PendingFireDistributionManagers = new List<FireDistributionManager>();
         
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
@@ -295,7 +297,7 @@ namespace CoreSystems
         private readonly List<MyKeys> _pressedKeys = new List<MyKeys>();
         private readonly List<MyMouseButtonsEnum> _pressedButtons = new List<MyMouseButtonsEnum>();
         private readonly List<MyEntity> _tmpNearByBlocks = new List<MyEntity>();
-
+        
 
         internal readonly Spectrum Spectrum;
 

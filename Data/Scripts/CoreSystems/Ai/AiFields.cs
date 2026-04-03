@@ -212,6 +212,8 @@ namespace CoreSystems.Support
 
         private FireDistributionManager _fireDistributionManager;
 
+        internal bool HasFireDistributionManager() => _fireDistributionManager != null;
+        
         internal bool GetFireDistributionManager(out FireDistributionManager manager)
         {
             lock (this)
