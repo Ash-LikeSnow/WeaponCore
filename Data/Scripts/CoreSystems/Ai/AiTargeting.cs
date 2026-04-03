@@ -623,7 +623,6 @@ namespace CoreSystems.Support
                 
                 if (fireDistributionAccessor.IsValid && fireDistributionAccessor.TryGetAssignment(out lp))
                 {
-                    MyAPIGateway.Utilities.ShowMessage("AcquireProjectile", $"W {w.Comp.TerminalBlock?.CustomName} - try {lp.Info.Id}");
                     isFromManager = true;
                 }
                 else

@@ -103,7 +103,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, int> IndexByWeapon = new Dictionary<Weapon, int>();
         
-        protected bool[] WeaponsAssigned { get; private set; } = Array.Empty<bool>();
+        protected bool[] IsWeaponAssigned { get; private set; } = Array.Empty<bool>();
         
         protected readonly Dictionary<Weapon, Projectile> Assignments = new Dictionary<Weapon, Projectile>();
         
@@ -160,13 +160,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             indexByWeapon.Add(weapon, index);
                         }
 
-                        if (weapons.Count > WeaponsAssigned.Length)
+                        if (weapons.Count > IsWeaponAssigned.Length)
                         {
-                            WeaponsAssigned = new bool[weapons.Count];
+                            IsWeaponAssigned = new bool[weapons.Count];
                         }
                         else
                         {
-                            Array.Clear(WeaponsAssigned, 0, Weapons.Count);
+                            Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
                         }   
                         
                         _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
@@ -203,6 +203,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         protected abstract void TickSetup();
 
+        /// <summary>
+        ///     Clears the assignments and the flags.
+        /// </summary>
+        protected void ClearAssignmentState()
+        {
+            Assignments.Clear();
+            Array.Clear(IsWeaponAssigned, 0, Weapons.Count);
+        }
+        
         /// <summary>
         ///     Called when a weapon finds it cannot shoot the assigned target, after that issue has already been marked.
         /// </summary>
@@ -586,14 +595,30 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         protected override void TickSetup()
         {
-            Network.Threats.SortNoAlloc(CompareThreatsByDistance);
+            // Another fucking local sort because the profiler would catch the comparer...
+            var threats = Network.Threats;
+            var count = threats.Count;
+    
+            for (int i = 1; i < count; i++)
+            {
+                var key = threats[i];
+                var keyDist = key.DistanceToGridCenter;
+                var j = i - 1;
+        
+                while (j >= 0 && threats[j].DistanceToGridCenter > keyDist)
+                {
+                    threats[j + 1] = threats[j];
+                    j--;
+                }
+                
+                threats[j + 1] = key;
+            }
             
             TargetAssignment();
         }
 
         protected override void Recalculate()
         {
-            Assignments.Clear();
             TargetAssignment();
         }
 
@@ -602,8 +627,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         private void TargetAssignment()
         {
+            ClearAssignmentState();
+            
             var threats = Network.Threats;
-            var isAssigned = WeaponsAssigned;
+            var isAssigned = IsWeaponAssigned;
 
             var weaponsRemaining = Weapons.Count;
 
@@ -633,13 +660,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     }
                 }
             }
-        }
-
-        // How the fuck am I supposed to get around the profiler here?
-        // I guess another local sort...
-        private static int CompareThreatsByDistance(ThreatGraph.Threat a, ThreatGraph.Threat b)
-        {
-            return a.DistanceToGridCenter.CompareTo(b.DistanceToGridCenter);
         }
     }
 }
