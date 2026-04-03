@@ -14,55 +14,53 @@ using VRageMath;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
+    /// <summary>
+    ///     Manages multiple <see cref="FireDistributionSystem"/>s.
+    ///     Each system will manage a specific subset of the grid's weapons. The subsets are guaranteed to be disjoint.
+    /// </summary>
     internal sealed class FireDistributionManager
     {
         public readonly Ai MasterAi;
-        private readonly FireDistributionSystem _closestSystem;
+        private readonly FireDistributionSystem[] _systems;
         
         public FireDistributionManager(Ai masterAi)
         {
             MasterAi = masterAi;
-            
-            _closestSystem = new ClosestTargetingFireDistributionSystem(this, GetClosestWeaponsIterable);
+
+            _systems = new FireDistributionSystem[]
+            {
+                new ClosestTargetingFireDistributionSystem(this)
+            };
         }
 
         /// <summary>
-        ///     Gets the weapon list for <see cref="_closestSystem"/>.
+        ///     Creates an acessor to the system that handles the weapon.
+        ///     Returns an invalid accessor if none of the systems handle the weapon.
         /// </summary>
+        /// <param name="weapon"></param>
         /// <returns></returns>
-        private IEnumerable<Weapon> GetClosestWeaponsIterable()
-        {
-            for (var componentIndex = 0; componentIndex < MasterAi.WeaponComps.Count; componentIndex++)
-            {
-                var comp = MasterAi.WeaponComps[componentIndex];
-                // We would check the terminal here, if the DF is enabled
-                // BD pls add
-                
-                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
-                {
-                    var w = comp.Collection[weaponIndex];
-                    
-                    if (w.System.ClosestFirst)
-                    {
-                        yield return w;
-                    }
-                }
-            }
-        }
-
         public FireDistributionSystem.Accessor CreateAccessor(Weapon weapon)
         {
-            if (weapon.System.ClosestFirst)
+            for (var systemIndex = 0; systemIndex < _systems.Length; systemIndex++)
             {
-                return _closestSystem.CreateAccessor(weapon);
-            }
+                var system = _systems[systemIndex];
 
+                if (system.IsValidWeapon(weapon))
+                {
+                    return system.CreateAccessor(weapon);
+                }
+            }
+            
             return new FireDistributionSystem.Accessor();
         }
         
+        // Not strictly necessary because we discard the whole manager, it's not reused
         public void CleanUp()
         {
-            _closestSystem.CleanUp();
+            for (var systemIndex = 0; systemIndex < _systems.Length; systemIndex++)
+            {
+                _systems[systemIndex].CleanUp();
+            }
         }
     }
     
@@ -82,28 +80,28 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             public float WeaponValue;
             
             // Temporary value used by the local sort. Invalid to access anywhere else!
-            public float CurrentTurnCost;
+            public float TempCurrentTurnCost;
             
+            /// <summary>
+            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssigned"/>.
+            /// </summary>
             public int Index;
         }
 
         private int _weaponCompsVersion = -1;
         
         protected readonly FireDistributionManager Manager;
-        private readonly Func<IEnumerable<Weapon>> _weaponListSupplier;
 
-        public FireDistributionSystem(FireDistributionManager manager, Func<IEnumerable<Weapon>> weaponListSupplier)
+        public FireDistributionSystem(FireDistributionManager manager)
         {
             Manager = manager;
-            _weaponListSupplier = weaponListSupplier;
         }
 
         private readonly FastResourceLock _lock = new FastResourceLock();
-       
+        
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, int> IndexByWeapon = new Dictionary<Weapon, int>();
-        
-        protected bool[] IsWeaponAssigned { get; private set; } = Array.Empty<bool>();
+        protected bool[] IsWeaponAssigned = Array.Empty<bool>();
         
         protected readonly Dictionary<Weapon, Projectile> Assignments = new Dictionary<Weapon, Projectile>();
         
@@ -114,6 +112,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         // P.S. depending on how often this runs, we may want to have a dedicated loop that clears those references.
 
         protected static void Log(string message) => MyAPIGateway.Utilities.ShowMessage("FDS", message);
+
+        /// <summary>
+        ///     Gets the valid weapons from the weapon comps, to rebuild the weapon list.
+        ///     The condition <see cref="IsValidWeapon"/> must be true for each returned result.
+        /// </summary>
+        /// <returns></returns>
+        protected abstract IEnumerable<Weapon> ScanForValidWeapons();
+
+        /// <summary>
+        ///     Checks if this manager handles the specified weapon.
+        ///     All of these results must be self-exclusive across the different systems.
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <returns>True if this system handles the specified weapon. Otherwise, false.</returns>
+        public abstract bool IsValidWeapon(Weapon weapon);
         
         /// <summary>
         ///     Runs the algorithm for the first time in a tick, if necessary.
@@ -145,7 +158,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         weapons.Clear();
                         indexByWeapon.Clear();
                     
-                        foreach (var weapon in _weaponListSupplier.Invoke())
+                        foreach (var weapon in ScanForValidWeapons())
                         {
                             var index = weapons.Count;
                         
@@ -303,7 +316,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
-        // Not strictly necessary because we dispose of it, it's not reused
         public virtual void CleanUp()
         {
             Weapons.Clear();
@@ -546,11 +558,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         {
                             dirToTarget.Normalize();
                             var currentForward = weapon.Ref.GetScope.Info.Direction; // I hope I am doing this right... We'll debug draw it to be sure
-                            weapon.CurrentTurnCost = (float)((1.0 - Vector3D.Dot(currentForward, dirToTarget)) * weapon.TurnCostMultiplier);
+                            weapon.TempCurrentTurnCost = (float)((1.0 - Vector3D.Dot(currentForward, dirToTarget)) * weapon.TurnCostMultiplier);
                         }
                         else
                         {
-                            weapon.CurrentTurnCost = 0f;
+                            weapon.TempCurrentTurnCost = 0f;
                         }
                     }
 
@@ -558,10 +570,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     for (var i = 1; i < weaponCount; i++)
                     {
                         var key = weapons[i];
-                        var keyCost = key.CurrentTurnCost;
+                        var keyCost = key.TempCurrentTurnCost;
                         var j = i - 1;
                         
-                        while (j >= 0 && weapons[j].CurrentTurnCost > keyCost)
+                        while (j >= 0 && weapons[j].TempCurrentTurnCost > keyCost)
                         {
                             weapons[j + 1] = weapons[j];
                             j--;
@@ -585,9 +597,37 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         //private readonly bool _preferFairness; // We'd need to determine if there are unengaged torpedoes exactly. It's a bit more difficult for now
         
-        public ClosestTargetingFireDistributionSystem(FireDistributionManager manager, Func<IEnumerable<Weapon>> weaponListSupplier) : base(manager, weaponListSupplier)
+        public ClosestTargetingFireDistributionSystem(FireDistributionManager manager) : base(manager)
         {
             
+        }
+
+        protected override IEnumerable<Weapon> ScanForValidWeapons()
+        {
+            var weaponComps = Manager.MasterAi.WeaponComps;
+            
+            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
+            {
+                var comp = weaponComps[componentIndex];
+                
+                // We would check the terminal here, if the DF is enabled
+                // BD pls add
+                
+                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
+                {
+                    var w = comp.Collection[weaponIndex];
+                    
+                    if (w.System.ClosestFirst)
+                    {
+                        yield return w;
+                    }
+                }
+            }
+        }
+
+        public override bool IsValidWeapon(Weapon weapon)
+        {
+            return weapon.System.ClosestFirst;
         }
 
         /// <summary>
@@ -595,7 +635,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         protected override void TickSetup()
         {
-            // Another fucking local sort because the profiler would catch the comparer...
+            // Another fucking local sort because the profiler would (probably) catch the comparer...
             var threats = Network.Threats;
             var count = threats.Count;
     
