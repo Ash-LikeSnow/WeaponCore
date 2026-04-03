@@ -362,6 +362,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Comms\Space.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\Localization.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
