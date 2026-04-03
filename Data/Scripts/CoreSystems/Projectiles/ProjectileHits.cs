@@ -592,9 +592,10 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)
+            var targetProjectile = target.TargetObject as Projectile;
+
+            if (target.TargetState == Target.TargetStates.IsProjectile && targetProjectile != null && targetProjectile.State != ProjectileState.Dead && aConst.NonAntiSmartEwar && !projetileInShield)
             {
-                var targetProjectile = (Projectile)target.TargetObject;
                
                 double bulletRadius;
                 
