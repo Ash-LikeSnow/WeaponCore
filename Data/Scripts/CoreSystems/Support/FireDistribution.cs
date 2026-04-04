@@ -645,12 +645,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 public double DistanceToGridCenter; // Actual distance, not squared!
             }
             
-            public List<Threat> Threats = new List<Threat>();
+            public readonly List<Threat> Threats = new List<Threat>();
             public Dictionary<Projectile, Threat> ThreatsByProjectile = new Dictionary<Projectile, Threat>();
             private readonly Stack<List<LogicalWeapon>> _pool = new Stack<List<LogicalWeapon>>();
-
-            // Used for trimming. Reference swapped with Threats.
-            private List<Threat> _threatsTrim = new List<Threat>();
 
             /**
              * Hold your pitchfork, BD!
@@ -846,17 +843,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     UpdateRepositoryWeapons(weapons, grid);
                 });
-
-                // This leaks memory and just reallocates next tick. We will want to not do this.
-                // The fact there are torps that don't have any PDCs shouldn't affect the algorithm
-                var trimUnreachable = Measure(() =>
-                {
-                    TrimUnreachableThreats();
-                });
-
+                
                 /*
                  * This sorts EACH repository by the cost of turning the PDC to the torp.
                  * It's a massive cost, so we have a warm start thanks to the preserved order.
+                 *
+                 * P.S. This can be very easily dispatched in parallel; however, the overhead might be big (this takes from a few tens to a few hundreds of microseconds in my tests).
                  */
                 var sortRepos = Measure(() =>
                 {
@@ -865,7 +857,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                 if (Session.I.Tick30)
                 {
-                    MyAPIGateway.Utilities.ShowMessage($"FDS {this}", $"LP: {loadProjectiles:F}, WR: {removeWeapons:F}, URW: {updateRepositoryWeapons:F}, TU: {trimUnreachable:F}, SR: {sortRepos:F}");
+                    MyAPIGateway.Utilities.ShowMessage($"FDS {this}", $"LP: {loadProjectiles:F}, WR: {removeWeapons:F}, URW: {updateRepositoryWeapons:F}, SR: {sortRepos:F}");
                 }
             }
             
@@ -905,8 +897,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                 bands.Clear();
                 _rangeBandsByRange.Clear();
-                
-                _threatsTrim.Clear();
             }
 
             /// <summary>
@@ -1068,35 +1058,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         }
                     }
                 }
-            }
-            
-            /// <summary>
-            ///     Removes the threats which cannot be targeted at all.
-            ///     This will lower the load on the code downstream.
-            /// </summary>
-            private void TrimUnreachableThreats() // P.S. might be fine to keep them, we'll see
-            {
-                var trimmedList = _threatsTrim;
-                trimmedList.Clear();
-                
-                var threatsSource = Threats;
-                for (var sourceThreatIndex = 0; sourceThreatIndex < threatsSource.Count; sourceThreatIndex++)
-                {
-                    var sourceThreat = threatsSource[sourceThreatIndex];
-
-                    if (sourceThreat.WeaponCandidates.Count > 0)
-                    {
-                        trimmedList.Add(sourceThreat);
-                    }
-                    else
-                    {
-                        ThreatsByProjectile.Remove(sourceThreat.Ref);
-                    }
-                }
-
-                var temp = Threats;
-                Threats = trimmedList;
-                _threatsTrim = temp;
             }
             
             private void SortRepositoriesByAngleCost()
