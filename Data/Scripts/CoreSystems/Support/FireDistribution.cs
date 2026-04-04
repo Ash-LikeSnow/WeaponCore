@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -144,6 +143,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             ///     Used by the <see cref="Network"/> in its rebuild process, to remove the references to destroyed weapons from the repositories.
             /// </summary>
             public bool IsClosed;
+            
+            public enum RepoRebuildState : byte
+            {
+                Empty = 0,
+                IsMarkedInRepo = 1,
+                KeepInRepo = 2
+            }
+            
+            /// <summary>
+            ///     Used locally in the rebuild process.
+            ///     The data is invalid outside of that.
+            /// </summary>
+            public RepoRebuildState RepoRebuildStateTemp;
         }
 
         private int _weaponCompsVersion = -1;
@@ -186,6 +198,40 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected abstract bool IsCurrentWeaponListStillValid();
 
         /// <summary>
+        ///     For now, we use this in <see cref="IsCurrentWeaponListStillValid"/>.
+        ///     I doubt we will have performance issues because of the predicate. But if we do, we will inline.
+        /// </summary>
+        /// <param name="predicate"></param>
+        protected bool CheckForWeaponStateChangesOrUnmatchedConditions(Func<Weapon, bool> predicate)
+        {
+            var weaponComps = Manager.MasterAi.WeaponComps;
+            var validCount = 0;
+
+            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
+            {
+                var comp = weaponComps[componentIndex];
+        
+                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
+                {
+                    var w = comp.Collection[weaponIndex];
+            
+                    if (FireDistributionManager.IsValidPdc(w) && predicate(w))
+                    {
+                        validCount++;
+                
+                        // If we find a valid weapon that isn't tracked by us, then the terminal settings changed:
+                        if (!LogicalWeaponByWeapon.ContainsKey(w))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return validCount == Weapons.Count;
+        }
+
+        /// <summary>
         ///     Checks if this manager handles the specified weapon.
         ///     All of these results must be self-exclusive across the different systems.
         /// </summary>
@@ -208,7 +254,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         {
             var logicalWeapons = Weapons;
             var logicalWeaponByWeapon = LogicalWeaponByWeapon;
-            var aliveWeaponsTemp = this._aliveWeaponsTemp;
+            var aliveWeaponsTemp = _aliveWeaponsTemp;
                 
             foreach (var validWeapon in ScanForValidWeapons())
             {
@@ -219,8 +265,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
                 else
                 {
-                    // Create it immediately:
-                    logicalWeapons.Add(new LogicalWeapon
+                    var logicalWeapon = new LogicalWeapon
                     {
                         Ref = validWeapon,
                         TurnCostMultiplier = 1.0f,
@@ -230,7 +275,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         // We handle that below.
                         Index = logicalWeapons.Count,
                         IsClosed = false
-                    });
+                    };
+                    
+                    // Create it immediately:
+                    logicalWeapons.Add(logicalWeapon);
+                    logicalWeaponByWeapon.Add(validWeapon, logicalWeapon);
+                    aliveWeaponsTemp.Add(logicalWeapon);
                 }
             }
 
@@ -243,6 +293,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
                 
                 x.IsClosed = true;
+                logicalWeaponByWeapon.Remove(x.Ref);
                 
                 return true;
             }) > 0;
@@ -263,9 +314,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             {
                 IsWeaponAssignedToAnything = new bool[logicalWeapons.Count];
             }
-                        
-            _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
-
+            
             return anyWeaponsRemoved;
         }
         
@@ -299,20 +348,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion || !IsCurrentWeaponListStillValid())
                 {
                     anyWeaponsRemoved = RebuildWeaponList();
+                    _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
+                    
+                    MyAPIGateway.Utilities.ShowMessage("FCS", $"Rebuild weapons: {Weapons.Count}, ver {_weaponCompsVersion}");
                 }
                         
                 LoadWeaponSettings();
                 ClearAssignmentState();
                 
                 var grid = Manager.MasterAi.GridEntity;
-
-                var weapons = Weapons;
-
                 var projectileList = Manager.MasterAi.ProjectileCache;
                 
-                if (grid != null && weapons.Count > 0 && projectileList.Count > 0)
+                if (grid != null && Weapons.Count > 0 && projectileList.Count > 0)
                 {
-                    Network.UpdateDataStructure(projectileList, grid, weapons, anyWeaponsRemoved);
+                    Network.UpdateDataStructure(projectileList, grid, Weapons, anyWeaponsRemoved);
+                    SetupTickStartCore();
                 }
                 else
                 {
@@ -663,23 +713,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 // ReSharper disable once InvertIf
                 if (itemsToRemove > 0)
                 {
-                    for (var i = freeIndex; i < list.Count; i++)
-                    {
-                        list[i] = null;
-                    }
-        
                     list.RemoveRange(freeIndex, itemsToRemove);
                 }
             }
             
-            /// <summary>
-            /// Loads new projectiles with an empty candidate list.
-            /// Removes stale projectiles.
-            /// Projectiles that are valid aren't touched so we can use the preserved sort order downstream.
-            /// Also updates the distances for all projectiles.
-            /// </summary>
-            /// <param name="projectiles">The up-to-date projectile list.</param>
-            /// <param name="grid">The grid being targeted, to calculate the distance.</param>
             private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid)
             {
                 var threats = Threats;
@@ -765,22 +802,29 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 // ReSharper disable once InvertIf
                 if (itemsToRemove > 0)
                 {
-                    for (var i = freeIndex; i < repo.Count; i++)
-                    {
-                        repo[i] = null; 
-                    }
-
                     repo.RemoveRange(freeIndex, itemsToRemove);
                 }
             }
             
             public void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons, bool anyWeaponsRemoved)
             {
+                /*
+                 * - Loads new projectiles with an empty candidate list.
+                 * - Removes stale projectiles.
+                 * - Projectiles that are valid aren't touched so we can use the preserved sort order.
+                 * - Updates the distances for all projectiles.
+                 *
+                 * Since it's an active loop, it's optimized.
+                 */
                 var loadProjectiles = Measure(() =>
                 {
                     LoadProjectiles(projectileList, grid);
                 });
 
+                /*
+                 * If any weapons were removed (their IsClosed is set), this will remove them from all repositories.
+                 * Since it's infrequent, it's not optimized.
+                 */
                 var removeWeapons = Measure(() =>
                 {
                     if (anyWeaponsRemoved)
@@ -792,22 +836,37 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     }
                 });
                     
-                var initializeWeapons = Measure(() =>
+                /*
+                 * Initializes and maintains the weapons by cheap checks, to lower the number of failed acquires.
+                 * The maintenance preserves the existing weapons in their original order.
+                 * Since this order is expected to be coherent in time, this should massively lower the downstream sorting cost.
+                 * Since it's an active loop, it's optimized.
+                 */
+                var updateRepositoryWeapons = Measure(() =>
                 {
-                    InitializeRoughWeapons(weapons, grid);
+                    UpdateRepositoryWeapons(weapons, grid);
                 });
 
+                // This leaks memory and just reallocates next tick. We will want to not do this.
+                // The fact there are torps that don't have any PDCs shouldn't affect the algorithm
                 var trimUnreachable = Measure(() =>
                 {
                     TrimUnreachableThreats();
                 });
 
+                /*
+                 * This sorts EACH repository by the cost of turning the PDC to the torp.
+                 * It's a massive cost, so we have a warm start thanks to the preserved order.
+                 */
                 var sortRepos = Measure(() =>
                 {
                     SortRepositoriesByAngleCost();
                 });
-                   
-                MyAPIGateway.Utilities.ShowMessage($"FDS {this}", $"LP: {loadProjectiles:F}, WR: {removeWeapons:F}, IW: {initializeWeapons:F}, TU: {trimUnreachable:F}, SR: {sortRepos:F}");
+
+                if (Session.I.Tick30)
+                {
+                    MyAPIGateway.Utilities.ShowMessage($"FDS {this}", $"LP: {loadProjectiles:F}, WR: {removeWeapons:F}, URW: {updateRepositoryWeapons:F}, TU: {trimUnreachable:F}, SR: {sortRepos:F}");
+                }
             }
             
             private struct RangeBand
@@ -852,7 +911,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
             /// <summary>
             ///     Builds a "range band" data structure.
-            ///     Simply put, we quantize the range of each weapon in one-meter increments, then we collect weapons with the same quantized range in discrete sets.
+            ///     Simply put, we quantize the range of each weapon in one-meter increments, then we collect weapons with the same quantized range in discrete (disjoint!) sets.
             ///     This gives us a way to very cheaply discard weapons that are definitely not in range to shoot a given torp.
             /// </summary>
             /// <param name="weapons"></param>
@@ -883,30 +942,38 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     
                     band.Weapons.Add(weapon);
                 }
-
+                
+                // Sort descending. We can afford this since we only have a few bands.
+                // We will use this to optimize the repository update algorithm.
+                bands.Sort((a, b) => b.TruncatedRange.CompareTo(a.TruncatedRange));
             }
             
-            /// <summary>
-            ///     Initializes and maintains the <see cref="Threat.WeaponCandidates"/> by cheap checks, to lower the number of failed acquires.
-            ///     Comparing each PDC's range with each torp's distance would be O(NM).
-            ///     We can take advantage of the fact the PDC network usually has a few discrete ranges all around.
-            ///     The idea is, we will quantize the ranges, then separate them into "bands".
-            ///     With this, we can do some simple spatial partitioning to determine which PDCs are in range of which torpedoes.
-            /// </summary>
-            /// <param name="weapons"></param>
-            /// <param name="grid"></param>
-            private void InitializeRoughWeapons(List<LogicalWeapon> weapons, MyCubeGrid grid)
+            private void UpdateRepositoryWeapons(List<LogicalWeapon> weapons, MyCubeGrid grid)
             {
+                // We need to send the MCRN Hypersonic PMW to keen's headquaarters...
+
                 BuildRangeBands(weapons);
+
                 var bands = _rangeBands;
-
                 var gridRadius = grid.PositionComp.WorldVolume.Radius;
-
+                
+                // First, filter by range:
                 for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
                 {
                     var threat = Threats[threatIndex];
                     var distanceToCenter = threat.DistanceToGridCenter;
+                    var repo = threat.WeaponCandidates;
                     
+                    // This gives us the range in the list that holds the weapons we started with:
+                    var initialRepoSize = repo.Count;
+                    
+                    // First, we mark each existing weapon.
+                    // We will use this in the algorithm blow. It will allow us to see if a weapon should be kept in the repo.
+                    for (var existingWeaponIndex = 0; existingWeaponIndex < initialRepoSize; existingWeaponIndex++)
+                    {
+                        repo[existingWeaponIndex].RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.IsMarkedInRepo;
+                    }
+
                     // Lower and upper bounds on the distance to weapons:
                     var minimumDistance = distanceToCenter - gridRadius;
                     var maximumDistance = distanceToCenter + gridRadius;
@@ -917,8 +984,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         
                         if (minimumDistance > rangeBand.TruncatedRange)
                         {
-                            // Guaranteed to be out of range:
-                            continue; 
+                            // Guaranteed to be out of range.
+                            // We sorted the bands in descending order, so we can safely prune the rest of the list:
+                            break;
                         }
 
                         // If true, the weapon is guaranteed to be in range. Otherwise, we need to do a distance test.
@@ -927,6 +995,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         for (var index = 0; index < rangeBand.Weapons.Count; index++)
                         {
                             var weapon = rangeBand.Weapons[index];
+
                             var weaponRef = weapon.Ref;
                             var targetPosition = threat.Ref.Position;
 
@@ -936,8 +1005,66 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             }
                             
                             // Range-of-motion check: seems a bit involved. TODO
-                            
-                            threat.WeaponCandidates.Add(weapon);
+
+                            if (weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.IsMarkedInRepo)
+                            {
+                                // The weapon already exists in the repo.
+                                // We will now mark it as seen (i.e. it passes the checks to be kept in the repo).
+                                weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.KeepInRepo;
+                            }   
+                            else
+                            {
+                                // This guarantees the weapon isn't present in the repo.
+                                repo.Add(weapon);
+                            }
+                        }
+                    }
+                    
+                    // The list now has two segments. The first one has the previous weapons, with their order preserved. Then, after that, we have the new weapons.
+                    // The first segment is [0, initialRepoSize). We need to remove all elements in it that don't have their rebuild state set to KeepInRepo, but also reset this state to Empty for all of them.
+                    // The second segment won't be touched.
+                    // Inline RemoveAll modified to reset the temp state:
+                    
+                    var freeIndex = 0;
+                    
+                    while (freeIndex < initialRepoSize)
+                    {
+                        var weapon = repo[freeIndex];
+                        
+                        if (weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.KeepInRepo)
+                        {
+                            weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
+                            freeIndex++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    // ReSharper disable once InvertIf
+                    if (freeIndex < initialRepoSize)
+                    {
+                        repo[freeIndex].RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
+
+                        for (var readIndex = freeIndex + 1; readIndex < initialRepoSize; readIndex++)
+                        {
+                            var weapon = repo[readIndex];
+                            var shouldKeep = weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.KeepInRepo;
+                            weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
+
+                            if (shouldKeep)
+                            {
+                                repo[freeIndex] = weapon;
+                                freeIndex++;
+                            }
+                        }
+
+                        var itemsToRemove = initialRepoSize - freeIndex;
+                        
+                        if (itemsToRemove > 0)
+                        { 
+                            repo.RemoveRange(freeIndex, itemsToRemove);
                         }
                     }
                 }
@@ -971,10 +1098,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 Threats = trimmedList;
                 _threatsTrim = temp;
             }
-
-            /// <summary>
-            ///     Sorts the PDCs able to engage each torp by the cost of turning.
-            /// </summary>
+            
             private void SortRepositoriesByAngleCost()
             {
                 for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
@@ -1070,20 +1194,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
-        protected override bool IsCurrentWeaponListStillValid()
-        {
-            for (var weaponIndex = 0; weaponIndex < Weapons.Count; weaponIndex++)
-            {
-                var weapon = Weapons[weaponIndex];
-
-                if (!FireDistributionManager.IsValidPdc(weapon.Ref) || !weapon.Ref.System.ClosestFirst)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.System.ClosestFirst);
 
         public override bool IsValidWeapon(Weapon weapon)
         {
@@ -1154,21 +1265,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
             }
         }
-
-        protected override bool IsCurrentWeaponListStillValid()
-        {
-            for (var weaponIndex = 0; weaponIndex < Weapons.Count; weaponIndex++)
-            {
-                var weapon = Weapons[weaponIndex];
-
-                if (!FireDistributionManager.IsValidPdc(weapon.Ref) || weapon.Ref.System.ClosestFirst)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
+        
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !w.System.ClosestFirst);
 
         public override bool IsValidWeapon(Weapon weapon)
         {
