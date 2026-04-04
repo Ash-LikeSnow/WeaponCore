@@ -546,13 +546,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         return;
                     }
                     
+                    var repo = threat.WeaponCandidates;
                     var weapon = _weapon;
-                    var index = threat.WeaponCandidates.FindIndex(x => x.Ref == weapon);
 
-                    if (index != -1)
+                    for (var i = 0; i < repo.Count; i++)
                     {
-                        threat.WeaponCandidates.RemoveAtFast(index);
-                        IsDirty = true;
+                        if (repo[i].Ref == weapon)
+                        {
+                            // We call this one so order is preserved:
+                            repo.RemoveAt(i);
+                            IsDirty = true;
+                            break;
+                        }
                     }
                 }
                 finally
