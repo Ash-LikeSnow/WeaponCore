@@ -567,7 +567,7 @@ namespace CoreSystems.Support
                 }
             }
             
-            if (system.ClosestFirst)
+            if (w.PrioritizeClosestTarget)
             {
                 var length = collection.Count;
                 for (var h = length / 2; h > 0; h /= 2)
@@ -594,7 +594,7 @@ namespace CoreSystems.Support
 
             if (index < -1)
             {
-                var numToRandomize = system.ClosestFirst ? w.System.TopTargets : numOfTargets;
+                var numToRandomize = w.PrioritizeClosestTarget ? w.System.TopTargets : numOfTargets;
 
                 if (w.System.CycleTargets <= 0)
                     checkSize = numOfTargets;
@@ -977,7 +977,7 @@ namespace CoreSystems.Support
             var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
             var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
 
-            if (s.ClosestFirst)
+            if (w.PrioritizeClosestTarget)
             {
                 int length = collection.Count;
                 for (int h = length / 2; h > 0; h /= 2)
@@ -997,7 +997,7 @@ namespace CoreSystems.Support
                 }
             }
 
-            var numToRandomize = s.ClosestFirst ? s.Values.Targeting.TopTargets : numOfTargets;
+            var numToRandomize = w.PrioritizeClosestTarget ? s.Values.Targeting.TopTargets : numOfTargets;
             if (session.TargetDeck.Length < numOfTargets)
             {
                 session.TargetDeck = new int[numOfTargets];
@@ -1114,7 +1114,7 @@ namespace CoreSystems.Support
                     if (bt != Any && blockTypeMap != null && blockTypeMap[bt].Count > 0)
                     {
                         var subSystemList = blockTypeMap[bt];
-                        if (system.ClosestFirst)
+                        if (w.PrioritizeClosestTarget)
                         {
                             if (w.Top5.Count > 0 && (bt != w.LastTop5BlockType || w.Top5[0].CubeGrid != subSystemList[0].CubeGrid))
                                 w.Top5.Clear();

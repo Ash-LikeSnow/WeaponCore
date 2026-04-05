@@ -14,6 +14,14 @@ using VRageMath;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
+    internal static class FireDistributionConst
+    {
+        public const int UiWeaponValueFactor = 10;
+        public const int UiTurnCostFactor = 1000;
+        public const int MinMinLockTime = 15;
+        public const int MaxMinLockTime = 1200;
+    }
+    
     /// <summary>
     ///     Manages multiple <see cref="FireDistributionSystem"/>s.
     ///     Each system will manage a specific subset of the grid's weapons. The subsets are guaranteed to be disjoint.
@@ -21,7 +29,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
     internal sealed class FireDistributionManager
     {
         // Would be kind of a mess to inline this one, won't lie
-        public static bool IsValidPdc(Weapon w)
+        public static bool IsValidWeaponForFireDistribution(Weapon w)
         {
             var system = w.System;
             var comp = w.Comp;
@@ -48,7 +56,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 return comp.FunctionalBlock.Enabled && comp.FunctionalBlock.IsFunctional; 
             }
 
-            return true;
+            return system.AllowFireDistribution;
         }
         
         public readonly Ai MasterAi;
@@ -188,7 +196,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     var w = comp.Collection[weaponIndex];
             
-                    if (FireDistributionManager.IsValidPdc(w) && predicate(w))
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && predicate(w))
                     {
                         validCount++;
                 
@@ -1002,7 +1010,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionManager.IsValidPdc(w) && w.System.ClosestFirst)
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && w.PrioritizeClosestTarget)
                     {
                         yield return w;
                     }
@@ -1010,11 +1018,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.System.ClosestFirst);
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.PrioritizeClosestTarget);
 
         public override bool IsValidWeapon(Weapon weapon)
         {
-            return FireDistributionManager.IsValidPdc(weapon) && weapon.System.ClosestFirst;
+            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && weapon.PrioritizeClosestTarget;
         }
 
         #endregion
@@ -1074,7 +1082,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionManager.IsValidPdc(w) && !w.System.ClosestFirst)
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && !w.PrioritizeClosestTarget)
                     {
                         yield return w;
                     }
@@ -1082,11 +1090,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
         
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !w.System.ClosestFirst);
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !w.PrioritizeClosestTarget);
 
         public override bool IsValidWeapon(Weapon weapon)
         {
-            return FireDistributionManager.IsValidPdc(weapon) && !weapon.System.ClosestFirst;
+            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && !weapon.PrioritizeClosestTarget;
         }
 
         #endregion

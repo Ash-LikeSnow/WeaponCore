@@ -177,6 +177,8 @@ namespace CoreSystems.Support
         public readonly bool TargetSubSystems;
         public readonly bool OnlySubSystems;
         public readonly bool ClosestFirst;
+        public readonly bool AllowSwitchTargetPriority;
+        public readonly bool AllowFireDistribution;
         public readonly bool DegRof;
         public readonly bool ProhibitCoolingWhenOff;
         public readonly bool PainterUseMaxTargeting;
@@ -254,7 +256,7 @@ namespace CoreSystems.Support
         public readonly float RofAt0Heat;
         public readonly float RofAt100Heat;
         public readonly float HeatSinkRateOverheatMult;
-
+        
         public bool AnimationsInited;
 
         public enum FiringSoundState
@@ -301,6 +303,8 @@ namespace CoreSystems.Support
             StayCharged = values.HardPoint.Loading.StayCharged || WConst.ReloadTime == 0;
             MaxTargetSpeed = values.Targeting.StopTrackingSpeed > 0 ? values.Targeting.StopTrackingSpeed : double.MaxValue;
             ClosestFirst = values.Targeting.ClosestFirst;
+            AllowSwitchTargetPriority = values.Targeting.AllowSwitchTargetPriority;
+            AllowFireDistribution = values.Targeting.AllowFireDistribution;
             UniqueTargetPerWeapon = Values.Targeting.UniqueTargetPerWeapon;
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
@@ -495,9 +499,7 @@ namespace CoreSystems.Support
                 ammoDef.AreaOfDamage.EndOfLife.Falloff = Falloff.Exponential;
             }
         }
-
-
-
+        
         private void GetThreats(out HashSet<int> set, out bool projectilesFirst, out bool projectilesOnly)
         {
             set = new HashSet<int>(Values.Targeting.Threats.Length);
@@ -760,7 +762,6 @@ namespace CoreSystems.Support
                     if (ammoType.AmmoDef.Trajectory.MaxTrajectory * ammoType.AmmoDef.Trajectory.MaxTrajectory > firingSoundDistSqr)
                         firingSoundDistSqr = ammoType.AmmoDef.Trajectory.MaxTrajectory * ammoType.AmmoDef.Trajectory.MaxTrajectory;
         }
-    
     }
 
     internal class WeaponConstants

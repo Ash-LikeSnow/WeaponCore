@@ -8,6 +8,7 @@ using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 
 namespace CoreSystems.Control
 {
@@ -42,7 +43,7 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "FocusFire", Localization.GetText("TerminalFocusFireTitle"), Localization.GetText("TerminalFocusFireTooltip"), BlockUi.GetFocusFire, BlockUi.RequestSetFocusFire, true, HasTrackingExceptCommSlave);
             AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, TrackGrids);
-
+    
             AddOnOffSwitchNoAction<T>(session, "Neutrals", Localization.GetText("TerminalNeutralsTitle"), Localization.GetText("TerminalNeutralsTooltip"), BlockUi.GetNeutrals, BlockUi.RequestSetNeutrals, true, HasTrackingNeutrals);
             AddOnOffSwitchNoAction<T>(session, "Unowned", Localization.GetText("TerminalUnownedTitle"), Localization.GetText("TerminalUnownedTooltip"), BlockUi.GetUnowned, BlockUi.RequestSetUnowned, true, HasTrackingUnowned);
             AddOnOffSwitchNoAction<T>(session, "Grids", Localization.GetText("TerminalGridsTitle"), Localization.GetText("TerminalGridsTooltip"), BlockUi.GetGrids, BlockUi.RequestSetGrids, true, TrackGrids);
@@ -67,6 +68,12 @@ namespace CoreSystems.Control
             AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", BlockUi.FriendFill, BlockUi.FriendSelect, IsDrone, 1, true, true);
             AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", BlockUi.EnemyFill, BlockUi.EnemySelect, IsDrone, 1, true, true);
             AddOnOffSwitchNoAction<T>(session, "ReportTarget", Localization.GetText("TerminalReportTargetTitle"), Localization.GetText("TerminalReportTargetTooltip"), BlockUi.GetReportTarget, BlockUi.RequestSetReportTarget, true, UiReportTarget);
+            
+            AddOnOffSwitchNoAction<T>(session, "TargetClosest", Localization.GetText("TerminalTargetClosestTitle"), Localization.GetText("TerminalTargetClosestTooltip"), BlockUi.GetTargetClosest, BlockUi.RequestSetTargetClosest, true, AllowSwitchTargetPriority);
+            AddOnOffSwitchNoAction<T>(session, "EnableFireDistribution", Localization.GetText("TerminalEnableFireDistributionTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetEnableFireDistribution, BlockUi.RequestSetEnableFireDistribution, true, AllowFireDistribution);
+            AddWeaponValueSliderRange<T>(session, "WeaponValue", Localization.GetText("TerminalWeaponValueTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetWeaponValue, BlockUi.RequestSetWeaponValue, FireDistributionSlidersVisible, BlockUi.GetMinWeaponValue, BlockUi.GetMaxWeaponValue, true);
+            AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
+            AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
         }
 
 
@@ -407,7 +414,7 @@ namespace CoreSystems.Control
 
             return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
         }
-
+        
         internal static bool HasTrackingNoSizeProhibition(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -533,7 +540,22 @@ namespace CoreSystems.Control
         {
             return NoTurret(block) && GuidedAmmo(block);
         }
+        
+        internal static bool AllowSwitchTargetPriority(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip()) return false;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.Targeting.AllowSwitchTargetPriority && !comp.HasAlternateUi;
+        }
 
+        internal static bool AllowFireDistribution(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip()) return false;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.Targeting.AllowFireDistribution && !comp.HasAlternateUi;
+        }
 
         internal static void SliderWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
@@ -657,6 +679,27 @@ namespace CoreSystems.Control
             builder.Append(message);
         }
 
+        internal static void SliderWeaponValueWriterRange(IMyTerminalBlock block, StringBuilder builder)
+        {
+            var value = (long)Math.Round(BlockUi.GetWeaponValue(block), 0);
+
+            builder.Append(value.ToString());
+        }
+    
+        internal static void SliderTurnCostWriterRange(IMyTerminalBlock block, StringBuilder builder)
+        {
+            var value = (long)Math.Round(BlockUi.GetTurnCost(block), 0);
+
+            builder.Append(value.ToString());
+        }
+
+        internal static void SliderMinLockTimeWriterRange(IMyTerminalBlock block, StringBuilder builder)
+        {
+            var value = (long)Math.Round(BlockUi.GetMinLockTime(block), 0);
+            
+            builder.Append(value.ToString());
+        }
+        
         #region terminal control methods
         internal static IMyTerminalControlSlider AddBlockCameraSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
         {
@@ -1123,7 +1166,63 @@ namespace CoreSystems.Control
 
             return c;
         }
+        
+        internal static IMyTerminalControlSlider AddWeaponValueSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Enabled = IsReady;
+            c.Visible = visibleGetter;
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Writer = SliderWeaponValueWriterRange;
+            if(minGetter != null) c.SetLimits(minGetter, maxGetter);
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+            
+            return c;
+        }
 
+        internal static IMyTerminalControlSlider AddTurnCostSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Enabled = IsReady;
+            c.Visible = visibleGetter;
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Writer = SliderTurnCostWriterRange;
+            if(minGetter != null) c.SetLimits(minGetter, maxGetter);
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+            
+            return c;
+        }
+
+        internal static IMyTerminalControlSlider AddMinLockTimeSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Enabled = IsReady;
+            c.Visible = visibleGetter;
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Writer = SliderMinLockTimeWriterRange;
+            if(minGetter != null) c.SetLimits(minGetter, maxGetter);
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+            
+            return c;
+        }
+        
+        internal static bool FireDistributionSlidersVisible(IMyTerminalBlock block)
+        {
+            return AllowFireDistribution(block) && BlockUi.GetEnableFireDistribution(block);
+        }
+        
         #endregion
     }
 }

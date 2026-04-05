@@ -280,6 +280,9 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMinSizeControl(session);
             CreateCustomActions<T>.CreateMaxSizeControl(session);
             //CreateCustomActions<T>.CreateFriendlyControl(session);
+            
+            CreateCustomActions<T>.CreateTargetClosest(session);
+            CreateCustomActions<T>.CreateFireDistribution(session);
         }
 
         internal static void CreateSearchlightActions<T>(Session session) where T : IMyTerminalBlock

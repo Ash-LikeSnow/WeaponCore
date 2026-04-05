@@ -227,7 +227,7 @@ namespace CoreSystems.Platform
         internal bool VanillaTracking;
         internal bool RotorTurretTracking;
         internal bool RotorTurretSlaving;
-
+        
         internal bool ShotReady
         {
             get
@@ -467,6 +467,19 @@ namespace CoreSystems.Platform
 
             if (fwdAngled || upAngled || leftAngled)
                 AlternateForward = true;
+        }
+
+        public bool PrioritizeClosestTarget 
+        {
+            get
+            {
+                if (System.AllowSwitchTargetPriority)
+                {
+                    return Comp?.Data?.Repo?.Values?.Set?.Overrides?.TargetClosest ?? System.ClosestFirst;
+                }
+
+                return System.ClosestFirst;
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ using ProtoBuf;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
@@ -650,9 +651,11 @@ namespace CoreSystems
         //[ProtoMember(34)] public bool AngularTracking; // Deprecated
         [ProtoMember(35), DefaultValue(true)] public bool SupportingPD = true;
         [ProtoMember(36), DefaultValue(ObjectiveModes.Default)] public ObjectiveModes ObjectiveMode = ObjectiveModes.Default;
-
-
-
+        [ProtoMember(37), DefaultValue(true)] public bool TargetClosest = true;
+        [ProtoMember(38)] public bool EnableFireDistribution;
+        [ProtoMember(39), DefaultValue(FireDistributionConst.UiWeaponValueFactor)] public int WeaponValue = FireDistributionConst.UiWeaponValueFactor;
+        [ProtoMember(40), DefaultValue(FireDistributionConst.UiTurnCostFactor)] public int TurnCost = FireDistributionConst.UiTurnCostFactor;
+        [ProtoMember(41), DefaultValue(FireDistributionConst.MinMinLockTime)] public int MinLockTime = FireDistributionConst.MinMinLockTime;
 
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
@@ -688,6 +691,11 @@ namespace CoreSystems
             SmallGrid = syncFrom.SmallGrid;
             SupportingPD = syncFrom.SupportingPD;
             ObjectiveMode = syncFrom.ObjectiveMode;
+            TargetClosest = syncFrom.TargetClosest;
+            EnableFireDistribution = syncFrom.EnableFireDistribution;
+            WeaponValue = syncFrom.WeaponValue;
+            TurnCost = syncFrom.TurnCost;
+            MinLockTime = syncFrom.MinLockTime;
         }
     }
 }
