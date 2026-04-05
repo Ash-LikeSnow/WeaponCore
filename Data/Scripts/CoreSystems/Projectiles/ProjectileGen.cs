@@ -81,7 +81,7 @@ namespace CoreSystems.Projectiles
 
                 info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
                 info.ShooterVel = comp.Ai.TopEntityVel;
-
+                info.TestModeShot = w.Comp.MasterOverrides.Override;
                 info.FactionId = comp.Ai.AiOwnerFactionId;
                 info.OriginUp = t != Kind.Client ? muzzle.UpDirection : gen.OriginUp;
                 info.MaxTrajectory = t != Kind.Client ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
@@ -171,7 +171,6 @@ namespace CoreSystems.Projectiles
             {
                 var p = reAdd ?? AddTargets[i];
                 var info = p.Info;
-                var overrides = info.Weapon.Comp.Data.Repo.Values.Set.Overrides;
                 var ai = info.Ai;
                 var target = info.Target;
                 var ammoDef = info.AmmoDef;
@@ -189,13 +188,13 @@ namespace CoreSystems.Projectiles
 
                         var dumbAdd = false;
 
-                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
+                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || p.Info.TestModeShot && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
                             if (Vector3.Dot((Vector3)p.Direction, (Vector3)(info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation)) < 0)
                             {
                                 var testRay = new RayD(info.Origin, p.Direction);
-                                var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null;
+                                var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null || p.Info.TestModeShot;
 
                                 if (!quickCheck)
                                 {

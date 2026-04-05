@@ -267,7 +267,7 @@ namespace CoreSystems.Projectiles
                 OffsetTarget = Vector3D.Zero;
             }
 
-            s.PickTarget = (aConst.OverrideTarget || comp.ModOverride && !lockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
+            s.PickTarget = !Info.TestModeShot && (aConst.OverrideTarget || comp.ModOverride && !lockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
             if (s.PickTarget || lockedTarget && !Info.IsFragment) TargetsSeen++;
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
 
