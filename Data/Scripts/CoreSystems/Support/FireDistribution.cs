@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -129,33 +128,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             ///     It is to prevent the weapon juking without being able to fire.
             /// </summary>
             public int MinimumLockDuration;
-            
-            // Temporary value used by the local sort. Invalid to access anywhere else!
-            public float TempCurrentTurnCost;
-            
+        
             /// <summary>
-            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/>.
+            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/> and the <see cref="ThreatGraph.Threat.RowData"/>.
             /// </summary>
             public int Index;
-
-            /// <summary>
-            ///     If true, then the weapon was removed from the manager.
-            ///     Used by the <see cref="Network"/> in its rebuild process, to remove the references to destroyed weapons from the repositories.
-            /// </summary>
-            public bool IsClosed;
-            
-            public enum RepoRebuildState : byte
-            {
-                Empty = 0,
-                IsMarkedInRepo = 1,
-                KeepInRepo = 2
-            }
-            
-            /// <summary>
-            ///     Used locally in the rebuild process.
-            ///     The data is invalid outside of that.
-            /// </summary>
-            public RepoRebuildState RepoRebuildStateTemp;
         }
 
         private int _weaponCompsVersion = -1;
@@ -172,15 +149,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, LogicalWeapon> LogicalWeaponByWeapon = new Dictionary<Weapon, LogicalWeapon>();
         protected bool[] IsWeaponAssignedToAnything = Array.Empty<bool>();
-        protected readonly Dictionary<Weapon, Projectile> Assignments = new Dictionary<Weapon, Projectile>();
+        protected Projectile[] Assignments = Array.Empty<Projectile>();
         public readonly ThreatGraph Network = new ThreatGraph();
         
         public uint LastUpdateTick { get; private set; } = uint.MaxValue;
         
-        // P.S. depending on how often this runs, we may want to have a dedicated loop that clears those references.
-
-        protected static void Log(string message) => MyAPIGateway.Utilities.ShowMessage("FDS", message);
-
         // P.S. It doesn't just use a single predicate method because of profiler...
         #region Weapon List Acquisition
         
@@ -240,22 +213,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         public abstract bool IsValidWeapon(Weapon weapon);
         
         #endregion
-        
-        private static double Measure(Action a)
-        {
-            var sw = Stopwatch.StartNew();
-            a.Invoke();
-            return sw.Elapsed.TotalMilliseconds * 1000;
-        }
 
         private readonly HashSet<LogicalWeapon> _aliveWeaponsTemp = new HashSet<LogicalWeapon>();
         
-        private bool RebuildWeaponList()
+        private void RebuildWeaponListAndLookups()
         {
             var logicalWeapons = Weapons;
             var logicalWeaponByWeapon = LogicalWeaponByWeapon;
             var aliveWeaponsTemp = _aliveWeaponsTemp;
-                
+
             foreach (var validWeapon in ScanForValidWeapons())
             {
                 LogicalWeapon existingWeapon;
@@ -274,7 +240,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         // This index is strictly invalid if any weapons are removed.
                         // We handle that below.
                         Index = logicalWeapons.Count,
-                        IsClosed = false
                     };
                     
                     // Create it immediately:
@@ -292,7 +257,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     return false;
                 }
                 
-                x.IsClosed = true;
+                //x.IsClosed = true; only write usage here
                 logicalWeaponByWeapon.Remove(x.Ref);
                 
                 return true;
@@ -310,12 +275,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }                
             }
             
-            if (logicalWeapons.Count > IsWeaponAssignedToAnything.Length)
+            if (logicalWeapons.Count != IsWeaponAssignedToAnything.Length)
             {
                 IsWeaponAssignedToAnything = new bool[logicalWeapons.Count];
             }
-            
-            return anyWeaponsRemoved;
+
+            if (logicalWeapons.Count != Assignments.Length)
+            {
+                Assignments = new Projectile[logicalWeapons.Count];
+            }
         }
         
         private void LoadWeaponSettings()
@@ -344,10 +312,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     return;
                 }
 
-                var anyWeaponsRemoved = false;    
                 if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion || !IsCurrentWeaponListStillValid())
                 {
-                    anyWeaponsRemoved = RebuildWeaponList();
+                    RebuildWeaponListAndLookups();
                     _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
                     
                     MyAPIGateway.Utilities.ShowMessage("FCS", $"Rebuild weapons: {Weapons.Count}, ver {_weaponCompsVersion}");
@@ -361,7 +328,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 
                 if (grid != null && Weapons.Count > 0 && projectileList.Count > 0)
                 {
-                    Network.UpdateDataStructure(projectileList, grid, Weapons, anyWeaponsRemoved);
+                    Network.UpdateDataStructure(projectileList, grid, Weapons);
                     SetupTickStartCore();
                 }
                 else
@@ -388,22 +355,26 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         protected void ClearAssignmentState()
         {
-            Assignments.Clear();
-            Array.Clear(IsWeaponAssignedToAnything, 0, Weapons.Count);
+            Array.Clear(Assignments, 0, Assignments.Length);
+            Array.Clear(IsWeaponAssignedToAnything, 0, IsWeaponAssignedToAnything.Length);
         }
 
         /// <summary>
-        ///     Called when a weapon finds it cannot shoot the assigned target, after that issue has already been marked.
-        ///     Uses a fast greedy (suboptimal) assignment algorithm.
+        ///     First, the torpedoes are prioritized by the specific system implementation using a time-coherent sort.
+        ///     Then, the algorithm starts assigning PDCs to the torpedoes by priority, based on the cost of assignment.
+        ///     The value of the PDCs will also determine how many are assigned.
+        ///     This greedy cost problem assignment algorithm produces good results with very low cost, compared to an optimal assignment algorithm.
+        ///     In turn, we can run it multiple times per frame as the expensive LoS checks inform us that the PDCs cannot shoot the assigned torpedoes (the real cost is building the matrix, which is done once for the frame).
         /// </summary>
         protected virtual void ComputeAssignments()
-        {
-             ClearAssignmentState();
-            
+        { 
+            ClearAssignmentState();
+                
             var weapons = Weapons;
             var weaponsCount = Weapons.Count;
             var threats = Network.Threats;
             var isAssigned = IsWeaponAssignedToAnything;
+            var assignments = Assignments;
             var currentTick = Session.I.Tick;
 
             // Unassigned weapons left. Used to early-exit.
@@ -415,6 +386,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 var weapon = weapons[weaponIndex];
                 var weaponTarget = weapon.Ref.Target;
                 
+                // ReSharper disable once MergeSequentialChecks
                 if (weaponTarget != null && weaponTarget.TargetObject != null) // need some help here. What conditions do we impose here to make sure the target is not expired or something?
                 {
                     var targetProjectile = weaponTarget.TargetObject as Projectile;
@@ -424,8 +396,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         if (targetProjectile.State == Projectile.ProjectileState.Alive && currentTick - weapon.Ref.Target.ChangeTick < weapon.MinimumLockDuration)
                         {
                             // If true, then the weapon must keep the current target locked; we are not allowed to reassign.
-                            // We will write it in our datastructure:
-                            Assignments.Add(weapon.Ref, targetProjectile);
+                            // We will write it in our data structure:
+                            assignments[weaponIndex] = targetProjectile;
                             isAssigned[weapon.Index] = true;
                             --weaponsRemaining;
                         }
@@ -445,93 +417,132 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
             {
                 var threat = threats[threatIndex];
+                var rowData = threat.RowData;
 
                 var remainingThreatValue = 1.0f;
-                
-                // Apply committed weapons.
-                // These are the weapons whose locks we cannot change yet.
-                for (var candidateWeaponIndex = 0; candidateWeaponIndex < threat.WeaponCandidates.Count; candidateWeaponIndex++)
-                {
-                    var candidateWeapon = threat.WeaponCandidates[candidateWeaponIndex];
 
-                    Projectile projectileCommitted;
-                    if (isAssigned[candidateWeapon.Index] && Assignments.TryGetValue(candidateWeapon.Ref, out projectileCommitted) && projectileCommitted == threat.Ref)
+                // Apply committed weapons. These are the weapons whose locks we cannot change yet.
+                // If they are locked onto this torp, then by all means, take them into account:
+                for (var committedWeaponIndex = 0; committedWeaponIndex < weaponsCount; committedWeaponIndex++)
+                {
+                    // We can elide the isAssigned in this case.
+                    
+                    if (assignments[committedWeaponIndex] == threat.Ref && rowData[committedWeaponIndex] != 0)
                     {
-                        remainingThreatValue -= candidateWeapon.WeaponValue;
+                        remainingThreatValue -= weapons[committedWeaponIndex].WeaponValue;
                     }
                 }
                 
-                if (remainingThreatValue <= 0.0f || Math.Abs(remainingThreatValue) < 1e-4)
+                if (remainingThreatValue < 1e-4f)
                 {
-                    // The torpedo is fully engaged by the committed weapons
+                    // The torpedo is fully engaged by the committed weapons.
                     continue;
                 }
                 
-                for (var candidateWeaponIndex = 0; candidateWeaponIndex < threat.WeaponCandidates.Count; candidateWeaponIndex++)
+                // Assign using the cost. The LSB is 1 if the weapon can shoot the torp, and the rest is a quantized cost.
+                while (weaponsRemaining > 0 && remainingThreatValue > 1e-4)
                 {
-                    var candidateWeapon = threat.WeaponCandidates[candidateWeaponIndex];
-
-                    if (isAssigned[candidateWeapon.Index])
+                    // Finds the weapon that can shoot the torp and has minimum cost.
+                    // P.S. This minimum-cost extraction means the entire algorithm's complexity is a factor of how many PDCs a torp needs to be assigned.
+                    // So we will want to place a reasonable lower limit in the PDC value slider.
+                    var bestIndex = -1;
+                    var bestCost = int.MaxValue;
+                    for (var candidateIndex = 0; candidateIndex < weaponsCount; candidateIndex++)
                     {
-                        continue;
+                        if (isAssigned[candidateIndex])
+                        {
+                            continue;
+                        }
+
+                        var cell = rowData[candidateIndex];
+
+                        if (cell == 0)
+                        {
+                            // Weapon cannot shoot the torp:
+                            continue;
+                        }
+
+                        var cost = cell >> 1;
+
+                        if (bestIndex == -1 || cost < bestCost)
+                        {
+                            bestIndex = candidateIndex;
+                            bestCost = cost;
+                        }
                     }
 
-                    remainingThreatValue -= candidateWeapon.WeaponValue;
-                    
-                    Assignments.Add(candidateWeapon.Ref, threat.Ref);
-                    isAssigned[candidateWeapon.Index] = true;
-                    weaponsRemaining--;
-                    
-                    if (remainingThreatValue <= 0.0f || Math.Abs(remainingThreatValue) < 1e-4)
+                    if (bestIndex == -1)
                     {
+                        // There are no other weapons to assign:
                         break;
                     }
+                    
+                    // And assigns it:
+                    var candidateWeapon = weapons[bestIndex];
+                    remainingThreatValue -= candidateWeapon.WeaponValue;
+                    assignments[bestIndex] = threat.Ref;
+                    isAssigned[candidateWeapon.Index] = true;
+                    weaponsRemaining--;
                 }
             }
         }
         
+        /// <summary>
+        ///     Creates an accessor that is valid <i>throught the tick</i>. Trying to use it after the current tick will lead to undefined behavior.
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <returns>An invalid accessor, if the system doesn't handle the specified weapon, or a valid accessor otherwise. This also computes the assignments, if not done already.</returns>
         public Accessor CreateAccessor(Weapon weapon)
         {
             SetupTickStart();
-            return new Accessor(this, weapon, _lock);
+            
+            _lock.AcquireShared();
+            
+            LogicalWeapon logicalWeapon;
+
+            try
+            {
+                if (!LogicalWeaponByWeapon.TryGetValue(weapon, out logicalWeapon))
+                {
+                    return new Accessor();
+                }
+            }
+            finally
+            {
+                _lock.ReleaseShared();
+            }
+            
+            return new Accessor(this, logicalWeapon, _lock);
         }
         
         /// <summary>
         ///     Accessor that can be called in parallel to interact with the manager:
         ///         - Fetching assignments for the weapon
-        ///         - Marking an assignment as invalid (cannot shoot it)
-        ///         - Recalculating after that
+        ///         - Marking an assignment as invalid (cannot shoot it), which recomputes new assignments.
         /// </summary>
         public struct Accessor
         {
-            public readonly bool IsValid;
-            
+            public bool IsValid;
             private readonly FireDistributionSystem _system;
-            private readonly Weapon _weapon;
+            private readonly LogicalWeapon _logicalWeapon;
             private readonly FastResourceLock _lock;
-            public bool IsDirty;
             
-            public Accessor(FireDistributionSystem system, Weapon weapon, FastResourceLock accessLock)
+            public Accessor(FireDistributionSystem system, LogicalWeapon logicalWeapon, FastResourceLock accessLock)
             {
                 IsValid = true;
                 _system = system;
-                _weapon = weapon;
+                _logicalWeapon = logicalWeapon;
                 _lock = accessLock;
-                IsDirty = false;
             }
 
             public bool TryGetAssignment(out Projectile assignedProjectile)
             {
-                _lock.AcquireShared();
+                // We assume the reference is atomic, so we don't take a lock.
+                // This should be valid under the condition the accessor is being used in the tick it was created in.
+                
+                assignedProjectile = _system.Assignments[_logicalWeapon.Index];
 
-                try
-                {
-                    return _system.Assignments.TryGetValue(_weapon, out assignedProjectile);
-                }
-                finally
-                {
-                    _lock.ReleaseShared();
-                }
+                return assignedProjectile != null;
             }
             
             public void MarkCannotShoot(Projectile projectile)
@@ -543,39 +554,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     ThreatGraph.Threat threat;
                     if (!_system.Network.ThreatsByProjectile.TryGetValue(projectile, out threat))
                     {
+                        IsValid = false;
                         return;
                     }
                     
-                    var repo = threat.WeaponCandidates;
-                    var weapon = _weapon;
-
-                    for (var i = 0; i < repo.Count; i++)
-                    {
-                        if (repo[i].Ref == weapon)
-                        {
-                            // We call this one so order is preserved:
-                            repo.RemoveAt(i);
-                            IsDirty = true;
-                            break;
-                        }
-                    }
-                }
-                finally
-                {
-                    _lock.ReleaseExclusive();
-                }
-            }
-            
-            public void RecalculateAssignments()
-            {
-                _lock.AcquireExclusive();
+                    threat.RowData[_logicalWeapon.Index] = 0;
                 
-                try
-                {
-                    _system.ComputeAssignments();                   
+                    _system.ComputeAssignments();
                 }
                 finally
-                {   
+                {
                     _lock.ReleaseExclusive();
                 }
             }
@@ -609,8 +597,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         continue;
                     }
 
-                    Projectile assignedProjectile;
-                    if (!Assignments.TryGetValue(weaponRef, out assignedProjectile))
+                    var assignedProjectile = Assignments[weaponIndex];
+                    
+                    if (assignedProjectile == null)
                     {
                         continue;
                     }
@@ -636,7 +625,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         {
             Weapons.Clear();
             LogicalWeaponByWeapon.Clear();
-            Assignments.Clear();
+            Array.Clear(Assignments, 0, Assignments.Length);
             Network.Clear();
             LastUpdateTick = uint.MaxValue;
         }
@@ -646,29 +635,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             public sealed class Threat
             {
                 public Projectile Ref;
-                public List<LogicalWeapon> WeaponCandidates;
+                public ushort[] RowData;
                 public double DistanceToGridCenter; // Actual distance, not squared!
             }
             
             public readonly List<Threat> Threats = new List<Threat>();
             public Dictionary<Projectile, Threat> ThreatsByProjectile = new Dictionary<Projectile, Threat>();
-            private readonly Stack<List<LogicalWeapon>> _pool = new Stack<List<LogicalWeapon>>();
-
-            /**
-             * Hold your pitchfork, BD!
-             * We will hit INLINE on the IDE once this logic is done.
-             */
-            
-            private List<LogicalWeapon> GetPooledWeaponList() => _pool.Count > 0 
-                ? _pool.Pop()
-                : new List<LogicalWeapon>();
-
-            private void FreePooledWeaponList(List<LogicalWeapon> list)
-            {
-                list.Clear();
-                _pool.Push(list);
-            }
-
             private readonly HashSet<Projectile> _aliveProjectilesTemp = new HashSet<Projectile>();
             private readonly List<Projectile> _newProjectilesTemp = new List<Projectile>();
 
@@ -691,7 +663,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
 
                 var a = list[freeIndex];
-                FreePooledWeaponList(a.WeaponCandidates);
                 ThreatsByProjectile.Remove(a.Ref);
 
                 for (var readIndex = freeIndex + 1; readIndex < list.Count; readIndex++)
@@ -705,7 +676,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     }
                     else
                     {
-                       FreePooledWeaponList(currentItem.WeaponCandidates);
                        ThreatsByProjectile.Remove(currentItem.Ref);
                     }
                 }
@@ -719,7 +689,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
             }
             
-            private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid)
+            private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid, int weaponCount)
             {
                 var threats = Threats;
                 var threatsByProjectile = ThreatsByProjectile;
@@ -752,7 +722,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     var threat = new Threat
                     {
                         Ref = projectile,
-                        WeaponCandidates = GetPooledWeaponList(),
+                        RowData = new ushort[weaponCount],
                         DistanceToGridCenter = double.NaN
                     };
                     
@@ -772,98 +742,49 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
             }
 
-            private static void RemoveDestroyedWeaponsFromRepo(List<LogicalWeapon> repo)
+            private void ResizeColumnsAndClearMatrix(int weaponCount)
             {
-                // Inline List.RemoveAll
-                
-                var freeIndex = 0;
-                
-                while (freeIndex < repo.Count && !repo[freeIndex].IsClosed)
+                var threats = Threats;
+                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
                 {
-                    freeIndex++;
-                }
+                    var threat = threats[threatIndex];
+                    var rowData = threat.RowData;
 
-                if (freeIndex >= repo.Count)
-                {
-                    return;
-                }
-
-                for (var readIndex = freeIndex + 1; readIndex < repo.Count; readIndex++)
-                {
-                    var currentWeapon = repo[readIndex];
-
-                    if (!currentWeapon.IsClosed)
+                    if (rowData.Length == weaponCount)
                     {
-                        repo[freeIndex] = currentWeapon;
-                        freeIndex++;
+                        Array.Clear(rowData, 0, weaponCount);
                     }
-                }
-
-                var itemsToRemove = repo.Count - freeIndex;
-
-                // ReSharper disable once InvertIf
-                if (itemsToRemove > 0)
-                {
-                    repo.RemoveRange(freeIndex, itemsToRemove);
+                    else
+                    {
+                        threat.RowData = new ushort[weaponCount];
+                    }
                 }
             }
             
-            public void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons, bool anyWeaponsRemoved)
+            /// <summary>
+            ///     Builds the N×M matrix, where N is the number of torpedoes and M is the number of weapons.
+            ///     Each cell encodes whether the PDC can engage the torpedo, and the cost of doing so.
+            /// </summary>
+            /// <param name="projectileList"></param>
+            /// <param name="grid"></param>
+            /// <param name="weapons"></param>
+            public void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
             {
                 /*
-                 * - Loads new projectiles with an empty candidate list.
-                 * - Removes stale projectiles.
-                 * - Projectiles that are valid aren't touched so we can use the preserved sort order.
-                 * - Updates the distances for all projectiles.
-                 *
-                 * Since it's an active loop, it's optimized.
+                 * Loads new projectiles and removes stale projectiles. Preserves order of persisted projectiles.
+                 * Also updates the distances for all projectiles.
                  */
-                var loadProjectiles = Measure(() =>
-                {
-                    LoadProjectiles(projectileList, grid);
-                });
+                LoadProjectiles(projectileList, grid, weapons.Count);
 
                 /*
-                 * If any weapons were removed (their IsClosed is set), this will remove them from all repositories.
-                 * Since it's infrequent, it's not optimized.
+                 * Zeroes out the matrix and resizes each row data array if needed.
                  */
-                var removeWeapons = Measure(() =>
-                {
-                    if (anyWeaponsRemoved)
-                    {
-                        for (var index = 0; index < Threats.Count; index++)
-                        {
-                            RemoveDestroyedWeaponsFromRepo(Threats[index].WeaponCandidates);
-                        }
-                    }
-                });
-                    
-                /*
-                 * Initializes and maintains the weapons by cheap checks, to lower the number of failed acquires.
-                 * The maintenance preserves the existing weapons in their original order.
-                 * Since this order is expected to be coherent in time, this should massively lower the downstream sorting cost.
-                 * Since it's an active loop, it's optimized.
-                 */
-                var updateRepositoryWeapons = Measure(() =>
-                {
-                    UpdateRepositoryWeapons(weapons, grid);
-                });
+                ResizeColumnsAndClearMatrix(weapons.Count);
                 
                 /*
-                 * This sorts EACH repository by the cost of turning the PDC to the torp.
-                 * It's a massive cost, so we have a warm start thanks to the preserved order.
-                 *
-                 * P.S. This can be very easily dispatched in parallel; however, the overhead might be big (this takes from a few tens to a few hundreds of microseconds in my tests).
+                 * Computes the visibility and cost for each cell.
                  */
-                var sortRepos = Measure(() =>
-                {
-                    SortRepositoriesByAngleCost();
-                });
-
-                if (Session.I.Tick30)
-                {
-                    MyAPIGateway.Utilities.ShowMessage($"FDS {this}", $"LP: {loadProjectiles:F}, WR: {removeWeapons:F}, URW: {updateRepositoryWeapons:F}, SR: {sortRepos:F}");
-                }
+                ComputeMatrix(weapons, grid);
             }
             
             private struct RangeBand
@@ -876,18 +797,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                 /// <summary>
                 ///     All weapons that have their range match this floor.
+                ///     These indices are the global ones, that we can use.
                 /// </summary>
-                public List<LogicalWeapon> Weapons;
+                public List<int> WeaponIndices;
             }
 
             private readonly List<RangeBand> _rangeBands = new List<RangeBand>();
             private readonly Dictionary<int, RangeBand> _rangeBandsByRange = new Dictionary<int, RangeBand>();
+            private readonly Stack<List<int>> _indexListPool = new Stack<List<int>>();
 
             public void Clear()
             {
                 Threats.Clear();
                 ThreatsByProjectile.Clear();
-                _pool.Clear();
                 ClearBands();
             }
             
@@ -897,81 +819,91 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                 for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
                 {
-                    FreePooledWeaponList(bands[bandIndex].Weapons);
+                    var list = bands[bandIndex].WeaponIndices;
+                    list.Clear();
+                    _indexListPool.Push(list);
                 }
 
                 bands.Clear();
                 _rangeBandsByRange.Clear();
             }
 
-            /// <summary>
-            ///     Builds a "range band" data structure.
-            ///     Simply put, we quantize the range of each weapon in one-meter increments, then we collect weapons with the same quantized range in discrete (disjoint!) sets.
-            ///     This gives us a way to very cheaply discard weapons that are definitely not in range to shoot a given torp.
-            /// </summary>
-            /// <param name="weapons"></param>
-            private void BuildRangeBands(List<LogicalWeapon> weapons)
+            // ReSharper disable InconsistentNaming
+            private int __matrixComputeLocalCacheSize = -1;
+            private Vector3D[] __weaponPositions;
+            private Vector3[] __weaponDirections;
+            private float[] __weaponMaxSqrDists;
+            private float[] __weaponTurnCosts;
+            // ReSharper restore InconsistentNaming
+            
+            private void ComputeMatrix(List<LogicalWeapon> weapons, MyCubeGrid grid)
             {
                 ClearBands();
-                
+
+                var weaponCount = weapons.Count;
+
+                if (weaponCount != __matrixComputeLocalCacheSize)
+                {
+                    __weaponPositions = new Vector3D[weaponCount];
+                    __weaponDirections = new Vector3[weaponCount];
+                    __weaponMaxSqrDists = new float[weaponCount];
+                    __weaponTurnCosts = new float[weaponCount];
+                    __matrixComputeLocalCacheSize = weaponCount;
+                }
+
+                var weaponPositions = __weaponPositions;
+                var weaponDirections = __weaponDirections;
+                var weaponMaxSqrDists = __weaponMaxSqrDists;
+                var weaponTurnCosts = __weaponTurnCosts;
+               
                 var bands = _rangeBands;
                 var bandsByRange = _rangeBandsByRange;
 
-                for (var weaponIndex = 0; weaponIndex < weapons.Count; weaponIndex++)
+                // Prefetch all the data behind those references into these small arrays, and build the bands:
+                for (var weaponIndex = 0; weaponIndex < weaponCount; weaponIndex++)
                 {
                     var weapon = weapons[weaponIndex];
-                    var range = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
+                    var scopeInfo = weapon.Ref.GetScope.Info;
+
+                    weaponPositions[weaponIndex] = scopeInfo.Position;
+                    weaponDirections[weaponIndex] = scopeInfo.Direction;
+                    weaponMaxSqrDists[weaponIndex] = (float)weapon.Ref.MaxTargetDistanceSqr;
+                    weaponTurnCosts[weaponIndex] = 1.0f; // TODO pls bd
+                    
+                    var quantizedRange = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
 
                     RangeBand band;
-                    if (!bandsByRange.TryGetValue(range, out band))
+                    if (!bandsByRange.TryGetValue(quantizedRange, out band))
                     {
                         band = new RangeBand
                         {
-                            TruncatedRange = range,
-                            Weapons = GetPooledWeaponList()
+                            TruncatedRange = quantizedRange,
+                            WeaponIndices = _indexListPool.Count > 0 ? _indexListPool.Pop() : new List<int>()
                         };
                         
                         bands.Add(band);
-                        bandsByRange.Add(range, band);
+                        bandsByRange.Add(quantizedRange, band);
                     }
                     
-                    band.Weapons.Add(weapon);
+                    band.WeaponIndices.Add(weaponIndex);
                 }
                 
                 // Sort descending. We can afford this since we only have a few bands.
                 // We will use this to optimize the repository update algorithm.
                 bands.Sort((a, b) => b.TruncatedRange.CompareTo(a.TruncatedRange));
-            }
-            
-            private void UpdateRepositoryWeapons(List<LogicalWeapon> weapons, MyCubeGrid grid)
-            {
-                // We need to send the MCRN Hypersonic PMW to keen's headquaarters...
-
-                BuildRangeBands(weapons);
-
-                var bands = _rangeBands;
+                
                 var gridRadius = grid.PositionComp.WorldVolume.Radius;
                 
-                // First, filter by range:
+                // With this band data structure, the inner loop is not exactly O(N * M), unless all of the torps really are in range.
                 for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
                 {
                     var threat = Threats[threatIndex];
-                    var distanceToCenter = threat.DistanceToGridCenter;
-                    var repo = threat.WeaponCandidates;
+                    var threatPosition = threat.Ref.Position;
+                    var threatDistance = threat.DistanceToGridCenter;
                     
-                    // This gives us the range in the list that holds the weapons we started with:
-                    var initialRepoSize = repo.Count;
-                    
-                    // First, we mark each existing weapon.
-                    // We will use this in the algorithm blow. It will allow us to see if a weapon should be kept in the repo.
-                    for (var existingWeaponIndex = 0; existingWeaponIndex < initialRepoSize; existingWeaponIndex++)
-                    {
-                        repo[existingWeaponIndex].RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.IsMarkedInRepo;
-                    }
-
                     // Lower and upper bounds on the distance to weapons:
-                    var minimumDistance = distanceToCenter - gridRadius;
-                    var maximumDistance = distanceToCenter + gridRadius;
+                    var minimumDistance = threatDistance - gridRadius;
+                    var rowData = threat.RowData;
 
                     for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
                     {
@@ -984,135 +916,53 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             break;
                         }
 
-                        // If true, the weapon is guaranteed to be in range. Otherwise, we need to do a distance test.
-                        var skipDistanceCheck = maximumDistance <= rangeBand.TruncatedRange;
-
-                        for (var index = 0; index < rangeBand.Weapons.Count; index++)
+                        var bandWeaponIndices = rangeBand.WeaponIndices;
+                        var bandWeaponCount = bandWeaponIndices.Count;
+                        for (var weaponIdIndex = 0; weaponIdIndex < bandWeaponCount; weaponIdIndex++)
                         {
-                            var weapon = rangeBand.Weapons[index];
-
-                            var weaponRef = weapon.Ref;
-                            var targetPosition = threat.Ref.Position;
-
-                            if (!skipDistanceCheck && Vector3D.DistanceSquared(weaponRef.GetScope.Info.Position, targetPosition) > weapon.Ref.MaxTargetDistanceSqr)
+                            var weaponIndex = bandWeaponIndices[weaponIdIndex];
+                            
+                            var weaponPosition = weaponPositions[weaponIndex];
+                            var dirToTarget = threatPosition - weaponPosition;
+                            var distanceToTargetSqr = dirToTarget.LengthSquared();
+                            
+                            if (distanceToTargetSqr > weaponMaxSqrDists[weaponIndex])
                             {
                                 continue;
                             }
                             
                             // Range-of-motion check: seems a bit involved. TODO
+                            
+                            // Turn cost multiplier must be less than or equal to 1 !
+                            
+                            ushort quantizedCost = 0;
+                            if (distanceToTargetSqr > 1.0)
+                            {
+                                var weaponDirection = weaponDirections[weaponIndex];
+    
+                                double u;
+                                Vector3D.Dot(ref weaponDirection, ref dirToTarget, out u);
 
-                            if (weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.IsMarkedInRepo)
-                            {
-                                // The weapon already exists in the repo.
-                                // We will now mark it as seen (i.e. it passes the checks to be kept in the repo).
-                                weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.KeepInRepo;
-                            }   
-                            else
-                            {
-                                // This guarantees the weapon isn't present in the repo.
-                                repo.Add(weapon);
+                                double costMultiplier;
+    
+                                if (u > 0)
+                                {
+                                    // Maps [0, 90] degrees to cost [0, 1]
+                                    costMultiplier = 1.0 - u * u / distanceToTargetSqr;
+                                }
+                                else
+                                {
+                                    // Maps [90, 180] degrees to cost [1, 2]
+                                    costMultiplier = 1.0 + u * u / distanceToTargetSqr;
+                                }
+
+                                var cost = costMultiplier * weaponTurnCosts[weaponIndex];
+
+                                quantizedCost = (ushort) Math.Min(cost * 16383.5, 32767.0);
                             }
-                        }
-                    }
-                    
-                    // The list now has two segments. The first one has the previous weapons, with their order preserved. Then, after that, we have the new weapons.
-                    // The first segment is [0, initialRepoSize). We need to remove all elements in it that don't have their rebuild state set to KeepInRepo, but also reset this state to Empty for all of them.
-                    // The second segment won't be touched.
-                    // Inline RemoveAll modified to reset the temp state:
-                    
-                    var freeIndex = 0;
-                    
-                    while (freeIndex < initialRepoSize)
-                    {
-                        var weapon = repo[freeIndex];
-                        
-                        if (weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.KeepInRepo)
-                        {
-                            weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
-                            freeIndex++;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
 
-                    // ReSharper disable once InvertIf
-                    if (freeIndex < initialRepoSize)
-                    {
-                        repo[freeIndex].RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
-
-                        for (var readIndex = freeIndex + 1; readIndex < initialRepoSize; readIndex++)
-                        {
-                            var weapon = repo[readIndex];
-                            var shouldKeep = weapon.RepoRebuildStateTemp == LogicalWeapon.RepoRebuildState.KeepInRepo;
-                            weapon.RepoRebuildStateTemp = LogicalWeapon.RepoRebuildState.Empty;
-
-                            if (shouldKeep)
-                            {
-                                repo[freeIndex] = weapon;
-                                freeIndex++;
-                            }
+                            rowData[weaponIndex] = (ushort)((quantizedCost << 1) | 1);
                         }
-
-                        var itemsToRemove = initialRepoSize - freeIndex;
-                        
-                        if (itemsToRemove > 0)
-                        { 
-                            repo.RemoveRange(freeIndex, itemsToRemove);
-                        }
-                    }
-                }
-            }
-            
-            private void SortRepositoriesByAngleCost()
-            {
-                for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
-                {
-                    var threat = Threats[threatIndex];
-                    var weapons = threat.WeaponCandidates;
-                    var weaponCount = weapons.Count;
-                    
-                    if (weaponCount < 2)
-                    {
-                        continue;
-                    } 
-
-                    var targetPos = threat.Ref.Position;
-
-                    for (var weaponIndex = 0; weaponIndex < weaponCount; weaponIndex++)
-                    {
-                        var weapon = weapons[weaponIndex];
-
-                        var weaponPosition = weapon.Ref.GetScope.Info.Position;
-                        var dirToTarget = targetPos - weaponPosition;
-                        
-                        if (dirToTarget.LengthSquared() > 1)
-                        {
-                            dirToTarget.Normalize();
-                            var currentForward = weapon.Ref.GetScope.Info.Direction; // I hope I am doing this right... We'll debug draw it to be sure
-                            weapon.TempCurrentTurnCost = (float)((1.0 - Vector3D.Dot(currentForward, dirToTarget)) * weapon.TurnCostMultiplier);
-                        }
-                        else
-                        {
-                            weapon.TempCurrentTurnCost = 0f;
-                        }
-                    }
-
-                    // Insertion sort:
-                    for (var i = 1; i < weaponCount; i++)
-                    {
-                        var key = weapons[i];
-                        var keyCost = key.TempCurrentTurnCost;
-                        var j = i - 1;
-                        
-                        while (j >= 0 && weapons[j].TempCurrentTurnCost > keyCost)
-                        {
-                            weapons[j + 1] = weapons[j];
-                            j--;
-                        }
-                        
-                        weapons[j + 1] = key;
                     }
                 }
             }

@@ -611,15 +611,10 @@ namespace CoreSystems.Support
                 deck = GetDeck(ref s.TargetDeck, chunk, checkSize, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
             }
             
-            for (int x = 0; x < checkSize; x++)
+            for (var x = 0; x < checkSize; x++)
             {
                 Projectile lp; // Long pointer, yes
                 bool isFromManager;
-
-                if (fireDistributionAccessor.IsValid && fireDistributionAccessor.IsDirty)
-                {
-                    fireDistributionAccessor.RecalculateAssignments();
-                }
                 
                 if (fireDistributionAccessor.IsValid && fireDistributionAccessor.TryGetAssignment(out lp))
                 {
@@ -643,9 +638,7 @@ namespace CoreSystems.Support
                 }
                 
                 var lpAiOwnerFactionId = lp.Info.FactionId;
-                if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 &&
-                    lpAiOwnerFactionId > 0 &&
-                    MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
+                if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 && lpAiOwnerFactionId > 0 && MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
                 {
                     if (isFromManager)
                     {
