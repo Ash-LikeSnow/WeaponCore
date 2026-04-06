@@ -344,6 +344,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Array.Clear(IsWeaponAssignedToAnything, 0, IsWeaponAssignedToAnything.Length);
         }
 
+        // Used during the assignment algorithm. Tells us if a threat has no more PDCs that can be assigned to it. 
+        // ReSharper disable InconsistentNaming
+        private int __assignmentAlgorithmThreatCount = -1;
+        private bool[] __isThreatCompleted;
+        // ReSharper restore InconsistentNaming
+
         /// <summary>
         ///     First, the torpedoes are prioritized by the specific system implementation using a time-coherent sort.
         ///     Then, the algorithm starts assigning PDCs to the torpedoes by priority, based on the cost of assignment.
@@ -354,14 +360,27 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         protected virtual void ComputeAssignments()
         { 
             ClearAssignmentState();
-                
+            
             var weapons = Weapons;
             var weaponsCount = Weapons.Count;
             var threats = Network.Threats;
-            var isAssigned = IsWeaponAssignedToAnything;
+            var isWeaponAssigned = IsWeaponAssignedToAnything;
             var assignments = Assignments;
             var currentTick = Session.I.Tick;
+            
+            if (__assignmentAlgorithmThreatCount < threats.Count)
+            {
+                __isThreatCompleted = new bool[threats.Count];
+                __assignmentAlgorithmThreatCount = threats.Count;
+            }
+            else
+            {
+                Array.Clear(__isThreatCompleted, 0, __isThreatCompleted.Length);
+            }
 
+            var isThreatCompleted = __isThreatCompleted;
+            var uncompletedThreatCount = threats.Count;
+            
             // Unassigned weapons left. Used to early-exit.
             var weaponsRemaining = weaponsCount;
             
@@ -383,7 +402,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             // If true, then the weapon must keep the current target locked; we are not allowed to reassign.
                             // We will write it in our data structure:
                             assignments[weaponIndex] = targetProjectile;
-                            isAssigned[weapon.Index] = true;
+                            isWeaponAssigned[weapon.Index] = true;
                             --weaponsRemaining;
                         }
                         
@@ -392,15 +411,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     else
                     {
                         // It's aiming for something (maybe grids), so we will make sure we skip it in calculations:
-                        isAssigned[weapon.Index] = true;
+                        isWeaponAssigned[weapon.Index] = true;
                         --weaponsRemaining;
                     }
                 }
             }
-            
-            // Greedily assign whatever we can:
+
+            // First pass. Greedily assign whatever we can, while integrating the game state:
             for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
             {
+                if (isThreatCompleted[threatIndex])
+                {
+                    // No more PDCs can be assigned to this torp:
+                    continue;
+                }
+                
                 var threat = threats[threatIndex];
                 var rowData = threat.RowData;
 
@@ -421,6 +446,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 if (remainingThreatValue < 1e-4f)
                 {
                     // The torpedo is fully engaged by the committed weapons.
+                    // We can make no assumptions about the threat being starved (for the second pass).
                     continue;
                 }
                 
@@ -434,7 +460,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     var bestCost = int.MaxValue;
                     for (var candidateIndex = 0; candidateIndex < weaponsCount; candidateIndex++)
                     {
-                        if (isAssigned[candidateIndex])
+                        if (isWeaponAssigned[candidateIndex])
                         {
                             continue;
                         }
@@ -459,6 +485,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     if (bestIndex == -1)
                     {
                         // There are no other weapons to assign:
+                        isThreatCompleted[threatIndex] = true;
+                        --uncompletedThreatCount;
                         break;
                     }
                     
@@ -466,8 +494,74 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     var candidateWeapon = weapons[bestIndex];
                     remainingThreatValue -= candidateWeapon.Ref.Comp.MasterOverrides.WeaponValue / (float)FireDistributionConst.MaxWeaponValue;
                     assignments[bestIndex] = threat.Ref;
-                    isAssigned[candidateWeapon.Index] = true;
+                    isWeaponAssigned[candidateWeapon.Index] = true;
                     weaponsRemaining--;
+                }
+            }
+            
+            // Second pass. Greedily assign, based on priority only:
+            while (weaponsRemaining > 0 && uncompletedThreatCount > 0)
+            {
+                for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
+                {
+                    if (isThreatCompleted[threatIndex])
+                    {
+                        // No more PDCs can be assigned to this torp:
+                        continue;
+                    }
+                    
+                    var threat = threats[threatIndex];
+                    var rowData = threat.RowData;
+
+                    var remainingThreatValue = 1.0f;
+                    
+                    // Assign using the cost. The LSB is 1 if the weapon can shoot the torp, and the rest is a quantized cost.
+                    while (weaponsRemaining > 0 && remainingThreatValue > 1e-4)
+                    {
+                        // Finds the weapon that can shoot the torp and has minimum cost.
+                        // P.S. This minimum-cost extraction means the entire algorithm's complexity is a factor of how many PDCs a torp needs to be assigned.
+                        // So we will want to place a reasonable lower limit in the PDC value slider.
+                        var bestIndex = -1;
+                        var bestCost = int.MaxValue;
+                        for (var candidateIndex = 0; candidateIndex < weaponsCount; candidateIndex++)
+                        {
+                            if (isWeaponAssigned[candidateIndex])
+                            {
+                                continue;
+                            }
+
+                            var cell = rowData[candidateIndex];
+
+                            if (cell == 0)
+                            {
+                                // Weapon cannot shoot the torp:
+                                continue;
+                            }
+
+                            var cost = cell >> 1;
+
+                            if (bestIndex == -1 || cost < bestCost)
+                            {
+                                bestIndex = candidateIndex;
+                                bestCost = cost;
+                            }
+                        }
+
+                        if (bestIndex == -1)
+                        {
+                            // There are no other weapons to assign:
+                            isThreatCompleted[threatIndex] = true;
+                            --uncompletedThreatCount;
+                            break;
+                        }
+                        
+                        // And assigns it:
+                        var candidateWeapon = weapons[bestIndex];
+                        remainingThreatValue -= candidateWeapon.Ref.Comp.MasterOverrides.WeaponValue / (float)FireDistributionConst.MaxWeaponValue;
+                        assignments[bestIndex] = threat.Ref;
+                        isWeaponAssigned[candidateWeapon.Index] = true;
+                        weaponsRemaining--;
+                    }
                 }
             }
         }

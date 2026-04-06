@@ -558,7 +558,7 @@ namespace CoreSystems.Support
                     return false;
                 }
             }
-            else
+            else if(mOverrides.EnableFireDistribution)
             {
                 FireDistributionManager fireDistributionManager;
                 if (w.Comp.MasterAi.GetFireDistributionManager(out fireDistributionManager))
