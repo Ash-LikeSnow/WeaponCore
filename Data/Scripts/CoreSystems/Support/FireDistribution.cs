@@ -16,8 +16,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
     internal static class FireDistributionConst
     {
-        public const int UiWeaponValueFactor = 10;
-        public const int UiTurnCostFactor = 1000;
+        public const int MaxWeaponValue = 10;
+        public const int MaxTurnCost = 1000;
         public const int MinMinLockTime = 15;
         public const int MaxMinLockTime = 1200;
     }
@@ -41,7 +41,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
             var mOverrides = comp.MasterOverrides;
     
-            if (mOverrides == null) 
+            if (mOverrides == null || !system.AllowFireDistribution || !mOverrides.EnableFireDistribution) 
             {
                 return false;
             }
@@ -51,12 +51,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 return false;
             }
 
-            if (comp.IsBlock && comp.FunctionalBlock != null)
-            {
-                return comp.FunctionalBlock.Enabled && comp.FunctionalBlock.IsFunctional; 
-            }
-
-            return system.AllowFireDistribution;
+            return comp.IsBlock && 
+                   comp.FunctionalBlock != null && 
+                   comp.FunctionalBlock.Enabled &&
+                   comp.FunctionalBlock.IsFunctional;
         }
         
         public readonly Ai MasterAi;
@@ -74,7 +72,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         }
 
         /// <summary>
-        ///     Creates an acessor to the system that handles the weapon.
+        ///     Creates an accessor to the system that handles the weapon.
         ///     Returns an invalid accessor if none of the systems handle the weapon.
         /// </summary>
         /// <param name="weapon"></param>
@@ -121,22 +119,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         {
             public Weapon Ref;
             
-            /// <summary>
-            ///     Value set by the player. The larger it is, the costlier it is for the weapon to switch target.
-            /// </summary>
-            public float TurnCostMultiplier;
-
-            /// <summary>
-            ///     Value set by the player. The larger it is, the fewer of these weapons are assigned to a torp.
-            /// </summary>
-            public float WeaponValue;
-
-            /// <summary>
-            ///     Value set by the player. This is the minimum duration to wait before assigning a new target.
-            ///     It is to prevent the weapon juking without being able to fire.
-            /// </summary>
-            public int MinimumLockDuration;
-        
             /// <summary>
             ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/> and the <see cref="ThreatGraph.Threat.RowData"/>.
             /// </summary>
@@ -242,9 +224,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     var logicalWeapon = new LogicalWeapon
                     {
                         Ref = validWeapon,
-                        TurnCostMultiplier = 1.0f,
-                        WeaponValue = 1.0f,
-                        MinimumLockDuration = 20,
                         // This index is strictly invalid if any weapons are removed.
                         // We handle that below.
                         Index = logicalWeapons.Count,
@@ -324,8 +303,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     RebuildWeaponListAndLookups();
                     _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
-                    
-                    MyAPIGateway.Utilities.ShowMessage("FCS", $"Rebuild weapons: {Weapons.Count}, ver {_weaponCompsVersion}");
                 }
                         
                 LoadWeaponSettings();
@@ -401,7 +378,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                     if (targetProjectile != null)
                     {
-                        if (targetProjectile.State == Projectile.ProjectileState.Alive && currentTick - weapon.Ref.Target.ChangeTick < weapon.MinimumLockDuration)
+                        if (targetProjectile.State == Projectile.ProjectileState.Alive && currentTick - weapon.Ref.Target.ChangeTick < weapon.Ref.Comp.MasterOverrides.MinLockTime)
                         {
                             // If true, then the weapon must keep the current target locked; we are not allowed to reassign.
                             // We will write it in our data structure:
@@ -437,7 +414,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     
                     if (assignments[committedWeaponIndex] == threat.Ref && rowData[committedWeaponIndex] != 0)
                     {
-                        remainingThreatValue -= weapons[committedWeaponIndex].WeaponValue;
+                        remainingThreatValue -= weapons[committedWeaponIndex].Ref.Comp.MasterOverrides.WeaponValue / (float)FireDistributionConst.MaxWeaponValue;
                     }
                 }
                 
@@ -487,7 +464,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     
                     // And assigns it:
                     var candidateWeapon = weapons[bestIndex];
-                    remainingThreatValue -= candidateWeapon.WeaponValue;
+                    remainingThreatValue -= candidateWeapon.Ref.Comp.MasterOverrides.WeaponValue / (float)FireDistributionConst.MaxWeaponValue;
                     assignments[bestIndex] = threat.Ref;
                     isAssigned[candidateWeapon.Index] = true;
                     weaponsRemaining--;
@@ -876,7 +853,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     weaponPositions[weaponIndex] = scopeInfo.Position;
                     weaponDirections[weaponIndex] = scopeInfo.Direction;
                     weaponMaxSqrDists[weaponIndex] = (float)weapon.Ref.MaxTargetDistanceSqr;
-                    weaponTurnCosts[weaponIndex] = 1.0f; // TODO pls bd
+                    weaponTurnCosts[weaponIndex] = weapon.Ref.Comp.MasterOverrides.TurnCost / (float)FireDistributionConst.MaxTurnCost;
                     
                     var quantizedRange = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
 
@@ -941,8 +918,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                             
                             // Range-of-motion check: seems a bit involved. TODO
                             
-                            // Turn cost multiplier must be less than or equal to 1 !
-                            
                             ushort quantizedCost = 0;
                             if (distanceToTargetSqr > 1.0)
                             {
@@ -951,20 +926,20 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                                 double u;
                                 Vector3D.Dot(ref weaponDirection, ref dirToTarget, out u);
 
-                                double costMultiplier;
+                                double angleFunction;
     
                                 if (u > 0)
                                 {
                                     // Maps [0, 90] degrees to cost [0, 1]
-                                    costMultiplier = 1.0 - u * u / distanceToTargetSqr;
+                                    angleFunction = 1.0 - u * u / distanceToTargetSqr;
                                 }
                                 else
                                 {
                                     // Maps [90, 180] degrees to cost [1, 2]
-                                    costMultiplier = 1.0 + u * u / distanceToTargetSqr;
+                                    angleFunction = 1.0 + u * u / distanceToTargetSqr;
                                 }
 
-                                var cost = costMultiplier * weaponTurnCosts[weaponIndex];
+                                var cost = angleFunction * weaponTurnCosts[weaponIndex];
 
                                 quantizedCost = (ushort) Math.Min(cost * 16383.5, 32767.0);
                             }
@@ -1003,14 +978,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             {
                 var comp = weaponComps[componentIndex];
                 
-                // We would check the terminal here, if the DF is enabled
-                // BD pls add
-                
                 for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && w.PrioritizeClosestTarget)
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && (w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst))
                     {
                         yield return w;
                     }
@@ -1018,11 +990,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.PrioritizeClosestTarget);
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst);
 
         public override bool IsValidWeapon(Weapon weapon)
         {
-            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && weapon.PrioritizeClosestTarget;
+            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && (weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
 
         #endregion
@@ -1075,14 +1047,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             {
                 var comp = weaponComps[componentIndex];
                 
-                // We would check the terminal here, if the DF is enabled
-                // BD pls add
-                
                 for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && !w.PrioritizeClosestTarget)
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && !(w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst))
                     {
                         yield return w;
                     }
@@ -1090,11 +1059,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
         
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !w.PrioritizeClosestTarget);
+        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !(w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst));
 
         public override bool IsValidWeapon(Weapon weapon)
         {
-            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && !weapon.PrioritizeClosestTarget;
+            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
 
         #endregion

@@ -1206,7 +1206,7 @@ namespace CoreSystems
         internal static float GetWeaponValue(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.UiWeaponValueFactor;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.MaxWeaponValue;
             return comp.Data.Repo.Values.Set.Overrides.WeaponValue;
         }
 
@@ -1225,13 +1225,13 @@ namespace CoreSystems
         
         internal static float GetMaxWeaponValue(IMyTerminalBlock block)
         {
-            return FireDistributionConst.UiWeaponValueFactor;
+            return FireDistributionConst.MaxWeaponValue;
         }
 
         internal static float GetTurnCost(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.UiTurnCostFactor;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.MaxTurnCost;
             return comp.Data.Repo.Values.Set.Overrides.TurnCost;
         }
 
@@ -1250,7 +1250,7 @@ namespace CoreSystems
         
         internal static float GetMaxTurnCost(IMyTerminalBlock block)
         {
-            return FireDistributionConst.UiTurnCostFactor;
+            return FireDistributionConst.MaxTurnCost;
         }
 
         internal static float GetMinLockTime(IMyTerminalBlock block)

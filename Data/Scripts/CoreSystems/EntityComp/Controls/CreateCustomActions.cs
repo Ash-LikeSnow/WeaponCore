@@ -1028,9 +1028,9 @@ namespace CoreSystems.Control
         
         public static void CreateTargetClosest(Session session)
         {
-            var action = MyAPIGateway.TerminalControls.CreateAction<T>("TargetClosest");
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCTargetClosest");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("ActionWCTargetClosest");
+            action.Name = new StringBuilder(Localization.GetText("ActionWCTargetClosest"));
             action.Action = CustomActions.TerminalActionToggleTargetClosest;
             action.Writer = CustomActions.TargetClosestWriter;
             action.Enabled = TerminalHelpers.AllowSwitchTargetPriority;
@@ -1041,9 +1041,9 @@ namespace CoreSystems.Control
 
         public static void CreateFireDistribution(Session session)
         {
-            var action = MyAPIGateway.TerminalControls.CreateAction<T>("EnableFireDistribution");
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCEnableFireDistribution");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder("ActionWCFireDistribution");
+            action.Name = new StringBuilder(Localization.GetText("ActionWCFireDistribution"));
             action.Action = CustomActions.TerminalActionToggleFireDistribution;
             action.Writer = CustomActions.FireDistributionWriter;
             action.Enabled = TerminalHelpers.AllowFireDistribution;
