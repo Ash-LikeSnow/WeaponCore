@@ -5,7 +5,6 @@ using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage;
 using VRageMath;
 // ReSharper disable LoopCanBeConvertedToQuery
@@ -83,7 +82,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             {
                 var system = _systems[systemIndex];
 
-                if (system.IsValidWeapon(weapon))
+                if (system.IsValidWeaponForSystem(weapon))
                 {
                     return system.CreateAccessor(weapon);
                 }
@@ -144,28 +143,38 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         
         public uint LastUpdateTick { get; private set; } = uint.MaxValue;
         
-        // P.S. It doesn't just use a single predicate method because of profiler...
         #region Weapon List Acquisition
-        
+
         /// <summary>
         ///     Gets the valid weapons from the weapon comps, to rebuild the weapon list.
-        ///     The condition <see cref="IsValidWeapon"/> must be true for each returned result.
+        ///     The condition <see cref="IsValidWeaponForSystem"/> must be true for each returned result.
         /// </summary>
         /// <returns></returns>
-        protected abstract IEnumerable<Weapon> ScanForValidWeapons();
+        private IEnumerable<Weapon> ScanForValidWeapons()
+        {
+            var weaponComps = Manager.MasterAi.WeaponComps;
+            
+            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
+            {
+                var comp = weaponComps[componentIndex];
+                
+                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
+                {
+                    var w = comp.Collection[weaponIndex];
+                    
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
+                    {
+                        yield return w;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         ///     Checks if the existing weapon list is still valid. It may be invalidated when settings change.
         /// </summary>
         /// <returns></returns>
-        protected abstract bool IsCurrentWeaponListStillValid();
-
-        /// <summary>
-        ///     For now, we use this in <see cref="IsCurrentWeaponListStillValid"/>.
-        ///     I doubt we will have performance issues because of the predicate. But if we do, we will inline.
-        /// </summary>
-        /// <param name="predicate"></param>
-        protected bool CheckForWeaponStateChangesOrUnmatchedConditions(Func<Weapon, bool> predicate)
+        private bool IsCurrentWeaponListStillValid()
         {
             var weaponComps = Manager.MasterAi.WeaponComps;
             var validCount = 0;
@@ -178,7 +187,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 {
                     var w = comp.Collection[weaponIndex];
             
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && predicate(w))
+                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
                     {
                         validCount++;
                 
@@ -191,7 +200,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
             }
 
-            return validCount == Weapons.Count;
+            return validCount == Weapons.Count;   
         }
 
         /// <summary>
@@ -200,7 +209,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         /// </summary>
         /// <param name="weapon"></param>
         /// <returns>True if this system handles the specified weapon. Otherwise, false.</returns>
-        public abstract bool IsValidWeapon(Weapon weapon);
+        public abstract bool IsValidWeaponForSystem(Weapon weapon);
         
         #endregion
 
@@ -1062,36 +1071,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             
         }
 
-        #region Weapon List Acquisition
-        
-        protected override IEnumerable<Weapon> ScanForValidWeapons()
-        {
-            var weaponComps = Manager.MasterAi.WeaponComps;
-            
-            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
-            {
-                var comp = weaponComps[componentIndex];
-                
-                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
-                {
-                    var w = comp.Collection[weaponIndex];
-                    
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && (w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst))
-                    {
-                        yield return w;
-                    }
-                }
-            }
-        }
-
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst);
-
-        public override bool IsValidWeapon(Weapon weapon)
+        public override bool IsValidWeaponForSystem(Weapon weapon)
         {
             return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && (weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
-
-        #endregion
 
         /// <summary>
         ///     Sorts the threats by distance ascending (so, highest threat to the lowest threat).
@@ -1130,37 +1113,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         {
             
         }
-
-        #region Weapon List Acquisition
         
-        protected override IEnumerable<Weapon> ScanForValidWeapons()
-        {
-            var weaponComps = Manager.MasterAi.WeaponComps;
-            
-            for (var componentIndex = 0; componentIndex < weaponComps.Count; componentIndex++)
-            {
-                var comp = weaponComps[componentIndex];
-                
-                for (var weaponIndex = 0; weaponIndex < comp.Collection.Count; weaponIndex++)
-                {
-                    var w = comp.Collection[weaponIndex];
-                    
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && !(w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst))
-                    {
-                        yield return w;
-                    }
-                }
-            }
-        }
-        
-        protected override bool IsCurrentWeaponListStillValid() => CheckForWeaponStateChangesOrUnmatchedConditions(w => !(w.System.AllowSwitchTargetPriority ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst : w.System.ClosestFirst));
-
-        public override bool IsValidWeapon(Weapon weapon)
+        public override bool IsValidWeaponForSystem(Weapon weapon)
         {
             return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
-
-        #endregion
 
         protected override void SetupTickStartCore()
         {
