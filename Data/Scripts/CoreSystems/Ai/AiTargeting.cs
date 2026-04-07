@@ -635,7 +635,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                     
                     continue;
@@ -646,7 +646,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                     
                     continue;
@@ -663,7 +663,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                     
                     continue;
@@ -676,7 +676,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                     
                     continue;
@@ -687,7 +687,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                     
                     continue;
@@ -711,7 +711,7 @@ namespace CoreSystems.Support
                                 
                                 if (isFromManager)
                                 {
-                                    fireDistributionAccessor.MarkCannotShoot(lp);
+                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                                 }
                                 
                                 continue;
@@ -721,7 +721,7 @@ namespace CoreSystems.Support
                             {
                                 if (isFromManager)
                                 {
-                                    fireDistributionAccessor.MarkCannotShoot(lp);
+                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                                 }
                                 
                                 continue;
@@ -771,7 +771,7 @@ namespace CoreSystems.Support
                         {
                             if (isFromManager)
                             {
-                                fireDistributionAccessor.MarkCannotShoot(lp);
+                                fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                             }
                             
                             continue;
@@ -790,7 +790,7 @@ namespace CoreSystems.Support
                 {
                     if (isFromManager)
                     {
-                        fireDistributionAccessor.MarkCannotShoot(lp);
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                 }
             }

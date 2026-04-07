@@ -27,7 +27,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
     /// </summary>
     internal sealed class FireDistributionManager
     {
-        // Would be kind of a mess to inline this one, won't lie
+        /// <summary>
+        ///     Checks if a weapon is configured and set to use fire distribution, and if it's a valid PDC as well.
+        /// </summary>
+        /// <param name="w"></param>
+        /// <returns></returns>
         public static bool IsValidWeaponForFireDistribution(Weapon w)
         {
             var system = w.System;
@@ -119,7 +123,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             public Weapon Ref;
             
             /// <summary>
-            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/> and the <see cref="ThreatGraph.Threat.RowData"/>.
+            ///     The index in the <see cref="FireDistributionSystem.Weapons"/> list and the <see cref="FireDistributionSystem.IsWeaponAssignedToAnything"/>.
             /// </summary>
             public int Index;
         }
@@ -127,19 +131,17 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         private int _weaponCompsVersion = -1;
         
         protected readonly FireDistributionManager Manager;
-
+        
         public FireDistributionSystem(FireDistributionManager manager)
         {
             Manager = manager;
         }
 
         private readonly FastResourceLock _lock = new FastResourceLock();
-        
         protected readonly List<LogicalWeapon> Weapons = new List<LogicalWeapon>();
         protected readonly Dictionary<Weapon, LogicalWeapon> LogicalWeaponByWeapon = new Dictionary<Weapon, LogicalWeapon>();
         protected bool[] IsWeaponAssignedToAnything = Array.Empty<bool>();
         protected Projectile[] Assignments = Array.Empty<Projectile>();
-        public readonly ThreatGraph Network = new ThreatGraph();
         
         public uint LastUpdateTick { get; private set; } = uint.MaxValue;
         
@@ -215,7 +217,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
         private readonly HashSet<LogicalWeapon> _aliveWeaponsTemp = new HashSet<LogicalWeapon>();
         
-        private void RebuildWeaponListAndLookups()
+        private void RebuildWeapons()
         {
             var logicalWeapons = Weapons;
             var logicalWeaponByWeapon = LogicalWeaponByWeapon;
@@ -282,11 +284,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
         
-        private void LoadWeaponSettings()
-        {
-            // TODO read all the sliders here
-        }
-        
         /// <summary>
         ///     Runs the algorithm for the first time in a tick, if necessary.
         /// </summary>
@@ -310,11 +307,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
                 if (_weaponCompsVersion != Manager.MasterAi.WeaponCompsVersion || !IsCurrentWeaponListStillValid())
                 {
-                    RebuildWeaponListAndLookups();
+                    RebuildWeapons();
                     _weaponCompsVersion = Manager.MasterAi.WeaponCompsVersion;
                 }
                         
-                LoadWeaponSettings();
                 ClearAssignmentState();
                 
                 var grid = Manager.MasterAi.GridEntity;
@@ -322,12 +318,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 
                 if (grid != null && Weapons.Count > 0 && projectileList.Count > 0)
                 {
-                    Network.UpdateDataStructure(projectileList, grid, Weapons);
+                    UpdateDataStructure(projectileList, grid);
                     SetupTickStartCore();
                 }
                 else
                 {
-                    Network.Clear();
+                    ClearDataStructure();
                 }
                         
                 LastUpdateTick = sessionTick;
@@ -338,6 +334,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             }
         }
 
+        /// <summary>
+        ///     Called at most once per frame when there is a valid engagement ongoing, to update the internal data needed for the planner.
+        /// </summary>
+        /// <param name="projectileList"></param>
+        /// <param name="grid"></param>
+        protected abstract void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid);
+
+        /// <summary>
+        ///     Called at most once per frame when there isn't a valid engagement ongoing, to clear any references and other thins.
+        /// </summary>
+        protected abstract void ClearDataStructure();
+        
         /// <summary>
         ///     Runs the algorithm the first time in a tick.
         ///     The weapon settings, target positions and states are considered constant throughout the tick.
@@ -353,12 +361,548 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Array.Clear(IsWeaponAssignedToAnything, 0, IsWeaponAssignedToAnything.Length);
         }
 
+        /// <summary>
+        ///     Computes the assignments based on the recorded data. Always called after the data structure has been updated.
+        ///     It is a good idea to all <see cref="ClearAssignmentState"/> unless you plan to use the previous state.
+        /// </summary>
+        protected abstract void ComputeAssignments();
+        
+        /// <summary>
+        ///     Creates an accessor that is valid <i>throught the tick</i>. Trying to use it after the current tick will lead to undefined behavior.
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <returns>An invalid accessor, if the system doesn't handle the specified weapon, or a valid accessor otherwise. This also computes the assignments, if not done already.</returns>
+        public Accessor CreateAccessor(Weapon weapon)
+        {
+            SetupTickStart();
+            
+            _lock.AcquireShared();
+            
+            LogicalWeapon logicalWeapon;
+
+            try
+            {
+                if (!LogicalWeaponByWeapon.TryGetValue(weapon, out logicalWeapon))
+                {
+                    return new Accessor();
+                }
+            }
+            finally
+            {
+                _lock.ReleaseShared();
+            }
+            
+            return new Accessor(this, logicalWeapon, _lock);
+        }
+        
+        /// <summary>
+        ///     Accessor that can be called in parallel to interact with the manager:
+        ///         - Fetching assignments for the weapon
+        ///         - Marking an assignment as invalid (cannot shoot it), which recomputes new assignments.
+        /// </summary>
+        public struct Accessor
+        {
+            public bool IsValid;
+            private readonly FireDistributionSystem _system;
+            private readonly LogicalWeapon _logicalWeapon;
+            private readonly FastResourceLock _lock;
+            
+            public Accessor(FireDistributionSystem system, LogicalWeapon logicalWeapon, FastResourceLock accessLock)
+            {
+                IsValid = true;
+                _system = system;
+                _logicalWeapon = logicalWeapon;
+                _lock = accessLock;
+            }
+
+            public bool TryGetAssignment(out Projectile assignedProjectile)
+            {
+                // We assume the reference is atomic, so we don't take a lock.
+                // This should be valid under the condition the accessor is being used in the tick it was created in.
+                
+                assignedProjectile = _system.Assignments[_logicalWeapon.Index];
+
+                return assignedProjectile != null;
+            }
+            
+            public void MarkCannotShootAndRecompute(Projectile projectile)
+            {
+                _lock.AcquireExclusive();
+
+                try
+                {
+                    IsValid = _system.MarkCannotShootCore(_logicalWeapon, projectile);
+                    _system.ComputeAssignments();
+                }
+                finally
+                {
+                    _lock.ReleaseExclusive();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Called by the accessor in a synchronized context to mark the projectile as unreachable by a PDC in the internal data structure.
+        ///     The assignments should also be updated.
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <param name="projectile"></param>
+        /// <returns>True if the accessor is still valid.</returns>
+        protected abstract bool MarkCannotShootCore(LogicalWeapon weapon, Projectile projectile);
+
+        /// <summary>
+        ///     Periodically computes assignments. If the assignment differs from the PDC's current target, then it is guaranteed the minimum lock time condition is met, and we should attempt reassignment of the PDC.
+        /// </summary>
+        public void ActiveLoop()
+        {
+            // Will compute assignments:
+            SetupTickStart();
+            
+            _lock.AcquireShared();
+
+            try
+            {
+                // Now, we need to see which weapons don't match the calculated assignments.
+                var weapons = Weapons;
+                var weaponsCount = weapons.Count;
+                var currentTick = Session.I.Tick;
+                
+                for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
+                {
+                    var logicalWeapon = weapons[weaponIndex];
+                    var weaponRef = logicalWeapon.Ref;
+
+                    if (!IsWeaponAssignedToAnything[logicalWeapon.Index]) 
+                    {
+                        // Skip if we don't know anything about the weapon:
+                        continue;
+                    }
+
+                    var assignedProjectile = Assignments[weaponIndex];
+                    
+                    if (assignedProjectile == null)
+                    {
+                        continue;
+                    }
+                
+                    var weaponTarget = weaponRef.Target;
+                    var currentTargetProjectile = weaponTarget?.TargetObject as Projectile;
+                    
+                    if (currentTargetProjectile != assignedProjectile)
+                    {   
+                        // We assign it.
+                        // The target acquisition will run, and the weapon will get its assignment via AcquireProjectile.
+                        weaponRef.FastTargetResetTick = currentTick + 2;
+                    }
+                }
+            }
+            finally
+            {
+                _lock.ReleaseShared();   
+            }
+        }
+        
+        public virtual void CleanUp()
+        {
+            Weapons.Clear();
+            LogicalWeaponByWeapon.Clear();
+            Array.Clear(Assignments, 0, Assignments.Length);
+            ClearDataStructure();
+            LastUpdateTick = uint.MaxValue;
+        }
+
+        public class Threat
+        {
+            public Projectile Ref;
+            public double DistanceToGridCenter; // Actual distance, not squared!
+        }
+        
+        /// <summary>
+        ///     Data structure for storing all internal state needed by the assignment algorithm.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public abstract class ThreatStorage<T> where T : Threat
+        {
+            public readonly List<T> Threats = new List<T>();
+            public readonly Dictionary<Projectile, T> ThreatsByProjectile = new Dictionary<Projectile, T>();
+            private readonly HashSet<Projectile> _aliveProjectilesTemp = new HashSet<Projectile>();
+            private readonly List<Projectile> _newProjectilesTemp = new List<Projectile>();
+
+            protected abstract T CreateInstance(Projectile projectile, int weaponCount);
+            
+            private void DestroyDeadProjectiles()
+            {
+                // Inline List.RemoveAll:
+                
+                var list = Threats;
+                var alive = _aliveProjectilesTemp;
+                var freeIndex = 0;
+
+                while (freeIndex < list.Count && alive.Contains(list[freeIndex].Ref))
+                {
+                    freeIndex++;
+                }
+
+                if (freeIndex >= list.Count)
+                {
+                    return;
+                }
+
+                var a = list[freeIndex];
+                ThreatsByProjectile.Remove(a.Ref);
+
+                for (var readIndex = freeIndex + 1; readIndex < list.Count; readIndex++)
+                {
+                    var currentItem = list[readIndex];
+
+                    if (alive.Contains(currentItem.Ref))
+                    {
+                        list[freeIndex] = currentItem;
+                        freeIndex++;
+                    }
+                    else
+                    {
+                       ThreatsByProjectile.Remove(currentItem.Ref);
+                    }
+                }
+    
+                var itemsToRemove = list.Count - freeIndex;
+               
+                // ReSharper disable once InvertIf
+                if (itemsToRemove > 0)
+                {
+                    list.RemoveRange(freeIndex, itemsToRemove);
+                }
+            }
+            
+            private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid, int weaponCount)
+            {
+                var threats = Threats;
+                var threatsByProjectile = ThreatsByProjectile;
+                var aliveProjectilesTemp = _aliveProjectilesTemp;
+                var newProjectilesTemp = _newProjectilesTemp;
+                
+                // Find out which projectiles are still valid, and which ones are new:
+                for (var projectileIndex = 0; projectileIndex < projectiles.Count; projectileIndex++)
+                {
+                    var validProjectile = projectiles[projectileIndex];
+
+                    T existingThreat;
+                    if (threatsByProjectile.TryGetValue(validProjectile, out existingThreat))
+                    {
+                        aliveProjectilesTemp.Add(validProjectile);
+                    }
+                    else
+                    {
+                        newProjectilesTemp.Add(validProjectile);
+                    }
+                }
+                
+                DestroyDeadProjectiles();
+                aliveProjectilesTemp.Clear();
+
+                for (var newProjectileIndex = 0; newProjectileIndex < newProjectilesTemp.Count; newProjectileIndex++)
+                {
+                    var projectile = newProjectilesTemp[newProjectileIndex];
+                    var threat = CreateInstance(projectile, weaponCount);
+                    
+                    threats.Add(threat);
+                    threatsByProjectile.Add(projectile, threat);
+                }
+                
+                newProjectilesTemp.Clear();
+                
+                // Recompute distances for every threat:
+                var gridCenter = grid.PositionComp.WorldAABB.Center;
+                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
+                {
+                    var threat = threats[threatIndex];
+                    
+                    threat.DistanceToGridCenter = Vector3D.Distance(threat.Ref.Position, gridCenter);
+                }
+            }
+
+            /// <summary>
+            ///     Updates the data structure using the fresh projectile information.
+            /// </summary>
+            /// <param name="projectileList"></param>
+            /// <param name="grid"></param>
+            /// <param name="weapons"></param>
+            public virtual void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
+            {
+                /*
+                 * Loads new projectiles and removes stale projectiles. Preserves order of persisted projectiles.
+                 * Also updates the distances for all projectiles.
+                 */
+                LoadProjectiles(projectileList, grid, weapons.Count);
+            }
+            
+            public virtual void Clear()
+            {
+                Threats.Clear();
+                ThreatsByProjectile.Clear();
+            }
+        }
+
+        public sealed class ThreatRow : Threat
+        {
+            public ushort[] RowData;
+        }
+
+        public sealed class ThreatGraph : ThreatStorage<ThreatRow>
+        {
+            private struct RangeBand
+            {
+                /// <summary>
+                ///     The truncated value (since it's a double).
+                ///     This allows us to separate the network into discrete ranges. 
+                /// </summary>
+                public int TruncatedRange;
+
+                /// <summary>
+                ///     All weapons that have their range match this floor.
+                ///     These indices are the global ones, that we can use.
+                /// </summary>
+                public List<int> WeaponIndices;
+            }
+
+            private readonly List<RangeBand> _rangeBands = new List<RangeBand>();
+            private readonly Dictionary<int, RangeBand> _rangeBandsByRange = new Dictionary<int, RangeBand>();
+            private readonly Stack<List<int>> _indexListPool = new Stack<List<int>>();
+            
+            // ReSharper disable InconsistentNaming
+            private int __matrixComputeLocalCacheSize = -1;
+            private Vector3D[] __weaponPositions;
+            private Vector3[] __weaponDirections;
+            private float[] __weaponMaxSqrDists;
+            private float[] __weaponTurnCosts;
+            // ReSharper restore InconsistentNaming
+            
+            public void ClearBands()
+            {
+                var bands = _rangeBands;
+
+                for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
+                {
+                    var list = bands[bandIndex].WeaponIndices;
+                    list.Clear();
+                    _indexListPool.Push(list);
+                }
+
+                bands.Clear();
+                _rangeBandsByRange.Clear();
+            }
+
+            private void ResizeColumnsAndClearMatrix(int weaponCount)
+            {
+                var threats = Threats;
+                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
+                {
+                    var threat = threats[threatIndex];
+                    var rowData = threat.RowData;
+
+                    if (rowData.Length == weaponCount)
+                    {
+                        Array.Clear(rowData, 0, weaponCount);
+                    }
+                    else
+                    {
+                        threat.RowData = new ushort[weaponCount];
+                    }
+                }
+            }
+            
+            private void ComputeMatrix(List<LogicalWeapon> weapons, MyCubeGrid grid)
+            {
+                ClearBands();
+
+                var weaponCount = weapons.Count;
+
+                if (weaponCount != __matrixComputeLocalCacheSize)
+                {
+                    __weaponPositions = new Vector3D[weaponCount];
+                    __weaponDirections = new Vector3[weaponCount];
+                    __weaponMaxSqrDists = new float[weaponCount];
+                    __weaponTurnCosts = new float[weaponCount];
+                    __matrixComputeLocalCacheSize = weaponCount;
+                }
+
+                var weaponPositions = __weaponPositions;
+                var weaponDirections = __weaponDirections;
+                var weaponMaxSqrDists = __weaponMaxSqrDists;
+                var weaponTurnCosts = __weaponTurnCosts;
+               
+                var bands = _rangeBands;
+                var bandsByRange = _rangeBandsByRange;
+
+                // Prefetch all the data behind those references into these small arrays, and build the bands:
+                for (var weaponIndex = 0; weaponIndex < weaponCount; weaponIndex++)
+                {
+                    var weapon = weapons[weaponIndex];
+                    var scopeInfo = weapon.Ref.GetScope.Info;
+
+                    weaponPositions[weaponIndex] = scopeInfo.Position;
+                    weaponDirections[weaponIndex] = scopeInfo.Direction;
+                    weaponMaxSqrDists[weaponIndex] = (float)weapon.Ref.MaxTargetDistanceSqr;
+                    weaponTurnCosts[weaponIndex] = weapon.Ref.Comp.MasterOverrides.TurnCost / (float)FireDistributionConst.MaxTurnCost;
+                    
+                    var quantizedRange = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
+
+                    RangeBand band;
+                    if (!bandsByRange.TryGetValue(quantizedRange, out band))
+                    {
+                        band = new RangeBand
+                        {
+                            TruncatedRange = quantizedRange,
+                            WeaponIndices = _indexListPool.Count > 0 ? _indexListPool.Pop() : new List<int>()
+                        };
+                        
+                        bands.Add(band);
+                        bandsByRange.Add(quantizedRange, band);
+                    }
+                    
+                    band.WeaponIndices.Add(weaponIndex);
+                }
+                
+                // Sort descending. We can afford this since we only have a few bands.
+                // We will use this to optimize the repository update algorithm.
+                bands.Sort((a, b) => b.TruncatedRange.CompareTo(a.TruncatedRange));
+                
+                var gridRadius = grid.PositionComp.WorldVolume.Radius;
+                
+                // With this band data structure, the inner loop is not exactly O(N * M), unless all of the torps really are in range.
+                for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
+                {
+                    var threat = Threats[threatIndex];
+                    var threatPosition = threat.Ref.Position;
+                    var threatDistance = threat.DistanceToGridCenter;
+                    
+                    // Lower and upper bounds on the distance to weapons:
+                    var minimumDistance = threatDistance - gridRadius;
+                    var rowData = threat.RowData;
+
+                    for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
+                    {
+                        var rangeBand = bands[bandIndex];
+                        
+                        if (minimumDistance > rangeBand.TruncatedRange)
+                        {
+                            // Guaranteed to be out of range.
+                            // We sorted the bands in descending order, so we can safely prune the rest of the list:
+                            break;
+                        }
+
+                        var bandWeaponIndices = rangeBand.WeaponIndices;
+                        var bandWeaponCount = bandWeaponIndices.Count;
+                        for (var weaponIdIndex = 0; weaponIdIndex < bandWeaponCount; weaponIdIndex++)
+                        {
+                            var weaponIndex = bandWeaponIndices[weaponIdIndex];
+                            
+                            var weaponPosition = weaponPositions[weaponIndex];
+                            var dirToTarget = threatPosition - weaponPosition;
+                            var distanceToTargetSqr = dirToTarget.LengthSquared();
+                            
+                            if (distanceToTargetSqr > weaponMaxSqrDists[weaponIndex])
+                            {
+                                continue;
+                            }
+                            
+                            // Range-of-motion check: seems a bit involved. TODO
+                            
+                            ushort quantizedCost = 0;
+                            if (distanceToTargetSqr > 1.0)
+                            {
+                                var weaponDirection = weaponDirections[weaponIndex];
+    
+                                double u;
+                                Vector3D.Dot(ref weaponDirection, ref dirToTarget, out u);
+
+                                double angleFunction;
+    
+                                if (u > 0)
+                                {
+                                    // Maps [0, 90] degrees to cost [0, 1]
+                                    angleFunction = 1.0 - u * u / distanceToTargetSqr;
+                                }
+                                else
+                                {
+                                    // Maps [90, 180] degrees to cost [1, 2]
+                                    angleFunction = 1.0 + u * u / distanceToTargetSqr;
+                                }
+
+                                var cost = angleFunction * weaponTurnCosts[weaponIndex];
+
+                                quantizedCost = (ushort) Math.Min(cost * 16383.5, 32767.0);
+                            }
+
+                            rowData[weaponIndex] = (ushort)((quantizedCost << 1) | 1);
+                        }
+                    }
+                }
+            }
+            
+            protected override ThreatRow CreateInstance(Projectile projectile, int weaponCount) => new ThreatRow
+            {
+                Ref = projectile,
+                RowData = new ushort[weaponCount],
+                DistanceToGridCenter = double.NaN
+            };
+
+            /// <summary>
+            ///     Builds the N×M matrix, where N is the number of torpedoes and M is the number of weapons.
+            ///     Each cell encodes whether the PDC can engage the torpedo, and the cost of doing so.
+            /// </summary>
+            /// <param name="projectileList"></param>
+            /// <param name="grid"></param>
+            /// <param name="weapons"></param>
+            public override void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
+            {
+                base.UpdateDataStructure(projectileList, grid, weapons);
+                
+                /*
+                 * Zeroes out the matrix and resizes each row data array if needed.
+                 */
+                ResizeColumnsAndClearMatrix(weapons.Count);
+                
+                /*
+                 * Computes the visibility and cost for each cell.
+                 */
+                ComputeMatrix(weapons, grid);
+            }
+
+            public override void Clear()
+            {
+                base.Clear();
+                ClearBands();
+            }
+        }
+    }
+
+    internal abstract class AdvancedFireDistributionSystem : FireDistributionSystem
+    {
+        public readonly ThreatGraph Network = new ThreatGraph();
+        
         // Used during the assignment algorithm. Tells us if a threat has no more PDCs that can be assigned to it. 
         // ReSharper disable InconsistentNaming
         private int __assignmentAlgorithmThreatCount = -1;
         private bool[] __isThreatCompleted;
         // ReSharper restore InconsistentNaming
+        
+        protected AdvancedFireDistributionSystem(FireDistributionManager manager) : base(manager)
+        {
+            
+        }
+        
+        protected override void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid)
+        {
+            Network.UpdateDataStructure(projectileList, grid, Weapons);
+        }
 
+        protected override void ClearDataStructure()
+        {
+            Network.Clear();
+        }
+        
         /// <summary>
         ///     First, the torpedoes are prioritized by the specific system implementation using a time-coherent sort.
         ///     Then, the algorithm starts assigning PDCs to the torpedoes by priority, based on the cost of assignment.
@@ -366,7 +910,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         ///     This greedy cost problem assignment algorithm produces good results with very low cost, compared to an optimal assignment algorithm.
         ///     In turn, we can run it multiple times per frame as the expensive LoS checks inform us that the PDCs cannot shoot the assigned torpedoes (the real cost is building the matrix, which is done once for the frame).
         /// </summary>
-        protected virtual void ComputeAssignments()
+        protected override void ComputeAssignments()
         { 
             ClearAssignmentState();
             
@@ -574,492 +1118,26 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 }
             }
         }
-        
-        /// <summary>
-        ///     Creates an accessor that is valid <i>throught the tick</i>. Trying to use it after the current tick will lead to undefined behavior.
-        /// </summary>
-        /// <param name="weapon"></param>
-        /// <returns>An invalid accessor, if the system doesn't handle the specified weapon, or a valid accessor otherwise. This also computes the assignments, if not done already.</returns>
-        public Accessor CreateAccessor(Weapon weapon)
+
+        protected override bool MarkCannotShootCore(LogicalWeapon weapon, Projectile projectile)
         {
-            SetupTickStart();
-            
-            _lock.AcquireShared();
-            
-            LogicalWeapon logicalWeapon;
-
-            try
+            ThreatRow threat;
+            if (!Network.ThreatsByProjectile.TryGetValue(projectile, out threat))
             {
-                if (!LogicalWeaponByWeapon.TryGetValue(weapon, out logicalWeapon))
-                {
-                    return new Accessor();
-                }
+                return false;
             }
-            finally
-            {
-                _lock.ReleaseShared();
-            }
-            
-            return new Accessor(this, logicalWeapon, _lock);
-        }
-        
-        /// <summary>
-        ///     Accessor that can be called in parallel to interact with the manager:
-        ///         - Fetching assignments for the weapon
-        ///         - Marking an assignment as invalid (cannot shoot it), which recomputes new assignments.
-        /// </summary>
-        public struct Accessor
-        {
-            public bool IsValid;
-            private readonly FireDistributionSystem _system;
-            private readonly LogicalWeapon _logicalWeapon;
-            private readonly FastResourceLock _lock;
-            
-            public Accessor(FireDistributionSystem system, LogicalWeapon logicalWeapon, FastResourceLock accessLock)
-            {
-                IsValid = true;
-                _system = system;
-                _logicalWeapon = logicalWeapon;
-                _lock = accessLock;
-            }
-
-            public bool TryGetAssignment(out Projectile assignedProjectile)
-            {
-                // We assume the reference is atomic, so we don't take a lock.
-                // This should be valid under the condition the accessor is being used in the tick it was created in.
-                
-                assignedProjectile = _system.Assignments[_logicalWeapon.Index];
-
-                return assignedProjectile != null;
-            }
-            
-            public void MarkCannotShoot(Projectile projectile)
-            {
-                _lock.AcquireExclusive();
-
-                try
-                {
-                    ThreatGraph.Threat threat;
-                    if (!_system.Network.ThreatsByProjectile.TryGetValue(projectile, out threat))
-                    {
-                        IsValid = false;
-                        return;
-                    }
                     
-                    threat.RowData[_logicalWeapon.Index] = 0;
-                
-                    _system.ComputeAssignments();
-                }
-                finally
-                {
-                    _lock.ReleaseExclusive();
-                }
-            }
-        }
+            threat.RowData[weapon.Index] = 0;
 
-        /// <summary>
-        ///     Periodically computes assignments. If the assignment differs from the PDC's current target, then it is guaranteed the minimum lock time condition is met, and we should attempt reassignment of the PDC.
-        /// </summary>
-        public void ActiveLoop()
-        {
-            // Will compute assignments:
-            SetupTickStart();
-            
-            _lock.AcquireShared();
-
-            try
-            {
-                // Now, we need to see which weapons don't match the calculated assignments.
-                var weapons = Weapons;
-                var weaponsCount = weapons.Count;
-                var currentTick = Session.I.Tick;
-                
-                for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
-                {
-                    var logicalWeapon = weapons[weaponIndex];
-                    var weaponRef = logicalWeapon.Ref;
-
-                    if (!IsWeaponAssignedToAnything[logicalWeapon.Index]) 
-                    {
-                        // Skip if we don't know anything about the weapon:
-                        continue;
-                    }
-
-                    var assignedProjectile = Assignments[weaponIndex];
-                    
-                    if (assignedProjectile == null)
-                    {
-                        continue;
-                    }
-                
-                    var weaponTarget = weaponRef.Target;
-                    var currentTargetProjectile = weaponTarget?.TargetObject as Projectile;
-                    
-                    if (currentTargetProjectile != assignedProjectile)
-                    {   
-                        // We assign it.
-                        // The target acquisition will run, and the weapon will get its assignment via AcquireProjectile.
-                        weaponRef.FastTargetResetTick = currentTick + 2;
-                    }
-                }
-            }
-            finally
-            {
-                _lock.ReleaseShared();   
-            }
-        }
-        
-        public virtual void CleanUp()
-        {
-            Weapons.Clear();
-            LogicalWeaponByWeapon.Clear();
-            Array.Clear(Assignments, 0, Assignments.Length);
-            Network.Clear();
-            LastUpdateTick = uint.MaxValue;
-        }
-
-        public sealed class ThreatGraph
-        {
-            public sealed class Threat
-            {
-                public Projectile Ref;
-                public ushort[] RowData;
-                public double DistanceToGridCenter; // Actual distance, not squared!
-            }
-            
-            public readonly List<Threat> Threats = new List<Threat>();
-            public Dictionary<Projectile, Threat> ThreatsByProjectile = new Dictionary<Projectile, Threat>();
-            private readonly HashSet<Projectile> _aliveProjectilesTemp = new HashSet<Projectile>();
-            private readonly List<Projectile> _newProjectilesTemp = new List<Projectile>();
-
-            private void DestroyDeadProjectiles()
-            {
-                // Inline List.RemoveAll:
-                
-                var list = Threats;
-                var alive = _aliveProjectilesTemp;
-                var freeIndex = 0;
-
-                while (freeIndex < list.Count && alive.Contains(list[freeIndex].Ref))
-                {
-                    freeIndex++;
-                }
-
-                if (freeIndex >= list.Count)
-                {
-                    return;
-                }
-
-                var a = list[freeIndex];
-                ThreatsByProjectile.Remove(a.Ref);
-
-                for (var readIndex = freeIndex + 1; readIndex < list.Count; readIndex++)
-                {
-                    var currentItem = list[readIndex];
-
-                    if (alive.Contains(currentItem.Ref))
-                    {
-                        list[freeIndex] = currentItem;
-                        freeIndex++;
-                    }
-                    else
-                    {
-                       ThreatsByProjectile.Remove(currentItem.Ref);
-                    }
-                }
-    
-                var itemsToRemove = list.Count - freeIndex;
-               
-                // ReSharper disable once InvertIf
-                if (itemsToRemove > 0)
-                {
-                    list.RemoveRange(freeIndex, itemsToRemove);
-                }
-            }
-            
-            private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid, int weaponCount)
-            {
-                var threats = Threats;
-                var threatsByProjectile = ThreatsByProjectile;
-                var aliveProjectilesTemp = _aliveProjectilesTemp;
-                var newProjectilesTemp = _newProjectilesTemp;
-                
-                // Find out which projectiles are still valid, and which ones are new:
-                for (var projectileIndex = 0; projectileIndex < projectiles.Count; projectileIndex++)
-                {
-                    var validProjectile = projectiles[projectileIndex];
-
-                    Threat existingThreat;
-                    if (threatsByProjectile.TryGetValue(validProjectile, out existingThreat))
-                    {
-                        aliveProjectilesTemp.Add(validProjectile);
-                    }
-                    else
-                    {
-                        newProjectilesTemp.Add(validProjectile);
-                    }
-                }
-                
-                DestroyDeadProjectiles();
-                aliveProjectilesTemp.Clear();
-
-                for (var newProjectileIndex = 0; newProjectileIndex < newProjectilesTemp.Count; newProjectileIndex++)
-                {
-                    var projectile = newProjectilesTemp[newProjectileIndex];
-                    
-                    var threat = new Threat
-                    {
-                        Ref = projectile,
-                        RowData = new ushort[weaponCount],
-                        DistanceToGridCenter = double.NaN
-                    };
-                    
-                    threats.Add(threat);
-                    threatsByProjectile.Add(projectile, threat);
-                }
-                
-                newProjectilesTemp.Clear();
-                
-                // Recompute distances for every threat:
-                var gridCenter = grid.PositionComp.WorldAABB.Center;
-                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
-                {
-                    var threat = threats[threatIndex];
-                    
-                    threat.DistanceToGridCenter = Vector3D.Distance(threat.Ref.Position, gridCenter);
-                }
-            }
-
-            private void ResizeColumnsAndClearMatrix(int weaponCount)
-            {
-                var threats = Threats;
-                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
-                {
-                    var threat = threats[threatIndex];
-                    var rowData = threat.RowData;
-
-                    if (rowData.Length == weaponCount)
-                    {
-                        Array.Clear(rowData, 0, weaponCount);
-                    }
-                    else
-                    {
-                        threat.RowData = new ushort[weaponCount];
-                    }
-                }
-            }
-            
-            /// <summary>
-            ///     Builds the N×M matrix, where N is the number of torpedoes and M is the number of weapons.
-            ///     Each cell encodes whether the PDC can engage the torpedo, and the cost of doing so.
-            /// </summary>
-            /// <param name="projectileList"></param>
-            /// <param name="grid"></param>
-            /// <param name="weapons"></param>
-            public void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
-            {
-                /*
-                 * Loads new projectiles and removes stale projectiles. Preserves order of persisted projectiles.
-                 * Also updates the distances for all projectiles.
-                 */
-                LoadProjectiles(projectileList, grid, weapons.Count);
-
-                /*
-                 * Zeroes out the matrix and resizes each row data array if needed.
-                 */
-                ResizeColumnsAndClearMatrix(weapons.Count);
-                
-                /*
-                 * Computes the visibility and cost for each cell.
-                 */
-                ComputeMatrix(weapons, grid);
-            }
-            
-            private struct RangeBand
-            {
-                /// <summary>
-                ///     The truncated value (since it's a double).
-                ///     This allows us to separate the network into discrete ranges. 
-                /// </summary>
-                public int TruncatedRange;
-
-                /// <summary>
-                ///     All weapons that have their range match this floor.
-                ///     These indices are the global ones, that we can use.
-                /// </summary>
-                public List<int> WeaponIndices;
-            }
-
-            private readonly List<RangeBand> _rangeBands = new List<RangeBand>();
-            private readonly Dictionary<int, RangeBand> _rangeBandsByRange = new Dictionary<int, RangeBand>();
-            private readonly Stack<List<int>> _indexListPool = new Stack<List<int>>();
-
-            public void Clear()
-            {
-                Threats.Clear();
-                ThreatsByProjectile.Clear();
-                ClearBands();
-            }
-            
-            public void ClearBands()
-            {
-                var bands = _rangeBands;
-
-                for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
-                {
-                    var list = bands[bandIndex].WeaponIndices;
-                    list.Clear();
-                    _indexListPool.Push(list);
-                }
-
-                bands.Clear();
-                _rangeBandsByRange.Clear();
-            }
-
-            // ReSharper disable InconsistentNaming
-            private int __matrixComputeLocalCacheSize = -1;
-            private Vector3D[] __weaponPositions;
-            private Vector3[] __weaponDirections;
-            private float[] __weaponMaxSqrDists;
-            private float[] __weaponTurnCosts;
-            // ReSharper restore InconsistentNaming
-            
-            private void ComputeMatrix(List<LogicalWeapon> weapons, MyCubeGrid grid)
-            {
-                ClearBands();
-
-                var weaponCount = weapons.Count;
-
-                if (weaponCount != __matrixComputeLocalCacheSize)
-                {
-                    __weaponPositions = new Vector3D[weaponCount];
-                    __weaponDirections = new Vector3[weaponCount];
-                    __weaponMaxSqrDists = new float[weaponCount];
-                    __weaponTurnCosts = new float[weaponCount];
-                    __matrixComputeLocalCacheSize = weaponCount;
-                }
-
-                var weaponPositions = __weaponPositions;
-                var weaponDirections = __weaponDirections;
-                var weaponMaxSqrDists = __weaponMaxSqrDists;
-                var weaponTurnCosts = __weaponTurnCosts;
-               
-                var bands = _rangeBands;
-                var bandsByRange = _rangeBandsByRange;
-
-                // Prefetch all the data behind those references into these small arrays, and build the bands:
-                for (var weaponIndex = 0; weaponIndex < weaponCount; weaponIndex++)
-                {
-                    var weapon = weapons[weaponIndex];
-                    var scopeInfo = weapon.Ref.GetScope.Info;
-
-                    weaponPositions[weaponIndex] = scopeInfo.Position;
-                    weaponDirections[weaponIndex] = scopeInfo.Direction;
-                    weaponMaxSqrDists[weaponIndex] = (float)weapon.Ref.MaxTargetDistanceSqr;
-                    weaponTurnCosts[weaponIndex] = weapon.Ref.Comp.MasterOverrides.TurnCost / (float)FireDistributionConst.MaxTurnCost;
-                    
-                    var quantizedRange = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
-
-                    RangeBand band;
-                    if (!bandsByRange.TryGetValue(quantizedRange, out band))
-                    {
-                        band = new RangeBand
-                        {
-                            TruncatedRange = quantizedRange,
-                            WeaponIndices = _indexListPool.Count > 0 ? _indexListPool.Pop() : new List<int>()
-                        };
-                        
-                        bands.Add(band);
-                        bandsByRange.Add(quantizedRange, band);
-                    }
-                    
-                    band.WeaponIndices.Add(weaponIndex);
-                }
-                
-                // Sort descending. We can afford this since we only have a few bands.
-                // We will use this to optimize the repository update algorithm.
-                bands.Sort((a, b) => b.TruncatedRange.CompareTo(a.TruncatedRange));
-                
-                var gridRadius = grid.PositionComp.WorldVolume.Radius;
-                
-                // With this band data structure, the inner loop is not exactly O(N * M), unless all of the torps really are in range.
-                for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
-                {
-                    var threat = Threats[threatIndex];
-                    var threatPosition = threat.Ref.Position;
-                    var threatDistance = threat.DistanceToGridCenter;
-                    
-                    // Lower and upper bounds on the distance to weapons:
-                    var minimumDistance = threatDistance - gridRadius;
-                    var rowData = threat.RowData;
-
-                    for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
-                    {
-                        var rangeBand = bands[bandIndex];
-                        
-                        if (minimumDistance > rangeBand.TruncatedRange)
-                        {
-                            // Guaranteed to be out of range.
-                            // We sorted the bands in descending order, so we can safely prune the rest of the list:
-                            break;
-                        }
-
-                        var bandWeaponIndices = rangeBand.WeaponIndices;
-                        var bandWeaponCount = bandWeaponIndices.Count;
-                        for (var weaponIdIndex = 0; weaponIdIndex < bandWeaponCount; weaponIdIndex++)
-                        {
-                            var weaponIndex = bandWeaponIndices[weaponIdIndex];
-                            
-                            var weaponPosition = weaponPositions[weaponIndex];
-                            var dirToTarget = threatPosition - weaponPosition;
-                            var distanceToTargetSqr = dirToTarget.LengthSquared();
-                            
-                            if (distanceToTargetSqr > weaponMaxSqrDists[weaponIndex])
-                            {
-                                continue;
-                            }
-                            
-                            // Range-of-motion check: seems a bit involved. TODO
-                            
-                            ushort quantizedCost = 0;
-                            if (distanceToTargetSqr > 1.0)
-                            {
-                                var weaponDirection = weaponDirections[weaponIndex];
-    
-                                double u;
-                                Vector3D.Dot(ref weaponDirection, ref dirToTarget, out u);
-
-                                double angleFunction;
-    
-                                if (u > 0)
-                                {
-                                    // Maps [0, 90] degrees to cost [0, 1]
-                                    angleFunction = 1.0 - u * u / distanceToTargetSqr;
-                                }
-                                else
-                                {
-                                    // Maps [90, 180] degrees to cost [1, 2]
-                                    angleFunction = 1.0 + u * u / distanceToTargetSqr;
-                                }
-
-                                var cost = angleFunction * weaponTurnCosts[weaponIndex];
-
-                                quantizedCost = (ushort) Math.Min(cost * 16383.5, 32767.0);
-                            }
-
-                            rowData[weaponIndex] = (ushort)((quantizedCost << 1) | 1);
-                        }
-                    }
-                }
-            }
+            return true;
         }
     }
-
+    
     /// <summary>
     ///     This is the actual bread and butter of saving the ship.
     ///     It acts as a me-first system. Torpedoes that are closest are obviously the biggest danger to the ship, so that's our threat heuristic.
     /// </summary>
-    internal sealed class ClosestTargetingFireDistributionSystem : FireDistributionSystem
+    internal sealed class ClosestTargetingFireDistributionSystem : AdvancedFireDistributionSystem
     {
         /// <summary>
         ///     If true, when the threats outnumber the PDCs, the PDC value is ignored and one PDC is assigned to each threat. 
@@ -1107,7 +1185,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
     /// <summary>
     ///     Fire distribution system that tries to distribute fire evenly, using seekers.
     /// </summary>
-    internal sealed class MaximumSpreadTargetingFireDistributionSystem : FireDistributionSystem
+    internal sealed class MaximumSpreadTargetingFireDistributionSystem : AdvancedFireDistributionSystem
     {
         public MaximumSpreadTargetingFireDistributionSystem(FireDistributionManager manager) : base(manager)
         {
