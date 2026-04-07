@@ -21,6 +21,7 @@ using Sandbox.ModAPI;
 using VRage.ModAPI;
 using Sandbox.Game.EntityComponents;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 
 namespace CoreSystems.Support
 {

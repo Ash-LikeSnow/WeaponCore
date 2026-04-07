@@ -29,6 +29,7 @@ using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.WeaponSystem;

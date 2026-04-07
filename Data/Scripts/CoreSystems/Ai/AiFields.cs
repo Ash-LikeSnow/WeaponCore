@@ -14,6 +14,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 using static CoreSystems.Platform.Weapon;
 

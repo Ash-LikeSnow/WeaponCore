@@ -8,6 +8,7 @@ using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;

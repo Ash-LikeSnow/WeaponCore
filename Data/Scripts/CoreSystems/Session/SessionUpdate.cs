@@ -17,6 +17,7 @@ using VRage.Game.Entity;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 
 namespace CoreSystems
 {
