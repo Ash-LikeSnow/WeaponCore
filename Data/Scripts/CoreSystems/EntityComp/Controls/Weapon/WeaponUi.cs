@@ -1203,32 +1203,7 @@ namespace CoreSystems
                 comp.Cube.UpdateTerminalForced(); 
             }
         }
-
-        internal static float GetWeaponValue(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.MaxWeaponValue;
-            return comp.Data.Repo.Values.Set.Overrides.WeaponValue;
-        }
-
-        internal static void RequestSetWeaponValue(IMyTerminalBlock block, float newValue)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            var roundedInt = (int)Math.Round(newValue);
-            Weapon.WeaponComponent.RequestSetValue(comp, "WeaponValue", roundedInt, Session.I.PlayerId);
-        }
         
-        internal static float GetMinWeaponValue(IMyTerminalBlock block)
-        {
-            return 1;
-        }
-        
-        internal static float GetMaxWeaponValue(IMyTerminalBlock block)
-        {
-            return FireDistributionConst.MaxWeaponValue;
-        }
-
         internal static float GetTurnCost(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

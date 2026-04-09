@@ -71,7 +71,6 @@ namespace CoreSystems.Control
             
             AddOnOffSwitchNoAction<T>(session, "TargetClosest", Localization.GetText("TerminalTargetClosestTitle"), Localization.GetText("TerminalTargetClosestTooltip"), BlockUi.GetTargetClosest, BlockUi.RequestSetTargetClosest, true, AllowSwitchTargetPriority);
             AddOnOffSwitchNoAction<T>(session, "EnableFireDistribution", Localization.GetText("TerminalEnableFireDistributionTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetEnableFireDistribution, BlockUi.RequestSetEnableFireDistribution, true, AllowFireDistribution);
-            AddWeaponValueSliderRange<T>(session, "WeaponValue", Localization.GetText("TerminalWeaponValueTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetWeaponValue, BlockUi.RequestSetWeaponValue, FireDistributionSlidersVisible, BlockUi.GetMinWeaponValue, BlockUi.GetMaxWeaponValue, true);
             AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
             AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
         }
@@ -678,13 +677,6 @@ namespace CoreSystems.Control
 
             builder.Append(message);
         }
-
-        internal static void SliderWeaponValueWriterRange(IMyTerminalBlock block, StringBuilder builder)
-        {
-            var value = (long)Math.Round(BlockUi.GetWeaponValue(block), 0);
-
-            builder.Append(value.ToString());
-        }
     
         internal static void SliderTurnCostWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
@@ -1164,23 +1156,6 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddControl<T>(c);
             session.CustomControls.Add(c);
 
-            return c;
-        }
-        
-        internal static IMyTerminalControlSlider AddWeaponValueSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
-        {
-            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
-            c.Title = MyStringId.GetOrCompute(title);
-            c.Tooltip = MyStringId.GetOrCompute(tooltip);
-            c.Enabled = IsReady;
-            c.Visible = visibleGetter;
-            c.Getter = getter;
-            c.Setter = setter;
-            c.Writer = SliderWeaponValueWriterRange;
-            if(minGetter != null) c.SetLimits(minGetter, maxGetter);
-            MyAPIGateway.TerminalControls.AddControl<T>(c);
-            session.CustomControls.Add(c);
-            
             return c;
         }
 

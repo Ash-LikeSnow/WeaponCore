@@ -694,9 +694,6 @@ namespace CoreSystems.Platform
                     case "EnableFireDistribution":
                         o.EnableFireDistribution = enabled;
                         break;
-                    case "WeaponValue":
-                        o.WeaponValue = v;
-                        break;
                     case "TurnCost":
                         o.TurnCost = v;
                         break;

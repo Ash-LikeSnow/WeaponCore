@@ -106,8 +106,6 @@ namespace CoreSystems.Support
                         { "TerminalTargetClosestTooltip", "Prioritizes the closest blocks/grids and projectiles" },
                         { "TerminalEnableFireDistributionTitle", "Enable PD Fire Distribution" },
                         { "TerminalEnableFireDistributionTooltip", "Enables distribution of point defense targets (PD targeting computer)" },
-                        { "TerminalWeaponValueTitle", "PD Value" },
-                        { "TerminalWeaponValueTooltip", "Indicates how valuable this turret is for point-defense. The lower the value is, the more turrets will be assigned per projectile" },
                         { "TerminalTurnCostTitle", "PD Turn Cost" },
                         { "TerminalTurnCostTooltip", "How expensive turning to lock a torpedo is based on the angle" },
                         { "TerminalMinLockTimeTitle", "PD Minimum Lock Time" },

@@ -16,7 +16,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
 {
     internal static class FireDistributionConst
     {
-        public const int MaxWeaponValue = 10;
         public const int MaxTurnCost = 1000;
         public const int MinMinLockTime = 15;
         public const int MaxMinLockTime = 1200;
@@ -518,6 +517,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
         public class Threat
         {
             public Projectile Ref;
+            public int Index;
             public double DistanceToGridCenter; // Actual distance, not squared!
         }
         
@@ -616,12 +616,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 
                 newProjectilesTemp.Clear();
                 
-                // Recompute distances for every threat:
+                // Recompute distances and indices for every threat:
                 var gridCenter = grid.PositionComp.WorldAABB.Center;
                 for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
                 {
                     var threat = threats[threatIndex];
                     
+                    threat.Index = threatIndex;
                     threat.DistanceToGridCenter = Vector3D.Distance(threat.Ref.Position, gridCenter);
                 }
             }
