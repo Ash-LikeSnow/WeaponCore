@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRageMath;
@@ -15,26 +14,31 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
         protected readonly ThreatMatrix Matrix = new ThreatMatrix();
         
         // Used during the assignment algorithm. Tells us if a threat has no more PDCs that can be assigned to it. 
-        // ReSharper disable InconsistentNaming
-        private int __assignmentAlgorithmThreatCount = -1;
-        private bool[] __isThreatHandled;
-        // ReSharper restore InconsistentNaming
+        private bool[] _isThreatHandled = Array.Empty<bool>();
         
         protected AdvancedFireDistributionSystem(FireDistributionManager manager) : base(manager)
         {
             
         }
-        
-        protected override void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid)
+
+        protected override void UpdateDataStructure(List<Projectile> fullProjectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid)
         {
-            Matrix.UpdateDataStructure(projectileList, grid, Weapons);
+            Matrix.UpdateDataStructure(fullProjectileList, lockedOn, grid, Weapons);
         }
 
         protected override void ClearDataStructure()
         {
             Matrix.Clear();
         }
-        
+
+        protected override void SetupTickStartCore()
+        {
+            if (_isThreatHandled.Length < Matrix.Threats.Count)
+            {
+                _isThreatHandled = new bool[Matrix.Threats.Count];
+            }
+        }
+
         /// <summary>
         ///     First, the torpedoes are prioritized by the specific system implementation using a (hopefully) time-coherent sort.
         ///     Then, the algorithm starts assigning PDCs to the torpedoes by priority, based on the cost of assignment.
@@ -52,17 +56,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             var isWeaponAssigned = IsWeaponAssignedToAnything;
             var assignments = Assignments;
 
-            if (__assignmentAlgorithmThreatCount < threats.Count)
-            {
-                __isThreatHandled = new bool[threats.Count];
-                __assignmentAlgorithmThreatCount = threats.Count;
-            }
-            else
-            {
-                Array.Clear(__isThreatHandled, 0, __isThreatHandled.Length);
-            }
-
-            var isThreatAssigned = __isThreatHandled;
+            var isThreatHandled = _isThreatHandled;
+            Array.Clear(isThreatHandled, 0, threats.Count);
             
             // Unassigned weapons left. Used to early-exit.
             var weaponsRemaining = weaponsCount;
@@ -73,7 +68,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 isWeaponAssigned,
                 ref weaponsRemaining,
                 Matrix,
-                isThreatAssigned
+                isThreatHandled
             );
 
             // First pass: Greedily assigns whatever we can, while integrating the game state.
@@ -86,7 +81,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 
                 for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
                 {
-                    if (isThreatAssigned[threatIndex])
+                    if (isThreatHandled[threatIndex])
                     {
                         continue;
                     }
@@ -129,7 +124,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     var candidateWeapon = weapons[bestPdcIndex];
                     
                     // And assigns it:
-                    isThreatAssigned[threatIndex] = true;
+                    isThreatHandled[threatIndex] = true;
                     assignments[bestPdcIndex] = threat.Ref;
                     isWeaponAssigned[candidateWeapon.Index] = true;
                     weaponsRemaining--;
@@ -137,7 +132,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     isMakingAssignments = true;
                 }
 
-                Array.Clear(isThreatAssigned, 0, threats.Count);
+                Array.Clear(isThreatHandled, 0, threats.Count);
             } while (isMakingAssignments && weaponsRemaining > 0);
         }
 
@@ -279,6 +274,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 bands.Sort((a, b) => b.TruncatedRange.CompareTo(a.TruncatedRange));
                 
                 var gridRadius = grid.PositionComp.WorldVolume.Radius;
+
+                var isLockedOn = IsThreatLockedOn;
+                var supportivePd = SupportivePd;
                 
                 // With this band data structure, the inner loop is not exactly O(N * M), unless all of the torps really are in range.
                 for (var threatIndex = 0; threatIndex < Threats.Count; threatIndex++)
@@ -291,6 +289,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     var minimumDistance = threatDistance - gridRadius;
                     var rowData = threat.RowData;
 
+                    var isThreatLockedOn = isLockedOn[threatIndex];
+                    
                     for (var bandIndex = 0; bandIndex < bands.Count; bandIndex++)
                     {
                         var rangeBand = bands[bandIndex];
@@ -313,6 +313,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                             var distanceToTargetSqr = dirToTarget.LengthSquared();
                             
                             if (distanceToTargetSqr > weaponMaxSqrDists[weaponIndex])
+                            {
+                                continue;
+                            }
+
+                            if (!isThreatLockedOn && !supportivePd[weaponIndex])
                             {
                                 continue;
                             }
@@ -365,14 +370,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             /// <param name="projectileList"></param>
             /// <param name="grid"></param>
             /// <param name="weapons"></param>
-            public override void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
+            public override void UpdateDataStructure(List<Projectile> projectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid, List<LogicalWeapon> weapons)
             {
-                base.UpdateDataStructure(projectileList, grid, weapons);
+                base.UpdateDataStructure(projectileList, lockedOn, grid, weapons);
                 
                 /*
                  * Zeroes out the matrix and resizes each row data array if needed.
                  */
                 ResizeColumnsAndClearMatrix(weapons.Count);
+                
+                /*
+                 * Load the support flags so we can determine if a weapon should target a torp:
+                 */
+                LoadSupport(weapons);
                 
                 /*
                  * Computes the visibility and cost for each cell.

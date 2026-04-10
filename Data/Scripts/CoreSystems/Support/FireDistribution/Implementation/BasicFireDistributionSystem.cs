@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRageMath;
 
 // ReSharper disable InlineTemporaryVariable
@@ -16,10 +14,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
     {
         private readonly Storage _distanceSortedStorage = new Storage();
 
-        // ReSharper disable InconsistentNaming
-        private int __assignmentAlgorithmThreatCount = -1;
-        private bool[] __isThreatHandled;
-        // ReSharper restore InconsistentNaming
+        private bool[] _isThreatHandled = Array.Empty<bool>();
 
         // Sparse visibility matrix:
         private HashSet<int>[] _cannotShootByThreat = Array.Empty<HashSet<int>>();
@@ -34,7 +29,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         {
             base.RebuildWeapons();
 
-            if (_weaponPositionAndRangeSqr.Length < Weapons.Count)
+            if (_weaponPositionAndRangeSqr.Length != Weapons.Count)
             {
                 _weaponPositionAndRangeSqr = new Vector4D[Weapons.Count];
             }
@@ -45,13 +40,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon);
         }
 
-        protected override void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid)
+        protected override void UpdateDataStructure(List<Projectile> fullProjectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid)
         {
-            _distanceSortedStorage.UpdateDataStructure(projectileList, grid, Weapons);
+            _distanceSortedStorage.UpdateDataStructure(fullProjectileList, lockedOn, grid, Weapons);
 
-            if (projectileList.Count > _cannotShootByThreat.Length)
+            if (fullProjectileList.Count > _cannotShootByThreat.Length)
             {
-                _cannotShootByThreat = new HashSet<int>[projectileList.Count + 10];
+                _cannotShootByThreat = new HashSet<int>[fullProjectileList.Count + 10];
             }
         }
 
@@ -62,10 +57,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
 
         protected override void SetupTickStartCore()
         {
+            var threats = _distanceSortedStorage.Threats;
+            var threatCount = threats.Count;
+            
             FireDistributionSupport.InsertionSortByDistance(_distanceSortedStorage);
 
-            // Copy new indices after sorting:
+            // Copy new indices and support after sorting:
             _distanceSortedStorage.CopyIndices();
+            _distanceSortedStorage.LoadSupport(Weapons);
+            
+            if (_isThreatHandled.Length < threatCount)
+            {
+                _isThreatHandled = new bool[threatCount];
+            }
             
             for (var index = 0; index < _distanceSortedStorage.Threats.Count; index++)
             {
@@ -74,19 +78,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             
             var weapons = Weapons;
             var weaponsCount = Weapons.Count;
-            
             var weaponPositionAndRange = _weaponPositionAndRangeSqr;
             for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
             {
                 var weapon = weapons[weaponIndex].Ref;
                 var position = weapon.GetScope.Info.Position;
-                
-                weaponPositionAndRange[weaponIndex] = new Vector4D(
-                    position.X,
-                    position.Y,
-                    position.Z,
-                    weapon.MaxTargetDistanceSqr
-                );
+                weaponPositionAndRange[weaponIndex] = new Vector4D(position.X, position.Y, position.Z, weapon.MaxTargetDistanceSqr);
             }
             
             ComputeAssignments();
@@ -107,18 +104,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             var isWeaponAssigned = IsWeaponAssignedToAnything;
             var assignments = Assignments;
             var cannotShootByThreat = _cannotShootByThreat;
-
-            if (__assignmentAlgorithmThreatCount < threats.Count)
-            {
-                __isThreatHandled = new bool[threats.Count];
-                __assignmentAlgorithmThreatCount = threats.Count;
-            }
-            else
-            {
-                Array.Clear(__isThreatHandled, 0, __isThreatHandled.Length);
-            }
-
-            var isThreatAssigned = __isThreatHandled;
+            
+            var isThreatHandled = _isThreatHandled;
+            Array.Clear(isThreatHandled, 0, threats.Count);
             
             // Unassigned weapons left. Used to early-exit.
             var weaponsRemaining = weaponsCount;
@@ -129,12 +117,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                 isWeaponAssigned,
                 ref weaponsRemaining,
                 _distanceSortedStorage,
-                isThreatAssigned
+                isThreatHandled
             );
 
             // First pass: Assign remaining PDCs per torp by distance.
             // The other passes: overkill the torpedoes.
             bool isMakingAssignments;
+
+            var isLockedOn = _distanceSortedStorage.IsThreatLockedOn;
+            var supportivePd = _distanceSortedStorage.SupportivePd;
             
             do
             {
@@ -142,18 +133,24 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                 
                 for (var threatIndex = 0; threatIndex < threats.Count && weaponsRemaining > 0; threatIndex++)
                 {
-                    if (isThreatAssigned[threatIndex])
+                    if (isThreatHandled[threatIndex])
                     {
                         continue;
                     }
 
                     var weaponBlacklist = cannotShootByThreat[threatIndex];
                     var threatPosition = threats[threatIndex].Ref.Position;
-                
+                    var isThreatLockedOn = isLockedOn[threatIndex];
+                    
                     // Finds the weapon can shoot the torp:
                     for (var candidateWeaponIndex = 0; candidateWeaponIndex < weaponsCount; candidateWeaponIndex++)
                     {
                         if (isWeaponAssigned[candidateWeaponIndex])
+                        {
+                            continue;
+                        }
+
+                        if (!isThreatLockedOn && !supportivePd[candidateWeaponIndex])
                         {
                             continue;
                         }
@@ -176,7 +173,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                         var candidateWeapon = weapons[candidateWeaponIndex];
                     
                         // And assigns it:
-                        isThreatAssigned[threatIndex] = true;
+                        isThreatHandled[threatIndex] = true;
                         assignments[candidateWeaponIndex] = threats[threatIndex].Ref;
                         isWeaponAssigned[candidateWeapon.Index] = true;
                         weaponsRemaining--;
@@ -187,7 +184,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                     }
                 }
 
-                Array.Clear(isThreatAssigned, 0, threats.Count);
+                Array.Clear(isThreatHandled, 0, threats.Count);
             } while (isMakingAssignments && weaponsRemaining > 0);
         }
 

@@ -28,6 +28,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         /// </summary>
         protected override void SetupTickStartCore()
         {
+            base.SetupTickStartCore();
+            
             FireDistributionSupport.InsertionSortByDistance(Matrix);
 
             // Copy new indices after sorting:

@@ -278,11 +278,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 ClearAssignmentState();
                 
                 var grid = Manager.MasterAi.GridEntity;
-                var projectileList = Manager.MasterAi.ProjectileCache;
+                var fullProjectileList = Manager.MasterAi.GetProCache(null, true);
+                var lockedOnMap = Manager.MasterAi.LiveProjectile;
                 
-                if (grid != null && Weapons.Count > 0 && projectileList.Count > 0)
+                if (grid != null && Weapons.Count > 0 && fullProjectileList.Count > 0)
                 {
-                    UpdateDataStructure(projectileList, grid);
+                    UpdateDataStructure(fullProjectileList, lockedOnMap, grid);
                     SetupTickStartCore();
                 }
                 else
@@ -301,9 +302,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
         /// <summary>
         ///     Called at most once per frame when there is a valid engagement ongoing, to update the internal data needed for the planner.
         /// </summary>
-        /// <param name="projectileList"></param>
+        /// <param name="fullProjectileList"></param>
+        /// <param name="lockedOn"></param>
         /// <param name="grid"></param>
-        protected abstract void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid);
+        protected abstract void UpdateDataStructure(List<Projectile> fullProjectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid);
 
         /// <summary>
         ///     Called at most once per frame when there isn't a valid engagement ongoing, to clear any references and other thins.
@@ -480,6 +482,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             public Projectile Ref;
             public int Index;
             public double DistanceToGridCenter; // Actual distance, not squared!
+            public bool IsLockedOn;
         }
         
         /// <summary>
@@ -493,6 +496,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             private readonly HashSet<Projectile> _aliveProjectilesTemp = new HashSet<Projectile>();
             private readonly List<Projectile> _newProjectilesTemp = new List<Projectile>();
 
+            public bool[] IsThreatLockedOn = Array.Empty<bool>();
+            public bool[] SupportivePd = Array.Empty<bool>();
+            
             protected abstract T CreateInstance(Projectile projectile, int weaponCount);
             
             private void DestroyDeadProjectiles()
@@ -539,8 +545,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     list.RemoveRange(freeIndex, itemsToRemove);
                 }
             }
-            
-            private void LoadProjectiles(List<Projectile> projectiles, MyCubeGrid grid, int weaponCount)
+
+            private void LoadProjectiles(List<Projectile> projectiles, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid, int weaponCount)
             {
                 var threats = Threats;
                 var threatsByProjectile = ThreatsByProjectile;
@@ -551,6 +557,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 for (var projectileIndex = 0; projectileIndex < projectiles.Count; projectileIndex++)
                 {
                     var validProjectile = projectiles[projectileIndex];
+
+                    if (validProjectile.State == Projectile.ProjectileState.Dead)
+                    {
+                        // What the fuck? The projectile list has stale projectiles!
+                        continue;
+                    }
 
                     T existingThreat;
                     if (threatsByProjectile.TryGetValue(validProjectile, out existingThreat))
@@ -577,7 +589,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 
                 newProjectilesTemp.Clear();
                 
-                // Recompute distances and indices for every threat:
+                // Recompute distances and indices for every threat, and also see if they are locked onto the grid:
                 var gridCenter = grid.PositionComp.WorldAABB.Center;
                 for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
                 {
@@ -585,6 +597,42 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     
                     threat.Index = threatIndex;
                     threat.DistanceToGridCenter = Vector3D.Distance(threat.Ref.Position, gridCenter);
+
+                    bool isLockedOn;
+                    if (!lockedOn.TryGetValue(threat.Ref, out isLockedOn))
+                    {
+                        isLockedOn = true;
+                    }
+
+                    threat.IsLockedOn = isLockedOn;
+                }
+            }
+            
+            public void LoadSupport(List<LogicalWeapon> weapons)
+            {
+                var threats = Threats;
+                var threatsCount = threats.Count;
+                if (IsThreatLockedOn.Length < threatsCount)
+                {
+                    IsThreatLockedOn = new bool[threatsCount];
+                }
+
+                var isThreatLockedOn = IsThreatLockedOn;
+                for (var index = 0; index < threatsCount; index++)
+                {
+                    isThreatLockedOn[index] = threats[index].IsLockedOn;
+                }
+                
+                var weaponsCount = weapons.Count;
+                if (SupportivePd.Length != weaponsCount)
+                {
+                    SupportivePd = new bool[weaponsCount];
+                }
+                
+                var supportivePd = SupportivePd;
+                for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
+                {
+                    supportivePd[weaponIndex] = weapons[weaponIndex].Ref?.Comp?.MasterOverrides?.SupportingPD ?? true;
                 }
             }
 
@@ -602,15 +650,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             ///     Updates the data structure using the fresh projectile information.
             /// </summary>
             /// <param name="projectileList"></param>
+            /// <param name="lockedOn"></param>
             /// <param name="grid"></param>
             /// <param name="weapons"></param>
-            public virtual void UpdateDataStructure(List<Projectile> projectileList, MyCubeGrid grid, List<LogicalWeapon> weapons)
+            public virtual void UpdateDataStructure(List<Projectile> projectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid, List<LogicalWeapon> weapons)
             {
                 /*
                  * Loads new projectiles and removes stale projectiles. Preserves order of persisted projectiles.
                  * Also updates the distances for all projectiles.
                  */
-                LoadProjectiles(projectileList, grid, weapons.Count);
+                LoadProjectiles(projectileList, lockedOn, grid, weapons.Count);
             }
             
             public virtual void Clear()

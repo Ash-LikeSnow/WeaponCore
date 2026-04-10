@@ -252,26 +252,40 @@ namespace CoreSystems.Support
             return deck;
         }
 
-        internal List<Projectile> GetProCache(Weapon w, bool supportingPD)
+        internal List<Projectile> GetProCache(Weapon w, bool supportingPd)
         {
-            var collection = !w.System.TargetSlaving ? supportingPD ? ProjectileCache : ProjectileLockedCache : ProjectileCollection;
-            if (!w.System.TargetSlaving)
+            var collection = w == null 
+                ? supportingPd 
+                    ? ProjectileCache
+                    : ProjectileLockedCache
+                : !w.System.TargetSlaving 
+                    ? supportingPd 
+                        ? ProjectileCache 
+                        : ProjectileLockedCache 
+                    : ProjectileCollection;
+            
+            if (w == null || !w.System.TargetSlaving)
             {
                 if (LiveProjectileTick > _pCacheTick)
                 {
                     ProjectileCache.Clear();
                     ProjectileLockedCache.Clear();
                     ProjectileCache.AddRange(LiveProjectile.Keys);
-                    foreach(var proj in LiveProjectile)
+                    foreach(var kvp in LiveProjectile)
                     {
-                        if (proj.Value)
-                            ProjectileLockedCache.Add(proj.Key);
+                        if (kvp.Value)
+                        {
+                            ProjectileLockedCache.Add(kvp.Key);
+                        }
                     }
+                    
                     _pCacheTick = LiveProjectileTick;
                 }
             }
             else if (!Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.Projectiles))
+            {
                 Log.Line($"couldn't get exported projectile collection");
+            }
 
             return collection;
         }

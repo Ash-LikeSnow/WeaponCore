@@ -19,6 +19,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
 
         protected override void SetupTickStartCore()
         {
+            base.SetupTickStartCore();
+            
             // P.S. These values are probably not coherent in time, might be better to load up some arrays and call a framework sort
             var threats = Matrix.Threats;
             var count = threats.Count;
