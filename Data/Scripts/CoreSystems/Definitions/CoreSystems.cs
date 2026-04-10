@@ -179,6 +179,7 @@ namespace CoreSystems.Support
         public readonly bool ClosestFirst;
         public readonly bool AllowSwitchTargetPriority;
         public readonly bool AllowFireDistribution;
+        public readonly bool AdvancedFireDistribution;
         public readonly bool DegRof;
         public readonly bool ProhibitCoolingWhenOff;
         public readonly bool PainterUseMaxTargeting;
@@ -305,6 +306,7 @@ namespace CoreSystems.Support
             ClosestFirst = values.Targeting.ClosestFirst;
             AllowSwitchTargetPriority = values.Targeting.AllowSwitchTargetPriority;
             AllowFireDistribution = values.Targeting.AllowFireDistribution;
+            AdvancedFireDistribution = values.Targeting.AdvancedFireDistribution;
             UniqueTargetPerWeapon = Values.Targeting.UniqueTargetPerWeapon;
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;

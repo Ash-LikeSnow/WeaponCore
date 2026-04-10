@@ -47,7 +47,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             {
                 var system = _systems[systemIndex];
 
-                if (system.IsValidWeaponForSystem(weapon))
+                if (system.IsWeaponForSystem(weapon))
                 {
                     return system.CreateAccessor(weapon);
                 }
@@ -113,7 +113,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
 
         /// <summary>
         ///     Gets the valid weapons from the weapon comps, to rebuild the weapon list.
-        ///     The condition <see cref="IsValidWeaponForSystem"/> must be true for each returned result.
+        ///     The condition <see cref="IsWeaponForSystem"/> must be true for each returned result.
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Weapon> ScanForValidWeapons()
@@ -128,7 +128,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
+                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsWeaponForSystem(w))
                     {
                         yield return w;
                     }
@@ -153,7 +153,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 {
                     var w = comp.Collection[weaponIndex];
             
-                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
+                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsWeaponForSystem(w))
                     {
                         validCount++;
                 
@@ -175,7 +175,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
         /// </summary>
         /// <param name="weapon"></param>
         /// <returns>True if this system handles the specified weapon. Otherwise, false.</returns>
-        public abstract bool IsValidWeaponForSystem(Weapon weapon);
+        public abstract bool IsWeaponForSystem(Weapon weapon);
         
         #endregion
 

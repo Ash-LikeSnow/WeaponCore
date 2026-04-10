@@ -12,9 +12,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             
         }
         
-        public override bool IsValidWeaponForSystem(Weapon weapon)
+        public override bool IsWeaponForSystem(Weapon weapon)
         {
-            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon) && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
+            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon) && weapon.System.AdvancedFireDistribution && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
 
         protected override void SetupTickStartCore()

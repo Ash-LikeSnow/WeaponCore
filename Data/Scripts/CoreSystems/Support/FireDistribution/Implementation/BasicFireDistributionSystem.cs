@@ -17,6 +17,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         private bool[] _isThreatHandled = Array.Empty<bool>();
 
         // Sparse visibility matrix:
+        // TODO investigate replacing this hashset with a bit array
         private HashSet<int>[] _cannotShootByThreat = Array.Empty<HashSet<int>>();
         private Vector4D[] _weaponPositionAndRangeSqr = Array.Empty<Vector4D>();
         
@@ -35,9 +36,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             }
         }
 
-        public override bool IsValidWeaponForSystem(Weapon weapon)
+        public override bool IsWeaponForSystem(Weapon weapon)
         {
-            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon);
+            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon) && !weapon.System.AdvancedFireDistribution;
         }
 
         protected override void UpdateDataStructure(List<Projectile> fullProjectileList, Dictionary<Projectile, bool> lockedOn, MyCubeGrid grid)

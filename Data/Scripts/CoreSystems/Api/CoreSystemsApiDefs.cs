@@ -286,6 +286,7 @@ namespace CoreSystems.Api
                 [ProtoMember(23)] internal int CycleBlocks;
                 [ProtoMember(24)] internal bool AllowSwitchTargetPriority;
                 [ProtoMember(25)] internal bool AllowFireDistribution;
+                [ProtoMember(26)] internal bool AdvancedFireDistribution;
                 
                 [ProtoContract]
                 public struct CommunicationDef
