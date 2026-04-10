@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRageMath;
-
 // ReSharper disable InlineTemporaryVariable
 // ReSharper disable ForCanBeConvertedToForeach
 
@@ -15,10 +15,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         private readonly Storage _distanceSortedStorage = new Storage();
 
         private bool[] _isThreatHandled = Array.Empty<bool>();
-
-        // Sparse visibility matrix:
-        // TODO investigate replacing this hashset with a bit array
-        private HashSet<int>[] _cannotShootByThreat = Array.Empty<HashSet<int>>();
+        
+        // Sparse visibility matrix. Each row represents a threat, and each column represents a weapon.
+        // All bit arrays are discarded once the weapon count changes!
+        private BitArray[] _cannotShootByThreat = Array.Empty<BitArray>();
         private Vector4D[] _weaponPositionAndRangeSqr = Array.Empty<Vector4D>();
         
         public BasicFireDistributionSystem(FireDistributionManager manager) : base(manager)
@@ -34,6 +34,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             {
                 _weaponPositionAndRangeSqr = new Vector4D[Weapons.Count];
             }
+
+            // Discard the row data:
+            for (var threatIndex = 0; threatIndex < _cannotShootByThreat.Length; threatIndex++)
+            {
+                _cannotShootByThreat[threatIndex] = null;
+            }
         }
 
         public override bool IsWeaponForSystem(Weapon weapon)
@@ -47,7 +53,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
 
             if (fullProjectileList.Count > _cannotShootByThreat.Length)
             {
-                _cannotShootByThreat = new HashSet<int>[fullProjectileList.Count + 10];
+                _cannotShootByThreat = new BitArray[fullProjectileList.Count];
             }
         }
 
@@ -74,7 +80,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
             
             for (var index = 0; index < _distanceSortedStorage.Threats.Count; index++)
             {
-                _cannotShootByThreat[index]?.Clear();
+                _cannotShootByThreat[index]?.SetAll(false);
             }
             
             var weapons = Weapons;
@@ -155,6 +161,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                         {
                             continue;
                         }
+                        
+                        if (weaponBlacklist != null && weaponBlacklist.Get(candidateWeaponIndex))
+                        {
+                            continue;
+                        }
 
                         var positionAndRange = weaponPositionAndRange[candidateWeaponIndex];
                         var dx = threatPosition.X - positionAndRange.X;
@@ -162,11 +173,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                         var dz = threatPosition.Z - positionAndRange.Z;
 
                         if (dx * dx + dy * dy + dz * dz > positionAndRange.W)
-                        {
-                            continue;
-                        }
-
-                        if (weaponBlacklist != null && weaponBlacklist.Contains(candidateWeaponIndex))
                         {
                             continue;
                         }
@@ -201,11 +207,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
 
             if (blacklist == null)
             {
-                blacklist = new HashSet<int>();
+                blacklist = new BitArray(Weapons.Count);
+                
                 _cannotShootByThreat[threat.Index] = blacklist;
             }
 
-            blacklist.Add(weapon.Index);
+            blacklist.Set(weapon.Index, true);
             
             return true;
         }
