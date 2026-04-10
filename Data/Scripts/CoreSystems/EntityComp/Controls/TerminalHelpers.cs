@@ -8,7 +8,7 @@ using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
-using WeaponCore.Data.Scripts.CoreSystems.Support;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace CoreSystems.Control
 {
@@ -71,7 +71,7 @@ namespace CoreSystems.Control
             
             AddOnOffSwitchNoAction<T>(session, "TargetClosest", Localization.GetText("TerminalTargetClosestTitle"), Localization.GetText("TerminalTargetClosestTooltip"), BlockUi.GetTargetClosest, BlockUi.RequestSetTargetClosest, true, AllowSwitchTargetPriority);
             AddOnOffSwitchNoAction<T>(session, "EnableFireDistribution", Localization.GetText("TerminalEnableFireDistributionTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetEnableFireDistribution, BlockUi.RequestSetEnableFireDistribution, true, AllowFireDistribution);
-            AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
+            AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionAdvancedSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
             AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
         }
 
@@ -1196,6 +1196,18 @@ namespace CoreSystems.Control
         internal static bool FireDistributionSlidersVisible(IMyTerminalBlock block)
         {
             return AllowFireDistribution(block) && BlockUi.GetEnableFireDistribution(block);
+        }
+
+        internal static bool FireDistributionAdvancedSlidersVisible(IMyTerminalBlock block)
+        {
+            if (!FireDistributionSlidersVisible(block))
+            {
+                return false;
+            }
+            
+            var comp = (Weapon.WeaponComponent) block.Components.Get<CoreComponent>();
+
+            return comp.PrimaryWeapon?.System?.AdvancedFireDistribution ?? false;
         }
         
         #endregion
