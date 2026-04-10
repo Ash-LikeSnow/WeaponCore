@@ -14,7 +14,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         
         public override bool IsValidWeaponForSystem(Weapon weapon)
         {
-            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
+            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon) && !(weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
 
         protected override void SetupTickStartCore()
@@ -56,6 +56,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
                 
                 threats[j + 1] = key;
             }
+            
+            // Copy new indices after sorting:
+            Matrix.CopyIndices();
             
             ComputeAssignments();
         }

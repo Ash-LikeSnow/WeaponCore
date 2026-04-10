@@ -1207,7 +1207,7 @@ namespace CoreSystems
         internal static float GetTurnCost(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.MaxTurnCost;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionSupport.MaxTurnCost;
             return comp.Data.Repo.Values.Set.Overrides.TurnCost;
         }
 
@@ -1226,13 +1226,13 @@ namespace CoreSystems
         
         internal static float GetMaxTurnCost(IMyTerminalBlock block)
         {
-            return FireDistributionConst.MaxTurnCost;
+            return FireDistributionSupport.MaxTurnCost;
         }
 
         internal static float GetMinLockTime(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionConst.MinMinLockTime;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionSupport.MinMinLockTime;
             return comp.Data.Repo.Values.Set.Overrides.MinLockTime;
         }
 
@@ -1246,12 +1246,12 @@ namespace CoreSystems
         
         internal static float GetMinMinLockTime(IMyTerminalBlock block)
         {
-            return FireDistributionConst.MinMinLockTime;
+            return FireDistributionSupport.MinMinLockTime;
         }
         
         internal static float GetMaxMinLockTime(IMyTerminalBlock block)
         {
-            return FireDistributionConst.MaxMinLockTime;
+            return FireDistributionSupport.MaxMinLockTime;
         }
     }
 }

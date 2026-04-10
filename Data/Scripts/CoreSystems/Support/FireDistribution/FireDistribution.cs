@@ -14,52 +14,12 @@ using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implementatio
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
 {
-    internal static class FireDistributionConst
-    {
-        public const int MaxTurnCost = 1000;
-        public const int MinMinLockTime = 15;
-        public const int MaxMinLockTime = 1200;
-    }
-    
     /// <summary>
     ///     Manages multiple <see cref="FireDistributionSystem"/>s.
     ///     Each system will manage a specific subset of the grid's weapons. The subsets are guaranteed to be disjoint.
     /// </summary>
     internal sealed class FireDistributionManager
     {
-        /// <summary>
-        ///     Checks if a weapon is configured and set to use fire distribution, and if it's a valid PDC as well.
-        /// </summary>
-        /// <param name="w"></param>
-        /// <returns></returns>
-        public static bool IsValidWeaponForFireDistribution(Weapon w)
-        {
-            var system = w.System;
-            var comp = w.Comp;
-
-            if (system == null || comp == null)
-            {
-                return false;
-            }
-
-            var mOverrides = comp.MasterOverrides;
-    
-            if (mOverrides == null || !system.AllowFireDistribution || !mOverrides.EnableFireDistribution) 
-            {
-                return false;
-            }
-            
-            if (!((system.TrackProjectile || comp.Ai?.ControlComp != null) && mOverrides.Projectiles && !system.FocusOnly))
-            {
-                return false;
-            }
-
-            return comp.IsBlock && 
-                   comp.FunctionalBlock != null && 
-                   comp.FunctionalBlock.Enabled &&
-                   comp.FunctionalBlock.IsFunctional;
-        }
-        
         public readonly Ai MasterAi;
         private readonly FireDistributionSystem[] _systems;
         
@@ -69,8 +29,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
 
             _systems = new FireDistributionSystem[]
             {
-                new AdvancedClosestFireDistributionSystem(this),
-                new AdvancedScreeningFireDistributionSystem(this)
+                //new AdvancedClosestFireDistributionSystem(this),
+                //new AdvancedScreeningFireDistributionSystem(this)
+                new BasicFireDistributionSystem(this)
             };
         }
 
@@ -167,7 +128,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 {
                     var w = comp.Collection[weaponIndex];
                     
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
+                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
                     {
                         yield return w;
                     }
@@ -192,7 +153,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                 {
                     var w = comp.Collection[weaponIndex];
             
-                    if (FireDistributionManager.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
+                    if (FireDistributionSupport.IsValidWeaponForFireDistribution(w) && IsValidWeaponForSystem(w))
                     {
                         validCount++;
                 
@@ -220,7 +181,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
 
         private readonly HashSet<LogicalWeapon> _aliveWeaponsTemp = new HashSet<LogicalWeapon>();
         
-        private void RebuildWeapons()
+        protected virtual void RebuildWeapons()
         {
             var logicalWeapons = Weapons;
             var logicalWeaponByWeapon = LogicalWeaponByWeapon;
@@ -624,6 +585,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     
                     threat.Index = threatIndex;
                     threat.DistanceToGridCenter = Vector3D.Distance(threat.Ref.Position, gridCenter);
+                }
+            }
+
+            public void CopyIndices()
+            {
+                var threats = Threats;
+
+                for (var threatIndex = 0; threatIndex < threats.Count; threatIndex++)
+                {
+                    threats[threatIndex].Index = threatIndex;
                 }
             }
 

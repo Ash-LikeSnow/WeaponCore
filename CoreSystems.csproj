@@ -364,8 +364,10 @@
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\AdvancedFireDistributionSystem.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\FireDistribution.cs" />
+    <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\FireDistributionSupport.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\Implementation\AdvancedClosestFireDistributionSystem.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\Implementation\AdvancedScreeningFireDistributionSystem.cs" />
+    <Compile Include="Data\Scripts\CoreSystems\Support\FireDistribution\Implementation\BasicFireDistributionSystem.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\Localization.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

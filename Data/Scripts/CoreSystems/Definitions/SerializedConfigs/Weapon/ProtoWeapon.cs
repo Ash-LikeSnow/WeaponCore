@@ -654,8 +654,8 @@ namespace CoreSystems
         [ProtoMember(36), DefaultValue(ObjectiveModes.Default)] public ObjectiveModes ObjectiveMode = ObjectiveModes.Default;
         [ProtoMember(37), DefaultValue(true)] public bool TargetClosest = true;
         [ProtoMember(38)] public bool EnableFireDistribution;
-        [ProtoMember(40), DefaultValue(FireDistributionConst.MaxTurnCost)] public int TurnCost = FireDistributionConst.MaxTurnCost;
-        [ProtoMember(41), DefaultValue(FireDistributionConst.MinMinLockTime)] public int MinLockTime = FireDistributionConst.MinMinLockTime;
+        [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
+        [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
 
         public void Sync(ProtoWeaponOverrides syncFrom)
         {

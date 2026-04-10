@@ -49,11 +49,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             var weapons = Weapons;
             var weaponsCount = Weapons.Count;
             var threats = Matrix.Threats;
-            var threatByProjectile = Matrix.ThreatsByProjectile;
             var isWeaponAssigned = IsWeaponAssignedToAnything;
             var assignments = Assignments;
-            var currentTick = Session.I.Tick;
-            
+
             if (__assignmentAlgorithmThreatCount < threats.Count)
             {
                 __isThreatHandled = new bool[threats.Count];
@@ -68,45 +66,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             
             // Unassigned weapons left. Used to early-exit.
             var weaponsRemaining = weaponsCount;
-            
-            // Merge the current game state into the representation we have:
-            for (var weaponIndex = 0; weaponIndex < weaponsCount; weaponIndex++)
-            {
-                var weapon = weapons[weaponIndex];
-                var weaponTarget = weapon.Ref.Target;
-                
-                // ReSharper disable once MergeSequentialChecks
-                if (weaponTarget != null && weaponTarget.TargetObject != null) // need some help here. What conditions do we impose here to make sure the target is not expired or something?
-                {
-                    var targetProjectile = weaponTarget.TargetObject as Projectile;
-
-                    if (targetProjectile != null)
-                    {
-                        if (targetProjectile.State == Projectile.ProjectileState.Alive && currentTick - weapon.Ref.Target.ChangeTick < weapon.Ref.Comp.MasterOverrides.MinLockTime)
-                        {
-                            // If true, then the weapon must keep the current target locked; we are not allowed to reassign.
-                            // We will write it in our data structure:
-                            assignments[weaponIndex] = targetProjectile;
-                            isWeaponAssigned[weapon.Index] = true;
-                            --weaponsRemaining;
-
-                            ThreatRow correspondingThreat;
-                            if (threatByProjectile.TryGetValue(targetProjectile, out correspondingThreat))
-                            {
-                                isThreatAssigned[correspondingThreat.Index] = true;
-                            }
-                        }
-                        
-                        // else, we are free to reassign
-                    }
-                    else
-                    {
-                        // It's aiming for something (maybe grids), so we will make sure we skip it in calculations:
-                        isWeaponAssigned[weapon.Index] = true;
-                        --weaponsRemaining;
-                    }
-                }
-            }
+           
+            FireDistributionSupport.LoadWeaponTargets(
+                weapons,
+                assignments, 
+                isWeaponAssigned,
+                ref weaponsRemaining,
+                Matrix,
+                isThreatAssigned
+            );
 
             // First pass: Greedily assigns whatever we can, while integrating the game state.
             // The other passes: overkill the torpedoes.
@@ -286,7 +254,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
                     weaponPositions[weaponIndex] = scopeInfo.Position;
                     weaponDirections[weaponIndex] = scopeInfo.Direction;
                     weaponMaxSqrDists[weaponIndex] = (float)weapon.Ref.MaxTargetDistanceSqr;
-                    weaponTurnCosts[weaponIndex] = weapon.Ref.Comp.MasterOverrides.TurnCost / (float)FireDistributionConst.MaxTurnCost;
+                    weaponTurnCosts[weaponIndex] = weapon.Ref.Comp.MasterOverrides.TurnCost / (float)FireDistributionSupport.MaxTurnCost;
                     
                     var quantizedRange = Math.Max((int)weapon.Ref.MaxTargetDistance, 1);
 

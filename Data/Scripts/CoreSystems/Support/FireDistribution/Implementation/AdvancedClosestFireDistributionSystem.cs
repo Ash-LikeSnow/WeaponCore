@@ -20,7 +20,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
 
         public override bool IsValidWeaponForSystem(Weapon weapon)
         {
-            return FireDistributionManager.IsValidWeaponForFireDistribution(weapon) && (weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
+            return FireDistributionSupport.IsValidWeaponForFireDistribution(weapon) && (weapon.System.AllowSwitchTargetPriority ? weapon.Comp?.MasterOverrides?.TargetClosest ?? weapon.System.ClosestFirst : weapon.System.ClosestFirst);
         }
 
         /// <summary>
@@ -28,25 +28,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution.Implement
         /// </summary>
         protected override void SetupTickStartCore()
         {
-            // Another fucking local sort because the profiler would (probably) catch the comparer...
-            var threats = Matrix.Threats;
-            var count = threats.Count;
-            // P.S. we should copy these into local
-            for (int i = 1; i < count; i++)
-            {
-                var key = threats[i];
-                var keyDist = key.DistanceToGridCenter;
-                var j = i - 1;
-        
-                while (j >= 0 && threats[j].DistanceToGridCenter > keyDist)
-                {
-                    threats[j + 1] = threats[j];
-                    j--;
-                }
-                
-                threats[j + 1] = key;
-            }
-            
+            FireDistributionSupport.InsertionSortByDistance(Matrix);
+
+            // Copy new indices after sorting:
+            Matrix.CopyIndices();
+
             ComputeAssignments();
         }
     }
