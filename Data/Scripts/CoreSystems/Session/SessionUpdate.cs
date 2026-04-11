@@ -633,7 +633,7 @@ namespace CoreSystems
                         }
                         else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
                             w.Reloaded(1);
-
+                        
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
 
@@ -734,8 +734,10 @@ namespace CoreSystems
 
                         ///
                         /// Queue for target acquire or set to tracking weapon.
-                        /// 
-                        if (weaponAcquires && w.TargetAcquireTick == uint.MaxValue && (!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0) && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
+                        ///
+                        // Runs the AI loop for projectile acquire on the client:
+                        var clientProjectileSeek = !IsServer && w.ProjectilesNear;
+                        if ((weaponAcquires || clientProjectileSeek) && w.TargetAcquireTick == uint.MaxValue && (!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0) && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
                         {
                             var myTimeSlot = Tick == w.FastTargetResetTick || w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
@@ -748,8 +750,7 @@ namespace CoreSystems
                             var weaponReady = !w.OutOfAmmo && !requiresHome && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
                             Dictionary<object, Weapon> masterTargets;
                          
-                            var seekProjectilesClient = !I.IsServer && w.ProjectilesNear;
-                            var seek = (weaponReady && (acquireReady || w.ProjectilesNear) || seekProjectilesClient) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
+                            var seek = (weaponReady && (acquireReady || w.ProjectilesNear) || clientProjectileSeek) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             var syncCTC = w.RotorTurretSlaving && ai.ControlComp != null && ai.RootComp?.PrimaryWeapon != null && (bool)ai.RootComp.PrimaryWeapon.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
 
