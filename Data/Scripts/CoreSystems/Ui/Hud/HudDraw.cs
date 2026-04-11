@@ -1,5 +1,6 @@
 ﻿using CoreSystems;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game;
 using VRage.Utils;
@@ -273,7 +274,17 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         displayText += NotInRangeStr;
                 }
                 else if (weapon.Comp.HasTurret && !weapon.Target.IsAligned && weapon.Target.ValidEstimate)
-                    displayText += RotatingStr;
+                {
+                    var pro = weapon.Target.TargetObject as Projectile;
+                    if (pro == null)
+                    {
+                        displayText += $" PRO NULL {weapon.Target.HasTarget}";
+                    }
+                    else
+                    {
+                        displayText += RotatingStr + $" P {Vector3D.Distance(weapon.MyPivotPos, pro.Position):F}m";
+                    }
+                }
                 else if (weapon.Comp.HasTurret && weapon.Target.CurrentState == Target.States.Fake)
                 {
                     if (weapon.Target.IsAligned)

@@ -17,7 +17,6 @@ using VRage.Game.Entity;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
-using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 
 namespace CoreSystems
 {
@@ -584,6 +583,12 @@ namespace CoreSystems
                     for (int j = 0; j < wComp.Platform.Weapons.Count; j++) {
 
                         var w = wComp.Platform.Weapons[j];
+                        
+                        if (DebugSupport.DebugWeaponSync && Tick60 && IsServer && w.Comp.Cube != null)
+                        {
+                            DebugSupport.ServerWeaponSyncDebug(w, j);
+                        }
+                        
                         if (w.PartReadyTick > Tick)
                         {
 
@@ -838,31 +843,6 @@ namespace CoreSystems
 
             }
 
-            if (I.Tick10)
-            {
-                // Parallel dispatch for fire distribution:
-                foreach (var kvp in EntityAIs)
-                {
-                    var ai = kvp.Value;
-
-                    FireDistributionManager manager;
-                    if (ai.HasFireDistributionManager() && ai.GetFireDistributionManager(out manager))
-                    {
-                        PendingFireDistributionManagers.Add(manager);
-                    }
-                }
-
-                if (PendingFireDistributionManagers.Count > 0)
-                {
-                    MyAPIGateway.Parallel.ForEach(PendingFireDistributionManagers, manager =>
-                    {
-                        manager.ActiveLoop();
-                    });
-                    
-                    PendingFireDistributionManagers.Clear();
-                }
-            }
-            
             if (DbTask.IsComplete && DbsToUpdate.Count > 0 && !DbUpdating)
                 UpdateDbsInQueue();
         }

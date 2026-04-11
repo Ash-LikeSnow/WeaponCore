@@ -26,7 +26,7 @@ namespace CoreSystems
                 if (errorPacket.MaxAttempts == 0)  {
                     Log.LineShortDate($"        [ClientReprocessing] Entity:{packet.EntityId} - Type:{packet.PType}", "net");
                     //set packet retry variables, based on type
-                    errorPacket.MaxAttempts = 7;
+                    errorPacket.MaxAttempts = 512;
                     errorPacket.RetryDelayTicks = 15;
                     errorPacket.RetryTick = Tick + errorPacket.RetryDelayTicks;
                 }

@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static Sandbox.Definitions.MyDefinitionManager;
 
 namespace CoreSystems
@@ -405,6 +406,11 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
+
+                if (DebugSupport.DebugWeaponSync)
+                {
+                    MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(DebugSupport.WeaponSyncDebugId, DebugSupport.WeaponDesyncDebugHandler);
+                }
             }
 
             if (HandlesInput)

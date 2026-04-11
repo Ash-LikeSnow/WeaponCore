@@ -13,6 +13,7 @@ using VRage.Input;
 using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef.HardwareDef.HardwareType;
 namespace CoreSystems
 {
@@ -35,6 +36,11 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(StringPacketId, StringReceived);
+
+                if (DebugSupport.DebugWeaponSync)
+                {
+                    MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(DebugSupport.WeaponSyncDebugId, DebugSupport.WeaponDesyncDebugHandler);
+                }
             }
 
             if (IsServer)
