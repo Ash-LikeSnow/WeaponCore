@@ -747,7 +747,9 @@ namespace CoreSystems
                             var requiresHome = w.System.GoHomeToReload && !w.IsHome && noAmmo;
                             var weaponReady = !w.OutOfAmmo && !requiresHome && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
                             Dictionary<object, Weapon> masterTargets;
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
+                         
+                            var seekProjectilesClient = !I.IsServer && w.ProjectilesNear;
+                            var seek = (weaponReady && (acquireReady || w.ProjectilesNear) || seekProjectilesClient) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             var syncCTC = w.RotorTurretSlaving && ai.ControlComp != null && ai.RootComp?.PrimaryWeapon != null && (bool)ai.RootComp.PrimaryWeapon.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
 
@@ -934,7 +936,7 @@ namespace CoreSystems
                         if (w.Target.HasTarget) {
                             w.EventTriggerStateChanged(EventTriggers.Tracking, true);
 
-                            if (MpActive)
+                            if (MpActive && IsServer)
                                 w.Target.PushTargetToClient(w);
                         }
                     }

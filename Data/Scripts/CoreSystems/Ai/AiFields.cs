@@ -250,7 +250,7 @@ namespace CoreSystems.Support
             AiType = GridEntity != null ? AiTypes.Grid : type == CoreComponent.CompTypeSpecific.Rifle ? AiTypes.Player : AiTypes.Phantom;
             IsGrid = AiType == AiTypes.Grid;
             DeadSphereRadius = GridEntity?.GridSizeHalf + 0.1 ?? 1.35;
-            AcquireTargets = !Session.I.IsClient && !Session.I.Settings.Enforcement.DisableAi;
+            AcquireTargets = /*!Session.I.IsClient && */!Session.I.Settings.Enforcement.DisableAi;
 
             if (AiType != AiTypes.Phantom)
             {
