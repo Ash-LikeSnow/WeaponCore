@@ -329,10 +329,16 @@ namespace CoreSystems.Platform
             else
                 targetCenter = Vector3D.Zero;
 
+            if (targetCenter.IsZero())
+            {
+                // On client, we receive invalid requests.
+                // Maybe we could fix it from upstream, but rn it's not super important
+                return false;
+            }
+            
             var validEstimate = true;
             if (w.System.Prediction != Prediction.Off && !w.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && w.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
             {
-
                 if (fakeTargetInfo != null)
                 {
                     targetLinVel = fakeTargetInfo.LinearVelocity;
@@ -838,6 +844,7 @@ namespace CoreSystems.Platform
                     case TargetType.Grid:
                     {
                         var attemptAdvancedGridPrediction =
+                            allowAdvancedGridAlgorithm &&
                             GridTarget?.Physics != null &&
                             !GridTarget.Closed &&
                             (
