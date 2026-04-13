@@ -194,7 +194,7 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public struct ProtoAdvProjectileSpawnData
+    public class AdvProjectileSpawnPacket : Packet
     {
         [ProtoMember(1)] internal uint WeaponId;
         [ProtoMember(2)] internal int MuzzleId;
@@ -205,35 +205,32 @@ namespace CoreSystems
         [ProtoMember(7)] internal ulong NetId;
         [ProtoMember(8)] internal ushort SpawnDepth;
         [ProtoMember(9)] internal long TargetId;
-    }
-
-    [ProtoContract]
-    public class AdvProjectileSpawnPacket : Packet
-    {
-        [ProtoMember(1)] public List<ProtoAdvProjectileSpawnData> Data;
         
         public override void CleanUp()
         {
             base.CleanUp();
-            Data?.Clear();
+            WeaponId = 0;
+            MuzzleId = 0;
+            AmmoIndex = 0;
+            Position = Vector3D.Zero;
+            Direction = Vector3D.Zero;
+            Velocity = Vector3D.Zero;
+            NetId = 0;
+            SpawnDepth = 0;
+            TargetId = 0;
         }
     }
 
-    [ProtoContract]
-    public struct ProtoAdvProjectileDeathData
-    {
-        [ProtoMember(1)] public ulong SyncId;
-    }
     
     [ProtoContract]
     public class AdvProjectileDeathPacket : Packet
     {
-        [ProtoMember(1)] public List<ProtoAdvProjectileDeathData> Data;
+        [ProtoMember(1)] public ulong NetId;
         
         public override void CleanUp()
         {
             base.CleanUp();
-            Data?.Clear();
+            NetId = 0;
         }
     }
 

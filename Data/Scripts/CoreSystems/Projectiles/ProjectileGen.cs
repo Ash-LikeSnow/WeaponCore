@@ -83,21 +83,28 @@ namespace CoreSystems.Projectiles
                 }
                 else if (Session.I.AdvSyncServer && aConst.FullSync)
                 {
-                    info.AdvSyncId = ++Session.I.AdvSyncNetIdCounter;
+                    info.AdvSyncId = Session.I.AdvSyncNetIdCounter++;
                     Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
 
                     var targetEnt = target.TargetObject as MyEntity;
-                    Session.I.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
+                    
+                    var spawnPacket = Session.I.AdvProjectileSpawnPacketPool.Get();
+                    
+                    spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
+                    spawnPacket.NetId = info.AdvSyncId;
+                    spawnPacket.WeaponId = w.PartState.Id;
+                    spawnPacket.MuzzleId = muzzle.MuzzleId;
+                    spawnPacket.AmmoIndex = aConst.AmmoIdxPos;
+                    spawnPacket.Position = muzzle.Position;
+                    spawnPacket.Direction = gen.Direction;
+                    spawnPacket.Velocity = comp.Ai.TopEntityVel;
+                    spawnPacket.TargetId = targetEnt?.EntityId ?? 0;
+                    spawnPacket.SpawnDepth = 0;
+                    
+                    Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {
-                        NetId = info.AdvSyncId,
-                        WeaponId = w.PartState.Id,
-                        MuzzleId = muzzle.MuzzleId,
-                        AmmoIndex = aConst.AmmoIdxPos,
-                        Position = muzzle.Position,
-                        Direction = gen.Direction,
-                        Velocity = comp.Ai.TopEntityVel,
-                        TargetId = targetEnt?.EntityId ?? 0,
-                        SpawnDepth = 0,
+                        Packet = spawnPacket,
+                        Entity = w.Comp.CoreEntity
                     });
                 }
 

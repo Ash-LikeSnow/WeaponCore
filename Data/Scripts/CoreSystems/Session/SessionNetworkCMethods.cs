@@ -1,4 +1,5 @@
-﻿using CoreSystems.Platform;
+﻿using System;
+using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -571,99 +572,76 @@ namespace CoreSystems
             return true;
         }
 
-        private bool ClientAdvProjectileSpawnSync(PacketObj data)
+        private void ClientAdvProjectileSpawnSync(PacketObj data)
         {
             var packet = data.Packet;
-            var spawnPacket = (AdvProjectileSpawnPacket)packet;
-            if (spawnPacket.Data == null) return Error(data, Msg("AdvSpawnData"));
+            var spawn = (AdvProjectileSpawnPacket)packet;
 
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Spawn packet: {spawnPacket.Data.Count} projectiles");
-
-            for (var i = 0; i < spawnPacket.Data.Count; i++)
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Spawn packet: {spawn.NetId}");
+            
+            Weapon w;
+            if (!WeaponLookUp.TryGetValue(spawn.WeaponId, out w) || w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
             {
-                var spawn = spawnPacket.Data[i];
-                
-                Weapon w;
-                if (!WeaponLookUp.TryGetValue(spawn.WeaponId, out w) || w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
-                {
-                    Log.Line($"ClientAdvProjectileSpawnSync: weapon {spawn.WeaponId} not found or not ready");
-                    continue;
-                }
-
-                if (spawn.AmmoIndex < 0 || spawn.AmmoIndex >= w.System.AmmoTypes.Length)
-                {
-                    Log.Line($"ClientAdvProjectileSpawnSync: ammoIndex {spawn.AmmoIndex} out of range");
-                    continue;
-                }
-
-                if (spawn.MuzzleId < 0 || spawn.MuzzleId >= w.Muzzles.Length)
-                {
-                    Log.Line($"ClientAdvProjectileSpawnSync: muzzleId {spawn.MuzzleId} out of range");
-                    continue;
-                }
-
-                var ammoType = w.System.AmmoTypes[spawn.AmmoIndex];
-                var muzzle = w.Muzzles[spawn.MuzzleId];
-
-                MyEntity targetEnt = null;
-                if (spawn.TargetId > 0)
-                {
-                    targetEnt = MyEntities.GetEntityByIdOrDefault(spawn.TargetId);
-                }
-
-                Projectiles.NewProjectiles.Add(new NewProjectile
-                {
-                    AmmoDef = ammoType.AmmoDef,
-                    Muzzle = muzzle,
-                    TargetEnt = targetEnt,
-                    Origin = spawn.Position,
-                    OriginUp = muzzle.UpDirection,
-                    Direction = spawn.Direction,
-                    Velocity = spawn.Velocity,
-                    MaxTrajectory = ammoType.AmmoDef.Const.MaxTrajectory,
-                    Type = NewProjectile.Kind.AdvSync,
-                    NetId = spawn.NetId,
-                    SpawnDepth = spawn.SpawnDepth,
-                });
+                Log.Line($"ClientAdvProjectileSpawnSync: weapon {spawn.WeaponId} not found or not ready");
+                return;
             }
 
-            data.Report.PacketValid = true;
-            spawnPacket.CleanUp();
-            return true;
+            if (spawn.AmmoIndex < 0 || spawn.AmmoIndex >= w.System.AmmoTypes.Length)
+            {
+                Log.Line($"ClientAdvProjectileSpawnSync: ammoIndex {spawn.AmmoIndex} out of range");
+                return;
+            }
+
+            if (spawn.MuzzleId < 0 || spawn.MuzzleId >= w.Muzzles.Length)
+            {
+                Log.Line($"ClientAdvProjectileSpawnSync: muzzleId {spawn.MuzzleId} out of range");
+                return;
+            }
+
+            var ammoType = w.System.AmmoTypes[spawn.AmmoIndex];
+            var muzzle = w.Muzzles[spawn.MuzzleId];
+
+            var targetEnt = spawn.TargetId != 0 
+                ? MyEntities.GetEntityByIdOrDefault(spawn.TargetId) 
+                : null;
+
+            Projectiles.NewProjectiles.Add(new NewProjectile
+            {
+                AmmoDef = ammoType.AmmoDef,
+                Muzzle = muzzle,
+                TargetEnt = targetEnt,
+                Origin = spawn.Position,
+                OriginUp = muzzle.UpDirection,
+                Direction = spawn.Direction,
+                Velocity = spawn.Velocity,
+                MaxTrajectory = ammoType.AmmoDef.Const.MaxTrajectory,
+                Type = NewProjectile.Kind.AdvSync,
+                NetId = spawn.NetId,
+                SpawnDepth = spawn.SpawnDepth,
+            });
         }
         
-        private bool ClientAdvProjectileDeathSync(PacketObj data)
+        private void ClientAdvProjectileDeathSync(PacketObj data)
         {
             var packet = data.Packet;
-            var deathPacket = (AdvProjectileDeathPacket)packet;
-            if (deathPacket.Data == null) return Error(data, Msg("AdvDeathData"));
-            
-            var applied = 0;
-            for (var i = 0; i < deathPacket.Data.Count; i++)
-            {
-                var death = deathPacket.Data[i];
+            var death = (AdvProjectileDeathPacket)packet;
+            var applied = false;
 
-                Projectile p;
-                if (I.ProjectilesByNetId.TryGetValue(death.SyncId, out p))
+            Projectile p;
+            if (ProjectilesByNetId.TryGetValue(death.NetId, out p))
+            {
+                if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
                 {
-                    if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
-                    {
-                        ++applied;
-                        p.State = Projectile.ProjectileState.Destroy;
-                    }
-                }
-                else
-                {
-                    Log.Line($"ClientAdvProjectileDeathSync: Pro with NetID {death.SyncId} not found");
+                    p.State = Projectile.ProjectileState.Destroy;
+                    applied = true;
                 }
             }
+            else
+            {
+                Log.Line($"ClientAdvProjectileDeathSync: Pro with NetID {death.NetId} not found");
+            }
 
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Death packet: {deathPacket.Data.Count} projectiles, {applied} killed");
-
-            data.Report.PacketValid = true;
-            deathPacket.CleanUp();
-            return true;
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Death packet: {death.NetId}, {(applied ? "OK" : "NOT APPLIED")}");
         }
-
     }
 }

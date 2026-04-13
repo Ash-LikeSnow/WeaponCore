@@ -27,9 +27,7 @@ namespace CoreSystems.Projectiles
         internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
 
         internal ulong CurrentProjectileId;
-        internal readonly List<ProtoAdvProjectileSpawnData> PendingAdvSpawnData = new List<ProtoAdvProjectileSpawnData>(32);
-        internal readonly List<ProtoAdvProjectileDeathData> PendingAdvDeathData = new List<ProtoAdvProjectileDeathData>(32);
-        
+    
         internal Projectiles()
         {
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
@@ -51,8 +49,6 @@ namespace CoreSystems.Projectiles
             ProjectilePool.Clear();
             ShrapnelPool.Clear();
             FragmentPool.Clear();
-            PendingAdvSpawnData.Clear();
-            PendingAdvDeathData.Clear();
         }
 
         internal void SpawnAndMove() // Methods highly inlined due to keen's mod profiler
@@ -72,40 +68,6 @@ namespace CoreSystems.Projectiles
             Session.I.StallReporter.Start($"Spawn: {ShrapnelToSpawn.Count}", 11);
             if (ShrapnelToSpawn.Count > 0) SpawnFragments();
             Session.I.StallReporter.End();
-
-            if (Session.I.AdvSyncServer && PendingAdvSpawnData.Count > 0) FlushAdvSpawnPackets();
-            if (Session.I.AdvSyncServer && PendingAdvDeathData.Count > 0) FlushAdvDeathPackets();
-        }
-
-        private void FlushAdvSpawnPackets()
-        {
-            var packet = new AdvProjectileSpawnPacket
-            {
-                PType = PacketType.AdvProjectileSpawnSyncs,
-                SenderId = Session.I.MultiplayerId,
-                Data = new List<ProtoAdvProjectileSpawnData>(PendingAdvSpawnData)
-            };
-            
-            PendingAdvSpawnData.Clear();
-           
-            Session.I.PacketsToClient.Add(new Session.PacketInfo
-            {
-                Packet = packet,
-            });
-        }
-
-        private void FlushAdvDeathPackets()
-        {
-            var packet = new AdvProjectileDeathPacket
-            {
-                PType = PacketType.AdvProjectileDeathSyncs,
-                SenderId = Session.I.MultiplayerId,
-                Data = new List<ProtoAdvProjectileDeathData>(PendingAdvDeathData)
-            };
-            
-            PendingAdvDeathData.Clear();
-            
-            Session.I.PacketsToClient.Add(new Session.PacketInfo { Packet = packet });
         }
 
         internal void Intersect() // Methods highly inlined due to keen's mod profiler

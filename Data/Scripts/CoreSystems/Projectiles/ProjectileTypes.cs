@@ -672,21 +672,27 @@ namespace CoreSystems.Support
 
                 if (session.AdvSyncServer && aConst.FullSync)
                 {
-                    info.AdvSyncId = ++session.AdvSyncNetIdCounter;
+                    info.AdvSyncId = session.AdvSyncNetIdCounter++;
                     session.ProjectilesByNetId[info.AdvSyncId] = p;
 
                     var targetEnt = frag.TargetEntity as MyEntity;
-                    session.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
+                    var spawnPacket = session.AdvProjectileSpawnPacketPool.Get();
+                   
+                    spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
+                    spawnPacket.NetId = info.AdvSyncId;
+                    spawnPacket.WeaponId = frag.Weapon.PartState.Id;
+                    spawnPacket.MuzzleId = frag.MuzzleId;
+                    spawnPacket.AmmoIndex = aConst.AmmoIdxPos;
+                    spawnPacket.Position = frag.Origin;
+                    spawnPacket.Direction = frag.Direction;
+                    spawnPacket.Velocity = frag.Velocity;
+                    spawnPacket.TargetId = targetEnt?.EntityId ?? 0;
+                    spawnPacket.SpawnDepth = frag.Depth;
+                    
+                    Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {
-                        NetId = info.AdvSyncId,
-                        WeaponId = frag.Weapon.PartState.Id,
-                        MuzzleId = frag.MuzzleId,
-                        AmmoIndex = aConst.AmmoIdxPos,
-                        Position = frag.Origin,
-                        Direction = frag.Direction,
-                        Velocity = frag.Velocity,
-                        TargetId = targetEnt?.EntityId ?? 0,
-                        SpawnDepth = frag.Depth,
+                        Packet = spawnPacket,
+                        Entity = frag.Weapon.Comp.CoreEntity
                     });
                 }
 

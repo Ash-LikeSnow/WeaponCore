@@ -108,11 +108,15 @@ namespace CoreSystems
                     case PacketType.AdvProjectileSpawnSyncs:
                     {
                         ClientAdvProjectileSpawnSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
                         break;
                     }
                     case PacketType.AdvProjectileDeathSyncs:
                     {
                         ClientAdvProjectileDeathSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
                         break;
                     }
                     case PacketType.AimTargetUpdate: 
@@ -609,6 +613,13 @@ namespace CoreSystems
                     case PacketType.AdvProjectileSpawnSyncs:
                     {
                         pInfo.Packet.CleanUp();
+                        AdvProjectileSpawnPacketPool.Return((AdvProjectileSpawnPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileDeathSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileDeathPacketPool.Return((AdvProjectileDeathPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.AiData:

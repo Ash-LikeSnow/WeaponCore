@@ -383,13 +383,13 @@ namespace CoreSystems.Projectiles
 
             if (Session.I.AdvSyncServer && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
             {
-                FlagForAdvSyncDeath();
+                SyncAdvDeath();
             }
             
             State = ProjectileState.Depleted;
         }
 
-        internal void FlagForAdvSyncDeath()
+        internal void SyncAdvDeath()
         {
             if (Info.AdvSyncId == 0 || Info.AdvSyncDeathSent)
             {
@@ -397,10 +397,16 @@ namespace CoreSystems.Projectiles
             }
 
             Info.AdvSyncDeathSent = true;
+
+            var deathPacket = Session.I.AdvProjectileDeathPacketPool.Get();
             
-            Session.I.Projectiles.PendingAdvDeathData.Add(new ProtoAdvProjectileDeathData
+            deathPacket.PType = PacketType.AdvProjectileDeathSyncs;
+            deathPacket.NetId = Info.AdvSyncId;
+            
+            Session.I.PacketsToClient.Add(new Session.PacketInfo
             {
-                SyncId = Info.AdvSyncId
+                Packet = deathPacket,
+                Entity = Info.Weapon.Comp.CoreEntity
             });
         }
         

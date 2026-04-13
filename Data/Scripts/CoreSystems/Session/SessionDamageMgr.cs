@@ -74,7 +74,7 @@ namespace CoreSystems
                             
                             if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
                             {
-                                p.FlagForAdvSyncDeath();
+                                p.SyncAdvDeath();
                             }
                         }
 
@@ -119,7 +119,7 @@ namespace CoreSystems
                    
                     if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
                     {
-                        p.FlagForAdvSyncDeath();
+                        p.SyncAdvDeath();
                     }
                 }
 

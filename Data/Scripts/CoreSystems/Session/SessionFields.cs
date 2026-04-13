@@ -105,6 +105,8 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<BetterInventoryItem> BetterInventoryItems = new MyConcurrentPool<BetterInventoryItem>(128);
         internal readonly MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>> PhysicalItemListPool = new MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>>(256, list => list.Clear());
         internal readonly MyConcurrentPool<MyConcurrentList<BetterInventoryItem>> BetterItemsListPool = new MyConcurrentPool<MyConcurrentList<BetterInventoryItem>>(256, list => list.Clear());
+        internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
