@@ -64,6 +64,7 @@ namespace CoreSystems
         HandWeaponDebug,
         ShootingChanged,
         AdvProjectileSpawnSyncs,
+        AdvProjectileDeathSyncs
     }
 
     #region packets
@@ -111,6 +112,7 @@ namespace CoreSystems
     [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(46, typeof(ShootingChangedPacket))]
     [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
+    [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
 
     public class Packet
     {
@@ -208,12 +210,30 @@ namespace CoreSystems
     [ProtoContract]
     public class AdvProjectileSpawnPacket : Packet
     {
-        [ProtoMember(1)] public List<ProtoAdvProjectileSpawnData> Data = new List<ProtoAdvProjectileSpawnData>();
-
+        [ProtoMember(1)] public List<ProtoAdvProjectileSpawnData> Data;
+        
         public override void CleanUp()
         {
             base.CleanUp();
-            Data.Clear();
+            Data?.Clear();
+        }
+    }
+
+    [ProtoContract]
+    public struct ProtoAdvProjectileDeathData
+    {
+        [ProtoMember(1)] public ulong SyncId;
+    }
+    
+    [ProtoContract]
+    public class AdvProjectileDeathPacket : Packet
+    {
+        [ProtoMember(1)] public List<ProtoAdvProjectileDeathData> Data;
+        
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Data?.Clear();
         }
     }
 

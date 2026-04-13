@@ -44,8 +44,9 @@ namespace CoreSystems.Support
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
-        internal ulong SyncId;
-
+        internal ulong AdvSyncId;
+        internal bool AdvSyncDeathSent;
+        
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -121,12 +122,13 @@ namespace CoreSystems.Support
             if (aConst.IsGuided)
                 Storage.Clean(this);
 
-            if (SyncId != 0)
+            if (AdvSyncId != 0)
             {
-                Session.I.ProjectilesByNetId.Remove(SyncId);
-                SyncId = 0;
+                // P.S. not the cleanest, but it's good...
+                Session.I.ProjectilesByNetId.Remove(AdvSyncId);
             }
 
+            AdvSyncDeathSent = false;
 
             if (IsFragment)
             {
@@ -192,7 +194,6 @@ namespace CoreSystems.Support
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             TotalAcceleration = Vector3D.Zero;
-
         }
     }
 
@@ -567,7 +568,7 @@ namespace CoreSystems.Support
                     frag.ManualMode = info.Storage.ManualMode;
                 }
 
-                frag.SyncId = info.SyncId;
+                frag.SyncId = info.AdvSyncId;
                 frag.SyncedFrags = ++info.SyncedFrags;
 
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
@@ -671,13 +672,13 @@ namespace CoreSystems.Support
 
                 if (session.AdvSyncServer && aConst.FullSync)
                 {
-                    info.SyncId = ++session.AdvSyncNetIdCounter;
-                    session.ProjectilesByNetId[info.SyncId] = p;
+                    info.AdvSyncId = ++session.AdvSyncNetIdCounter;
+                    session.ProjectilesByNetId[info.AdvSyncId] = p;
 
                     var targetEnt = frag.TargetEntity as MyEntity;
                     session.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
                     {
-                        NetId = info.SyncId,
+                        NetId = info.AdvSyncId,
                         WeaponId = frag.Weapon.PartState.Id,
                         MuzzleId = frag.MuzzleId,
                         AmmoIndex = aConst.AmmoIdxPos,

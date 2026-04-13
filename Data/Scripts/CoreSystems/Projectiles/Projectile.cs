@@ -364,31 +364,46 @@ namespace CoreSystems.Projectiles
             Info.ProHit.Entity = null;
             Info.ProHit.LastHit = Position;
 
-            if (Info.AvShot != null) {
+            if (Info.AvShot != null) 
+            {
                 Info.AvShot.ForceHitParticle = true;
-                Info.AvShot.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Session.I.Tick };
+                Info.AvShot.Hit = new Hit
+                {
+                    Entity = null,
+                    SurfaceHit = Position,
+                    LastHit = Position,
+                    HitVelocity = !Vector3D.IsZero(Gravity) 
+                            ? Velocity * 0.33f
+                            : Velocity,
+                    HitTick = Session.I.Tick
+                };
             }
 
             Intersecting = true;
 
-            //TODO AdvSync if (Info.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
-            //TODO AdvSync     AddToDeathSyncMonitor();
-
+            if (Session.I.AdvSyncServer && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
+            {
+                FlagForAdvSyncDeath();
+            }
+            
             State = ProjectileState.Depleted;
         }
 
-        internal void AddToDeathSyncMonitor()
+        internal void FlagForAdvSyncDeath()
         {
-            var s = Session.I;
-            //TODO AdvSync if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
+            if (Info.AdvSyncId == 0 || Info.AdvSyncDeathSent)
             {
-                //TODO AdvSync if (s.AdvSyncServer)
-                //TODO AdvSync {
-                //TODO AdvSync     s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.SyncId});
-                //TODO AdvSync }
+                return;
             }
-        }
 
+            Info.AdvSyncDeathSent = true;
+            
+            Session.I.Projectiles.PendingAdvDeathData.Add(new ProtoAdvProjectileDeathData
+            {
+                SyncId = Info.AdvSyncId
+            });
+        }
+        
         internal void ProjectileClose()
         {
             var aConst = Info.AmmoDef.Const;
@@ -3677,7 +3692,7 @@ namespace CoreSystems.Projectiles
             proSync.Position = Position;
             proSync.State = state;
             proSync.Velocity = (Vector3)Velocity;
-            proSync.ProId = Info.SyncId;
+            proSync.ProId = Info.AdvSyncId;
             Info.Weapon.ProPositionSync.Collection.Add(proSync);
             session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProPositionSync;
         }
@@ -3686,7 +3701,7 @@ namespace CoreSystems.Projectiles
         {
             var session = Session.I;
             var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
-            proSync.ProId = Info.SyncId;
+            proSync.ProId = Info.AdvSyncId;
             var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
             proSync.EntityId = targetId;
             Info.Weapon.ProTargetSync.Collection.Add(proSync);
@@ -3699,11 +3714,11 @@ namespace CoreSystems.Projectiles
             var s = Session.I;
 
             Session.ClientProSync sync;
-            if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
+            if (w.WeaponProSyncs.TryGetValue(Info.AdvSyncId, out sync))
             {
                 if (Session.I.RelativeTime - sync.UpdateTick > 30)
                 {
-                    w.WeaponProSyncs.Remove(Info.SyncId);
+                    w.WeaponProSyncs.Remove(Info.AdvSyncId);
                     return;
                 }
 
@@ -3714,7 +3729,7 @@ namespace CoreSystems.Projectiles
                     if (proPosSync.State == ProtoProPosition.ProSyncState.Dead)
                     {
                         State = ProjectileState.Destroy;
-                        w.WeaponProSyncs.Remove(Info.SyncId);
+                        w.WeaponProSyncs.Remove(Info.AdvSyncId);
                         return;
                     }
 
@@ -3747,10 +3762,10 @@ namespace CoreSystems.Projectiles
                     if (w.System.WConst.DebugMode)
                     {
                         List<Session.ClientProSyncDebugLine> lines;
-                        if (!Session.I.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
+                        if (!Session.I.ProSyncLineDebug.TryGetValue(Info.AdvSyncId, out lines))
                         {
                             lines = new List<Session.ClientProSyncDebugLine>();
-                            Session.I.ProSyncLineDebug[Info.SyncId] = lines;
+                            Session.I.ProSyncLineDebug[Info.AdvSyncId] = lines;
                         }
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * (float) Session.I.DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
@@ -3760,7 +3775,7 @@ namespace CoreSystems.Projectiles
                         //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
-                w.WeaponProSyncs.Remove(Info.SyncId);
+                w.WeaponProSyncs.Remove(Info.AdvSyncId);
             }
         }
         #endregion

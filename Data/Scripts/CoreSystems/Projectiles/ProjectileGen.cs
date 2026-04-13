@@ -78,18 +78,18 @@ namespace CoreSystems.Projectiles
 
                 if (t == Kind.AdvSync)
                 {
-                    info.SyncId = gen.NetId;
-                    Session.I.ProjectilesByNetId[info.SyncId] = p;
+                    info.AdvSyncId = gen.NetId;
+                    Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
                 }
                 else if (Session.I.AdvSyncServer && aConst.FullSync)
                 {
-                    info.SyncId = ++Session.I.AdvSyncNetIdCounter;
-                    Session.I.ProjectilesByNetId[info.SyncId] = p;
+                    info.AdvSyncId = ++Session.I.AdvSyncNetIdCounter;
+                    Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
 
                     var targetEnt = target.TargetObject as MyEntity;
                     Session.I.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
                     {
-                        NetId = info.SyncId,
+                        NetId = info.AdvSyncId,
                         WeaponId = w.PartState.Id,
                         MuzzleId = muzzle.MuzzleId,
                         AmmoIndex = aConst.AmmoIdxPos,

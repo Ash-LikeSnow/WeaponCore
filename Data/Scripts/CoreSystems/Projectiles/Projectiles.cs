@@ -7,6 +7,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
 using static CoreSystems.Support.AvShot;
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems.Projectiles
 {
@@ -27,7 +28,8 @@ namespace CoreSystems.Projectiles
 
         internal ulong CurrentProjectileId;
         internal readonly List<ProtoAdvProjectileSpawnData> PendingAdvSpawnData = new List<ProtoAdvProjectileSpawnData>(32);
-
+        internal readonly List<ProtoAdvProjectileDeathData> PendingAdvDeathData = new List<ProtoAdvProjectileDeathData>(32);
+        
         internal Projectiles()
         {
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
@@ -50,6 +52,7 @@ namespace CoreSystems.Projectiles
             ShrapnelPool.Clear();
             FragmentPool.Clear();
             PendingAdvSpawnData.Clear();
+            PendingAdvDeathData.Clear();
         }
 
         internal void SpawnAndMove() // Methods highly inlined due to keen's mod profiler
@@ -59,34 +62,50 @@ namespace CoreSystems.Projectiles
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start("AddTargets", 11);
-            if (AddTargets.Count > 0)
-                AddProjectileTargets();
+            if (AddTargets.Count > 0) AddProjectileTargets();
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start($"UpdateState: {ActiveProjetiles.Count}", 11);
-            if (ActiveProjetiles.Count > 0) 
-                UpdateState();
+            if (ActiveProjetiles.Count > 0) UpdateState();
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start($"Spawn: {ShrapnelToSpawn.Count}", 11);
-            if (ShrapnelToSpawn.Count > 0)
-                SpawnFragments();
+            if (ShrapnelToSpawn.Count > 0) SpawnFragments();
             Session.I.StallReporter.End();
 
-            if (Session.I.AdvSyncServer && PendingAdvSpawnData.Count > 0)
-                FlushAdvSpawnPackets();
+            if (Session.I.AdvSyncServer && PendingAdvSpawnData.Count > 0) FlushAdvSpawnPackets();
+            if (Session.I.AdvSyncServer && PendingAdvDeathData.Count > 0) FlushAdvDeathPackets();
         }
 
         private void FlushAdvSpawnPackets()
         {
-            var s = Session.I;
-            var packet = new AdvProjectileSpawnPacket();
-            packet.PType = PacketType.AdvProjectileSpawnSyncs;
-            packet.SenderId = s.MultiplayerId;
-            for (int i = 0; i < PendingAdvSpawnData.Count; i++)
-                packet.Data.Add(PendingAdvSpawnData[i]);
+            var packet = new AdvProjectileSpawnPacket
+            {
+                PType = PacketType.AdvProjectileSpawnSyncs,
+                SenderId = Session.I.MultiplayerId,
+                Data = new List<ProtoAdvProjectileSpawnData>(PendingAdvSpawnData)
+            };
+            
             PendingAdvSpawnData.Clear();
-            s.PacketsToClient.Add(new Session.PacketInfo { Packet = packet });
+           
+            Session.I.PacketsToClient.Add(new Session.PacketInfo
+            {
+                Packet = packet,
+            });
+        }
+
+        private void FlushAdvDeathPackets()
+        {
+            var packet = new AdvProjectileDeathPacket
+            {
+                PType = PacketType.AdvProjectileDeathSyncs,
+                SenderId = Session.I.MultiplayerId,
+                Data = new List<ProtoAdvProjectileDeathData>(PendingAdvDeathData)
+            };
+            
+            PendingAdvDeathData.Clear();
+            
+            Session.I.PacketsToClient.Add(new Session.PacketInfo { Packet = packet });
         }
 
         internal void Intersect() // Methods highly inlined due to keen's mod profiler

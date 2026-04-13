@@ -110,6 +110,11 @@ namespace CoreSystems
                         ClientAdvProjectileSpawnSync(packetObj);
                         break;
                     }
+                    case PacketType.AdvProjectileDeathSyncs:
+                    {
+                        ClientAdvProjectileDeathSync(packetObj);
+                        break;
+                    }
                     case PacketType.AimTargetUpdate: 
                     {
                             ClientFakeTargetUpdate(packetObj);

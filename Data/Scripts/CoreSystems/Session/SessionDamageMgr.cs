@@ -68,12 +68,14 @@ namespace CoreSystems
 
                     if (pExpiring || tInvalid || hitMax || outOfPew)
                     {
-
                         if ((hitMax || outOfPew) && (int)p.State < 3)
                         {
                             p.State = Projectile.ProjectileState.Depleted;
-                            //TODO AdvSync if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                            //TODO AdvSync     p.AddToDeathSyncMonitor();
+                            
+                            if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
+                            {
+                                p.FlagForAdvSyncDeath();
+                            }
                         }
 
                         hitEnt.Clean();
@@ -113,10 +115,12 @@ namespace CoreSystems
 
                 if (info.BaseDamagePool <= 0 && (int)p.State < 3)
                 {
-
                     p.State = Projectile.ProjectileState.Depleted;
-                    //TODO AdvSync if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                    //TODO AdvSync     p.AddToDeathSyncMonitor();
+                   
+                    if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
+                    {
+                        p.FlagForAdvSyncDeath();
+                    }
                 }
 
                 info.HitList.Clear();
@@ -1103,9 +1107,11 @@ namespace CoreSystems
 
                 pTarget.Info.BaseHealthPool = 0;
 
-                //TODO AdvSync var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
-                var requiresPdSync = false;
-                pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+                pTarget.State = I.AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.AdvSyncId != 0 
+                    ? Projectile.ProjectileState.ClientPhantom
+                    : Projectile.ProjectileState.Destroy;
+               
+                // TODO AdvSync What? :
                 /*
                 if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
                 {
@@ -1156,9 +1162,12 @@ namespace CoreSystems
                     {
                         attacker.DamageDoneProj += (long)objHp;
                         sTarget.Info.BaseHealthPool = 0;
-                        //TODO AdvSync var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
-                        var requiresPdSync = false;
-                        sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+
+                        sTarget.State = I.AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.AdvSyncId != 0
+                            ? Projectile.ProjectileState.ClientPhantom 
+                            : Projectile.ProjectileState.Destroy;
+                        
+                        // TODO AdvSync What? :
                         /*
                         if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
                         {
