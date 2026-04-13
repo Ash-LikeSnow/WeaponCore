@@ -459,10 +459,11 @@ namespace CoreSystems
                     var pdInfo = deathSyncMonitor.Collection[i];
                     Projectile p = null;
                     Weapon w = null;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                    {
-                        p.State = Projectile.ProjectileState.Destroy;
-                    }
+                    //TODO AdvSync if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    //TODO AdvSync {
+                    //TODO AdvSync     p.State = Projectile.ProjectileState.Destroy;
+                    //TODO AdvSync }
+                  
                     //else
                     //    Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
                 }
@@ -475,33 +476,34 @@ namespace CoreSystems
 
         internal void ProcessDeathSyncsForClients()
         {
-            if (!AdvSyncClient)
-            {
-                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
-                var playerCount = Players.Values.Count;
-
-                DeathSyncPackets += playerCount;
-                DeathSyncDataSize += playerCount * payLoad.Length;
-
-                foreach (var p in Players.Values)
-                {
-                    if (p.Player.SteamUserId != MultiplayerId)
-                        MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
-                }
-                ProtoDeathSyncMonitor.Collection.Clear();
-            }
-            else if (Tick60)
-            {
-                for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
-
-                    var pdInfo = ProtoDeathSyncMonitor.Collection[i];
-                    Projectile p;
-                    Weapon w;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                        p.State = Projectile.ProjectileState.Destroy;
-                }
-                ProtoDeathSyncMonitor.Collection.Clear();
-            }
+            //if (!AdvSyncClient)
+            
+             // TODO AdvSync {
+             // TODO AdvSync     var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
+             // TODO AdvSync     var playerCount = Players.Values.Count;
+ // TODO AdvSync 
+             // TODO AdvSync     DeathSyncPackets += playerCount;
+             // TODO AdvSync     DeathSyncDataSize += playerCount * payLoad.Length;
+ // TODO AdvSync 
+             // TODO AdvSync     foreach (var p in Players.Values)
+             // TODO AdvSync     {
+             // TODO AdvSync         if (p.Player.SteamUserId != MultiplayerId)
+             // TODO AdvSync             MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
+             // TODO AdvSync     }
+             // TODO AdvSync     ///ProtoDeathSyncMonitor.Collection.Clear();
+             // TODO AdvSync }
+            // TODO AdvSync else if (Tick60)
+            // TODO AdvSync {
+            // TODO AdvSync     for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
+// TODO AdvSync 
+            // TODO AdvSync         var pdInfo = ProtoDeathSyncMonitor.Collection[i];
+            // TODO AdvSync         Projectile p;
+            // TODO AdvSync         Weapon w;
+            // TODO AdvSync         if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+            // TODO AdvSync             p.State = Projectile.ProjectileState.Destroy;
+            // TODO AdvSync     }
+            // TODO AdvSync     ProtoDeathSyncMonitor.Collection.Clear();
+            // TODO AdvSync }
         }
 
         internal void ProccessServerPacketsForClients()

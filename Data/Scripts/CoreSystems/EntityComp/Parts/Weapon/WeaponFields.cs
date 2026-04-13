@@ -23,7 +23,6 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<ulong, ClientProSync> WeaponProSyncs = new Dictionary<ulong, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly Dictionary<MyEntity, HiddenInfo> HiddenTargets = new Dictionary<MyEntity, HiddenInfo>();
-        internal readonly Dictionary<ulong, Projectile> ProjectileSyncMonitor = new Dictionary<ulong, Projectile>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();

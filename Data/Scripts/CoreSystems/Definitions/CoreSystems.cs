@@ -219,7 +219,7 @@ namespace CoreSystems.Support
         public readonly bool HasSpinPart;
         public readonly bool DebugMode;
         public readonly bool ShootBlanks;
-        public readonly bool HasProjectileSync;
+        //TODO AdvSync public readonly bool HasProjectileSync;
         public readonly bool TargetSlaving;
         public readonly bool TargetPersists;
         public readonly bool DisableStatus;
@@ -419,8 +419,8 @@ namespace CoreSystems.Support
                 if (aConst.GuidedAmmoDetected)
                     HasGuidedAmmo = true;
 
-                if (aConst.FullSync)
-                    HasProjectileSync = true;
+                //TODO AdvSync if (aConst.FullSync)
+                //TODO AdvSync     HasProjectileSync = true;
 
                 if (aConst.AntiSmartDetected)
                     HasAntiSmart = true;

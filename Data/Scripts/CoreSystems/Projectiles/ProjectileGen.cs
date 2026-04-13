@@ -69,12 +69,12 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                if (Session.I.AdvSync) {
-
-                    info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
-                }
+                //TODO AdvSync if (Session.I.AdvSync) {
+                //TODO AdvSync 
+                //TODO AdvSync     info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                //TODO AdvSync     if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
+                //TODO AdvSync         info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
+                //TODO AdvSync }
 
                 ++w.ProjectileCounter;
                 info.BaseDamagePool = aConst.BaseDamage;

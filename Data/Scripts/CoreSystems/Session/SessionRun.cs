@@ -225,8 +225,8 @@ namespace CoreSystems
             if (!DedicatedServer) Av.End();
             DsUtil.Complete("av", true);
 
-            if (AdvSyncServer && ProtoDeathSyncMonitor.Collection.Count > 0)
-                ProcessDeathSyncsForClients();
+             // TODO AdvSync if (AdvSyncServer && ProtoDeathSyncMonitor.Collection.Count > 0)
+             // TODO AdvSync     ProcessDeathSyncsForClients();
 
             if (MpActive)  {
                 

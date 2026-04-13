@@ -132,18 +132,18 @@ namespace CoreSystems.Projectiles
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.I.Tick;
 
-                if (Session.I.AdvSync && aConst.FullSync)
-                {
-                    if (Session.I.IsClient) 
-                    {
-                        var posSlot = (int)Math.Round(info.RelativeAge) % 30;
-                        storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
-                        if (info.Weapon.WeaponProSyncs.Count > 0)
-                            p.SyncClientProjectile(posSlot);
-                    }
-                    else if (info.Age > 0 && info.Age % 29 == 0)
-                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
-                }
+                //TODO AdvSync if (Session.I.AdvSync && aConst.FullSync)
+                //TODO AdvSync {
+                //TODO AdvSync     if (Session.I.IsClient) 
+                //TODO AdvSync     {
+                //TODO AdvSync         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
+                //TODO AdvSync         storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
+                //TODO AdvSync         if (info.Weapon.WeaponProSyncs.Count > 0)
+                //TODO AdvSync             p.SyncClientProjectile(posSlot);
+                //TODO AdvSync     }
+                //TODO AdvSync     else if (info.Age > 0 && info.Age % 29 == 0)
+                //TODO AdvSync         p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
+                //TODO AdvSync }
 
                 if (storage.Sleep)
                 {

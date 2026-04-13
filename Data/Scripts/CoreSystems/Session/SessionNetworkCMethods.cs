@@ -506,12 +506,12 @@ namespace CoreSystems
                         var sync = syncPacket.Collection[j];
                         Projectile p;
                         MyEntity target;
-                        if (w.ProjectileSyncMonitor.TryGetValue(sync.ProId, out p) && p.State == Projectile.ProjectileState.Alive && MyEntities.TryGetEntityById(sync.EntityId, out target) && target != p.Info.Target.TargetObject)
-                        {
-                            var topEntId = target.GetTopMostParent().EntityId;
-                            var targetPos = target.PositionComp.WorldAABB.Center;
-                            p.Info.Target.Set(target, targetPos, 0, 0, topEntId);
-                        }
+                        //TODO AdvSync if (w.ProjectileSyncMonitor.TryGetValue(sync.ProId, out p) && p.State == Projectile.ProjectileState.Alive && MyEntities.TryGetEntityById(sync.EntityId, out target) && target != p.Info.Target.TargetObject)
+                        //TODO AdvSync {
+                        //TODO AdvSync     var topEntId = target.GetTopMostParent().EntityId;
+                        //TODO AdvSync     var targetPos = target.PositionComp.WorldAABB.Center;
+                        //TODO AdvSync     p.Info.Target.Set(target, targetPos, 0, 0, topEntId);
+                        //TODO AdvSync }
                     }
                 }
                 else

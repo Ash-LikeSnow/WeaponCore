@@ -302,7 +302,7 @@ namespace CoreSystems
 
         internal readonly Spectrum Spectrum;
 
-        internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
+        // TODO AdvSync internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -458,9 +458,6 @@ namespace CoreSystems
         internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;
-        internal bool AdvSyncClient;
-        internal bool AdvSyncServer;
-        internal bool AdvSync;
         internal bool IsServer;
         internal bool BaseControlsActions;
         internal bool EarlyInitOver;

@@ -237,8 +237,8 @@ namespace CoreSystems.Support
 
             Sleep = false;
 
-            if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
-                info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
+            //TODO AdvSync if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
+            //TODO AdvSync     info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
 
             if (ApproachInfo != null)
             {
@@ -282,7 +282,7 @@ namespace CoreSystems.Support
             for (int i = 0; i < PastProInfos.Length; i++)
                 PastProInfos[i] = Vector3D.Zero;
 
-            info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
+            //TODO AdvSync info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
 
             ProSyncPosMissCount = 0;
 
@@ -655,15 +655,15 @@ namespace CoreSystems.Support
                     info.Storage.DummyTargets = frag.DummyTargets;
                 }
 
-                if (session.AdvSync)
-                {
-                    var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
-                    var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
-                    info.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        p.Info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
-                }
+               //TODO AdvSync  if (session.AdvSync)
+               //TODO AdvSync  {
+               //TODO AdvSync      var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
+               //TODO AdvSync      var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
+               //TODO AdvSync      info.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+//TODO AdvSync 
+               //TODO AdvSync      if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
+               //TODO AdvSync          p.Info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
+               //TODO AdvSync  }
 
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();

@@ -72,8 +72,8 @@ namespace CoreSystems
                         if ((hitMax || outOfPew) && (int)p.State < 3)
                         {
                             p.State = Projectile.ProjectileState.Depleted;
-                            if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                                p.AddToDeathSyncMonitor();
+                            //TODO AdvSync if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
+                            //TODO AdvSync     p.AddToDeathSyncMonitor();
                         }
 
                         hitEnt.Clean();
@@ -115,8 +115,8 @@ namespace CoreSystems
                 {
 
                     p.State = Projectile.ProjectileState.Depleted;
-                    if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                        p.AddToDeathSyncMonitor();
+                    //TODO AdvSync if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
+                    //TODO AdvSync     p.AddToDeathSyncMonitor();
                 }
 
                 info.HitList.Clear();
@@ -1103,7 +1103,8 @@ namespace CoreSystems
 
                 pTarget.Info.BaseHealthPool = 0;
 
-                var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
+                //TODO AdvSync var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
+                var requiresPdSync = false;
                 pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
                 /*
                 if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
@@ -1155,7 +1156,8 @@ namespace CoreSystems
                     {
                         attacker.DamageDoneProj += (long)objHp;
                         sTarget.Info.BaseHealthPool = 0;
-                        var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
+                        //TODO AdvSync var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
+                        var requiresPdSync = false;
                         sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
                         /*
                         if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))

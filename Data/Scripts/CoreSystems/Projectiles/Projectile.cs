@@ -118,8 +118,8 @@ namespace CoreSystems.Projectiles
             if (aConst.CheckFutureIntersection)
                 s.Obstacle = session.ClosestObstaclesPool.Count > 0 ? session.ClosestObstaclesPool.Pop() : new ClosestObstacles();
 
-            if (aConst.FullSync)
-                s.FullSyncInfo = session.FullSyncInfoPool.Count > 0 ? session.FullSyncInfoPool.Pop() : new FullSyncInfo();
+            //TODO AdvSync if (aConst.FullSync)
+            //TODO AdvSync     s.FullSyncInfo = session.FullSyncInfoPool.Count > 0 ? session.FullSyncInfoPool.Pop() : new FullSyncInfo();
 
             EndState = EndStates.None;
             Position = Info.Origin;
@@ -371,8 +371,8 @@ namespace CoreSystems.Projectiles
 
             Intersecting = true;
 
-            if (Info.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
-                AddToDeathSyncMonitor();
+            //TODO AdvSync if (Info.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
+            //TODO AdvSync     AddToDeathSyncMonitor();
 
             State = ProjectileState.Depleted;
         }
@@ -380,12 +380,12 @@ namespace CoreSystems.Projectiles
         internal void AddToDeathSyncMonitor()
         {
             var s = Session.I;
-            if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
+            //TODO AdvSync if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
             {
-                if (s.AdvSyncServer)
-                {
-                    s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.SyncId});
-                }
+                //TODO AdvSync if (s.AdvSyncServer)
+                //TODO AdvSync {
+                //TODO AdvSync     s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.SyncId});
+                //TODO AdvSync }
             }
         }
 
@@ -511,9 +511,8 @@ namespace CoreSystems.Projectiles
                 s.SmartReady = true;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
-                var clientSync = aConst.FullSync && Session.I.AdvSyncClient;
 
-                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
+                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                 bool validEntity = false;
                 if (Info.Target.TargetState == Target.TargetStates.IsEntity) {
@@ -525,7 +524,7 @@ namespace CoreSystems.Projectiles
                         validEntity = IsFocusTarget(targetEnt);
                 }
 
-                var invalidate = !overMaxTargets || clientSync;
+                var invalidate = !overMaxTargets;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && invalidate;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
 
@@ -544,7 +543,7 @@ namespace CoreSystems.Projectiles
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
                 #region TargetTracking
-                if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
+                if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
                     if (s.ZombieLifeTime > 0)
                     {
@@ -3063,10 +3062,10 @@ namespace CoreSystems.Projectiles
                     newTarget = false;
                 }
 
-                if (s.AdvSyncServer && aConst.FullSync) {
-                    if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
-                        SyncTargetServerProjectile();
-                }
+                //TODO AdvSync if (s.AdvSyncServer && aConst.FullSync) {
+                //TODO AdvSync     if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
+                //TODO AdvSync         SyncTargetServerProjectile();
+                //TODO AdvSync }
             }
             else
             {
