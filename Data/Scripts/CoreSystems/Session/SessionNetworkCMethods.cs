@@ -2,6 +2,7 @@
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems
@@ -566,6 +567,64 @@ namespace CoreSystems
             }
 
             data.Report.PacketValid = true;
+            return true;
+        }
+
+        private bool ClientAdvProjectileSpawnSync(PacketObj data)
+        {
+            var packet = data.Packet;
+            var spawnPacket = (AdvProjectileSpawnPacket)packet;
+            if (spawnPacket.Data == null) return Error(data, Msg("AdvSpawnData"));
+
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Spawn packet: {spawnPacket.Data.Count} projectiles");
+
+            for (int i = 0; i < spawnPacket.Data.Count; i++)
+            {
+                var d = spawnPacket.Data[i];
+                Weapon w;
+                if (!WeaponLookUp.TryGetValue(d.WeaponId, out w) || w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
+                {
+                    Log.Line($"ClientAdvProjectileSpawnSync: weapon {d.WeaponId} not found or not ready");
+                    continue;
+                }
+
+                if (d.AmmoIndex < 0 || d.AmmoIndex >= w.System.AmmoTypes.Length)
+                {
+                    Log.Line($"ClientAdvProjectileSpawnSync: ammoIndex {d.AmmoIndex} out of range");
+                    continue;
+                }
+
+                if (d.MuzzleId < 0 || d.MuzzleId >= w.Muzzles.Length)
+                {
+                    Log.Line($"ClientAdvProjectileSpawnSync: muzzleId {d.MuzzleId} out of range");
+                    continue;
+                }
+
+                var ammoType = w.System.AmmoTypes[d.AmmoIndex];
+                var muzzle = w.Muzzles[d.MuzzleId];
+
+                MyEntity targetEnt = null;
+                if (d.TargetId > 0)
+                    targetEnt = MyEntities.GetEntityByIdOrDefault(d.TargetId);
+
+                Projectiles.NewProjectiles.Add(new NewProjectile
+                {
+                    AmmoDef = ammoType.AmmoDef,
+                    Muzzle = muzzle,
+                    TargetEnt = targetEnt,
+                    Origin = d.Position,
+                    OriginUp = muzzle.UpDirection,
+                    Direction = d.Direction,
+                    Velocity = d.Velocity,
+                    MaxTrajectory = ammoType.AmmoDef.Const.MaxTrajectory,
+                    Type = NewProjectile.Kind.AdvSync,
+                    NetId = d.NetId,
+                    SpawnDepth = d.SpawnDepth,
+                });
+            }
+
+            data.Report.PacketValid = true;
+            spawnPacket.CleanUp();
             return true;
         }
     }

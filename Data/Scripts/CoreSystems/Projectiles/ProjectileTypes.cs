@@ -513,7 +513,8 @@ namespace CoreSystems.Support
             Normal,
             Virtual,
             Frag,
-            Client
+            Client,
+            AdvSync
         }
 
         internal Weapon.Muzzle Muzzle;
@@ -528,6 +529,8 @@ namespace CoreSystems.Support
         internal float MaxTrajectory;
         internal Kind Type;
         internal double RelativeAge;
+        internal ulong NetId;
+        internal ushort SpawnDepth;
     }
 
     internal class Fragments
@@ -604,11 +607,21 @@ namespace CoreSystems.Support
         internal void Spawn(out int spawned)
         {
             Session session = null;
-            spawned = Sharpnel.Count;
-            for (int i = 0; i < spawned; i++)
+            spawned = 0;
+            for (int i = 0; i < Sharpnel.Count; i++)
             {
                 var frag = Sharpnel[i];
                 session = Session.I;
+
+                var aDef = frag.AmmoDef;
+                var aConst = aDef.Const;
+
+                if (session.AdvSyncClient && aConst.FullSync)
+                {
+                    session.Projectiles.FragmentPool.Push(frag);
+                    continue;
+                }
+
                 var p = session.Projectiles.ProjectilePool.Count > 0 ? session.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 info.Weapon = frag.Weapon;
@@ -616,8 +629,6 @@ namespace CoreSystems.Support
                 info.Ai = frag.Ai;
                 info.Id = session.Projectiles.CurrentProjectileId++;
 
-                var aDef = frag.AmmoDef;
-                var aConst = aDef.Const;
                 info.AmmoDef = aDef;
                 var target = info.Target;
                 
@@ -655,16 +666,26 @@ namespace CoreSystems.Support
                     info.Storage.DummyTargets = frag.DummyTargets;
                 }
 
-               //TODO AdvSync  if (session.AdvSync)
-               //TODO AdvSync  {
-               //TODO AdvSync      var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
-               //TODO AdvSync      var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
-               //TODO AdvSync      info.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-//TODO AdvSync 
-               //TODO AdvSync      if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-               //TODO AdvSync          p.Info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
-               //TODO AdvSync  }
+                if (session.AdvSyncServer && aConst.FullSync)
+                {
+                    info.SyncId = ++session.AdvSyncNetIdCounter;
 
+                    var targetEnt = frag.TargetEntity as MyEntity;
+                    session.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
+                    {
+                        NetId = info.SyncId,
+                        WeaponId = frag.Weapon.PartState.Id,
+                        MuzzleId = frag.MuzzleId,
+                        AmmoIndex = aConst.AmmoIdxPos,
+                        Position = frag.Origin,
+                        Direction = frag.Direction,
+                        Velocity = frag.Velocity,
+                        TargetId = targetEnt?.EntityId ?? 0,
+                        SpawnDepth = frag.Depth,
+                    });
+                }
+
+                spawned++;
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)

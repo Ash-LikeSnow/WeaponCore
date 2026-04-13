@@ -63,6 +63,7 @@ namespace CoreSystems
         PingPong,
         HandWeaponDebug,
         ShootingChanged,
+        AdvProjectileSpawnSyncs,
     }
 
     #region packets
@@ -109,6 +110,7 @@ namespace CoreSystems
     [ProtoInclude(44, typeof(PingPacket))]
     [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(46, typeof(ShootingChangedPacket))]
+    [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
 
     public class Packet
     {
@@ -186,6 +188,32 @@ namespace CoreSystems
             }
             Data.Clear();
             base.CleanUp();
+        }
+    }
+
+    [ProtoContract]
+    public struct ProtoAdvProjectileSpawnData
+    {
+        [ProtoMember(1)] internal uint WeaponId;
+        [ProtoMember(2)] internal int MuzzleId;
+        [ProtoMember(3)] internal int AmmoIndex;
+        [ProtoMember(4)] internal Vector3D Position;
+        [ProtoMember(5)] internal Vector3D Direction;
+        [ProtoMember(6)] internal Vector3D Velocity;
+        [ProtoMember(7)] internal ulong NetId;
+        [ProtoMember(8)] internal ushort SpawnDepth;
+        [ProtoMember(9)] internal long TargetId;
+    }
+
+    [ProtoContract]
+    public class AdvProjectileSpawnPacket : Packet
+    {
+        [ProtoMember(1)] public List<ProtoAdvProjectileSpawnData> Data = new List<ProtoAdvProjectileSpawnData>();
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Data.Clear();
         }
     }
 

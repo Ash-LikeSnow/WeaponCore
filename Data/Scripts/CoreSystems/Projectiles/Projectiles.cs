@@ -26,6 +26,8 @@ namespace CoreSystems.Projectiles
         internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
 
         internal ulong CurrentProjectileId;
+        internal readonly List<ProtoAdvProjectileSpawnData> PendingAdvSpawnData = new List<ProtoAdvProjectileSpawnData>(32);
+
         internal Projectiles()
         {
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
@@ -47,6 +49,7 @@ namespace CoreSystems.Projectiles
             ProjectilePool.Clear();
             ShrapnelPool.Clear();
             FragmentPool.Clear();
+            PendingAdvSpawnData.Clear();
         }
 
         internal void SpawnAndMove() // Methods highly inlined due to keen's mod profiler
@@ -69,6 +72,21 @@ namespace CoreSystems.Projectiles
             if (ShrapnelToSpawn.Count > 0)
                 SpawnFragments();
             Session.I.StallReporter.End();
+
+            if (Session.I.AdvSyncServer && PendingAdvSpawnData.Count > 0)
+                FlushAdvSpawnPackets();
+        }
+
+        private void FlushAdvSpawnPackets()
+        {
+            var s = Session.I;
+            var packet = new AdvProjectileSpawnPacket();
+            packet.PType = PacketType.AdvProjectileSpawnSyncs;
+            packet.SenderId = s.MultiplayerId;
+            for (int i = 0; i < PendingAdvSpawnData.Count; i++)
+                packet.Data.Add(PendingAdvSpawnData[i]);
+            PendingAdvSpawnData.Clear();
+            s.PacketsToClient.Add(new Session.PacketInfo { Packet = packet });
         }
 
         internal void Intersect() // Methods highly inlined due to keen's mod profiler

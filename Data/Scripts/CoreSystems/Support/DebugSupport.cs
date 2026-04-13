@@ -13,7 +13,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
     internal static class DebugSupport
     {
-        public const bool DebugWeaponSync = true;
+        public const bool DebugWeaponSync = false;
         public const ushort WeaponSyncDebugId = 11223;
         
         [ProtoContract]

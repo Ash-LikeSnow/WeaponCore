@@ -105,6 +105,11 @@ namespace CoreSystems
                         ClientProjectileTargetSyncs(packetObj);
                         break;
                     }
+                    case PacketType.AdvProjectileSpawnSyncs:
+                    {
+                        ClientAdvProjectileSpawnSync(packetObj);
+                        break;
+                    }
                     case PacketType.AimTargetUpdate: 
                     {
                             ClientFakeTargetUpdate(packetObj);
@@ -594,6 +599,11 @@ namespace CoreSystems
                     {
                         pInfo.Packet.CleanUp();
                         ProtoWeaponProTargetPacketPool.Push((ProjectileSyncTargetPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileSpawnSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
                         break;
                     }
                     case PacketType.AiData:

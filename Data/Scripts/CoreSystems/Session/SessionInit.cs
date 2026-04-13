@@ -27,6 +27,9 @@ namespace CoreSystems
             HandlesInput = !IsServer || IsServer && !DedicatedServer;
             IsHost = IsServer && !DedicatedServer && MpActive;
             MpServer = IsHost || DedicatedServer;
+            AdvSync = MpActive;
+            AdvSyncServer = AdvSync && IsServer;
+            AdvSyncClient = AdvSync && IsClient;
             PlayerId = DedicatedServer ? 0 : Session.Player?.IdentityId ?? -1;
 
             if (IsServer || DedicatedServer)

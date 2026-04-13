@@ -41,13 +41,14 @@ namespace CoreSystems.Projectiles
                 info.AmmoDef = a;
                 info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
                 info.RelativeAge = gen.RelativeAge;
-                target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
+                var fromPacket = t == Kind.Client || t == Kind.AdvSync;
+                target.TargetObject = !fromPacket ? wTarget.TargetObject : gen.TargetEnt;
 
-                if (t == Kind.Client)
+                if (fromPacket)
                 {
                     var tEntity = target.TargetObject as MyEntity;
                     target.TargetState = tEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
-                    target.TargetPos = tEntity != null ? tEntity.PositionComp.WorldAABB.Center : Vector3D.Zero;
+                    target.TargetPos = tEntity != null ? tEntity.PositionComp.WorldAABB.Center : gen.Origin;
                 }
                 else
                 {
@@ -56,7 +57,13 @@ namespace CoreSystems.Projectiles
                     target.TopEntityId = wTarget.TopEntityId;
                 }
 
-                p.TargetPosition = wTarget.TargetPos;
+                if (t == Kind.AdvSync)
+                {
+                    info.SpawnDepth = gen.SpawnDepth;
+                    info.IsFragment = gen.SpawnDepth > 0;
+                }
+
+                p.TargetPosition = !fromPacket ? wTarget.TargetPos : target.TargetPos;
 
 
                 storage.DummyTargets = null;
@@ -69,29 +76,45 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                //TODO AdvSync if (Session.I.AdvSync) {
-                //TODO AdvSync 
-                //TODO AdvSync     info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                //TODO AdvSync     if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                //TODO AdvSync         info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
-                //TODO AdvSync }
+                if (t == Kind.AdvSync)
+                {
+                    info.SyncId = gen.NetId;
+                }
+                else if (Session.I.AdvSyncServer && aConst.FullSync)
+                {
+                    info.SyncId = ++Session.I.AdvSyncNetIdCounter;
+
+                    var targetEnt = target.TargetObject as MyEntity;
+                    Session.I.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData
+                    {
+                        NetId = info.SyncId,
+                        WeaponId = w.PartState.Id,
+                        MuzzleId = muzzle.MuzzleId,
+                        AmmoIndex = aConst.AmmoIdxPos,
+                        Position = muzzle.Position,
+                        Direction = gen.Direction,
+                        Velocity = comp.Ai.TopEntityVel,
+                        TargetId = targetEnt?.EntityId ?? 0,
+                        SpawnDepth = 0,
+                    });
+                }
 
                 ++w.ProjectileCounter;
                 info.BaseDamagePool = aConst.BaseDamage;
 
                 info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
-                info.ShooterVel = comp.Ai.TopEntityVel;
+                info.ShooterVel = t != Kind.AdvSync ? (Vector3D)comp.Ai.TopEntityVel : gen.Velocity;
 
                 info.FactionId = comp.Ai.AiOwnerFactionId;
-                info.OriginUp = t != Kind.Client ? muzzle.UpDirection : gen.OriginUp;
-                info.MaxTrajectory = t != Kind.Client ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
+                info.OriginUp = !fromPacket ? muzzle.UpDirection : gen.OriginUp;
+                info.MaxTrajectory = !fromPacket ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
                 info.MuzzleId = t != Kind.Virtual ? muzzle.MuzzleId : -1;
                 info.UniqueMuzzleId = muzzle.UniqueId;
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
-                info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
-                info.OriginFwd = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
+                info.Origin = fromPacket ? gen.Origin : t != Kind.Virtual ? muzzle.Position : w.MyPivotPos;
+                info.OriginFwd = fromPacket ? gen.Direction : t != Kind.Virtual ? gen.Direction : w.MyPivotFwd;
 
-                if (t == Kind.Client && !aConst.IsBeamWeapon) 
+                if (fromPacket && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
                 
                 float shotFade;
