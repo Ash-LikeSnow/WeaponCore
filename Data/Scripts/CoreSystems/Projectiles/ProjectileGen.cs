@@ -79,10 +79,12 @@ namespace CoreSystems.Projectiles
                 if (t == Kind.AdvSync)
                 {
                     info.SyncId = gen.NetId;
+                    Session.I.ProjectilesByNetId[info.SyncId] = p;
                 }
                 else if (Session.I.AdvSyncServer && aConst.FullSync)
                 {
                     info.SyncId = ++Session.I.AdvSyncNetIdCounter;
+                    Session.I.ProjectilesByNetId[info.SyncId] = p;
 
                     var targetEnt = target.TargetObject as MyEntity;
                     Session.I.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData

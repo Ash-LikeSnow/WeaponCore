@@ -335,6 +335,11 @@ namespace CoreSystems.Platform
                 // Maybe we could fix it from upstream, but rn it's not super important
                 return false;
             }
+
+            //if (Session.I.Tick10 && pTarget != null && pTarget.Info.SyncId != 0)
+            //{
+            //    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"TT {pTarget.Info.SyncId}/{pTarget.State}/{Session.I.Tick - target.ChangeTick}");
+            //}
             
             var validEstimate = true;
             if (w.System.Prediction != Prediction.Off && !w.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && w.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)

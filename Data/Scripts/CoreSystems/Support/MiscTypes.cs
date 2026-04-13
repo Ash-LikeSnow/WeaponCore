@@ -98,7 +98,10 @@ namespace CoreSystems.Support
             w.TargetData.TargetPos = TargetPos;
             w.TargetData.PartId = w.PartId;
             w.TargetData.EntityId = w.Target.TargetId;
-            
+
+            var pTarget = w.Target.TargetObject as Projectile;
+            w.TargetData.TargetSyncId = pTarget != null ? pTarget.Info.SyncId : 0;
+
             if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Target.TargetId != 0)
                 w.ProjectileCounter = 0;
 

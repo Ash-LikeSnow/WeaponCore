@@ -44,7 +44,7 @@ namespace CoreSystems.Support
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
-        internal ulong SyncId = ulong.MaxValue;
+        internal ulong SyncId;
 
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
@@ -121,8 +121,11 @@ namespace CoreSystems.Support
             if (aConst.IsGuided)
                 Storage.Clean(this);
 
-
-            SyncId = ulong.MaxValue;
+            if (SyncId != 0)
+            {
+                Session.I.ProjectilesByNetId.Remove(SyncId);
+                SyncId = 0;
+            }
 
 
             if (IsFragment)
@@ -669,6 +672,7 @@ namespace CoreSystems.Support
                 if (session.AdvSyncServer && aConst.FullSync)
                 {
                     info.SyncId = ++session.AdvSyncNetIdCounter;
+                    session.ProjectilesByNetId[info.SyncId] = p;
 
                     var targetEnt = frag.TargetEntity as MyEntity;
                     session.Projectiles.PendingAdvSpawnData.Add(new ProtoAdvProjectileSpawnData

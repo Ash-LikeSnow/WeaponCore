@@ -192,6 +192,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride>();
         internal readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> WeaponValuesMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
+        internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
         internal readonly Dictionary<uint, ProtoProTargetSync> GlobalProTargetSyncs = new Dictionary<uint, ProtoProTargetSync>();
 
@@ -429,7 +430,7 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
-        internal ulong AdvSyncNetIdCounter;
+        internal ulong AdvSyncNetIdCounter = 1; // 0 used as the sentinel value
 
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;

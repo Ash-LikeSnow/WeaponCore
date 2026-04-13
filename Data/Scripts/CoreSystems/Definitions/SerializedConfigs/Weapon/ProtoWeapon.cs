@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using ProtoBuf;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Support;
 using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
@@ -534,12 +534,14 @@ namespace CoreSystems
         [ProtoMember(4)] public int PartId;
         [ProtoMember(5)] public WeaponRandomGenerator WeaponRandom; // save
         [ProtoMember(6)] public Vector3D TargetPos;
+        [ProtoMember(7)] public ulong TargetSyncId;
 
         internal void SyncTarget(Weapon w)
         {
             w.TargetData.Revision = Revision;
             w.TargetData.EntityId = EntityId;
             w.TargetData.TargetPos = TargetPos;
+            w.TargetData.TargetSyncId = TargetSyncId;
             w.PartId = PartId;
             w.TargetData.WeaponRandom.Sync(WeaponRandom);
 
@@ -555,6 +557,19 @@ namespace CoreSystems
 
             if (isProjectile)
             {
+                Projectile pTarget;
+                if (TargetSyncId != 0 && Session.I.ProjectilesByNetId.TryGetValue(TargetSyncId, out pTarget) && pTarget.State == Projectile.ProjectileState.Alive)
+                {
+                    target.TargetObject = pTarget;
+                    target.TargetState = Target.TargetStates.IsProjectile;
+                    target.TargetPos = pTarget.Position;
+                    target.ProjectileEndTick = 0;
+                    target.SoftProjetileReset = false;
+                    target.ClientDirty = false;
+                    target.StateChange(true, Target.States.Acquired);
+                    return;
+                }
+
                 target.ProjectileEndTick = 0;
                 target.SoftProjetileReset = false;
                 target.TargetState = Target.TargetStates.IsProjectile;
@@ -587,6 +602,7 @@ namespace CoreSystems
             ++Revision;
             EntityId = 0;
             TargetPos = Vector3D.Zero;
+            TargetSyncId = 0;
         }
     }
 
