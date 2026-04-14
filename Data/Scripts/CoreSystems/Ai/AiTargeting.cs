@@ -1001,13 +1001,14 @@ namespace CoreSystems.Support
 
             return found;
         }
+        //TODO rework to include a cheap check if everything is obscured on the target grid
         private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool focusedTarget)
         {
             var system = w.System;
             var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
             
             var checkPower = overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && !focusedTarget || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled; 
-            if (system.TargetSubSystems && overRides.FocusSubSystem && overRides.SubSystem != Any)
+            if (system.TargetSubSystems)// && overRides.FocusSubSystem && overRides.SubSystem != Any
             {
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
