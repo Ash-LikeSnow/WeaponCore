@@ -122,6 +122,13 @@ namespace CoreSystems
                         packetObj.Report.PacketValid = true;
                         break;
                     }
+                    case PacketType.AdvProjectilePositionSyncs:
+                    {
+                        ClientAdvProjectilePositionSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
+                        break;
+                    }
                     case PacketType.AimTargetUpdate: 
                     {
                             ClientFakeTargetUpdate(packetObj);
@@ -727,6 +734,12 @@ namespace CoreSystems
                     {
                         pInfo.Packet.CleanUp();
                         AdvProjectileUpdateTargetPacketPool.Return((AdvProjectileUpdateTargetPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectilePositionSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectilePositionPacketPool.Return((AdvProjectilePositionPacket)pInfo.Packet);
                         break;
                     }
                     default:

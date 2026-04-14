@@ -64,7 +64,8 @@ namespace CoreSystems
         ShootingChanged,
         AdvProjectileSpawnSyncs,
         AdvProjectileDeathSyncs,
-        AdvProjectileUpdateTargetSyncs
+        AdvProjectileUpdateTargetSyncs,
+        AdvProjectilePositionSyncs
     }
 
     #region packets
@@ -114,6 +115,7 @@ namespace CoreSystems
     [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
     [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
+    [ProtoInclude(50, typeof(AdvProjectilePositionPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -243,6 +245,30 @@ namespace CoreSystems
         {
             base.CleanUp();
             Data = default(AdvProjectileUpdateTargetInfo);
+        }
+    }
+
+    [ProtoContract]
+    public class AdvProjectilePositionPacket : Packet
+    {
+        [ProtoMember(1)] internal ulong NetId;
+        [ProtoMember(2)] internal Vector3D Position;
+        [ProtoMember(3)] internal Vector3D LastPosition;
+        [ProtoMember(4)] internal Vector3D Velocity;
+        [ProtoMember(5)] internal Vector3D PrevVelocity0;
+        [ProtoMember(6)] internal Vector3D PrevVelocity1;
+        [ProtoMember(7)] internal Vector3D Direction;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            NetId = 0;
+            Position = Vector3D.Zero;
+            LastPosition = Vector3D.Zero;
+            Velocity = Vector3D.Zero;
+            PrevVelocity0 = Vector3D.Zero;
+            PrevVelocity1 = Vector3D.Zero;
+            Direction = Vector3D.Zero;
         }
     }
     

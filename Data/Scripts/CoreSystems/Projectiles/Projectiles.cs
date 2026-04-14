@@ -311,6 +311,26 @@ namespace CoreSystems.Projectiles
                 else if (p.EndState == EndStates.AtMaxEarly) //Prevents projectiles that are AtMaxEarly from hanging infinitely
                     p.State = ProjectileState.Destroy;
 
+                if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0 && Session.I.Tick20)
+                {
+                    var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
+                    posPacket.PType = PacketType.AdvProjectilePositionSyncs;
+                    posPacket.NetId = info.AdvSyncId;
+                    posPacket.Position = p.Position;
+                    posPacket.LastPosition = p.LastPosition;
+                    posPacket.Velocity = p.Velocity;
+                    posPacket.PrevVelocity0 = p.PrevVelocity0;
+                    posPacket.PrevVelocity1 = p.PrevVelocity1;
+                    posPacket.Direction = p.Direction;
+
+                    Session.I.PacketsToClient.Add(new Session.PacketInfo
+                    {
+                        Packet = posPacket,
+                        Entity = info.Weapon.Comp.CoreEntity,
+                        HasPooledResource = true
+                    });
+                }
+
                 if (aConst.Ewar)
                     p.RunEwar();
             }

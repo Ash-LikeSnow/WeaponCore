@@ -5,6 +5,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
+using VRageMath;
 using static CoreSystems.Support.Ai;
 // ReSharper disable ForCanBeConvertedToForeach
 namespace CoreSystems
@@ -665,6 +666,34 @@ namespace CoreSystems
                 topEntityId,
                 sync.TargetType == AdvTargetType.Fake
             );
+        }
+
+        private void ClientAdvProjectilePositionSync(PacketObj data)
+        {
+            var packet = (AdvProjectilePositionPacket)data.Packet;
+
+            Projectile p;
+            if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
+            {
+                Log.Line($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
+                return;
+            }
+
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(packet.Position, p.Position):F}m");
+            
+            p.Position = packet.Position;
+            p.LastPosition = packet.LastPosition;
+            p.Velocity = packet.Velocity;
+            p.PrevVelocity0 = packet.PrevVelocity0;
+            p.PrevVelocity1 = packet.PrevVelocity1;
+            p.Direction = packet.Direction;
+
+            Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
+            p.TravelMagnitude = p.Velocity * DeltaStepConst;
+
+            double d;
+            Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out d);
+            p.Info.DistanceTraveled += Math.Abs(d);
         }
     }
 }

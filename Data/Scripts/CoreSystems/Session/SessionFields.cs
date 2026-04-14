@@ -108,6 +108,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileUpdateTargetPacket> AdvProjectileUpdateTargetPacketPool = new MyConcurrentPool<AdvProjectileUpdateTargetPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectilePositionPacket> AdvProjectilePositionPacketPool = new MyConcurrentPool<AdvProjectilePositionPacket>(64);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
