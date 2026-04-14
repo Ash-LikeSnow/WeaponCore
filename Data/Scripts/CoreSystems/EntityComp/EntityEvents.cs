@@ -255,7 +255,6 @@ namespace CoreSystems.Support
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
             }
 
-            bool needsHeat = false;
             for (int i = 0; i < collection.Count; i++)
             {
                 var w = collection[i];
@@ -267,15 +266,13 @@ namespace CoreSystems.Support
                     $"\n{(chargeTime == 0 ? Localization.GetText("WeaponInfoPowerCharged") : Localization.GetText("WeaponInfoPowerChargedIn") + " " + chargeTime + Localization.GetText("WeaponInfoSeconds"))}";
                 }
 
-                if (w.ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier)
-                    needsHeat = true;
-
                 var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
                 var timeToLoad = (int)(w.ReloadEndTick - Session.I.Tick) / 60;
+                var loadTimeMessage = timeToLoad > 0 && (!w.Comp.IsWorking || w.Comp.IsDisabled) ? Localization.GetText("WeaponInfoBlockOff") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + " " + Localization.GetText("WeaponInfoSeconds");
                 var showName = w.ActiveAmmoDef.AmmoDef.Const.TerminalName != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
                 var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                 stringBuilder.Append($"\n\n" + w.System.PartName + $" {(w.Comp.ProhibitSubsystemChanges ? $"\n{Localization.GetText("WeaponInfoNoSubsystem")}" : "")}  " + shots);
-                stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : Localization.GetText("WeaponInfoLoadedIn") + " " + timeToLoad + Localization.GetText("WeaponInfoSeconds") : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : (w.System.MaxReloads > 0 && w.Reload.LifetimeLoads >= w.System.MaxReloads) ? w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxReloadsDrone") : Localization.GetText("WeaponInfoMaxReloadsHit") : Localization.GetText("WeaponInfoNoammo")))}");
+                stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : loadTimeMessage : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : (w.System.MaxReloads > 0 && w.Reload.LifetimeLoads >= w.System.MaxReloads) ? w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxReloadsDrone") : Localization.GetText("WeaponInfoMaxReloadsHit") : (!w.Comp.IsWorking || w.Comp.IsDisabled) ? Localization.GetText("WeaponInfoBlockOff") : Localization.GetText("WeaponInfoNoammo")))}");
                 stringBuilder.Append($" {(w.System.MaxReloads <= 0 ? string.Empty : $"\n{(w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxDroneLabel") : Localization.GetText("WeaponInfoMaxReloadLabel"))}: {w.System.MaxReloads - w.Reload.LifetimeLoads}/{w.System.MaxReloads}")}");
                 stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : w.Comp.MasterAi.DetectionInfo.SomethingInRange && (w.Target.CurrentState == Target.States.NotSet || w.Target.CurrentState == Target.States.Expired) ? Localization.GetText("WeaponTargNeedSelection") : w.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < w.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < w.MinTargetDistanceSqr) ? Localization.GetText("WeaponTargTooClose") : w.BaseComp.MasterAi.DetectionInfo.SomethingInRange ? Localization.GetText("WeaponTargRange") : Localization.GetText("WeaponTargFalse")) : string.Empty)}");
                 stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}");

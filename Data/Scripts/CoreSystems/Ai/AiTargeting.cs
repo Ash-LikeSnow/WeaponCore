@@ -1007,7 +1007,7 @@ namespace CoreSystems.Support
             var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
             
             var checkPower = overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && !focusedTarget || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled; 
-            if (system.TargetSubSystems)
+            if (system.TargetSubSystems && overRides.FocusSubSystem && overRides.SubSystem != Any)
             {
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
@@ -1091,7 +1091,7 @@ namespace CoreSystems.Support
             else
                 checkSize = w.System.CycleBlocks;
 
-            var chunk = totalBlocks > 0 ? checkSize * w.AcquireAttempts % totalBlocks : 0;
+            var chunk = totalBlocks > 0 ? checkSize * w.AcquireAttempts / totalBlocks : 0;
 
             if (chunk + checkSize >= totalBlocks)
                 checkSize = totalBlocks - chunk;
@@ -1108,7 +1108,7 @@ namespace CoreSystems.Support
             var blocksSighted = 0;
             var hitTmpList = s.HitInfoTmpList;
 
-            var checkLimit = ai.PlanetSurfaceInRange ? 128 : 512;
+            var checkLimit = ai.PlanetSurfaceInRange ? 256 : 2048;
 
             for (int i = 0; i < checkSize; i++)
             {
@@ -1410,8 +1410,7 @@ namespace CoreSystems.Support
                 var cube = i < top5Count ? top5[index] : cubes[index];
 
                 var grid = cube.CubeGrid;
-                if (grid == null || grid.MarkedForClose) continue;
-                if (cube.MarkedForClose || cube == newEntity || cube == newEntity0 || cube == newEntity1 || cube == newEntity2 || cube == newEntity3 || checkPower && !(cube is IMyWarhead) && !cube.IsWorking)
+                if (grid == null || grid.MarkedForClose || cube.MarkedForClose || cube == newEntity || cube == newEntity0 || cube == newEntity1 || cube == newEntity2 || cube == newEntity3 || checkPower && !(cube is IMyWarhead) && !cube.IsWorking)
                     continue;
                 
                 // Inline to keep the profiler happy:
@@ -1436,8 +1435,9 @@ namespace CoreSystems.Support
                 var cubePos = grid.GridIntegerToWorld(cube.Position);
                 var range = cubePos - weaponPos;
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
-
-                if (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint)
+                double distSqr;
+                Vector3D.DistanceSquared(ref cubePos, ref weaponPos, out distSqr);
+                if (distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceSqr || (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint))
                     continue;
 
                 if (test < minValue3)

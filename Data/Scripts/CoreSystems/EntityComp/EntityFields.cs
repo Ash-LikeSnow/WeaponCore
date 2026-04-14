@@ -24,7 +24,6 @@ namespace CoreSystems.Support
         internal List<Action<int, bool>>[] EventMonitors;
 
         internal bool InControlPanel => MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
-        internal readonly RunningAverage DamageAverage = new RunningAverage(10);
 
         internal bool InventoryInited;
         internal CompType Type;
@@ -68,9 +67,6 @@ namespace CoreSystems.Support
         internal long TotalShieldEffect;
         internal long TotalProjectileEffect;
         internal long LastControllingPlayerId;
-        internal double PreviousTotalEffect;
-        internal double AverageEffect;
-        internal double AddEffect;
         internal double HeatLoss;
 
         internal float CurrentHeat;

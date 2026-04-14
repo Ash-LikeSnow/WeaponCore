@@ -59,7 +59,7 @@ namespace CoreSystems
 
                 ai.CheckProjectiles = Tick - ai.NewProjectileTick <= 1;
 
-                if (ai.AiType == Ai.AiTypes.Grid && (ai.UpdatePowerSources || !ai.HadPower && ai.GridEntity.IsPowered || ai.HasPower && !ai.GridEntity.IsPowered || Tick10))
+                if (ai.AiType == Ai.AiTypes.Grid && (ai.UpdatePowerSources || !ai.HadPower && ai.GridEntity.IsPowered || ai.HasPower && !ai.GridEntity.IsPowered || Tick10)) //BD Power switch reminder
                     ai.UpdateGridPower();
 
                 var enforcement = Settings.Enforcement;
@@ -477,7 +477,11 @@ namespace CoreSystems
                         wComp.DetectStateChanges(masterChange);
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
+                    {
+                        if ((!wComp.IsWorking || wComp.IsDisabled) && wComp.PrimaryWeapon.Loading)
+                            wComp.PrimaryWeapon.ReloadEndTick++;
                         continue;
+                    }
 
                     var cMode = overrides.Control;
 
@@ -569,13 +573,6 @@ namespace CoreSystems
                     var noShootDelay = wComp.ShootManager.ShootDelay == 0 || wComp.ShootManager.ShootDelay != 0 && wComp.ShootManager.ShootDelay-- == 0;
                     var sequenceReady = (overrides.WeaponGroupId == 0 || overrides.SequenceId == -1) || wComp.SequenceReady(rootConstruct);
 
-                    if (Tick60) {
-                        var add = wComp.TotalEffect - wComp.PreviousTotalEffect;
-                        wComp.AddEffect = add > 0 ? add : wComp.AddEffect;
-                        wComp.AverageEffect = wComp.DamageAverage.Add((int)add);
-                        wComp.PreviousTotalEffect = wComp.TotalEffect;
-                    }
-
                     ///
                     /// Weapon update section
                     ///
@@ -584,7 +581,6 @@ namespace CoreSystems
                         var w = wComp.Platform.Weapons[j];
                         if (w.PartReadyTick > Tick)
                         {
-
                             if (w.Target.HasTarget && !IsClient)
                                 w.Target.Reset(Tick, States.WeaponNotReady);
                             continue;

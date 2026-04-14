@@ -70,7 +70,7 @@ namespace CoreSystems.Platform
                 var loading = System.Values.HardPoint.Loading;
                 var reqDeviantMod = ShootRequest.ExtraShotAngle > 0;
                 var forceShotDirection = ShootRequest.Type == ApiShootRequest.TargetType.Position;
-                var targSGMod = System.WConst.DeviateShotAngleRadsSG > 0 && Target.IsSG;
+                var targSGMod = System.WConst.DeviateShotAngleRadsSG != 0 && Target.IsSG;
                 FireCounter++;
                 List<NewVirtual> vProList = null;
                 var selfDamage = 0f;

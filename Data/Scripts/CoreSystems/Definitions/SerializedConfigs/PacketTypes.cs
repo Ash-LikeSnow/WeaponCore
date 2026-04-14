@@ -37,7 +37,6 @@ namespace CoreSystems
         FocusLockUpdate,
         ReticleUpdate,
         CountingDownUpdate,
-        CriticalReactionUpdate,
         ClientAiAdd,
         ClientAiRemove,
         RequestShootUpdate,
