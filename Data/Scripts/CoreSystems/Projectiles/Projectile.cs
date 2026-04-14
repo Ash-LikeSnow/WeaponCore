@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
@@ -406,7 +406,8 @@ namespace CoreSystems.Projectiles
             Session.I.PacketsToClient.Add(new Session.PacketInfo
             {
                 Packet = deathPacket,
-                Entity = Info.Weapon.Comp.CoreEntity
+                Entity = Info.Weapon.Comp.CoreEntity,
+                HasPooledResource = true
             });
         }
         
@@ -3083,10 +3084,6 @@ namespace CoreSystems.Projectiles
                     newTarget = false;
                 }
 
-                //TODO AdvSync if (s.AdvSyncServer && aConst.FullSync) {
-                //TODO AdvSync     if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
-                //TODO AdvSync         SyncTargetServerProjectile();
-                //TODO AdvSync }
             }
             else
             {
@@ -3110,6 +3107,11 @@ namespace CoreSystems.Projectiles
             {
                 Info.LastTarget = Info.Target.TargetObject;
                 Info.LastTopTargetId = Info.Target.TopEntityId;
+
+                if (s.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && oldTarget != Info.Target.TargetObject)
+                {
+                    SyncTargetServerProjectile();
+                }
             }
 
             return newTarget;
@@ -3705,13 +3707,48 @@ namespace CoreSystems.Projectiles
 
         internal void SyncTargetServerProjectile()
         {
-            var session = Session.I;
-            var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
-            proSync.ProId = Info.AdvSyncId;
-            var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
-            proSync.EntityId = targetId;
-            Info.Weapon.ProTargetSync.Collection.Add(proSync);
-            session.GlobalProTargetSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProTargetSync;
+            if (Info.AdvSyncId == 0)
+            {
+                return;
+            }
+
+            var target = Info.Target;
+            
+            var info = new AdvProjectileUpdateTargetInfo
+            {
+                NetId = Info.AdvSyncId
+            };
+
+            var pTarget = target.TargetObject as Projectile;
+            if (pTarget != null)
+            {
+                info.TargetType = AdvTargetType.Projectile;
+                info.TargetId = (long)pTarget.Info.AdvSyncId;
+                info.TargetPos = pTarget.Position;
+            }
+            else
+            {
+                var ent = target.TargetObject as MyEntity;
+                if (ent != null)
+                {
+                    info.TargetType = AdvTargetType.Entity;
+                    info.TargetId = ent.EntityId;
+                    info.TargetPos = target.TargetPos;
+                }
+                else if (target.TargetState == Target.TargetStates.IsFake)
+                {
+                    info.TargetType = AdvTargetType.Fake;
+                    info.TargetId = -2;
+                    info.TargetPos = target.TargetPos;
+                }
+                else
+                {
+                    info.TargetType = AdvTargetType.None;
+                    info.TargetId = 0;
+                }
+            }
+
+            Session.I.GlobalProTargetSyncs[Info.AdvSyncId] = info;
         }
 
         internal void SyncClientProjectile(int posSlot)

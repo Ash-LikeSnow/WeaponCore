@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -489,44 +489,6 @@ namespace CoreSystems
             return true;
         }
 
-        private bool ClientProjectileTargetSyncs(PacketObj data)
-        {
-            var packet = data.Packet;
-            var proPacket = (ProjectileSyncTargetPacket)packet;
-            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
-
-            for (int i = 0; i < proPacket.Data.Count; i++)
-            {
-                var syncPacket = proPacket.Data[i];
-                Weapon w;
-                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
-                {
-                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
-                        continue;
-
-                    for (int j = 0; j < syncPacket.Collection.Count; j++)
-                    {
-                        var sync = syncPacket.Collection[j];
-                        Projectile p;
-                        MyEntity target;
-                        //TODO AdvSync if (w.ProjectileSyncMonitor.TryGetValue(sync.ProId, out p) && p.State == Projectile.ProjectileState.Alive && MyEntities.TryGetEntityById(sync.EntityId, out target) && target != p.Info.Target.TargetObject)
-                        //TODO AdvSync {
-                        //TODO AdvSync     var topEntId = target.GetTopMostParent().EntityId;
-                        //TODO AdvSync     var targetPos = target.PositionComp.WorldAABB.Center;
-                        //TODO AdvSync     p.Info.Target.Set(target, targetPos, 0, 0, topEntId);
-                        //TODO AdvSync }
-                    }
-                }
-                else
-                    Log.Line($"ClientProjectileTargetSyncs failed");
-            }
-
-            data.Report.PacketValid = true;
-
-            proPacket.CleanUp();
-            return true;
-        }
-
         private bool ClientShootSyncs(PacketObj data)
         {
             var packet = data.Packet;
@@ -576,8 +538,6 @@ namespace CoreSystems
         {
             var packet = data.Packet;
             var spawn = (AdvProjectileSpawnPacket)packet;
-
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Spawn packet: {spawn.NetId}");
             
             Weapon w;
             if (!WeaponLookUp.TryGetValue(spawn.WeaponId, out w) || w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
@@ -625,7 +585,6 @@ namespace CoreSystems
         {
             var packet = data.Packet;
             var death = (AdvProjectileDeathPacket)packet;
-            var applied = false;
 
             Projectile p;
             if (ProjectilesByNetId.TryGetValue(death.NetId, out p))
@@ -633,15 +592,79 @@ namespace CoreSystems
                 if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
                 {
                     p.State = Projectile.ProjectileState.Destroy;
-                    applied = true;
                 }
             }
             else
             {
                 Log.Line($"ClientAdvProjectileDeathSync: Pro with NetID {death.NetId} not found");
+            } 
+        }
+
+        private void ClientAdvProjectileTargetSync(PacketObj data)
+        {
+            var packet = (AdvProjectileUpdateTargetPacket)data.Packet;
+            var sync = packet.Data;
+
+            Projectile p;
+            if (!ProjectilesByNetId.TryGetValue(sync.NetId, out p))
+            {
+                Log.Line($"ClientAdvProjectileTargetSync: Pro with NetID {sync.NetId} not found");
+                return;
             }
 
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Death packet: {death.NetId}, {(applied ? "OK" : "NOT APPLIED")}");
+            object targetObj = null;
+            long topEntityId = 0;
+            switch (sync.TargetType)
+            {
+                case AdvTargetType.Entity:
+                    MyEntity ent;
+                    if (MyEntities.TryGetEntityById(sync.TargetId, out ent))
+                    {
+                        targetObj = ent;
+                        topEntityId = ent.GetTopMostParent().EntityId;
+                        MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} acquires entity {sync.TargetId}");
+                    }
+                    else
+                    {
+                        Log.Line($"ClientAdvProjectileTargetSync: Entity target {sync.TargetId} for {sync.NetId} not found");
+                    }
+                    
+                    break;
+                case AdvTargetType.Projectile:
+                    Projectile pTarget;
+                    if (ProjectilesByNetId.TryGetValue((ulong)sync.TargetId, out pTarget))
+                    {
+                        targetObj = pTarget;
+                        topEntityId = pTarget.Info.Weapon.BaseComp.TopEntity.EntityId;
+                        MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} acquires projectile {sync.TargetId}");
+                    }
+                    else
+                    {
+                        Log.Line($"ClientAdvProjectileTargetSync: Projectile target {sync.TargetId} for {sync.NetId} not found");
+                        MyAPIGateway.Utilities.ShowMessage("AA", $"ClientAdvProjectileTargetSync: Projectile target {sync.TargetId} for {sync.NetId} not found");
+                    }
+                    break;
+                case AdvTargetType.Fake:
+                    targetObj = null;
+                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} fake");
+                    break;
+                case AdvTargetType.None:
+                    p.Info.Target.Reset(I.Tick, Target.States.Acquired);
+                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} reset");
+                    return;
+                default:
+                    Log.Line($"ClientAdvProjectileTargetSync: Invalid AdvTargetType {sync.TargetType}");
+                    break;
+            }
+
+            p.Info.Target.Set(
+                targetObj, 
+                sync.TargetPos,
+                0,
+                0,
+                topEntityId,
+                sync.TargetType == AdvTargetType.Fake
+            );
         }
     }
 }

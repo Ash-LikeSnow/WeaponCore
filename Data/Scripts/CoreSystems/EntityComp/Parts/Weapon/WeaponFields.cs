@@ -27,7 +27,6 @@ namespace CoreSystems.Platform
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
         internal readonly ProtoProPositionSync ProPositionSync = new ProtoProPositionSync();
-        internal readonly ProtoProTargetSync ProTargetSync = new ProtoProTargetSync();
         internal readonly JerkRunningAverage JerkRunningAverage = new JerkRunningAverage(30);
 
         internal readonly ApiShootRequest ShootRequest;

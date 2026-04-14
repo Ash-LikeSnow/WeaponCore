@@ -692,7 +692,8 @@ namespace CoreSystems.Support
                     Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {
                         Packet = spawnPacket,
-                        Entity = frag.Weapon.Comp.CoreEntity
+                        Entity = frag.Weapon.Comp.CoreEntity,
+                        HasPooledResource = true
                     });
                 }
 

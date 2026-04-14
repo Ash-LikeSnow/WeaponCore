@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Settings;
 using ProtoBuf;
@@ -53,7 +53,6 @@ namespace CoreSystems
         EwaredBlocks,
         ClientReady,
         ProjectilePosSyncs,
-        ProjectileTargetSyncs,
         ControlComp,
         ControlState,
         ForceReload,
@@ -64,7 +63,8 @@ namespace CoreSystems
         HandWeaponDebug,
         ShootingChanged,
         AdvProjectileSpawnSyncs,
-        AdvProjectileDeathSyncs
+        AdvProjectileDeathSyncs,
+        AdvProjectileUpdateTargetSyncs
     }
 
     #region packets
@@ -109,11 +109,11 @@ namespace CoreSystems
     [ProtoInclude(42, typeof(DronePacket))]
     //[ProtoInclude(43, typeof(HandWeaponDebugPacket))]
     [ProtoInclude(44, typeof(PingPacket))]
-    [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
+    //[ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(46, typeof(ShootingChangedPacket))]
     [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
-
+    [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -176,22 +176,6 @@ namespace CoreSystems
         }
     }
 
-    [ProtoContract]
-    public class ProjectileSyncTargetPacket : Packet
-    {
-        [ProtoMember(1)] internal List<ProtoProTargetSync> Data = new List<ProtoProTargetSync>();
-
-        public override void CleanUp()
-        {
-            for (int i = 0; i < Data.Count; i++)
-            {
-                var d = Data[i];
-                d.Collection.Clear();
-            }
-            Data.Clear();
-            base.CleanUp();
-        }
-    }
 
     [ProtoContract]
     public class AdvProjectileSpawnPacket : Packet
@@ -220,7 +204,6 @@ namespace CoreSystems
             TargetId = 0;
         }
     }
-
     
     [ProtoContract]
     public class AdvProjectileDeathPacket : Packet
@@ -234,6 +217,35 @@ namespace CoreSystems
         }
     }
 
+    public enum AdvTargetType : byte
+    {
+        None,
+        Entity,
+        Projectile,
+        Fake
+    }
+
+    [ProtoContract]
+    public struct AdvProjectileUpdateTargetInfo
+    {
+        [ProtoMember(1)] public ulong NetId;
+        [ProtoMember(2)] public long TargetId;
+        [ProtoMember(3)] public AdvTargetType TargetType;
+        [ProtoMember(4)] public Vector3D TargetPos;
+    }
+
+    [ProtoContract]
+    public class AdvProjectileUpdateTargetPacket : Packet
+    {
+        [ProtoMember(1)] public AdvProjectileUpdateTargetInfo Data;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Data = default(AdvProjectileUpdateTargetInfo);
+        }
+    }
+    
     [ProtoContract]
     public class OverRidesPacket : Packet
     {

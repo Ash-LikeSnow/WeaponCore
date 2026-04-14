@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -107,6 +107,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<MyConcurrentList<BetterInventoryItem>> BetterItemsListPool = new MyConcurrentPool<MyConcurrentList<BetterInventoryItem>>(256, list => list.Clear());
         internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectileUpdateTargetPacket> AdvProjectileUpdateTargetPacketPool = new MyConcurrentPool<AdvProjectileUpdateTargetPacket>(32);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
@@ -115,10 +116,8 @@ namespace CoreSystems
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(128);
         internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(128);
-        internal readonly Stack<ProtoProTarget> ProtoWeaponProSyncTargetPool = new Stack<ProtoProTarget>(32);
 
         internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(128);
-        internal readonly Stack<ProjectileSyncTargetPacket> ProtoWeaponProTargetPacketPool = new Stack<ProjectileSyncTargetPacket>(32);
 
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(128);
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
@@ -196,7 +195,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
-        internal readonly Dictionary<uint, ProtoProTargetSync> GlobalProTargetSyncs = new Dictionary<uint, ProtoProTargetSync>();
+        internal readonly Dictionary<ulong, AdvProjectileUpdateTargetInfo> GlobalProTargetSyncs = new Dictionary<ulong, AdvProjectileUpdateTargetInfo>();
 
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();

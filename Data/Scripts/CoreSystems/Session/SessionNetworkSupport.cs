@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRageMath;
@@ -71,6 +72,7 @@ namespace CoreSystems
             internal bool SingleClient;
             internal long SpecialPlayerId;
             internal bool Unreliable;
+            internal bool HasPooledResource;
         }
 
         internal class ErrorPacket
@@ -99,6 +101,7 @@ namespace CoreSystems
         #endregion
 
         #region ServerOnly
+    
         private void SendProjectilePosSyncs()
         {
             var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPositionPacket ();
@@ -132,42 +135,34 @@ namespace CoreSystems
                 SpecialPlayerId = long.MinValue,
                 Packet = packet,
                 Entity = null,
+                HasPooledResource = true
             };
         }
 
         private void SendProjectileTargetSyncs()
         {
-            var packet = ProtoWeaponProTargetPacketPool.Count > 0 ? ProtoWeaponProTargetPacketPool.Pop() : new ProjectileSyncTargetPacket();
-
-            var latencyMonActive = Tick - LastPongTick < 120;
-            LastProSyncSendTick = Tick;
-
-            foreach (var pSync in GlobalProTargetSyncs)
+            foreach (var sync in GlobalProTargetSyncs.Values)
             {
-                var sync = pSync.Value;
-                if (latencyMonActive)
-                    packet.Data.Add(sync);
+                Projectile p;
+                if (!ProjectilesByNetId.TryGetValue(sync.NetId, out p))
+                {
+                    Log.Line($"SendProjectileTargetSyncs: Invalid projectile {sync.NetId}");
+                    continue;
+                }
 
-                foreach (var p in sync.Collection)
-                    ProtoWeaponProSyncTargetPool.Push(p);
+                var packet = AdvProjectileUpdateTargetPacketPool.Get();
+                packet.PType = PacketType.AdvProjectileUpdateTargetSyncs;
+                packet.Data = sync;
+
+                PacketsToClient.Add(new PacketInfo
+                {
+                    Packet = packet,
+                    Entity = p.Info.Weapon.Comp.CoreEntity,
+                    HasPooledResource = true
+                });
             }
 
-            GlobalProPosSyncs.Clear();
-
-            if (!latencyMonActive)
-            {
-                Log.Line($"PingPong not active");
-                ProtoWeaponProTargetPacketPool.Push(packet);
-                return;
-            }
-
-            packet.PType = PacketType.ProjectileTargetSyncs;
-            PrunedPacketsToClient[packet] = new PacketInfo
-            {
-                Function = null,
-                Packet = packet,
-                Entity = null,
-            };
+            GlobalProTargetSyncs.Clear();
         }
 
         private object RewriteAddClientLatency(object o1, object o2)
@@ -210,6 +205,7 @@ namespace CoreSystems
                 {
                     Entity = ai.TopEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendConstruct should never be called on Client");
@@ -245,6 +241,7 @@ namespace CoreSystems
                     {
                         Entity = ai.TopEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else SendConstruct(ai);
@@ -279,6 +276,7 @@ namespace CoreSystems
                 {
                     Entity = ai.TopEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendAiData should never be called on Client");
@@ -316,6 +314,7 @@ namespace CoreSystems
                 {
                     Entity = w.BaseComp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendWeaponAmmoData should never be called on Client");
@@ -349,6 +348,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -384,6 +384,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -419,6 +420,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -454,6 +456,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -491,6 +494,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -532,6 +536,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -573,6 +578,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -614,6 +620,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -656,6 +663,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -699,6 +707,7 @@ namespace CoreSystems
                     {
                         Entity = w.Comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +7,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems
 {
@@ -100,11 +101,6 @@ namespace CoreSystems
                         ClientProjectilePosSyncs(packetObj);
                         break;
                     }
-                    case PacketType.ProjectileTargetSyncs:
-                    {
-                        ClientProjectileTargetSyncs(packetObj);
-                        break;
-                    }
                     case PacketType.AdvProjectileSpawnSyncs:
                     {
                         ClientAdvProjectileSpawnSync(packetObj);
@@ -115,6 +111,13 @@ namespace CoreSystems
                     case PacketType.AdvProjectileDeathSyncs:
                     {
                         ClientAdvProjectileDeathSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
+                        break;
+                    }
+                    case PacketType.AdvProjectileUpdateTargetSyncs:
+                    {
+                        ClientAdvProjectileTargetSync(packetObj);
                         packetObj.Packet.CleanUp();
                         packetObj.Report.PacketValid = true;
                         break;
@@ -520,17 +523,16 @@ namespace CoreSystems
             // TODO AdvSync }
         }
 
-        internal void ProccessServerPacketsForClients()
+        internal void ProcessServerPacketsForClients()
         {
-
-            if ((!IsServer || !MpActive))
+            if (!IsServer || !MpActive)
             {
                 Log.Line("trying to process server packets on a non-server");
                 return;
             }
 
             PacketsToClient.AddRange(PrunedPacketsToClient.Values);
-            for (int i = 0; i < PacketsToClient.Count; i++)
+            for (var i = 0; i < PacketsToClient.Count; i++)
             {
                 var packetInfo = PacketsToClient[i];
 
@@ -542,10 +544,12 @@ namespace CoreSystems
                 var reliable = !packetInfo.Unreliable;
                 var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
                 if (packetInfo.SingleClient)
+                {
                     MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, reliable);
+                }
                 else
                 {
-                    long entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
+                    var entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
                     foreach (var p in Players.Values)
                     {
                         var steamId = p.Player.SteamUserId;
@@ -557,31 +561,43 @@ namespace CoreSystems
                         byte[] bytesRewrite = null;
                         var rewrite = specialPlayer && hasRewritePlayer || addOwl;
                         if (rewrite)
+                        {
                             bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet, steamId));
-
-
+                        }
+                        
                         var sendPacket = notSender && packetInfo.Entity == null;
                         if (!sendPacket && !skipPlayer && notSender)
                         {
                             HashSet<long> entityIds;
                             if (PlayerEntityIdInRange.TryGetValue(steamId, out entityIds))
                             {
-                                if (entityIds.Contains(entityId)) {
+                                if (entityIds.Contains(entityId))
+                                {
                                     sendPacket = true;
                                 }
-                                else  {
+                                else
+                                {
                                     Ai rootAi;
                                     CoreComponent comp;
                                     var notGrid = packetInfo.Entity != null && !(packetInfo.Entity is MyCubeBlock);
                                     var entity = notGrid && IdToCompMap.TryGetValue(packetInfo.Entity.EntityId, out comp) ? comp.TopEntity : packetInfo.Entity.GetTopMostParent();
                                     if (entity != null && EntityToMasterAi.TryGetValue(entity, out rootAi) && PlayerEntityIdInRange[p.Player.SteamUserId].Contains(rootAi.TopEntity.EntityId))
+                                    {
                                         sendPacket = true;
+                                    }
                                 }
                             }
                         }
 
                         if (sendPacket)
-                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, reliable);
+                        {
+                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(
+                                ClientPacketId, 
+                                rewrite ? bytesRewrite : bytes,
+                                p.Player.SteamUserId,
+                                reliable
+                            );
+                        }
                     }
                 }
             }
@@ -591,35 +607,38 @@ namespace CoreSystems
 
         private void ServerPacketsForClientsClean()
         {
-            PacketsToClient.Clear();
-            var prunedPackets = PrunedPacketsToClient.Values.ToArray();
-            PrunedPacketsToClient.Clear();
-            foreach (var pInfo in prunedPackets)
+            /*if (Tick60)
             {
+                Log.LineShortDate($"[PoolStats] - " +
+                                  $"Cnt:{PacketConstructPool.Count} - " +
+                                  $"Foc:{PacketConstructFociPool.Count} - " +
+                                  $"Ai:{PacketAiPool.Count} - " +
+                                  $"WComp:{PacketWeaponCompPool.Count} - " +
+                                  $"UComp:{PacketUpgradeCompPool.Count} - " +
+                                  $"SComp:{PacketSupportCompPool.Count} - " +
+                                  $"CComp:{PacketControlCompPool.Count} - " +
+                                  $"WSt:{PacketWeaponStatePool.Count} - " +
+                                  $"USt:{PacketUpgradeStatePool.Count} - " +
+                                  $"SSt:{PacketSupportStatePool.Count} - " +
+                                  $"CSt:{PacketControlStatePool.Count} - " +
+                                  $"Rel:{PacketReloadPool.Count} - " +
+                                  $"Amm:{PacketAmmoPool.Count} - " +
+                                  $"Tgt:{PacketTargetPool.Count} - " +
+                                  $"ASpw:{AdvProjectileSpawnPacketPool.Count} - " +
+                                  $"ADth:{AdvProjectileDeathPacketPool.Count} - " +
+                                  $"ATgt:{AdvProjectileUpdateTargetPacketPool.Count} - " +
+                                  $"Pos:{ProtoWeaponProPosPacketPool.Count}", "stats");
+            }*/
+
+            for (var index = 0; index < PacketsToClient.Count; index++)
+            {
+                var pInfo = PacketsToClient[index];
                 switch (pInfo.Packet.PType)
                 {
                     case PacketType.ProjectilePosSyncs:
                     {
                         pInfo.Packet.CleanUp();
                         ProtoWeaponProPosPacketPool.Push((ProjectileSyncPositionPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.ProjectileTargetSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        ProtoWeaponProTargetPacketPool.Push((ProjectileSyncTargetPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.AdvProjectileSpawnSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        AdvProjectileSpawnPacketPool.Return((AdvProjectileSpawnPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.AdvProjectileDeathSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        AdvProjectileDeathPacketPool.Return((AdvProjectileDeathPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.AiData:
@@ -684,7 +703,7 @@ namespace CoreSystems
                     }
                     case PacketType.ControlComp:
                     {
-                            PacketControlCompPool.Return((ControlCompPacket)pInfo.Packet);
+                        PacketControlCompPool.Return((ControlCompPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.ControlState:
@@ -692,9 +711,40 @@ namespace CoreSystems
                         PacketControlStatePool.Return((ControlStatePacket)pInfo.Packet);
                         break;
                     }
+                    case PacketType.AdvProjectileSpawnSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileSpawnPacketPool.Return((AdvProjectileSpawnPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileDeathSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileDeathPacketPool.Return((AdvProjectileDeathPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileUpdateTargetSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileUpdateTargetPacketPool.Return((AdvProjectileUpdateTargetPacket)pInfo.Packet);
+                        break;
+                    }
+                    default:
+                    {
+                        if (pInfo.HasPooledResource)
+                        {
+                            Log.Line($"Unreturned pooled packet {pInfo.Packet.PType}");
+                        }
+
+                        break;
+                    }
                 }
             }
+
+            PrunedPacketsToClient.Clear();
+            PacketsToClient.Clear();
         }
+        
         #endregion
     }
 }

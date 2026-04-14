@@ -47,7 +47,9 @@ namespace CoreSystems.Projectiles
                 if (fromPacket)
                 {
                     var tEntity = target.TargetObject as MyEntity;
-                    target.TargetState = tEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
+                    target.TargetState = tEntity != null 
+                        ? Target.TargetStates.IsEntity 
+                        : Target.TargetStates.None;
                     target.TargetPos = tEntity != null ? tEntity.PositionComp.WorldAABB.Center : gen.Origin;
                 }
                 else
@@ -63,18 +65,19 @@ namespace CoreSystems.Projectiles
                     info.IsFragment = gen.SpawnDepth > 0;
                 }
 
-                p.TargetPosition = !fromPacket ? wTarget.TargetPos : target.TargetPos;
-
+                p.TargetPosition = fromPacket 
+                    ? target.TargetPos 
+                    : wTarget.TargetPos;
 
                 storage.DummyTargets = null;
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + ((1 + w.Reload.EndId) * aConst.MagazineSize + w.ProjectileCounter) * 5));
                 info.ShieldProc = info.Random;
+            
                 if ((aConst.IsDrone || aConst.IsSmart) && comp.FakeMode)
                 {
                     Session.I.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
                     storage.ManualMode = comp.ManualMode;
                 }
-
 
                 if (t == Kind.AdvSync)
                 {
@@ -87,7 +90,6 @@ namespace CoreSystems.Projectiles
                     Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
 
                     var targetEnt = target.TargetObject as MyEntity;
-                    
                     var spawnPacket = Session.I.AdvProjectileSpawnPacketPool.Get();
                     
                     spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
@@ -104,7 +106,8 @@ namespace CoreSystems.Projectiles
                     Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {
                         Packet = spawnPacket,
-                        Entity = w.Comp.CoreEntity
+                        Entity = w.Comp.CoreEntity,
+                        HasPooledResource = true
                     });
                 }
 
@@ -123,19 +126,34 @@ namespace CoreSystems.Projectiles
                 info.Origin = fromPacket ? gen.Origin : t != Kind.Virtual ? muzzle.Position : w.MyPivotPos;
                 info.OriginFwd = fromPacket ? gen.Direction : t != Kind.Virtual ? gen.Direction : w.MyPivotFwd;
 
-                if (fromPacket && !aConst.IsBeamWeapon) 
+                if (fromPacket && !aConst.IsBeamWeapon)
+                {
                     p.Velocity = gen.Velocity;
+                }
                 
                 float shotFade;
                 if (aConst.HasShotFade && !aConst.VirtualBeams)
                 {
                     if (patternCycle > a.AmmoGraphics.Lines.Tracer.VisualFadeStart)
-                        shotFade = MathHelper.Clamp(((patternCycle - a.AmmoGraphics.Lines.Tracer.VisualFadeStart)) * aConst.ShotFadeStep, 0, 1);
+                    {
+                        shotFade = MathHelper.Clamp((patternCycle - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
+                    }
                     else if (w.System.DelayCeaseFire && w.CeaseFireDelayTick != Session.I.Tick)
-                        shotFade = MathHelper.Clamp(((Session.I.Tick - w.CeaseFireDelayTick) - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
-                    else shotFade = 0;
+                    {
+                        shotFade = MathHelper.Clamp(
+                            ((Session.I.Tick - w.CeaseFireDelayTick) - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) *
+                            aConst.ShotFadeStep, 0, 1);
+                    }
+                    else
+                    {
+                        shotFade = 0;
+                    }
                 }
-                else shotFade = 0;
+                else
+                {
+                    shotFade = 0;
+                }
+                
                 info.ShotFade = shotFade;
 
                 var updateGravity = aConst.StoreGravity && info.Ai.InPlanetGravity;
@@ -153,17 +171,21 @@ namespace CoreSystems.Projectiles
                 if (t != Kind.Virtual)
                 {
                     if (targetable)
+                    {
                         Session.I.Projectiles.AddTargets.Add(p);
+                    }
                 }
                 else
                 {
                     w.WeaponCache.Hits = 0;
-                    for (int j = 0; j < virts.Count; j++)
+                    for (var j = 0; j < virts.Count; j++)
                     {
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
-                        if (!a.Const.RotateRealBeam) 
+                        if (!a.Const.RotateRealBeam)
+                        {
                             w.WeaponCache.VirutalId = 0;
+                        }
                         else if (v.Rotate)
                         {
                             info.Origin = v.Muzzle.Position;

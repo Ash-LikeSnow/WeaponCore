@@ -149,7 +149,7 @@ namespace CoreSystems
                     PingPong(Session.GameplayFrameCounter);
 
                 if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
-                    ProccessServerPacketsForClients();
+                    ProcessServerPacketsForClients();
                 if (PacketsToServer.Count > 0)
                     ProccessClientPacketsForServer();
             }
@@ -239,7 +239,7 @@ namespace CoreSystems
                     SendProjectileTargetSyncs();
 
                 if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0) 
-                    ProccessServerPacketsForClients();
+                    ProcessServerPacketsForClients();
                 if (PacketsToServer.Count > 0) 
                     ProccessClientPacketsForServer();
                 if (EwarNetDataDirty)

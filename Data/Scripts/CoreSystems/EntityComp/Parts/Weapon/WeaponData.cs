@@ -49,7 +49,7 @@ namespace CoreSystems.Platform
 
                         w.PartState = Repo.Values.State.Weapons[i];
                         w.ProPositionSync.WeaponSyncId = w.PartState.Id;
-                        w.ProTargetSync.WeaponSyncId = w.PartState.Id;
+                        //w.ProTargetSync.WeaponSyncId = w.PartState.Id;
 
                         w.Reload = Repo.Values.Reloads[i];
 
@@ -107,7 +107,7 @@ namespace CoreSystems.Platform
                         {
                             w.PartState = state;
                             w.ProPositionSync.WeaponSyncId = w.PartState.Id;
-                            w.ProTargetSync.WeaponSyncId = w.PartState.Id;
+                           // w.ProTargetSync.WeaponSyncId = w.PartState.Id;
 
                             w.Reload = reload;
                             w.ProtoWeaponAmmo = ammo;
