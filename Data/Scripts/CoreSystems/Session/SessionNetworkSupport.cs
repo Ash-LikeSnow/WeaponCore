@@ -1489,7 +1489,7 @@ namespace CoreSystems
 
             // RelativeTime increments discretely (once per tick), so rawOwl is quantized.
             // We are extrapolating the position in continuous-time on the client, so we need to smooth over this value jittering between two integers.
-            const float alpha = 0.1f;
+            const float alpha = 0.15f;
             var smoothedOwl = oldLatency.CurrentLatency > 0.0f
                 ? alpha * rawOwl + (1.0f - alpha) * oldLatency.CurrentLatency
                 : rawOwl;
