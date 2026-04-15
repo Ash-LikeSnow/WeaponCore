@@ -227,8 +227,8 @@ namespace CoreSystems.Support
                         { "WeaponInfoManualOnly", "!! No automatic aiming !!\n!! Aim disabled by modder !!" },
                         { "WeaponInfoEWARed", "!! Disabled by EWAR !!"},
                         { "WeaponInfoBlockOff", "Block is off"},
-                        { "WeaponInfoBlockOffWarn", "!! Block is off !!"}
-
+                        { "WeaponInfoBlockOffWarn", "!! Block is off !!"},
+                        { "WeaponInfoBlockFuncWarn", "!! Block is not functional !!"}
                     }
                 },
                {
