@@ -226,7 +226,9 @@ namespace CoreSystems.Support
                         { "WeaponInfoMaxDroneLabel", "Drones Remaining/Max" },
                         { "WeaponInfoManualOnly", "!! No automatic aiming !!\n!! Aim disabled by modder !!" },
                         { "WeaponInfoEWARed", "!! Disabled by EWAR !!"},
-                        { "WeaponInfoBlockOff", "Block is off"}
+                        { "WeaponInfoBlockOff", "Block is off"},
+                        { "WeaponInfoBlockOffWarn", "!! Block is off !!"}
+
                     }
                 },
                {
