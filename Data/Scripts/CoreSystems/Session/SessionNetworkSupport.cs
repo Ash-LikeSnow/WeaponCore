@@ -1482,12 +1482,24 @@ namespace CoreSystems
         internal void RecordClientLatency(PingPacket clientPong)
         {
             var rtt = RelativeTime - clientPong.RelativeTime;
-            var owl = (float)Math.Max(Math.Round(rtt / (2.0 * StepConst)), 2d);
+            var rawOwl = (float)Math.Max(Math.Round(rtt / (2.0 * StepConst)), 2d);
 
             TickLatency oldLatency;
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
 
-            PlayerTickLatency[clientPong.SenderId] = new TickLatency { CurrentLatency = owl, PreviousLatency = oldLatency.CurrentLatency };
+            // RelativeTime increments discretely (once per tick), so rawOwl is quantized.
+            // We are extrapolating the position in continuous-time on the client, so we need to smooth over this value jittering between two integers.
+            const float alpha = 0.1f;
+            var smoothedOwl = oldLatency.CurrentLatency > 0.0f
+                ? alpha * rawOwl + (1.0f - alpha) * oldLatency.CurrentLatency
+                : rawOwl;
+
+            PlayerTickLatency[clientPong.SenderId] = new TickLatency
+            {
+                CurrentLatency = smoothedOwl,
+                PreviousLatency = oldLatency.CurrentLatency
+            };
+            
             LastPongTick = Tick;
         }
     }

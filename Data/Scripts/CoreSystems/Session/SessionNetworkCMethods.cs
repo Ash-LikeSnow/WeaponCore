@@ -679,15 +679,43 @@ namespace CoreSystems
                 Log.Line($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
                 return;
             }
-
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(packet.Position, p.Position):F}m owl {packet.CurrentOwl:F1}t");
             
-            p.Position = packet.Position;
-            p.LastPosition = packet.LastPosition;
-            p.Velocity = packet.Velocity;
-            p.PrevVelocity0 = packet.PrevVelocity0;
-            p.PrevVelocity1 = packet.PrevVelocity1;
-            p.Direction = packet.Direction;
+            var position = packet.Position;
+            var lastPosition = packet.LastPosition;
+            var velocity = packet.Velocity;
+            var prevVelocity0 = packet.PrevVelocity0;
+            var prevVelocity1 = packet.PrevVelocity1;
+            var maxSpeed = p.MaxSpeed;
+            
+            if (packet.CurrentOwl > 0f)
+            {
+                LimitlessPdAdvProjectilePositionSyncExtrapolate(
+                    packet.CurrentOwl,
+                    ref position, ref lastPosition,
+                    ref velocity,
+                    ref prevVelocity1,
+                    ref prevVelocity0,
+                    maxSpeed
+                );
+            }
+            
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(position, p.Position):F}m owl {packet.CurrentOwl:F1}t, extrap: {Vector3D.Distance(packet.Position, position):F}m");
+
+            p.Position = position;
+            p.LastPosition = lastPosition;
+            p.Velocity = velocity;
+            p.PrevVelocity0 = prevVelocity0;
+            p.PrevVelocity1 = prevVelocity1;
+            
+            if (!Vector3D.IsZero(velocity))
+            {
+                Vector3D.Normalize(ref velocity, out p.Direction);
+            }
+            else
+            {
+                p.Direction = packet.Direction;
+            }
+            
             p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
             p.OffsetTarget = packet.OffsetTarget;
 
@@ -697,6 +725,106 @@ namespace CoreSystems
             double d;
             Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out d);
             p.Info.DistanceTraveled += Math.Abs(d);
+        }
+
+        private static void LimitlessPdAdvProjectilePositionSyncExtrapolate(
+            double extrapolateTicks,
+            ref Vector3D position, ref Vector3D lastPosition,
+            ref Vector3D velocity,
+            ref Vector3D previousVelocity1,
+            ref Vector3D previousVelocity0,
+            double maxSpeed
+            )
+        {
+            var fullSteps = (int)extrapolateTicks;
+            var remainder = extrapolateTicks - fullSteps;
+            var maxSpeedSqr = maxSpeed * maxSpeed;
+
+            var targetAccel0 = (previousVelocity1 - previousVelocity0) / StepConst;
+            var targetAccel1 = (velocity - previousVelocity1) / StepConst;
+
+            var targetAccel0N = targetAccel0.Length();
+            var targetAccel1N = targetAccel1.Length();
+
+            if (targetAccel0N < 1.0 || targetAccel1N < 1.0)
+                goto fallback;
+
+            var e0 = targetAccel0 / targetAccel0N;
+            var e1 = targetAccel1 / targetAccel1N;
+
+            var w = Vector3D.Cross(e0, e1);
+            var sinTheta = MathHelperD.Clamp(w.Length(), 0.0, 1.0);
+
+            if (sinTheta < 1e-6)
+                goto fallback;
+
+            w /= sinTheta;
+
+            var cosTheta = MathHelperD.Clamp(Vector3D.Dot(e0, e1), -1.0, 1.0);
+            var targetAccelWorld = targetAccel1;
+
+            for (var step = 0; step < fullSteps; step++)
+            {
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+
+                velocity += targetAccelWorld * StepConst;
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                    velocity = velocity.Normalized() * maxSpeed;
+                position += velocity * StepConst;
+
+                var r1 = targetAccelWorld * cosTheta;
+                var r2 = Vector3D.Cross(w, targetAccelWorld) * sinTheta;
+                var r3 = w * (Vector3D.Dot(w, targetAccelWorld) * (1.0 - cosTheta));
+                targetAccelWorld = r1 + r2 + r3;
+            }
+
+            if (remainder > 1e-6)
+            {
+                var frac = remainder * StepConst;
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+
+                velocity += targetAccelWorld * frac;
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+                
+                position += velocity * frac;
+            }
+
+            return;
+
+            fallback:
+            for (var step = 0; step < fullSteps; step++)
+            {
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+                position += velocity * StepConst;
+                
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+            }
+
+            if (remainder > 1e-6)
+            {
+                var frac = remainder * StepConst;
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+                position += velocity * frac;
+                
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+            }
         }
     }
 }
