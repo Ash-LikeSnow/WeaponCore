@@ -1092,7 +1092,7 @@ namespace CoreSystems.Support
             else
                 checkSize = w.System.CycleBlocks;
 
-            var chunk = totalBlocks > 0 ? checkSize * w.AcquireAttempts / totalBlocks : 0;
+            var chunk = totalBlocks > 0 ? checkSize * w.AcquireAttempts % totalBlocks : 0;
 
             if (chunk + checkSize >= totalBlocks)
                 checkSize = totalBlocks - chunk;
