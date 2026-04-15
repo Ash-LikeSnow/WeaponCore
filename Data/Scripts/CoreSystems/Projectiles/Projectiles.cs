@@ -286,9 +286,10 @@ namespace CoreSystems.Projectiles
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out distChanged);
                         info.DistanceTraveled += Math.Abs(distChanged);
-
-                        if (info.RelativeAge > aConst.MaxLifeTime) {
-                            p.DistanceToTravelSqr = (info.DistanceTraveled * info.DistanceTraveled);
+                        
+                        if (info.RelativeAge > aConst.MaxLifeTime)
+                        {
+                            p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
                             p.EndState = EndStates.EarlyEnd;
                         }
 
@@ -311,18 +312,16 @@ namespace CoreSystems.Projectiles
                 else if (p.EndState == EndStates.AtMaxEarly) //Prevents projectiles that are AtMaxEarly from hanging infinitely
                     p.State = ProjectileState.Destroy;
 
-                if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0 && Session.I.Tick20)
+                if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0 && Session.I.Tick10)
                 {
                     Session.I.LastProSyncSendTick = Session.I.Tick;
                     var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
                     posPacket.PType = PacketType.AdvProjectilePositionSyncs;
                     posPacket.NetId = info.AdvSyncId;
                     posPacket.Position = p.Position;
-                    posPacket.LastPosition = p.LastPosition;
                     posPacket.Velocity = p.Velocity;
                     posPacket.PrevVelocity0 = p.PrevVelocity0;
                     posPacket.PrevVelocity1 = p.PrevVelocity1;
-                    posPacket.Direction = p.Direction;
                     posPacket.RandOffsetDir = p.Info.Storage.RandOffsetDir;
                     posPacket.OffsetTarget = p.OffsetTarget;
 

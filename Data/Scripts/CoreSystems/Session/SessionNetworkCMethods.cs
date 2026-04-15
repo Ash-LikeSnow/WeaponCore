@@ -1,4 +1,3 @@
-using System;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -681,13 +680,13 @@ namespace CoreSystems
             }
             
             var position = packet.Position;
-            var lastPosition = packet.LastPosition;
-            var velocity = packet.Velocity;
-            var prevVelocity0 = packet.PrevVelocity0;
-            var prevVelocity1 = packet.PrevVelocity1;
+            var lastPosition = packet.Position;
+            var velocity = (Vector3D)packet.Velocity;
+            var prevVelocity0 = (Vector3D)packet.PrevVelocity0;
+            var prevVelocity1 = (Vector3D)packet.PrevVelocity1;
             var maxSpeed = p.MaxSpeed;
             
-            if (packet.CurrentOwl > 0f)
+            if (packet.CurrentOwl > 0.0)
             {
                 LimitlessPdAdvProjectilePositionSyncExtrapolate(
                     packet.CurrentOwl,
@@ -698,35 +697,38 @@ namespace CoreSystems
                     maxSpeed
                 );
             }
-            
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(position, p.Position):F}m owl {packet.CurrentOwl:F1}t, extrap: {Vector3D.Distance(packet.Position, position):F}m");
+
+            var positionDelta = Vector3D.Distance(position, p.Position);
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {positionDelta:F}m owl {packet.CurrentOwl:F1}t");
 
             p.Position = position;
             p.LastPosition = lastPosition;
             p.Velocity = velocity;
             p.PrevVelocity0 = prevVelocity0;
             p.PrevVelocity1 = prevVelocity1;
-            
+
             if (!Vector3D.IsZero(velocity))
             {
                 Vector3D.Normalize(ref velocity, out p.Direction);
             }
-            else
-            {
-                p.Direction = packet.Direction;
-            }
-            
-            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
-            p.OffsetTarget = packet.OffsetTarget;
 
             Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
             p.TravelMagnitude = p.Velocity * DeltaStepConst;
-
-            double d;
-            Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out d);
-            p.Info.DistanceTraveled += Math.Abs(d);
+            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
+            p.OffsetTarget = packet.OffsetTarget;
         }
 
+        /// <summary>
+        ///     Extrapolates the projectile forward in time, so it more closely matches up with the position on the server.
+        ///     I don't know if the grids themselves are timed similarly to this, but BD wants extrapolation so here we go.
+        /// </summary>
+        /// <param name="extrapolateTicks"></param>
+        /// <param name="position"></param>
+        /// <param name="lastPosition"></param>
+        /// <param name="velocity"></param>
+        /// <param name="previousVelocity1"></param>
+        /// <param name="previousVelocity0"></param>
+        /// <param name="maxSpeed"></param>
         private static void LimitlessPdAdvProjectilePositionSyncExtrapolate(
             double extrapolateTicks,
             ref Vector3D position, ref Vector3D lastPosition,
@@ -747,7 +749,9 @@ namespace CoreSystems
             var targetAccel1N = targetAccel1.Length();
 
             if (targetAccel0N < 1.0 || targetAccel1N < 1.0)
+            {
                 goto fallback;
+            }
 
             var e0 = targetAccel0 / targetAccel0N;
             var e1 = targetAccel1 / targetAccel1N;
@@ -756,13 +760,16 @@ namespace CoreSystems
             var sinTheta = MathHelperD.Clamp(w.Length(), 0.0, 1.0);
 
             if (sinTheta < 1e-6)
+            {
                 goto fallback;
+            }
 
             w /= sinTheta;
 
             var cosTheta = MathHelperD.Clamp(Vector3D.Dot(e0, e1), -1.0, 1.0);
             var targetAccelWorld = targetAccel1;
 
+            // Only the integration loop taken from limitless PD:
             for (var step = 0; step < fullSteps; step++)
             {
                 previousVelocity0 = previousVelocity1;
@@ -770,13 +777,18 @@ namespace CoreSystems
                 lastPosition = position;
 
                 velocity += targetAccelWorld * StepConst;
+           
                 if (velocity.LengthSquared() > maxSpeedSqr)
+                {
                     velocity = velocity.Normalized() * maxSpeed;
+                }
+                
                 position += velocity * StepConst;
 
                 var r1 = targetAccelWorld * cosTheta;
                 var r2 = Vector3D.Cross(w, targetAccelWorld) * sinTheta;
                 var r3 = w * (Vector3D.Dot(w, targetAccelWorld) * (1.0 - cosTheta));
+                
                 targetAccelWorld = r1 + r2 + r3;
             }
 

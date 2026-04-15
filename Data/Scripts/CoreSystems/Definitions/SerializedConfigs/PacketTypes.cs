@@ -256,12 +256,10 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal ulong NetId;
         [ProtoMember(2)] internal Vector3D Position;
-        [ProtoMember(3)] internal Vector3D LastPosition;
-        [ProtoMember(4)] internal Vector3D Velocity;
-        [ProtoMember(5)] internal Vector3D PrevVelocity0;
-        [ProtoMember(6)] internal Vector3D PrevVelocity1;
-        [ProtoMember(7)] internal Vector3D Direction;
-        [ProtoMember(8)] internal Vector3D RandOffsetDir;
+        [ProtoMember(4)] internal Vector3 Velocity;
+        [ProtoMember(5)] internal Vector3 PrevVelocity0;
+        [ProtoMember(6)] internal Vector3 PrevVelocity1;
+        [ProtoMember(8)] internal Vector3 RandOffsetDir;
         [ProtoMember(9)] internal Vector3D OffsetTarget;
         [ProtoMember(10)] internal float CurrentOwl;
 
@@ -270,12 +268,10 @@ namespace CoreSystems
             base.CleanUp();
             NetId = 0;
             Position = Vector3D.Zero;
-            LastPosition = Vector3D.Zero;
-            Velocity = Vector3D.Zero;
-            PrevVelocity0 = Vector3D.Zero;
-            PrevVelocity1 = Vector3D.Zero;
-            Direction = Vector3D.Zero;
-            RandOffsetDir = Vector3D.Zero;
+            Velocity = Vector3.Zero;
+            PrevVelocity0 = Vector3.Zero;
+            PrevVelocity1 = Vector3.Zero;
+            RandOffsetDir = Vector3.Zero;
             OffsetTarget = Vector3D.Zero;
             CurrentOwl = 0;
         }
