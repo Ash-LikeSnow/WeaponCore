@@ -535,6 +535,7 @@ namespace CoreSystems.Support
         internal double RelativeAge;
         internal ulong NetId;
         internal ushort SpawnDepth;
+        internal XorShiftRandomStruct RandomState;
     }
 
     internal class Fragments
@@ -688,6 +689,7 @@ namespace CoreSystems.Support
                     spawnPacket.Velocity = frag.Velocity;
                     spawnPacket.TargetId = targetEnt?.EntityId ?? 0;
                     spawnPacket.SpawnDepth = frag.Depth;
+                    spawnPacket.RandomState = info.Random;
                     
                     Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {

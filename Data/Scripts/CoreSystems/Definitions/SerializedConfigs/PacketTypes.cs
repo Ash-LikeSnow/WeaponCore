@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Settings;
+using CoreSystems.Support;
 using ProtoBuf;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
@@ -191,6 +192,7 @@ namespace CoreSystems
         [ProtoMember(7)] internal ulong NetId;
         [ProtoMember(8)] internal ushort SpawnDepth;
         [ProtoMember(9)] internal long TargetId;
+        [ProtoMember(10)] internal XorShiftRandomStruct RandomState;
         
         public override void CleanUp()
         {
@@ -204,6 +206,7 @@ namespace CoreSystems
             NetId = 0;
             SpawnDepth = 0;
             TargetId = 0;
+            RandomState = default(XorShiftRandomStruct);
         }
     }
     
@@ -258,6 +261,8 @@ namespace CoreSystems
         [ProtoMember(5)] internal Vector3D PrevVelocity0;
         [ProtoMember(6)] internal Vector3D PrevVelocity1;
         [ProtoMember(7)] internal Vector3D Direction;
+        [ProtoMember(8)] internal Vector3D RandOffsetDir;
+        [ProtoMember(9)] internal Vector3D OffsetTarget;
 
         public override void CleanUp()
         {
@@ -269,6 +274,8 @@ namespace CoreSystems
             PrevVelocity0 = Vector3D.Zero;
             PrevVelocity1 = Vector3D.Zero;
             Direction = Vector3D.Zero;
+            RandOffsetDir = Vector3D.Zero;
+            OffsetTarget = Vector3D.Zero;
         }
     }
     

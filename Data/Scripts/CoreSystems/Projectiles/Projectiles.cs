@@ -322,6 +322,8 @@ namespace CoreSystems.Projectiles
                     posPacket.PrevVelocity0 = p.PrevVelocity0;
                     posPacket.PrevVelocity1 = p.PrevVelocity1;
                     posPacket.Direction = p.Direction;
+                    posPacket.RandOffsetDir = p.Info.Storage.RandOffsetDir;
+                    posPacket.OffsetTarget = p.OffsetTarget;
 
                     Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {

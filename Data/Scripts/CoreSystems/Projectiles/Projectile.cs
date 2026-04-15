@@ -570,7 +570,8 @@ namespace CoreSystems.Projectiles
                     if (s.ZombieLifeTime > 0)
                     {
                         s.ZombieLifeTime = 0;
-                        OffSetTarget();
+                        if (!(Session.I.AdvSyncClient && aConst.FullSync))
+                            OffSetTarget();
                     }
                     var targetPos = Vector3D.Zero;
 
@@ -597,7 +598,7 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.TargetOffSet)
                     {
-                        if (Info.RelativeAge - s.LastOffsetTime > 300)
+                        if (Info.RelativeAge - s.LastOffsetTime > 300 && !(Session.I.AdvSyncClient && aConst.FullSync))
                         {
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
@@ -648,7 +649,8 @@ namespace CoreSystems.Projectiles
                         Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
                         if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3D.Dot(Direction, Position - TargetPosition) > 0)
                         {
-                            OffSetTarget(true);
+                            if (!(Session.I.AdvSyncClient && aConst.FullSync))
+                                OffSetTarget(true);
                             TargetPosition += OffsetTarget;
                         }
                     }
@@ -741,7 +743,7 @@ namespace CoreSystems.Projectiles
                     var currentSmartCheck = Info.RelativeAge % aConst.OffsetTime;
                     var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
 
-                    if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
+                    if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction) && !(Session.I.AdvSyncClient && aConst.FullSync))
                     {
                         var up = Vector3D.CalculatePerpendicularVector(Direction);
                         var right = Vector3D.Cross(Direction, up);

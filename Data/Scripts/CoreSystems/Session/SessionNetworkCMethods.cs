@@ -579,6 +579,7 @@ namespace CoreSystems
                 Type = NewProjectile.Kind.AdvSync,
                 NetId = spawn.NetId,
                 SpawnDepth = spawn.SpawnDepth,
+                RandomState = spawn.RandomState,
             });
         }
         
@@ -687,6 +688,8 @@ namespace CoreSystems
             p.PrevVelocity0 = packet.PrevVelocity0;
             p.PrevVelocity1 = packet.PrevVelocity1;
             p.Direction = packet.Direction;
+            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
+            p.OffsetTarget = packet.OffsetTarget;
 
             Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
             p.TravelMagnitude = p.Velocity * DeltaStepConst;

@@ -83,6 +83,8 @@ namespace CoreSystems.Projectiles
                 {
                     info.AdvSyncId = gen.NetId;
                     Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
+                    info.Random = gen.RandomState;
+                    info.ShieldProc = gen.RandomState;
                 }
                 else if (Session.I.AdvSyncServer && aConst.FullSync)
                 {
@@ -102,6 +104,7 @@ namespace CoreSystems.Projectiles
                     spawnPacket.Velocity = comp.Ai.TopEntityVel;
                     spawnPacket.TargetId = targetEnt?.EntityId ?? 0;
                     spawnPacket.SpawnDepth = 0;
+                    spawnPacket.RandomState = info.Random;
                     
                     Session.I.PacketsToClient.Add(new Session.PacketInfo
                     {
