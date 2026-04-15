@@ -680,7 +680,7 @@ namespace CoreSystems
                 return;
             }
 
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(packet.Position, p.Position):F}m");
+            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {Vector3D.Distance(packet.Position, p.Position):F}m owl {packet.CurrentOwl:F1}t");
             
             p.Position = packet.Position;
             p.LastPosition = packet.LastPosition;

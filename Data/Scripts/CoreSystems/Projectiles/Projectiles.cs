@@ -313,6 +313,7 @@ namespace CoreSystems.Projectiles
 
                 if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0 && Session.I.Tick20)
                 {
+                    Session.I.LastProSyncSendTick = Session.I.Tick;
                     var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
                     posPacket.PType = PacketType.AdvProjectilePositionSyncs;
                     posPacket.NetId = info.AdvSyncId;
@@ -325,12 +326,14 @@ namespace CoreSystems.Projectiles
                     posPacket.RandOffsetDir = p.Info.Storage.RandOffsetDir;
                     posPacket.OffsetTarget = p.OffsetTarget;
 
-                    Session.I.PacketsToClient.Add(new Session.PacketInfo
+                    Session.I.PrunedPacketsToClient[info.AdvSyncId] = new Session.PacketInfo
                     {
+                        Function = Session.I.RewriteAdvPositionPacketOwl,
+                        SpecialPlayerId = long.MinValue,
                         Packet = posPacket,
                         Entity = info.Weapon.Comp.CoreEntity,
                         HasPooledResource = true
-                    });
+                    };
                 }
 
                 if (aConst.Ewar)

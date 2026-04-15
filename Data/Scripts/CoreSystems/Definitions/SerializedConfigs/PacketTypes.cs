@@ -263,6 +263,7 @@ namespace CoreSystems
         [ProtoMember(7)] internal Vector3D Direction;
         [ProtoMember(8)] internal Vector3D RandOffsetDir;
         [ProtoMember(9)] internal Vector3D OffsetTarget;
+        [ProtoMember(10)] internal float CurrentOwl;
 
         public override void CleanUp()
         {
@@ -276,6 +277,7 @@ namespace CoreSystems
             Direction = Vector3D.Zero;
             RandOffsetDir = Vector3D.Zero;
             OffsetTarget = Vector3D.Zero;
+            CurrentOwl = 0;
         }
     }
     

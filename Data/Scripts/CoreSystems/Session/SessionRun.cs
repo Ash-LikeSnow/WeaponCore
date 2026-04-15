@@ -146,7 +146,7 @@ namespace CoreSystems
             if (MpActive)
             {
                 if (IsServer && Tick30 && LastProSyncSendTick > 0 && Tick - LastProSyncSendTick < 7200)
-                    PingPong(Session.GameplayFrameCounter);
+                    PingPong((float)RelativeTime);
 
                 if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
                     ProcessServerPacketsForClients();

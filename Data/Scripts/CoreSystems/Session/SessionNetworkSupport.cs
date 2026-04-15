@@ -176,6 +176,17 @@ namespace CoreSystems
             return proSync;
         }
 
+        internal object RewriteAdvPositionPacketOwl(object o1, object o2)
+        {
+            var packet = (AdvProjectilePositionPacket)o1;
+            var targetSteamId = (ulong)o2;
+
+            TickLatency tickLatency;
+            PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
+            packet.CurrentOwl = tickLatency.CurrentLatency;
+            return packet;
+        }
+
         internal void SendConstruct(Ai ai)
         {
             if (IsServer)
@@ -1471,7 +1482,7 @@ namespace CoreSystems
         internal void RecordClientLatency(PingPacket clientPong)
         {
             var rtt = RelativeTime - clientPong.RelativeTime;
-            var owl = (float)Math.Max(Math.Round(rtt + 1d / 2d), 2d);
+            var owl = (float)Math.Max(Math.Round(rtt / (2.0 * StepConst)), 2d);
 
             TickLatency oldLatency;
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
