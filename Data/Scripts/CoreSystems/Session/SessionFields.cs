@@ -122,7 +122,6 @@ namespace CoreSystems
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
         internal readonly Stack<DroneInfo> DroneInfoPool = new Stack<DroneInfo>(128);
         internal readonly Stack<ClosestObstacles> ClosestObstaclesPool = new Stack<ClosestObstacles>(64);
-        internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(32);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
         internal readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
@@ -232,7 +231,6 @@ namespace CoreSystems
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
         internal readonly List<CoreComponent> CompsDelayedInit = new List<CoreComponent>();
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
-        internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
         internal readonly ConcurrentDictionary<ulong, ApproachStageDebug> ApproachStageChangeDebug = new ConcurrentDictionary<ulong, ApproachStageDebug>();
         internal readonly ConcurrentDictionary<object, PersistentDebugDraw> PersistentDebugDraws = new ConcurrentDictionary<object, PersistentDebugDraw>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();

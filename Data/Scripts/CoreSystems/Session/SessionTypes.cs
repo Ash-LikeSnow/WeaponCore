@@ -862,13 +862,6 @@ namespace CoreSystems
             internal float AreaModifer;
         }
 
-        internal struct ClientProSyncDebugLine
-        {
-            internal LineD Line;
-            internal Color Color;
-            internal uint CreateTick;
-        }
-
         internal struct ApproachStageDebug
         {
             internal Vector3D Position;

@@ -200,7 +200,6 @@ namespace CoreSystems.Support
     internal class SmartStorage
     {
         internal ClosestObstacles Obstacle;
-        internal FullSyncInfo FullSyncInfo;
         internal FakeTargets DummyTargets;
         internal ApproachInfo ApproachInfo;
         internal DroneInfo DroneInfo;
@@ -255,12 +254,6 @@ namespace CoreSystems.Support
                 DroneInfo = null;
             }
 
-            if (FullSyncInfo != null)
-            {
-                FullSyncInfo.Clean(info);
-                FullSyncInfo = null;
-            }
-
             if (Obstacle != null)
             {
                 Obstacle.Entity = null;
@@ -274,24 +267,6 @@ namespace CoreSystems.Support
         internal MyEntity Entity;
         internal uint LastSeenTick = uint.MaxValue;
         internal BoundingSphereD AvoidSphere;
-    }
-
-    internal class FullSyncInfo
-    {
-        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
-        internal int ProSyncPosMissCount;
-
-        internal void Clean(ProInfo info)
-        {
-            for (int i = 0; i < PastProInfos.Length; i++)
-                PastProInfos[i] = Vector3D.Zero;
-
-            //TODO AdvSync info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
-
-            ProSyncPosMissCount = 0;
-
-            Session.I.FullSyncInfoPool.Push(this);
-        }
     }
 
     public class ApproachInfo
