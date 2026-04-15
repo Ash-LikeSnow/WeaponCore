@@ -116,10 +116,7 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(128);
-        internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(128);
-
-        internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(128);
-
+        
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(128);
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
@@ -195,7 +192,6 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> WeaponValuesMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
         internal readonly Dictionary<ulong, AdvProjectileUpdateTargetInfo> GlobalProTargetSyncs = new Dictionary<ulong, AdvProjectileUpdateTargetInfo>();
 
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();

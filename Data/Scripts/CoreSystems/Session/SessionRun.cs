@@ -232,9 +232,6 @@ namespace CoreSystems
                 
                 DsUtil.Start("network1");
 
-                if (GlobalProPosSyncs.Count > 0)
-                    SendProjectilePosSyncs();
-
                 if (GlobalProTargetSyncs.Count > 0)
                     SendProjectileTargetSyncs();
 

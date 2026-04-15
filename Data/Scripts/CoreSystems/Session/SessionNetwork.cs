@@ -96,11 +96,6 @@ namespace CoreSystems
                         ClientShootSyncs(packetObj);
                         break;
                     }
-                    case PacketType.ProjectilePosSyncs:
-                    {
-                        ClientProjectilePosSyncs(packetObj);
-                        break;
-                    }
                     case PacketType.AdvProjectileSpawnSyncs:
                     {
                         ClientAdvProjectileSpawnSync(packetObj);
@@ -642,12 +637,6 @@ namespace CoreSystems
                 var pInfo = PacketsToClient[index];
                 switch (pInfo.Packet.PType)
                 {
-                    case PacketType.ProjectilePosSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        ProtoWeaponProPosPacketPool.Push((ProjectileSyncPositionPacket)pInfo.Packet);
-                        break;
-                    }
                     case PacketType.AiData:
                     {
                         PacketAiPool.Return((AiDataPacket)pInfo.Packet);

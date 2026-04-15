@@ -3695,18 +3695,6 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        internal void SyncPosServerProjectile(ProtoProPosition.ProSyncState state)
-        {
-            var session = Session.I;
-            var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPosition();
-            proSync.Position = Position;
-            proSync.State = state;
-            proSync.Velocity = (Vector3)Velocity;
-            proSync.ProId = Info.AdvSyncId;
-            Info.Weapon.ProPositionSync.Collection.Add(proSync);
-            session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProPositionSync;
-        }
-
         internal void SyncTargetServerProjectile()
         {
             if (Info.AdvSyncId == 0)
@@ -3753,76 +3741,6 @@ namespace CoreSystems.Projectiles
             Session.I.GlobalProTargetSyncs[Info.AdvSyncId] = info;
         }
 
-        internal void SyncClientProjectile(int posSlot)
-        {
-            var w = Info.Weapon;
-            var s = Session.I;
-
-            Session.ClientProSync sync;
-            if (w.WeaponProSyncs.TryGetValue(Info.AdvSyncId, out sync))
-            {
-                if (Session.I.RelativeTime - sync.UpdateTick > 30)
-                {
-                    w.WeaponProSyncs.Remove(Info.AdvSyncId);
-                    return;
-                }
-
-                if (Session.I.RelativeTime - sync.UpdateTick <= 1 && sync.CurrentOwl < 30)
-                {
-                    var proPosSync = sync.ProPosition;
-
-                    if (proPosSync.State == ProtoProPosition.ProSyncState.Dead)
-                    {
-                        State = ProjectileState.Destroy;
-                        w.WeaponProSyncs.Remove(Info.AdvSyncId);
-                        return;
-                    }
-
-                    var oldPos = Position;
-                    var oldVels = Velocity;
-
-                    var checkSlot = (int)Math.Round(posSlot - sync.CurrentOwl >= 0 ? posSlot - sync.CurrentOwl : (posSlot - sync.CurrentOwl) + 30);
-
-                    var estimatedStepSize = sync.CurrentOwl * Session.I.DeltaStepConst;
-
-                    var estimatedDistTraveledToPresent = proPosSync.Velocity * (float) estimatedStepSize;
-                    var clampedEstimatedDistTraveledSqr = Math.Max(estimatedDistTraveledToPresent.LengthSquared(), 25);
-                    var pastServerProPos = proPosSync.Position;
-                    var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
-
-                    var pastClientProPos = Info.Storage.FullSyncInfo.PastProInfos[checkSlot];
-                    if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
-                    {
-                        if (++Info.Storage.FullSyncInfo.ProSyncPosMissCount > 1)
-                        {
-                            Info.Storage.FullSyncInfo.ProSyncPosMissCount = 0;
-                            Position = futurePosition;
-                            Velocity = proPosSync.Velocity;
-                            Vector3D.Normalize(ref Velocity, out Direction);
-                        }
-                    }
-                    else
-                        Info.Storage.FullSyncInfo.ProSyncPosMissCount = 0;
-
-                    if (w.System.WConst.DebugMode)
-                    {
-                        List<Session.ClientProSyncDebugLine> lines;
-                        if (!Session.I.ProSyncLineDebug.TryGetValue(Info.AdvSyncId, out lines))
-                        {
-                            lines = new List<Session.ClientProSyncDebugLine>();
-                            Session.I.ProSyncLineDebug[Info.AdvSyncId] = lines;
-                        }
-
-                        var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * (float) Session.I.DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
-
-                        lines.Add(new Session.ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
-
-                        //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
-                    }
-                }
-                w.WeaponProSyncs.Remove(Info.AdvSyncId);
-            }
-        }
         #endregion
     }
 }

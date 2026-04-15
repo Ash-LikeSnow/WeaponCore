@@ -101,43 +101,6 @@ namespace CoreSystems
         #endregion
 
         #region ServerOnly
-    
-        private void SendProjectilePosSyncs()
-        {
-            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPositionPacket ();
-            
-            var latencyMonActive = Tick - LastPongTick < 120;
-            LastProSyncSendTick = Tick;
-
-            foreach (var pSync in GlobalProPosSyncs)
-            {
-                var sync = pSync.Value;
-                if (latencyMonActive)
-                    packet.Data.Add(sync);
-
-                foreach (var p in sync.Collection)
-                    ProtoWeaponProSyncPosPool.Push(p);
-            }
-
-            GlobalProPosSyncs.Clear();
-
-            if (!latencyMonActive)
-            {
-                Log.Line($"PingPong not active");
-                ProtoWeaponProPosPacketPool.Push(packet);
-                return;
-            }
-
-            packet.PType = PacketType.ProjectilePosSyncs;
-            PrunedPacketsToClient[packet] = new PacketInfo
-            {
-                Function = RewriteAddClientLatency,
-                SpecialPlayerId = long.MinValue,
-                Packet = packet,
-                Entity = null,
-                HasPooledResource = true
-            };
-        }
 
         private void SendProjectileTargetSyncs()
         {
@@ -163,17 +126,6 @@ namespace CoreSystems
             }
 
             GlobalProTargetSyncs.Clear();
-        }
-
-        private object RewriteAddClientLatency(object o1, object o2)
-        {
-            var proSync = (ProjectileSyncPositionPacket)o1;
-            var targetSteamId = (ulong)o2;
-
-            TickLatency tickLatency;
-            PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
-            proSync.CurrentOwl = tickLatency.CurrentLatency;
-            return proSync;
         }
 
         internal object RewriteAdvPositionPacketOwl(object o1, object o2)

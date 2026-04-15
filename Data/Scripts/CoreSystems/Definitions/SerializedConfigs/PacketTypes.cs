@@ -53,7 +53,6 @@ namespace CoreSystems
         ShootSync,
         EwaredBlocks,
         ClientReady,
-        ProjectilePosSyncs,
         ControlComp,
         ControlState,
         ForceReload,
@@ -103,7 +102,6 @@ namespace CoreSystems
     [ProtoInclude(34, typeof(EwaredBlocksPacket))]
     [ProtoInclude(35, typeof(ClientReadyPacket))]
     [ProtoInclude(36, typeof(PaintedTargetPacket))]
-    [ProtoInclude(37, typeof(ProjectileSyncPositionPacket))]
     [ProtoInclude(38, typeof(ULongUpdatePacket))]
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
@@ -160,25 +158,6 @@ namespace CoreSystems
             base.CleanUp();
         }
     }
-
-    [ProtoContract]
-    public class ProjectileSyncPositionPacket : Packet
-    {
-        [ProtoMember(1)] internal List<ProtoProPositionSync> Data = new List<ProtoProPositionSync>();
-        [ProtoMember(2)] internal float CurrentOwl;
-
-        public override void CleanUp()
-        {
-            for (int i = 0; i < Data.Count; i++)
-            {
-                var d = Data[i];
-                d.Collection.Clear();
-            }
-            Data.Clear();
-            base.CleanUp();
-        }
-    }
-
 
     [ProtoContract]
     public class AdvProjectileSpawnPacket : Packet

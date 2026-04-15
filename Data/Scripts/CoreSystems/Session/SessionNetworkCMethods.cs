@@ -455,40 +455,7 @@ namespace CoreSystems
             return true;
 
         }
-
-        private bool ClientProjectilePosSyncs(PacketObj data)
-        {
-            var packet = data.Packet;
-            var proPacket = (ProjectileSyncPositionPacket)packet;
-            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
-
-            for (int i = 0; i < proPacket.Data.Count; i++)
-            {
-                var syncPacket = proPacket.Data[i];
-                Weapon w;
-                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
-                {
-                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
-                        continue;
-
-                    for (int j = 0; j < syncPacket.Collection.Count; j++)
-                    {
-                        var sync = syncPacket.Collection[j];
-                        ClientProSync oldSync;
-                        w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPosition = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl };
-                    }
-                }
-                else 
-                    Log.Line($"ClientProjectilePosSyncs failed");
-            }
-            
-            data.Report.PacketValid = true;
-
-            proPacket.CleanUp();
-            return true;
-        }
-
+        
         private bool ClientShootSyncs(PacketObj data)
         {
             var packet = data.Packet;

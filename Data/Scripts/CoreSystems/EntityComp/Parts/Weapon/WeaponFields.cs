@@ -20,13 +20,11 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesToFire = new HashSet<string>();
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
-        internal readonly Dictionary<ulong, ClientProSync> WeaponProSyncs = new Dictionary<ulong, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly Dictionary<MyEntity, HiddenInfo> HiddenTargets = new Dictionary<MyEntity, HiddenInfo>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
-        internal readonly ProtoProPositionSync ProPositionSync = new ProtoProPositionSync();
         internal readonly JerkRunningAverage JerkRunningAverage = new JerkRunningAverage(30);
 
         internal readonly ApiShootRequest ShootRequest;

@@ -862,14 +862,6 @@ namespace CoreSystems
             internal float AreaModifer;
         }
 
-        internal struct ClientProSync
-        {
-            internal ProtoProPosition ProPosition;
-
-            internal float UpdateTick;
-            internal float CurrentOwl;
-        }
-
         internal struct ClientProSyncDebugLine
         {
             internal LineD Line;
