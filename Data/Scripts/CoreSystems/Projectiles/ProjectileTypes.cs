@@ -7,6 +7,7 @@ using VRage;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
@@ -83,6 +84,8 @@ namespace CoreSystems.Support
         internal ushort SpawnDepth;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
 
+        internal AdvSyncProjectileInterpolator AdvSyncInterpolator;
+        
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef,  Weapon.Muzzle muzzle, double maxTrajectory, double shotFade)
         {
             Weapon = weapon;
@@ -100,6 +103,8 @@ namespace CoreSystems.Support
 
         internal void Clean()
         {
+            AdvSyncInterpolator = default(AdvSyncProjectileInterpolator);
+            
             var aConst = AmmoDef.Const;
 
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];

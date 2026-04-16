@@ -5,6 +5,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.Ai;
 // ReSharper disable ForCanBeConvertedToForeach
 namespace CoreSystems
@@ -646,6 +647,10 @@ namespace CoreSystems
                 return;
             }
             
+            // Set independent of interpolation:
+            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
+            p.OffsetTarget = packet.OffsetTarget;
+            
             var position = packet.Position;
             var lastPosition = packet.Position;
             var velocity = (Vector3D)packet.Velocity;
@@ -653,36 +658,69 @@ namespace CoreSystems
             var prevVelocity1 = (Vector3D)packet.PrevVelocity1;
             var maxSpeed = p.MaxSpeed;
             
-            if (packet.CurrentOwl > 0.0)
+            const double imperceptibleFactor = 0.2;
+            const double hardSnapFactor = 5.0;
+
+            var torpedoSpeed = p.Velocity.Length();
+            var distanceToServerHistory = Vector3D.Distance(p.Position, position);
+            var window = p.Info.AmmoDef.Const.PositionPatchWindow;
+
+            if (window <= 0 || distanceToServerHistory > torpedoSpeed * StepConst * hardSnapFactor || distanceToServerHistory < torpedoSpeed * StepConst * imperceptibleFactor)
             {
+                // Hard snap. We do this if the difference is acceptably small, or the difference is so big, we fuck off:
+                if (p.Info.Age > 60 && distanceToServerHistory > torpedoSpeed * StepConst * hardSnapFactor)
+                {
+                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"HS Pro {packet.NetId} delta {distanceToServerHistory:F}m");
+                }
+                p.Position = position;
+                p.LastPosition = lastPosition;
+                p.Velocity = velocity;
+                p.PrevVelocity0 = prevVelocity0;
+                p.PrevVelocity1 = prevVelocity1;
+
+                if (!Vector3D.IsZero(velocity))
+                {
+                    Vector3D.Normalize(ref velocity, out p.Direction);
+                }
+
+                Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
+                p.TravelMagnitude = p.Velocity * StepConst;
+            }
+            else
+            {
+                if (p.Info.Age > 60)
+                {
+                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"IN Pro {packet.NetId} delta {distanceToServerHistory:F}m");
+                }
+                
+                // We run some interpolation:
+                
                 LimitlessPdAdvProjectilePositionSyncExtrapolate(
-                    packet.CurrentOwl,
+                    window,
                     ref position, ref lastPosition,
                     ref velocity,
                     ref prevVelocity1,
                     ref prevVelocity0,
                     maxSpeed
                 );
+
+                p.Info.AdvSyncInterpolator = new AdvSyncProjectileInterpolator
+                {
+                    IsSet = true,
+                    Window = window,
+                    Ticks = 0,
+                    
+                    InitialPosition = p.Position, 
+                    InitialVelocity = p.Velocity,
+                    FinalPosition = position,
+                    FinalLastPosition =  lastPosition,
+                    FinalVelocity =  velocity,
+                    FinalPrevVelocity0 = prevVelocity0,
+                    FinalPrevVelocity1 =  prevVelocity1,
+                    VelPrev0 = p.PrevVelocity1,
+                    VelPrev1 = p.Velocity
+                };
             }
-
-            var positionDelta = Vector3D.Distance(position, p.Position);
-            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {packet.NetId} delta {positionDelta:F}m owl {packet.CurrentOwl:F1}t");
-
-            p.Position = position;
-            p.LastPosition = lastPosition;
-            p.Velocity = velocity;
-            p.PrevVelocity0 = prevVelocity0;
-            p.PrevVelocity1 = prevVelocity1;
-
-            if (!Vector3D.IsZero(velocity))
-            {
-                Vector3D.Normalize(ref velocity, out p.Direction);
-            }
-
-            Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
-            p.TravelMagnitude = p.Velocity * DeltaStepConst;
-            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
-            p.OffsetTarget = packet.OffsetTarget;
         }
 
         /// <summary>

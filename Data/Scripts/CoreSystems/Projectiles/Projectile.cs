@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
@@ -55,6 +54,7 @@ namespace CoreSystems.Projectiles
         internal int DeaccelRate;
         internal int TargetsSeen;
         internal int PruningProxyId = -1;
+        
         internal enum EndStates
         {
             None,
@@ -496,8 +496,7 @@ namespace CoreSystems.Projectiles
 
         }
         #endregion
-
-
+        
         #region Smart
         internal void RunSmart() // this is grossly inlined thanks to mod profiler... thanks keen.
         {
@@ -644,13 +643,15 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.Roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
                     {
-
                         double dist;
                         Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
                         if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3D.Dot(Direction, Position - TargetPosition) > 0)
                         {
                             if (!(Session.I.AdvSyncClient && aConst.FullSync))
+                            {
                                 OffSetTarget(true);
+                            }
+                            
                             TargetPosition += OffsetTarget;
                         }
                     }
@@ -750,6 +751,11 @@ namespace CoreSystems.Projectiles
                         var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                         s.RandOffsetDir *= aConst.OffsetRatio;
+                        
+                        if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && aConst.PositionUpdateOnRandomize)
+                        {
+                            SyncPositionServerProjectile();
+                        }
                     }
 
                     double distSqr;
@@ -2762,12 +2768,16 @@ namespace CoreSystems.Projectiles
 
             if (check || revOffsetDir)
             {
-
                 double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                 var up = Vector3D.CalculatePerpendicularVector(Direction);
                 var right = Vector3D.Cross(Direction, up);
                 s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                 s.RandOffsetDir *= smarts.OffsetRatio;
+                
+                if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && aConst.PositionUpdateOnRandomize)
+                {
+                    SyncPositionServerProjectile();
+                }
             }
 
             commandedAccel += speedLimitPerTick * s.RandOffsetDir;
@@ -3055,6 +3065,11 @@ namespace CoreSystems.Projectiles
             if (Info.PrevRelativeAge > -1)
             {
                 Info.Storage.LastOffsetTime = (int) Info.RelativeAge;
+            }
+            
+            if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && Info.AmmoDef.Const.PositionUpdateOnRandomize)
+            {
+                SyncPositionServerProjectile();
             }
         }
 
@@ -3739,6 +3754,29 @@ namespace CoreSystems.Projectiles
             }
 
             Session.I.GlobalProTargetSyncs[Info.AdvSyncId] = info;
+        }
+
+        internal void SyncPositionServerProjectile()
+        {
+            Session.I.LastProSyncSendTick = Session.I.Tick;
+            var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
+            posPacket.PType = PacketType.AdvProjectilePositionSyncs;
+            posPacket.NetId = Info.AdvSyncId;
+            posPacket.Position = Position;
+            posPacket.Velocity = Velocity;
+            posPacket.PrevVelocity0 = PrevVelocity0;
+            posPacket.PrevVelocity1 = PrevVelocity1;
+            posPacket.RandOffsetDir = Info.Storage.RandOffsetDir;
+            posPacket.OffsetTarget = OffsetTarget;
+
+            Session.I.PrunedPacketsToClient[Info.AdvSyncId] = new Session.PacketInfo
+            {
+                Function = Session.I.RewriteAdvPositionPacketOwl,
+                SpecialPlayerId = long.MinValue,
+                Packet = posPacket,
+                Entity = Info.Weapon.Comp.CoreEntity,
+                HasPooledResource = true
+            };
         }
 
         #endregion

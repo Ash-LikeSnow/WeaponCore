@@ -274,17 +274,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         displayText += NotInRangeStr;
                 }
                 else if (weapon.Comp.HasTurret && !weapon.Target.IsAligned && weapon.Target.ValidEstimate)
-                {
-                    var pro = weapon.Target.TargetObject as Projectile;
-                    if (pro == null)
-                    {
-                        displayText += $" PRO NULL {weapon.Target.HasTarget}";
-                    }
-                    else
-                    {
-                        displayText += RotatingStr + $" P {Vector3D.Distance(weapon.MyPivotPos, pro.Position):F}m";
-                    }
-                }
+                    displayText += RotatingStr;
                 else if (weapon.Comp.HasTurret && weapon.Target.CurrentState == Target.States.Fake)
                 {
                     if (weapon.Target.IsAligned)
@@ -293,7 +283,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         displayText += FakeCannotHit;
                 }
 
-                    var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
+                var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;
                 
                 var textInfo = _textDrawPool.Count > 0 ? _textDrawPool.Dequeue() :  new TextDrawRequest();

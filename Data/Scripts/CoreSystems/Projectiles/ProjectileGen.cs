@@ -122,7 +122,12 @@ namespace CoreSystems.Projectiles
 
                 info.FactionId = comp.Ai.AiOwnerFactionId;
                 info.OriginUp = !fromPacket ? muzzle.UpDirection : gen.OriginUp;
-                info.MaxTrajectory = !fromPacket ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
+                info.MaxTrajectory = fromPacket 
+                    ? gen.MaxTrajectory 
+                    : aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime
+                            ? aConst.TrajectoryStep * w.FireCounter
+                            : aConst.MaxTrajectory;
+                
                 info.MuzzleId = t != Kind.Virtual ? muzzle.MuzzleId : -1;
                 info.UniqueMuzzleId = muzzle.UniqueId;
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;

@@ -194,6 +194,8 @@ namespace CoreSystems.Projectiles
                             target.Reset(Session.I.Tick, Target.States.ProjetileIntercept);
                         }
 
+                        var prevPos = p.Position;
+
                         if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) 
                         {
                             var gravChange = (p.Gravity * aConst.GravityMultiplier) * (float)Session.I.DeltaStepConst;
@@ -281,6 +283,13 @@ namespace CoreSystems.Projectiles
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
+                        if (Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncInterpolator.IsSet)
+                        {
+                            info.AdvSyncInterpolator.Step(p);
+                            p.LastPosition = prevPos;
+                            p.TravelMagnitude = p.Position - prevPos;
+                        }
+
                         info.PrevDistanceTraveled = info.DistanceTraveled;
 
                         double distChanged;
@@ -312,27 +321,13 @@ namespace CoreSystems.Projectiles
                 else if (p.EndState == EndStates.AtMaxEarly) //Prevents projectiles that are AtMaxEarly from hanging infinitely
                     p.State = ProjectileState.Destroy;
 
-                if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0 && Session.I.Tick10)
+                if (Session.I.AdvSyncServer && aConst.FullSync && aConst.PositionSyncInterval > 0 && info.AdvSyncId != 0)
                 {
-                    Session.I.LastProSyncSendTick = Session.I.Tick;
-                    var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
-                    posPacket.PType = PacketType.AdvProjectilePositionSyncs;
-                    posPacket.NetId = info.AdvSyncId;
-                    posPacket.Position = p.Position;
-                    posPacket.Velocity = p.Velocity;
-                    posPacket.PrevVelocity0 = p.PrevVelocity0;
-                    posPacket.PrevVelocity1 = p.PrevVelocity1;
-                    posPacket.RandOffsetDir = p.Info.Storage.RandOffsetDir;
-                    posPacket.OffsetTarget = p.OffsetTarget;
-
-                    Session.I.PrunedPacketsToClient[info.AdvSyncId] = new Session.PacketInfo
+                    // With this formula, we can spread the packet load a little:
+                    if ((Session.I.Tick + info.AdvSyncId) % (ulong)aConst.PositionSyncInterval == 0UL)
                     {
-                        Function = Session.I.RewriteAdvPositionPacketOwl,
-                        SpecialPlayerId = long.MinValue,
-                        Packet = posPacket,
-                        Entity = info.Weapon.Comp.CoreEntity,
-                        HasPooledResource = true
-                    };
+                        p.SyncPositionServerProjectile();
+                    }
                 }
 
                 if (aConst.Ewar)
