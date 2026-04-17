@@ -224,23 +224,26 @@ namespace CoreSystems
             DsUtil.Start("av");
             if (!DedicatedServer) Av.End();
             DsUtil.Complete("av", true);
-
-             // TODO AdvSync if (AdvSyncServer && ProtoDeathSyncMonitor.Collection.Count > 0)
-             // TODO AdvSync     ProcessDeathSyncsForClients();
-
-            if (MpActive)  {
-                
+            
+            if (MpActive)
+            {
                 DsUtil.Start("network1");
 
-                if (GlobalProTargetSyncs.Count > 0)
-                    SendProjectileTargetSyncs();
-
-                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0) 
+                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
+                {
                     ProcessServerPacketsForClients();
-                if (PacketsToServer.Count > 0) 
+                }
+                
+                if (PacketsToServer.Count > 0)
+                {
                     ProccessClientPacketsForServer();
+                }
+                
                 if (EwarNetDataDirty)
+                {
                     SendEwaredBlocks();
+                }
+                
                 DsUtil.Complete("network1", true);
             }
         }

@@ -326,7 +326,7 @@ namespace CoreSystems.Projectiles
                     // With this formula, we can spread the packet load a little:
                     if ((Session.I.Tick + info.AdvSyncId) % (ulong)aConst.PositionSyncInterval == 0UL)
                     {
-                        p.SyncPositionServerProjectile();
+                        p.SendAdvSyncPositionPacket();
                     }
                 }
 

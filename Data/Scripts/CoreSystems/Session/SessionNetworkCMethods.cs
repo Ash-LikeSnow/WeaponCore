@@ -528,29 +528,26 @@ namespace CoreSystems
 
             var ammoType = w.System.AmmoTypes[spawn.AmmoIndex];
             var muzzle = w.Muzzles[spawn.MuzzleId];
-
-            var targetEnt = spawn.TargetId != 0 
-                ? MyEntities.GetEntityByIdOrDefault(spawn.TargetId) 
-                : null;
-
+            
             Projectiles.NewProjectiles.Add(new NewProjectile
             {
                 AmmoDef = ammoType.AmmoDef,
                 Muzzle = muzzle,
-                TargetEnt = targetEnt,
+                TargetEnt = null, // Recreated from the TargetInfo
                 Origin = spawn.Position,
                 OriginUp = muzzle.UpDirection,
                 Direction = spawn.Direction,
                 Velocity = spawn.Velocity,
                 MaxTrajectory = ammoType.AmmoDef.Const.MaxTrajectory,
                 Type = NewProjectile.Kind.AdvSync,
-                NetId = spawn.NetId,
+                AdvNetId = spawn.NetId,
                 SpawnDepth = spawn.SpawnDepth,
                 RandomState = spawn.RandomState,
+                AdvTargetInfo = spawn.TargetInfo
             });
         }
         
-        private void ClientAdvProjectileDeathSync(PacketObj data)
+        private void HandleClientAdvProjectileDeathSync(PacketObj data)
         {
             var packet = data.Packet;
             var death = (AdvProjectileDeathPacket)packet;
@@ -565,85 +562,32 @@ namespace CoreSystems
             }
             else
             {
-                Log.Line($"ClientAdvProjectileDeathSync: Pro with NetID {death.NetId} not found");
+                DebugLog.Warning($"ClientAdvProjectileDeathSync: Pro with NetID {death.NetId} not found");
             } 
         }
 
-        private void ClientAdvProjectileTargetSync(PacketObj data)
+        private void HandleClientAdvProjectileTargetSync(PacketObj data)
         {
             var packet = (AdvProjectileUpdateTargetPacket)data.Packet;
-            var sync = packet.Data;
 
             Projectile p;
-            if (!ProjectilesByNetId.TryGetValue(sync.NetId, out p))
+            if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
             {
-                Log.Line($"ClientAdvProjectileTargetSync: Pro with NetID {sync.NetId} not found");
+                DebugLog.Warning($"ClientAdvProjectileTargetSync: Pro with NetID {packet.NetId} not found");
                 return;
             }
 
-            object targetObj = null;
-            long topEntityId = 0;
-            switch (sync.TargetType)
-            {
-                case AdvTargetType.Entity:
-                    MyEntity ent;
-                    if (MyEntities.TryGetEntityById(sync.TargetId, out ent))
-                    {
-                        targetObj = ent;
-                        topEntityId = ent.GetTopMostParent().EntityId;
-                        MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} acquires entity {sync.TargetId}");
-                    }
-                    else
-                    {
-                        Log.Line($"ClientAdvProjectileTargetSync: Entity target {sync.TargetId} for {sync.NetId} not found");
-                    }
-                    
-                    break;
-                case AdvTargetType.Projectile:
-                    Projectile pTarget;
-                    if (ProjectilesByNetId.TryGetValue((ulong)sync.TargetId, out pTarget))
-                    {
-                        targetObj = pTarget;
-                        topEntityId = pTarget.Info.Weapon.BaseComp.TopEntity.EntityId;
-                        MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} acquires projectile {sync.TargetId}");
-                    }
-                    else
-                    {
-                        Log.Line($"ClientAdvProjectileTargetSync: Projectile target {sync.TargetId} for {sync.NetId} not found");
-                        MyAPIGateway.Utilities.ShowMessage("AA", $"ClientAdvProjectileTargetSync: Projectile target {sync.TargetId} for {sync.NetId} not found");
-                    }
-                    break;
-                case AdvTargetType.Fake:
-                    targetObj = null;
-                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} fake");
-                    break;
-                case AdvTargetType.None:
-                    p.Info.Target.Reset(I.Tick, Target.States.Acquired);
-                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Pro {sync.NetId} reset");
-                    return;
-                default:
-                    Log.Line($"ClientAdvProjectileTargetSync: Invalid AdvTargetType {sync.TargetType}");
-                    break;
-            }
-
-            p.Info.Target.Set(
-                targetObj, 
-                sync.TargetPos,
-                0,
-                0,
-                topEntityId,
-                sync.TargetType == AdvTargetType.Fake
-            );
+            packet.Info.ApplyTo(p);
         }
 
-        private void ClientAdvProjectilePositionSync(PacketObj data)
+        private void HandleClientAdvProjectilePositionSync(PacketObj data)
         {
             var packet = (AdvProjectilePositionPacket)data.Packet;
 
             Projectile p;
             if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
             {
-                Log.Line($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
                 return;
             }
             
@@ -668,10 +612,6 @@ namespace CoreSystems
             if (window <= 0 || distanceToServerHistory > torpedoSpeed * StepConst * hardSnapFactor || distanceToServerHistory < torpedoSpeed * StepConst * imperceptibleFactor)
             {
                 // Hard snap. We do this if the difference is acceptably small, or the difference is so big, we fuck off:
-                if (p.Info.Age > 60 && distanceToServerHistory > torpedoSpeed * StepConst * hardSnapFactor)
-                {
-                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"HS Pro {packet.NetId} delta {distanceToServerHistory:F}m");
-                }
                 p.Position = position;
                 p.LastPosition = lastPosition;
                 p.Velocity = velocity;
@@ -688,11 +628,6 @@ namespace CoreSystems
             }
             else
             {
-                if (p.Info.Age > 60)
-                {
-                    MyAPIGateway.Utilities.ShowMessage("AdvSync", $"IN Pro {packet.NetId} delta {distanceToServerHistory:F}m");
-                }
-                
                 // We run some interpolation:
                 
                 LimitlessPdAdvProjectilePositionSyncExtrapolate(

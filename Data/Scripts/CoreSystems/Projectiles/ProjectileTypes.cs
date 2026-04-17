@@ -513,9 +513,10 @@ namespace CoreSystems.Support
         internal float MaxTrajectory;
         internal Kind Type;
         internal double RelativeAge;
-        internal ulong NetId;
+        internal ulong AdvNetId;
         internal ushort SpawnDepth;
         internal XorShiftRandomStruct RandomState;
+        internal AdvSyncTargetInfo AdvTargetInfo;
     }
 
     internal class Fragments
@@ -656,7 +657,6 @@ namespace CoreSystems.Support
                     info.AdvSyncId = session.AdvSyncNetIdCounter++;
                     session.ProjectilesByNetId[info.AdvSyncId] = p;
 
-                    var targetEnt = frag.TargetEntity as MyEntity;
                     var spawnPacket = session.AdvProjectileSpawnPacketPool.Get();
                    
                     spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
@@ -667,7 +667,7 @@ namespace CoreSystems.Support
                     spawnPacket.Position = frag.Origin;
                     spawnPacket.Direction = frag.Direction;
                     spawnPacket.Velocity = frag.Velocity;
-                    spawnPacket.TargetId = targetEnt?.EntityId ?? 0;
+                    spawnPacket.TargetInfo = AdvSyncTargetInfo.FromProjectile(p);
                     spawnPacket.SpawnDepth = frag.Depth;
                     spawnPacket.RandomState = info.Random;
                     

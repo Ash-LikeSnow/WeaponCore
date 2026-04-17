@@ -191,7 +191,6 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> WeaponValuesMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<ulong, AdvProjectileUpdateTargetInfo> GlobalProTargetSyncs = new Dictionary<ulong, AdvProjectileUpdateTargetInfo>();
 
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();

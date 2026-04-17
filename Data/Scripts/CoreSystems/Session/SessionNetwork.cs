@@ -105,21 +105,21 @@ namespace CoreSystems
                     }
                     case PacketType.AdvProjectileDeathSyncs:
                     {
-                        ClientAdvProjectileDeathSync(packetObj);
+                        HandleClientAdvProjectileDeathSync(packetObj);
                         packetObj.Packet.CleanUp();
                         packetObj.Report.PacketValid = true;
                         break;
                     }
                     case PacketType.AdvProjectileUpdateTargetSyncs:
                     {
-                        ClientAdvProjectileTargetSync(packetObj);
+                        HandleClientAdvProjectileTargetSync(packetObj);
                         packetObj.Packet.CleanUp();
                         packetObj.Report.PacketValid = true;
                         break;
                     }
                     case PacketType.AdvProjectilePositionSyncs:
                     {
-                        ClientAdvProjectilePositionSync(packetObj);
+                        HandleClientAdvProjectilePositionSync(packetObj);
                         packetObj.Packet.CleanUp();
                         packetObj.Report.PacketValid = true;
                         break;

@@ -102,32 +102,6 @@ namespace CoreSystems
 
         #region ServerOnly
 
-        private void SendProjectileTargetSyncs()
-        {
-            foreach (var sync in GlobalProTargetSyncs.Values)
-            {
-                Projectile p;
-                if (!ProjectilesByNetId.TryGetValue(sync.NetId, out p))
-                {
-                    Log.Line($"SendProjectileTargetSyncs: Invalid projectile {sync.NetId}");
-                    continue;
-                }
-
-                var packet = AdvProjectileUpdateTargetPacketPool.Get();
-                packet.PType = PacketType.AdvProjectileUpdateTargetSyncs;
-                packet.Data = sync;
-
-                PacketsToClient.Add(new PacketInfo
-                {
-                    Packet = packet,
-                    Entity = p.Info.Weapon.Comp.CoreEntity,
-                    HasPooledResource = true
-                });
-            }
-
-            GlobalProTargetSyncs.Clear();
-        }
-
         internal object RewriteAdvPositionPacketOwl(object o1, object o2)
         {
             var packet = (AdvProjectilePositionPacket)o1;

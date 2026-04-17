@@ -1,4 +1,4 @@
-﻿using CoreSystems;
+using CoreSystems;
 using CoreSystems.Projectiles;
 using VRageMath;
 
@@ -23,11 +23,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         
         public void Step(Projectile projectile)
         {
-            if (Ticks == Window)
+            var t = ++Ticks / (double)Window;
+
+            if (Ticks >= Window)
             {
                 IsSet = false;
-                
-                // Snap other states:
 
                 projectile.Position = FinalPosition;
                 projectile.LastPosition = FinalLastPosition;
@@ -44,8 +44,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 
                 return;
             }
-
-            var t = ++Ticks / (double)Window;
 
             var u = Window * Session.StepConst;
             var v0 = InitialVelocity * u;

@@ -754,7 +754,7 @@ namespace CoreSystems.Projectiles
                         
                         if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && aConst.PositionUpdateOnRandomize)
                         {
-                            SyncPositionServerProjectile();
+                            SendAdvSyncPositionPacket();
                         }
                     }
 
@@ -2776,7 +2776,7 @@ namespace CoreSystems.Projectiles
                 
                 if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && aConst.PositionUpdateOnRandomize)
                 {
-                    SyncPositionServerProjectile();
+                    SendAdvSyncPositionPacket();
                 }
             }
 
@@ -3069,7 +3069,7 @@ namespace CoreSystems.Projectiles
             
             if (Session.I.AdvSyncServer && Info.AdvSyncId != 0 && Info.AmmoDef.Const.PositionUpdateOnRandomize)
             {
-                SyncPositionServerProjectile();
+                SendAdvSyncPositionPacket();
             }
         }
 
@@ -3178,7 +3178,7 @@ namespace CoreSystems.Projectiles
             
             if (session.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && targetChanged)
             {
-                SyncTargetServerProjectile();
+                SendAdvSyncTargetPacket();
             }
 
             return newTarget;
@@ -3760,70 +3760,43 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        internal void SyncTargetServerProjectile()
+        internal void SendAdvSyncTargetPacket()
         {
-            if (Info.AdvSyncId == 0)
-            {
-                return;
-            }
-
-            var target = Info.Target;
+            var packet = Session.I.AdvProjectileUpdateTargetPacketPool.Get();
             
-            var info = new AdvProjectileUpdateTargetInfo
+            packet.PType = PacketType.AdvProjectileUpdateTargetSyncs;
+            packet.NetId = Info.AdvSyncId;
+            packet.Info = AdvSyncTargetInfo.FromProjectile(this);
+
+            // This is leaking objects from the pool, but it's probably fine for now.
+            Session.I.PrunedPacketsToClient[Info.AdvSyncId] = new Session.PacketInfo
             {
-                NetId = Info.AdvSyncId
+                Packet = packet,
+                Entity = Info.Weapon.Comp.CoreEntity,
+                HasPooledResource = true
             };
-
-            var pTarget = target.TargetObject as Projectile;
-            if (pTarget != null)
-            {
-                info.TargetType = AdvTargetType.Projectile;
-                info.TargetId = (long)pTarget.Info.AdvSyncId;
-                info.TargetPos = pTarget.Position;
-            }
-            else
-            {
-                var ent = target.TargetObject as MyEntity;
-                if (ent != null)
-                {
-                    info.TargetType = AdvTargetType.Entity;
-                    info.TargetId = ent.EntityId;
-                    info.TargetPos = target.TargetPos;
-                }
-                else if (target.TargetState == Target.TargetStates.IsFake)
-                {
-                    info.TargetType = AdvTargetType.Fake;
-                    info.TargetId = -2;
-                    info.TargetPos = target.TargetPos;
-                }
-                else
-                {
-                    info.TargetType = AdvTargetType.None;
-                    info.TargetId = 0;
-                }
-            }
-
-            Session.I.GlobalProTargetSyncs[Info.AdvSyncId] = info;
         }
 
-        internal void SyncPositionServerProjectile()
+        internal void SendAdvSyncPositionPacket()
         {
             Session.I.LastProSyncSendTick = Session.I.Tick;
-            var posPacket = Session.I.AdvProjectilePositionPacketPool.Get();
-            posPacket.PType = PacketType.AdvProjectilePositionSyncs;
-            posPacket.NetId = Info.AdvSyncId;
-            posPacket.Position = Position;
-            posPacket.Velocity = Velocity;
-            posPacket.PrevVelocity0 = PrevVelocity0;
-            posPacket.PrevVelocity1 = PrevVelocity1;
-            posPacket.RandOffsetDir = Info.Storage.RandOffsetDir;
-            posPacket.OffsetTarget = OffsetTarget;
+            var packet = Session.I.AdvProjectilePositionPacketPool.Get();
+          
+            packet.PType = PacketType.AdvProjectilePositionSyncs;
+            packet.NetId = Info.AdvSyncId;
+            packet.Position = Position;
+            packet.Velocity = Velocity;
+            packet.PrevVelocity0 = PrevVelocity0;
+            packet.PrevVelocity1 = PrevVelocity1;
+            packet.RandOffsetDir = Info.Storage.RandOffsetDir;
+            packet.OffsetTarget = OffsetTarget;
 
+            // This is leaking objects from the pool, but it's probably fine for now.
             Session.I.PrunedPacketsToClient[Info.AdvSyncId] = new Session.PacketInfo
             {
                 Function = Session.I.RewriteAdvPositionPacketOwl,
                 SpecialPlayerId = long.MinValue,
-                Packet = posPacket,
+                Packet = packet,
                 Entity = Info.Weapon.Comp.CoreEntity,
                 HasPooledResource = true
             };

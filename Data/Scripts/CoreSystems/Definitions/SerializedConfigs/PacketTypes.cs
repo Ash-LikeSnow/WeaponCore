@@ -1,9 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using CoreSystems.Projectiles;
 using CoreSystems.Settings;
 using CoreSystems.Support;
 using ProtoBuf;
+using Sandbox.Game.Entities;
+using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems
@@ -159,6 +164,226 @@ namespace CoreSystems
         }
     }
 
+    internal enum AdvSyncFakeType : byte
+    {
+        Invalid = 0,
+        Manual = 1,
+        Painted = 2
+    }
+    
+    [ProtoContract]
+    internal struct AdvSyncTargetInfo
+    {
+        [ProtoMember(1)] public AdvTargetType Type;
+        /// <summary>
+        ///     The EntityId of the grid (directly taken from the <see cref="Target.TargetObject"/> when it is an entity.
+        /// </summary>
+        [ProtoMember(2)] public long EntityId;
+        /// <summary>
+        ///     The NetId of the projectile (directly taken from the <see cref="Target.TargetObject"/> when it is an AdvSync projectile.
+        /// </summary>
+        [ProtoMember(3)] public ulong ProjectileNetId;
+        /// <summary>
+        ///     The grid (actually, mik painted a suit once?) the fake target is attached to:
+        /// </summary>
+        [ProtoMember(4)] public long FakeEntityId;
+        /// <summary>
+        ///     The targeted point in the entity's local frame:
+        /// </summary>
+        [ProtoMember(5)] public Vector3D FakeLocalPos;
+        /// <summary>
+        ///     The current position of the target in the world frame:
+        /// </summary>
+        [ProtoMember(6)] public Vector3D FakeWorldPos;
+        /// <summary>
+        ///     The fake target type. Must be <see cref="AdvSyncFakeType.Manual"/> or <see cref="AdvSyncFakeType.Painted"/>.
+        /// </summary>
+        [ProtoMember(7)] public AdvSyncFakeType FakeType;
+        
+        [ProtoMember(8)] public Vector3D LinearVelocity;
+        [ProtoMember(9)] public Vector3D Acceleration;
+
+        /// <summary>
+        ///     Extracts target info from a projectile's current state.
+        /// </summary>
+        public static AdvSyncTargetInfo FromProjectile(Projectile p)
+        {
+            var info = new AdvSyncTargetInfo();
+            var target = p.Info.Target;
+
+            var pTarget = target.TargetObject as Projectile;
+            var ent = target.TargetObject as MyEntity;
+            
+            // This should pass:
+            if (ent != null && target.TargetState == Target.TargetStates.IsFake)
+            {
+                DebugLog.Error("AdvSyncTargetInfo$FromProjectile Uncleaned entity target on fake state");
+            }
+            
+            // Determines target type:
+            if (pTarget != null && pTarget.Info.AdvSyncId != 0)
+            {
+                info.Type = AdvTargetType.Projectile;
+                info.ProjectileNetId = pTarget.Info.AdvSyncId;
+                info.LinearVelocity = pTarget.Velocity;
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
+            }
+            else if (ent != null)
+            {
+                info.Type = AdvTargetType.Entity;
+                info.EntityId = ent.EntityId;
+                info.FakeWorldPos = target.TargetPos; // Reuse for entity center
+                
+                if (ent.Physics != null)
+                {
+                    info.LinearVelocity = ent.Physics.LinearVelocity;
+                    info.Acceleration = ent.Physics.LinearAcceleration;
+                }
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
+            }
+            else if (target.TargetState == Target.TargetStates.IsFake)
+            {
+                info.Type = AdvTargetType.Fake;
+                info.FakeWorldPos = target.TargetPos;
+
+                // Gets the actual needed information:
+                var storage = p.Info.Storage;
+               
+                if (storage.DummyTargets != null)
+                {
+                    var fakeTarget = !storage.ManualMode && storage.DummyTargets.PaintedTarget.EntityId != 0 
+                        ? storage.DummyTargets.PaintedTarget 
+                        : storage.DummyTargets.ManualTarget;
+                    
+                    info.FakeEntityId = fakeTarget.EntityId;
+                    info.FakeLocalPos = fakeTarget.LocalPosition;
+                    info.FakeType = fakeTarget.Type == Ai.FakeTarget.FakeType.Painted 
+                        ? AdvSyncFakeType.Painted 
+                        : AdvSyncFakeType.Manual;
+                    
+                    var fakeInfo = fakeTarget.FakeInfo;
+                    info.LinearVelocity = fakeInfo.LinearVelocity;
+                    info.Acceleration = fakeInfo.Acceleration;
+                    
+                    DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
+                }
+                else
+                {
+                    DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
+                }
+            }
+            else
+            {
+                info.Type = AdvTargetType.None;
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
+            }
+            
+            return info;
+        }
+
+        /// <summary>
+        ///     Applies this target info to a projectile on the client.
+        /// </summary>
+        public bool ApplyTo(Projectile p)
+        {
+            var target = p.Info.Target;
+            var storage = p.Info.Storage;
+            
+            switch (Type)
+            {
+                case AdvTargetType.Entity:
+                {
+                    MyEntity targetEnt;
+                    if (MyEntities.TryGetEntityById(EntityId, out targetEnt))
+                    {
+                        target.TargetObject = targetEnt;
+                        target.TargetState = Target.TargetStates.IsEntity;
+                        target.TargetPos = FakeWorldPos;
+                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Ent {targetEnt.EntityId}");
+                        return true;
+                    }
+
+                    DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo could not get Entity {EntityId}");
+                    return false;
+                }
+                case AdvTargetType.Projectile:
+                {
+                    Projectile targetPro;
+                    if (Session.I.ProjectilesByNetId.TryGetValue(ProjectileNetId, out targetPro))
+                    {
+                        target.TargetObject = targetPro;
+                        target.TargetState = Target.TargetStates.IsProjectile;
+                        target.TargetPos = targetPro.Position;
+                        //targetPro.Seekers.Add(p);
+                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Pro {targetPro.Info.AdvSyncId}");
+                        return true;
+                    }
+
+                    DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo could not get Projectile {ProjectileNetId}");
+                    return false;
+                }
+                case AdvTargetType.Fake:
+                {
+                    target.TargetObject = null;
+                    target.TargetState = Target.TargetStates.IsFake;
+                    target.TargetPos = FakeWorldPos;
+
+                    if (storage.DummyTargets == null)
+                    {
+                        storage.DummyTargets = new Ai.FakeTargets();
+                    }
+
+                    if (FakeType == AdvSyncFakeType.Invalid || (byte)FakeType > (byte)AdvSyncFakeType.Painted)
+                    {
+                        DebugLog.Critical("AdvSyncTargetInfo$ApplyTo got Invalid FakeType");
+                        return false;
+                    }
+
+                    var fakeTarget = FakeType == AdvSyncFakeType.Painted
+                        ? storage.DummyTargets.PaintedTarget
+                        : storage.DummyTargets.ManualTarget;
+
+                    fakeTarget.EntityId = FakeEntityId;
+                    fakeTarget.LocalPosition = FakeLocalPos;
+                    fakeTarget.FakeInfo.WorldPosition = FakeWorldPos;
+                    fakeTarget.FakeInfo.LinearVelocity = LinearVelocity;
+                    fakeTarget.FakeInfo.Acceleration = Acceleration;
+
+                    storage.ManualMode = FakeType == AdvSyncFakeType.Invalid;
+                    
+                    if (FakeEntityId != 0)
+                    {
+                        MyEntities.TryGetEntityById(FakeEntityId, out fakeTarget.TmpEntity);
+
+                        if (fakeTarget.TmpEntity == null)
+                        {
+                            DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo failed to get fake entity {FakeEntityId}");
+                            return false;
+                        }
+                    }
+                    
+                    DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId}: Type {FakeType}, FakeEntityId {FakeEntityId}, LocalPos {FakeLocalPos}, WorldPos {FakeWorldPos}, Resolved Ent: {fakeTarget.TmpEntity?.EntityId}");
+
+                    return true;
+                }
+                case AdvTargetType.None:
+                {
+                    target.Reset(Session.I.Tick, Target.States.ProjectileNewTarget);
+                    DebugLog.Debug("[ApplyTo] Fake applied: NONE");
+                    return true;
+                }
+                case AdvTargetType.Invalid:
+                default:
+                {
+                    throw new Exception($"Invalid AdvTargetType {Type}");
+                }
+            }
+        }
+    }
+
     [ProtoContract]
     public class AdvProjectileSpawnPacket : Packet
     {
@@ -170,7 +395,7 @@ namespace CoreSystems
         [ProtoMember(6)] internal Vector3D Velocity;
         [ProtoMember(7)] internal ulong NetId;
         [ProtoMember(8)] internal ushort SpawnDepth;
-        [ProtoMember(9)] internal long TargetId;
+        [ProtoMember(9)] internal AdvSyncTargetInfo TargetInfo;
         [ProtoMember(10)] internal XorShiftRandomStruct RandomState;
         
         public override void CleanUp()
@@ -184,7 +409,7 @@ namespace CoreSystems
             Velocity = Vector3D.Zero;
             NetId = 0;
             SpawnDepth = 0;
-            TargetId = 0;
+            TargetInfo = default(AdvSyncTargetInfo);
             RandomState = default(XorShiftRandomStruct);
         }
     }
@@ -203,30 +428,24 @@ namespace CoreSystems
 
     public enum AdvTargetType : byte
     {
-        None,
-        Entity,
-        Projectile,
-        Fake
+        Invalid = 0,
+        None = 1,
+        Entity = 2,
+        Projectile = 3,
+        Fake = 4
     }
 
     [ProtoContract]
-    public struct AdvProjectileUpdateTargetInfo
+    internal class AdvProjectileUpdateTargetPacket : Packet
     {
         [ProtoMember(1)] public ulong NetId;
-        [ProtoMember(2)] public long TargetId;
-        [ProtoMember(3)] public AdvTargetType TargetType;
-        [ProtoMember(4)] public Vector3D TargetPos;
-    }
-
-    [ProtoContract]
-    public class AdvProjectileUpdateTargetPacket : Packet
-    {
-        [ProtoMember(1)] public AdvProjectileUpdateTargetInfo Data;
+        [ProtoMember(2)] public AdvSyncTargetInfo Info;
 
         public override void CleanUp()
         {
             base.CleanUp();
-            Data = default(AdvProjectileUpdateTargetInfo);
+            NetId = 0;
+            Info = default(AdvSyncTargetInfo);
         }
     }
 
