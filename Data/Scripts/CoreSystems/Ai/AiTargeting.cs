@@ -953,6 +953,11 @@ namespace CoreSystems.Support
             return acquired;
         }
 
+        /// <summary>
+        ///     Used by smarts to re-acquire a new target. Doesn't concern weapons.
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
         internal static bool ReAcquireProjectile(Projectile p)
         {
             var info = p.Info;

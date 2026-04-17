@@ -3073,62 +3073,112 @@ namespace CoreSystems.Projectiles
             }
         }
 
+        /// <summary>
+        ///     Attempts to acquire a new target for the projectile when the current target is lost or invalid.
+        ///     Called from the smart guidance loop when seeking first target, re-acquiring after loss, or in zombie mode (wandering while seeking new target).
+        /// </summary>
+        /// <returns>True if a new target was successfully acquired. Otherwise, false.</returns>
         internal bool NewTarget()
         {
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
-            var s = Session.I;
-            var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-            storage.ChaseAge = (int) Info.RelativeAge;
+            var session = Session.I;
+            
+            // Determines if the projectile should give up chasing due to exceeding MaxTargets.
+            // Only applies if projectile previously had a target and MaxTargets is configured.
+            var giveUp = HadTarget != HadTargetState.None &&
+                         ++TargetsSeen > aConst.MaxTargets &&
+                         aConst.MaxTargets != 0;
+            
+            // Records the age when this target acquisition attempt started.
+            // Used to track how long we've been chasing this target for timeout purposes.
+            storage.ChaseAge = (int)Info.RelativeAge;
+            
+            // Disables target picking after this attempt to prevent continuous searching.
+            // Will be re-enabled by the guidance loop conditions if needed.
             storage.PickTarget = false;
+            
             var eTarget = Info.Target.TargetObject as MyEntity;
             var pTarget = Info.Target.TargetObject as Projectile;
+            
             var newTarget = true;
-
-            var oldTarget = Info.Target.TargetObject;
-            var projectilePriority = aConst.ProjectilesFirst && Info.Ai.EnemyProjectiles;
-            if (HadTarget != HadTargetState.Projectile && !projectilePriority)
+            
+            // Used to detect changes:
+            var oldTargetObject = Info.Target.TargetObject;
+            var oldTargetState = Info.Target.TargetState;
+            var oldTargetPos = Info.Target.TargetPos;
+            
+            // If true, projectiles are targeted first instead of grids.
+            var projectilesHavePriority = aConst.ProjectilesFirst && Info.Ai.EnemyProjectiles;
+            
+            if (HadTarget != HadTargetState.Projectile && !projectilesHavePriority)
             {
+                // Standard entity target acquisition path.
+                // Attempt to re-acquire using the AI's target finding logic.
                 if (giveUp || !Ai.ReacquireTarget(this))
                 {
-                    var activeEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && eTarget != null;
-                    var badEntity = !Info.AcquiredEntity && activeEntity && eTarget.MarkedForClose || Info.AcquiredEntity && activeEntity && (eTarget.GetTopMostParent()?.MarkedForClose ?? true);
-                    if (!giveUp && !Info.AcquiredEntity || Info.AcquiredEntity && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
+                    var isTargetingEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && 
+                                            eTarget != null;
+                    
+                    // If true, the entity target is dead.
+                    var isEntityDead = (!Info.AcquiredEntity && isTargetingEntity && eTarget.MarkedForClose) || 
+                                       (Info.AcquiredEntity && isTargetingEntity && (eTarget.GetTopMostParent()?.MarkedForClose ?? true));
+                    
+                    // Determines if we should reset the target state based on giveUp and NoTargetExpire settings.
+                    // Reset if not giving up and not acquired, or acquired and giving up, or NoTargetExpire is disabled, or the entity is dead.
+                    if ((!giveUp && !Info.AcquiredEntity) || (Info.AcquiredEntity && giveUp) || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || isEntityDead)
                     {
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
-                            Info.Target.Reset(s.Tick, Target.States.ProjectileNewTarget);
+                        {
+                            Info.Target.Reset(session.Tick, Target.States.ProjectileNewTarget);
+                        }
                     }
+                    
                     newTarget = false;
                 }
-
             }
             else
             {
-
+                // Projectile target acquisition path (higher priority or previous target was projectile).
+                // Removes from the previous projectile's seekers:
                 if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
+                {
                     pTarget?.Seekers.Remove(this);
+                }
 
-                if (giveUp || !Ai.ReAcquireProjectile(this))
+                // Attempts to re-acquire a projectile target:
+                if (giveUp || !Ai.ReAcquireProjectile(this)) // ReAcquireProjectile is a smart-only target acquire logic (similar to the weapon AcquireProjectile, but simpler)
                 {
                     if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
-                        Info.Target.Reset(s.Tick, Target.States.ProjectileNewTarget);
+                    {
+                        Info.Target.Reset(session.Tick, Target.States.ProjectileNewTarget);
+                    }
 
                     newTarget = false;
                 }
             }
-
-            if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTarget != Info.Target.TargetObject))
-                s.Projectiles.AddProjectileTargets(this);
+            
+            // For sync. It is set if anything changed (object, state, position).
+            var targetChanged = oldTargetObject != Info.Target.TargetObject ||
+                            oldTargetState != Info.Target.TargetState ||
+                            (Info.Target.TargetState == Target.TargetStates.IsFake && !oldTargetPos.Equals(Info.Target.TargetPos, 1e-3));
+            
+            // Registers this projectile as a target.
+            // Only for projectiles with health (not beams) and only when target state changes to fake or entity or projectile.
+            if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTargetObject != Info.Target.TargetObject))
+            {
+                session.Projectiles.AddProjectileTargets(this);
+            }
 
             if (newTarget)
             {
                 Info.LastTarget = Info.Target.TargetObject;
                 Info.LastTopTargetId = Info.Target.TopEntityId;
-
-                if (s.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && oldTarget != Info.Target.TargetObject)
-                {
-                    SyncTargetServerProjectile();
-                }
+            }
+            
+            if (session.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && targetChanged)
+            {
+                SyncTargetServerProjectile();
             }
 
             return newTarget;
