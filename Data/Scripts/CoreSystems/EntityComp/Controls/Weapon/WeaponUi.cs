@@ -9,6 +9,8 @@ using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 
 namespace CoreSystems
 {
@@ -349,21 +351,6 @@ namespace CoreSystems
             Weapon.WeaponComponent.RequestSetValue(comp, "Override", value, Session.I.PlayerId);
         }
 
-        internal static bool GetAngularTracking(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
-            return comp.Data.Repo.Values.Set.Overrides.AngularTracking;
-        }
-
-        internal static void RequestAngularTracking(IMyTerminalBlock block, bool newValue)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "AngularTracking", value, Session.I.PlayerId);
-        }
         internal static bool GetUnowned(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -1174,5 +1161,97 @@ namespace CoreSystems
             new MyTerminalControlComboBoxItem { Key = 6, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeJumping")) },
             new MyTerminalControlComboBoxItem { Key = 7, Value = MyStringId.GetOrCompute(Localization.GetText("SubtypeSteering")) },
         };
+        
+        internal static bool GetTargetClosest(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.TargetClosest;
+        }
+
+        internal static void RequestSetTargetClosest(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            Weapon.WeaponComponent.RequestSetValue(comp, "TargetClosest", newValue ? 1 : 0, Session.I.PlayerId);
+        }
+
+        internal static bool GetEnableFireDistribution(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.EnableFireDistribution;
+        }
+
+        internal static void RequestSetEnableFireDistribution(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var currentValue = comp.Data.Repo.Values.Set.Overrides.EnableFireDistribution;
+
+            if (newValue != currentValue)
+            {
+                if (Session.I.IsClient && Session.I.MpActive)
+                {
+                    comp.Data.Repo.Values.Set.Overrides.EnableFireDistribution = newValue;
+                }
+
+                Weapon.WeaponComponent.RequestSetValue(comp, "EnableFireDistribution", newValue ? 1 : 0, Session.I.PlayerId);
+                
+                // Pls gib
+                comp.Cube.UpdateTerminalForced(); 
+            }
+        }
+        
+        internal static float GetTurnCost(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionSupport.MaxTurnCost;
+            return comp.Data.Repo.Values.Set.Overrides.TurnCost;
+        }
+
+        internal static void RequestSetTurnCost(IMyTerminalBlock block, float newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            var roundedInt = (int)Math.Round(newValue);
+            Weapon.WeaponComponent.RequestSetValue(comp, "TurnCost", roundedInt, Session.I.PlayerId);
+        }
+        
+        internal static float GetMinTurnCost(IMyTerminalBlock block)
+        {
+            return 1;
+        }
+        
+        internal static float GetMaxTurnCost(IMyTerminalBlock block)
+        {
+            return FireDistributionSupport.MaxTurnCost;
+        }
+
+        internal static float GetMinLockTime(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return FireDistributionSupport.MinMinLockTime;
+            return comp.Data.Repo.Values.Set.Overrides.MinLockTime;
+        }
+
+        internal static void RequestSetMinLockTime(IMyTerminalBlock block, float newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            var roundedInt = (int)Math.Round(newValue);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MinLockTime", roundedInt, Session.I.PlayerId);
+        }
+        
+        internal static float GetMinMinLockTime(IMyTerminalBlock block)
+        {
+            return FireDistributionSupport.MinMinLockTime;
+        }
+        
+        internal static float GetMaxMinLockTime(IMyTerminalBlock block)
+        {
+            return FireDistributionSupport.MaxMinLockTime;
+        }
     }
 }

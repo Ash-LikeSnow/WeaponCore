@@ -188,20 +188,6 @@ namespace CoreSystems
                 }
             }
 
-            foreach (var p in ProSyncLineDebug)
-            {
-                for (var i = p.Value.Count - 1; i >= 0; i--)
-                {
-                    var info = p.Value[i];
-                    DsDebugDraw.DrawLine(info.Line, info.Color, 0.35f);
-                    if (Tick - info.CreateTick > 3600)
-                    {
-                        p.Value.RemoveAt(i);
-                    }
-                }
-            }
-
-
             foreach (var p in ApproachStageChangeDebug)
             {
                 var draw = Tick - p.Value.CreateTick <= 180;
@@ -243,6 +229,26 @@ namespace CoreSystems
                     ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}", 2000, "White");
                 else
                     ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2} - {ApproachDebug.TimeSinceSpawn}:{ApproachDebug.NextSpawn}", 2000, "White");
+            }
+
+            if (PersistentDebugDraws.Count > 0)
+            {
+                var removeList = new List<KeyValuePair<object, PersistentDebugDraw>>();
+
+                foreach (var kvp in PersistentDebugDraws)
+                {
+                    if (!kvp.Value.RenderAndKeepAlive())
+                    {
+                        removeList.Add(kvp);
+                    }
+                }
+
+                foreach (var kvp in removeList)
+                {
+                    PersistentDebugDraw temp;
+                    PersistentDebugDraws.TryRemove(kvp.Key, out temp);
+                    temp.OnDestroy();
+                }
             }
         }
 
@@ -853,7 +859,7 @@ namespace CoreSystems
                     }
 
                     if (cube.BlockDefinition?.Id.SubtypeName != null)
-                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
+                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName + " (" + cube.BlockDefinition.Context.ModName + ")");                    
 
                     if (DedicatedServer)
                     {

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRageMath;
@@ -71,6 +72,7 @@ namespace CoreSystems
             internal bool SingleClient;
             internal long SpecialPlayerId;
             internal bool Unreliable;
+            internal bool HasPooledResource;
         }
 
         internal class ErrorPacket
@@ -99,86 +101,16 @@ namespace CoreSystems
         #endregion
 
         #region ServerOnly
-        private void SendProjectilePosSyncs()
+
+        internal object RewriteAdvPositionPacketOwl(object o1, object o2)
         {
-            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPositionPacket ();
-            
-            var latencyMonActive = Tick - LastPongTick < 120;
-            LastProSyncSendTick = Tick;
-
-            foreach (var pSync in GlobalProPosSyncs)
-            {
-                var sync = pSync.Value;
-                if (latencyMonActive)
-                    packet.Data.Add(sync);
-
-                foreach (var p in sync.Collection)
-                    ProtoWeaponProSyncPosPool.Push(p);
-            }
-
-            GlobalProPosSyncs.Clear();
-
-            if (!latencyMonActive)
-            {
-                Log.Line($"PingPong not active");
-                ProtoWeaponProPosPacketPool.Push(packet);
-                return;
-            }
-
-            packet.PType = PacketType.ProjectilePosSyncs;
-            PrunedPacketsToClient[packet] = new PacketInfo
-            {
-                Function = RewriteAddClientLatency,
-                SpecialPlayerId = long.MinValue,
-                Packet = packet,
-                Entity = null,
-            };
-        }
-
-        private void SendProjectileTargetSyncs()
-        {
-            var packet = ProtoWeaponProTargetPacketPool.Count > 0 ? ProtoWeaponProTargetPacketPool.Pop() : new ProjectileSyncTargetPacket();
-
-            var latencyMonActive = Tick - LastPongTick < 120;
-            LastProSyncSendTick = Tick;
-
-            foreach (var pSync in GlobalProTargetSyncs)
-            {
-                var sync = pSync.Value;
-                if (latencyMonActive)
-                    packet.Data.Add(sync);
-
-                foreach (var p in sync.Collection)
-                    ProtoWeaponProSyncTargetPool.Push(p);
-            }
-
-            GlobalProPosSyncs.Clear();
-
-            if (!latencyMonActive)
-            {
-                Log.Line($"PingPong not active");
-                ProtoWeaponProTargetPacketPool.Push(packet);
-                return;
-            }
-
-            packet.PType = PacketType.ProjectileTargetSyncs;
-            PrunedPacketsToClient[packet] = new PacketInfo
-            {
-                Function = null,
-                Packet = packet,
-                Entity = null,
-            };
-        }
-
-        private object RewriteAddClientLatency(object o1, object o2)
-        {
-            var proSync = (ProjectileSyncPositionPacket)o1;
+            var packet = (AdvProjectilePositionPacket)o1;
             var targetSteamId = (ulong)o2;
 
             TickLatency tickLatency;
             PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
-            proSync.CurrentOwl = tickLatency.CurrentLatency;
-            return proSync;
+            packet.CurrentOwl = tickLatency.CurrentLatency;
+            return packet;
         }
 
         internal void SendConstruct(Ai ai)
@@ -210,6 +142,7 @@ namespace CoreSystems
                 {
                     Entity = ai.TopEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendConstruct should never be called on Client");
@@ -245,6 +178,7 @@ namespace CoreSystems
                     {
                         Entity = ai.TopEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else SendConstruct(ai);
@@ -279,6 +213,7 @@ namespace CoreSystems
                 {
                     Entity = ai.TopEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendAiData should never be called on Client");
@@ -316,6 +251,7 @@ namespace CoreSystems
                 {
                     Entity = w.BaseComp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendWeaponAmmoData should never be called on Client");
@@ -349,6 +285,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -384,6 +321,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -419,6 +357,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -454,6 +393,7 @@ namespace CoreSystems
                 {
                     Entity = comp.CoreEntity,
                     Packet = iPacket,
+                    HasPooledResource = true
                 };
             }
             else Log.Line("SendComp should never be called on Client");
@@ -491,6 +431,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -532,6 +473,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -573,6 +515,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -614,6 +557,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -656,6 +600,7 @@ namespace CoreSystems
                     {
                         Entity = comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -699,6 +644,7 @@ namespace CoreSystems
                     {
                         Entity = w.Comp.CoreEntity,
                         Packet = iPacket,
+                        HasPooledResource = true
                     };
                 }
                 else
@@ -1462,12 +1408,24 @@ namespace CoreSystems
         internal void RecordClientLatency(PingPacket clientPong)
         {
             var rtt = RelativeTime - clientPong.RelativeTime;
-            var owl = (float)Math.Max(Math.Round(rtt + 1d / 2d), 2d);
+            var rawOwl = (float)Math.Max(Math.Round(rtt / (2.0 * StepConst)), 2d);
 
             TickLatency oldLatency;
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
 
-            PlayerTickLatency[clientPong.SenderId] = new TickLatency { CurrentLatency = owl, PreviousLatency = oldLatency.CurrentLatency };
+            // RelativeTime increments discretely (once per tick), so rawOwl is quantized.
+            // We are extrapolating the position in continuous-time on the client, so we need to smooth over this value jittering between two integers.
+            const float alpha = 0.15f;
+            var smoothedOwl = oldLatency.CurrentLatency > 0.0f
+                ? alpha * rawOwl + (1.0f - alpha) * oldLatency.CurrentLatency
+                : rawOwl;
+
+            PlayerTickLatency[clientPong.SenderId] = new TickLatency
+            {
+                CurrentLatency = smoothedOwl,
+                PreviousLatency = oldLatency.CurrentLatency
+            };
+            
             LastPongTick = Tick;
         }
     }

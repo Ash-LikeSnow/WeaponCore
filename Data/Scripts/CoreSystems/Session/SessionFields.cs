@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,6 +28,8 @@ using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.WeaponSystem;
@@ -103,6 +105,10 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<BetterInventoryItem> BetterInventoryItems = new MyConcurrentPool<BetterInventoryItem>(128);
         internal readonly MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>> PhysicalItemListPool = new MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>>(256, list => list.Clear());
         internal readonly MyConcurrentPool<MyConcurrentList<BetterInventoryItem>> BetterItemsListPool = new MyConcurrentPool<MyConcurrentList<BetterInventoryItem>>(256, list => list.Clear());
+        internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectileUpdateTargetPacket> AdvProjectileUpdateTargetPacketPool = new MyConcurrentPool<AdvProjectileUpdateTargetPacket>(32);
+        internal readonly MyConcurrentPool<AdvProjectilePositionPacket> AdvProjectilePositionPacketPool = new MyConcurrentPool<AdvProjectilePositionPacket>(64);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
@@ -110,18 +116,12 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(128);
-        internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(128);
-        internal readonly Stack<ProtoProTarget> ProtoWeaponProSyncTargetPool = new Stack<ProtoProTarget>(32);
-
-        internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(128);
-        internal readonly Stack<ProjectileSyncTargetPacket> ProtoWeaponProTargetPacketPool = new Stack<ProjectileSyncTargetPacket>(32);
-
+        
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(128);
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
         internal readonly Stack<DroneInfo> DroneInfoPool = new Stack<DroneInfo>(128);
         internal readonly Stack<ClosestObstacles> ClosestObstaclesPool = new Stack<ClosestObstacles>(64);
-        internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(32);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
         internal readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
@@ -159,6 +159,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
         internal readonly ConcurrentDictionary<MyCubeGrid, TopMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, TopMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
+        internal readonly List<FireDistributionManager> PendingFireDistributionManagers = new List<FireDistributionManager>();
         
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
@@ -189,8 +190,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, CoreSettings.ServerSettings.AmmoOverride>();
         internal readonly Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride> WeaponValuesMap = new Dictionary<WeaponDefinition, CoreSettings.ServerSettings.WeaponOverride>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
-        internal readonly Dictionary<uint, ProtoProTargetSync> GlobalProTargetSyncs = new Dictionary<uint, ProtoProTargetSync>();
+        internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
 
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
@@ -230,8 +230,8 @@ namespace CoreSystems
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
         internal readonly List<CoreComponent> CompsDelayedInit = new List<CoreComponent>();
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
-        internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
         internal readonly ConcurrentDictionary<ulong, ApproachStageDebug> ApproachStageChangeDebug = new ConcurrentDictionary<ulong, ApproachStageDebug>();
+        internal readonly ConcurrentDictionary<object, PersistentDebugDraw> PersistentDebugDraws = new ConcurrentDictionary<object, PersistentDebugDraw>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
@@ -294,11 +294,11 @@ namespace CoreSystems
         private readonly List<MyKeys> _pressedKeys = new List<MyKeys>();
         private readonly List<MyMouseButtonsEnum> _pressedButtons = new List<MyMouseButtonsEnum>();
         private readonly List<MyEntity> _tmpNearByBlocks = new List<MyEntity>();
-
+        
 
         internal readonly Spectrum Spectrum;
 
-        internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
+        // TODO AdvSync internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -342,6 +342,10 @@ namespace CoreSystems
         /// WcApi function for checking if a weapon's target is allowed. Defaults true if null.
         /// </summary>
         internal Func<IMyTerminalBlock, int, MyEntity, bool> ValidateWeaponTargetFunc = null;
+        /// <summary>
+        /// WcApi filters for the subsystem blocks. Left null until a mod registers a filter.
+        /// </summary>
+        internal ApiBackend.ModApiSubsystemTargetingCustomization SubsystemTargetingCustomization = null;
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
@@ -421,6 +425,7 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
+        internal ulong AdvSyncNetIdCounter = 1; // 0 used as the sentinel value
 
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;
@@ -450,9 +455,6 @@ namespace CoreSystems
         internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;
-        internal bool AdvSyncClient;
-        internal bool AdvSyncServer;
-        internal bool AdvSync;
         internal bool IsServer;
         internal bool BaseControlsActions;
         internal bool EarlyInitOver;
@@ -511,6 +513,9 @@ namespace CoreSystems
         internal bool DirtyGrid;
         internal bool AuthorConnected;
         internal bool QueueSeamless;
+        internal bool AdvSync;
+        internal bool AdvSyncServer;
+        internal bool AdvSyncClient;
 
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {

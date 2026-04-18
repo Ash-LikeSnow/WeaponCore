@@ -58,9 +58,7 @@ namespace CoreSystems.Platform
                 var validPainter = !Session.I.Settings.Enforcement.ProhibitHUDPainter && Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero;
                 var fakeTarget = validPainter && preferPainted ? fakeTargets.PaintedTarget : validManual ? fakeTargets.ManualTarget : null;
                 if (fakeTarget == null)
-                {
                     return false;
-                }
 
                 fakeTargetInfo = fakeTarget.LastInfoTick != Session.I.Tick ? fakeTarget.GetFakeTargetInfo(Comp.MasterAi) : fakeTarget.FakeInfo;
             }

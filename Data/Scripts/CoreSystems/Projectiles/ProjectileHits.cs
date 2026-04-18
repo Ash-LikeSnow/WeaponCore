@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Support;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
@@ -59,6 +60,13 @@ namespace CoreSystems.Projectiles
             var aAvoidSelf = false;
             var aAvoidTarget = false;
             var aPhaseSelf = false;
+            
+            // Drift calculation only for dumb fire projectiles launched by a turret or fixed weapon.
+            // P.S. The best solution would be fixing it upstream. Maybe in the future?
+            var driftCompensationVelocity = p.Info.IsFragment || aConst.IsSmart || !aConst.AmmoSkipAccel 
+                ? Vector3D.Zero
+                : p.Info.ShooterVel;
+            
             if (s.ApproachInfo != null && s.ApproachInfo.Active)
             {
                 var approach = aConst.Approaches[s.RequestedStage];
@@ -240,6 +248,10 @@ namespace CoreSystems.Projectiles
                 var voxel = ent as MyVoxelBase;
                 var destroyable = ent as IMyDestroyableObject;
 
+                // Beam recomputed for continuous collision resolution.
+                // Calculated below, when the target is an enemy grid.
+                var crBeam = p.Beam;
+                
                 if (voxel != null && voxel == voxel?.RootVoxel && !ignoreVoxels)
                 {
                     VoxelIntersectBranch voxelState = VoxelIntersectBranch.None;
@@ -460,7 +472,67 @@ namespace CoreSystems.Projectiles
                         }
                     }
                     else
-                        grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
+                    {
+                        var targetVel = (Vector3D)grid.Physics.LinearVelocity;
+
+                        // Continuous collision detection @home:
+                        crBeam = new LineD(
+                            beamFrom + driftCompensationVelocity * Session.I.DeltaStepConst,
+                            beamTo - (targetVel - driftCompensationVelocity) * Session.I.DeltaStepConst
+                        );
+
+                        grid.RayCastCells(crBeam.From, crBeam.To, hitEntity.Vector3ICache, null, true, true);
+
+                        /*
+                        MyAPIGateway.Utilities.ShowMessage("A", $"iF: {p.Info.IsFragment}, wv: {driftCompensationVelocity.Length():F}, tv: {targetVel.Length():F}, d1: {Vector3D.Distance(beamFrom, crBeam.From):F}, d2: {Vector3D.Distance(beamTo, crBeam.To):F}");
+                        
+                        var txWorldTargetCr = MatrixD.Invert(grid.WorldMatrix);
+                        var beamFromTarget = Vector3D.Transform(beamFrom, txWorldTargetCr);
+                        var beamToTarget = Vector3D.Transform(beamTo, txWorldTargetCr);
+                        var crBeamFromTarget = Vector3D.Transform(crBeam.From, txWorldTargetCr);
+                        var crBeamToTarget = Vector3D.Transform(crBeam.To, txWorldTargetCr);
+
+                        var cells = hitEntity.Vector3ICache.ToList();
+                        Session.PersistentDebugDraw.GetOrAttachForEntity(grid, null, int.MaxValue).With(() =>
+                        {
+                            var txTargetWorld = grid.WorldMatrix;
+                            
+                            // Previous WC resolution:
+                            DsDebugDraw.DrawLine(
+                                Vector3D.Transform(beamFromTarget, txTargetWorld),
+                                Vector3D.Transform(beamToTarget, txTargetWorld),
+                                Color.Red.ToVector4(),
+                                0.25f
+                            );
+                            
+                            // New collision resolution:
+                            DsDebugDraw.DrawLine(
+                                Vector3D.Transform(crBeamFromTarget, txTargetWorld),
+                                Vector3D.Transform(crBeamToTarget, txTargetWorld),
+                                Color.White.ToVector4(),
+                                0.25f
+                            );
+
+                            var blocks = new HashSet<IMySlimBlock>();
+                            foreach (var vector3I in cells)
+                            {
+                                var slim = (grid as IMyCubeGrid).GetCubeBlock(vector3I);
+
+                                if (slim != null && blocks.Add(slim))
+                                {
+                                    var gridSize = grid.GridSize;
+                                    
+                                    var obb = new MyOrientedBoundingBoxD(new BoundingBoxD(
+                                        slim.Min * gridSize - gridSize / 2f,
+                                        slim.Max * gridSize + gridSize / 2f),
+                                        grid.WorldMatrix
+                                    );
+                                    
+                                    DsDebugDraw.DrawBox(obb, Color.White);
+                                }
+                            }
+                        });*/
+                    }
 
                     if (!offensiveEwar && !fieldActive)
                     {
@@ -493,7 +565,7 @@ namespace CoreSystems.Projectiles
                         hitEntity.Info = info;
                         hitEntity.Entity = hitEnt;
                         hitEntity.ShieldEntity = ent;
-                        hitEntity.Intersection = p.Beam;
+                        hitEntity.Intersection = crBeam;
                         hitEntity.SphereCheck = !lineCheck;
                         hitEntity.PruneSphere = p.PruneSphere;
                         hitEntity.SelfHit = entIsSelf;
@@ -519,40 +591,106 @@ namespace CoreSystems.Projectiles
                     s.Obstacle.AvoidSphere = new BoundingSphereD(closestFutureEnt.PositionComp.WorldAABB.Center, closestFutureEnt.PositionComp.LocalVolume.Radius + aConst.FutureIntersectionRange);
                 }
             }
+          
+            var targetProjectile = target.TargetObject as Projectile;
 
-            if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)
+            if (target.TargetState == Target.TargetStates.IsProjectile && targetProjectile != null && targetProjectile.State != ProjectileState.Dead && aConst.NonAntiSmartEwar && !projetileInShield)
             {
-                var detonate = p.State == ProjectileState.Detonate;
-                var hitTolerance = detonate ? aConst.EndOfLifeRadius : aConst.ByBlockHitRadius > aConst.CollisionSize ? aConst.ByBlockHitRadius : aConst.CollisionSize;
-                var useLine = lineCheck && !detonate && aConst.ByBlockHitRadius <= 0;
-                var projectile = (Projectile)target.TargetObject;
-                var sphere = new BoundingSphereD(projectile.Position, aConst.CollisionSize);
-                sphere.Include(new BoundingSphereD(projectile.LastPosition, 1));
-
-                bool rayCheck = false;
-                if (useLine)
-                {
-                    var dist = sphere.Intersects(new RayD(p.LastPosition, p.Direction));
-                    if (dist <= hitTolerance || isBeam && dist <= beamLen)
-                        rayCheck = true;
-                }
-
-                var testSphere = p.PruneSphere;
-                testSphere.Radius = hitTolerance;
-
-                if (rayCheck || sphere.Intersects(testSphere))
-                {
-                    ProjectileHit(p, projectile, lineCheck, ref p.Beam);
-                }
-            }
+                double bulletRadius;
                 
+                // LineShape is deprecated, and we use some fallback calculations to reproduce the old behavior:
+                if (aConst.CollisionIsLine)
+                {
+                    bulletRadius = p.State == ProjectileState.Detonate 
+                        ? aConst.EndOfLifeRadius 
+                        : aConst.ByBlockHitRadius > aConst.CollisionSize
+                            ? aConst.ByBlockHitRadius 
+                            : aConst.CollisionSize;
+                }
+                else
+                {
+                    // CollisionSize is diameter. This is the correct expression:
+                    bulletRadius = p.State == ProjectileState.Detonate 
+                        ? aConst.EndOfLifeRadius 
+                        : aConst.ByBlockHitRadius > 0.5 * aConst.CollisionSize
+                            ? aConst.ByBlockHitRadius 
+                            : 0.5 * aConst.CollisionSize;
+                }
+
+                double targetRadius;
+                var targetAmmo = targetProjectile.Info.AmmoDef.Const;
+                
+                // The previous implementation completely ignored the actual size of the target and did this nonsense:
+                if (targetAmmo.CollisionIsLine)
+                {
+                    // This calculation is really fucking random...
+                    var sphere = new BoundingSphereD(targetProjectile.Position, aConst.CollisionSize);
+                    sphere.Include(new BoundingSphereD(targetProjectile.LastPosition, 1));
+                    targetRadius = sphere.Radius;
+                }
+                else
+                {
+                    // CollisionSize is diameter:
+                    targetRadius = 0.5 * targetAmmo.CollisionSize;
+                }
+                    
+                #region Sphere-Sphere Continuous Collision Detection
+                
+                /* 
+                 * Simple and cheap mnethod for detecting the collision under the continuous-time framework the aim predictors work in.
+                 * For spheres and capsules, we can calculate the distance of closest approach between the current tick and the next, analytically.
+                 * (Note: This makes the algorithm forward-looking as opposed to the grid one)
+                 *  - For spheres, if the distance of closest approach is less than the sum of their radii, then we have a collision.
+                 *  - We don't have a capsule shape, because they are not needed, but the same type of logic can stated for them, although the needed algorithm would be a bit larger.
+                 */
+                
+                var dp = p.LastPosition + driftCompensationVelocity * Session.I.DeltaStepConst - targetProjectile.LastPosition;
+                var dv = (p.Position - p.LastPosition - targetProjectile.Position + targetProjectile.LastPosition) / Session.I.DeltaStepConst;
+
+                double closestApproachDistanceSqr; // Inside the [0, dt] range
+                
+                var dvdv = Vector3D.Dot(dv, dv);
+                
+                if (Math.Abs(dvdv) < 1e-6)
+                {
+                    // Very weird case where projectiles are speed-matched.
+                    // We will treat it as the collision tick.
+                    closestApproachDistanceSqr = Vector3D.Dot(dp, dp);
+                }
+                else
+                {
+                    var dpdv = Vector3D.Dot(dp, dv);
+                    
+                    // We clamp t to the interval between this tick and the next tick.
+                    // if t is negative, the collision has already passed and the closest approach is at t=0.
+                    var timeOfClosestApproach = MathHelperD.Clamp(-dpdv / dvdv, 0.0, Session.I.DeltaStepConst);
+                    closestApproachDistanceSqr = Vector3D.Dot(dp, dp) + dvdv * (timeOfClosestApproach * timeOfClosestApproach) + 2.0 * dpdv * timeOfClosestApproach;
+                }
+                
+                // The two things are interacting if their bounding spheres overlap:
+                var interactionThreshold = bulletRadius + targetRadius;
+
+                if (closestApproachDistanceSqr < interactionThreshold * interactionThreshold)
+                {
+                    ProjectileHit(p, targetProjectile, lineCheck, ref p.Beam);
+                }
+
+                #endregion
+            }
+
             if (lineCheck)
+            {
                 p.MySegmentList.Clear();
+            }
             else
+            {
                 entityCollection.Clear();
+            }
 
             if (info.HitList.Count > 0)
+            {
                 FinalizeHits(p);
+            }
         }
 
         internal void FinalizeHits(Projectile p)
@@ -592,7 +730,7 @@ namespace CoreSystems.Projectiles
             var aConst = p.Info.AmmoDef.Const;
 
             var isBeam = aConst.IsBeamWeapon;
-            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
+            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity1;
 
             var firstHitEntity = hit ? info.HitList[0] : null;
             var hitDist = hit ? firstHitEntity?.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
@@ -660,7 +798,8 @@ namespace CoreSystems.Projectiles
 
                 info.ExpandingEwarField = true;
                 p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                p.PrevVelocity = p.Velocity;
+                p.PrevVelocity0 = p.PrevVelocity1;
+                p.PrevVelocity1 = p.Velocity;
                 p.Velocity = Vector3D.Zero;
                 info.ProHit.LastHit = p.Position;
                 info.HitList.Clear();

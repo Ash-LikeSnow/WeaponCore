@@ -7,6 +7,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
 using static CoreSystems.Support.AvShot;
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems.Projectiles
 {
@@ -26,6 +27,7 @@ namespace CoreSystems.Projectiles
         internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
 
         internal ulong CurrentProjectileId;
+    
         internal Projectiles()
         {
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
@@ -56,18 +58,15 @@ namespace CoreSystems.Projectiles
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start("AddTargets", 11);
-            if (AddTargets.Count > 0)
-                AddProjectileTargets();
+            if (AddTargets.Count > 0) AddProjectileTargets();
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start($"UpdateState: {ActiveProjetiles.Count}", 11);
-            if (ActiveProjetiles.Count > 0) 
-                UpdateState();
+            if (ActiveProjetiles.Count > 0) UpdateState();
             Session.I.StallReporter.End();
 
             Session.I.StallReporter.Start($"Spawn: {ShrapnelToSpawn.Count}", 11);
-            if (ShrapnelToSpawn.Count > 0)
-                SpawnFragments();
+            if (ShrapnelToSpawn.Count > 0) SpawnFragments();
             Session.I.StallReporter.End();
         }
 
@@ -84,7 +83,7 @@ namespace CoreSystems.Projectiles
             if (Session.I.EffectedCubes.Count > 0)
                 Session.I.ApplyGridEffect();
 
-            if (Session.I.Tick60)
+            if (Session.I._gridEffects.Count > 0)
                 Session.I.GridEffects();
 
             if (Session.I.IsClient && (Session.I.CurrentClientEwaredCubes.Count > 0 || Session.I.ActiveEwarCubes.Count > 0) && (Session.I.ClientEwarStale || Session.I.Tick120))
@@ -132,18 +131,18 @@ namespace CoreSystems.Projectiles
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.I.Tick;
 
-                if (Session.I.AdvSync && aConst.FullSync)
-                {
-                    if (Session.I.IsClient) 
-                    {
-                        var posSlot = (int)Math.Round(info.RelativeAge) % 30;
-                        storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
-                        if (info.Weapon.WeaponProSyncs.Count > 0)
-                            p.SyncClientProjectile(posSlot);
-                    }
-                    else if (info.Age > 0 && info.Age % 29 == 0)
-                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
-                }
+                //TODO AdvSync if (Session.I.AdvSync && aConst.FullSync)
+                //TODO AdvSync {
+                //TODO AdvSync     if (Session.I.IsClient) 
+                //TODO AdvSync     {
+                //TODO AdvSync         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
+                //TODO AdvSync         storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
+                //TODO AdvSync         if (info.Weapon.WeaponProSyncs.Count > 0)
+                //TODO AdvSync             p.SyncClientProjectile(posSlot);
+                //TODO AdvSync     }
+                //TODO AdvSync     else if (info.Age > 0 && info.Age % 29 == 0)
+                //TODO AdvSync         p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
+                //TODO AdvSync }
 
                 if (storage.Sleep)
                 {
@@ -194,6 +193,8 @@ namespace CoreSystems.Projectiles
                             pTarget.Seekers.Remove(p);
                             target.Reset(Session.I.Tick, Target.States.ProjetileIntercept);
                         }
+
+                        var prevPos = p.Position;
 
                         if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) 
                         {
@@ -257,7 +258,7 @@ namespace CoreSystems.Projectiles
                                 if (p.VelocityLengthSqr > maxSpeedSqr)
                                     newVel = p.Direction * curMaxSpeed;
                                 else
-                                    info.TotalAcceleration += (newVel - p.PrevVelocity);
+                                    info.TotalAcceleration += (newVel - p.PrevVelocity1);
 
                                 if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                                     newVel = p.Velocity;
@@ -282,14 +283,22 @@ namespace CoreSystems.Projectiles
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
+                        if (Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncInterpolator.IsSet)
+                        {
+                            info.AdvSyncInterpolator.Step(p);
+                            p.LastPosition = prevPos;
+                            p.TravelMagnitude = p.Position - prevPos;
+                        }
+
                         info.PrevDistanceTraveled = info.DistanceTraveled;
 
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out distChanged);
                         info.DistanceTraveled += Math.Abs(distChanged);
-
-                        if (info.RelativeAge > aConst.MaxLifeTime) {
-                            p.DistanceToTravelSqr = (info.DistanceTraveled * info.DistanceTraveled);
+                        
+                        if (info.RelativeAge > aConst.MaxLifeTime)
+                        {
+                            p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
                             p.EndState = EndStates.EarlyEnd;
                         }
 
@@ -311,6 +320,15 @@ namespace CoreSystems.Projectiles
                 }
                 else if (p.EndState == EndStates.AtMaxEarly) //Prevents projectiles that are AtMaxEarly from hanging infinitely
                     p.State = ProjectileState.Destroy;
+
+                if (Session.I.AdvSyncServer && aConst.FullSync && aConst.PositionSyncInterval > 0 && info.AdvSyncId != 0)
+                {
+                    // With this formula, we can spread the packet load a little:
+                    if ((Session.I.Tick + info.AdvSyncId) % (ulong)aConst.PositionSyncInterval == 0UL)
+                    {
+                        p.SendAdvSyncPositionPacket();
+                    }
+                }
 
                 if (aConst.Ewar)
                     p.RunEwar();

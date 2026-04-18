@@ -167,7 +167,9 @@ namespace CoreSystems
                         ai.NewEntities.Clear();
                         ai.SortedTargets.Sort(TargetCompare);
                         ai.TargetAis.Clear();
-                        ai.TargetAis.AddRange(ai.TargetAisTmp);
+                        foreach (var temp in ai.TargetAisTmp)
+                            if (!ai.TargetAis.Contains(temp))
+                                ai.TargetAis.Add(temp);
                         ai.TargetAisTmp.Clear();
 
                         ai.Obstructions.Clear();

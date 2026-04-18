@@ -672,9 +672,6 @@ namespace CoreSystems.Platform
                     case "Override":
                         o.Override = enabled;
                         break;
-                    case "AngularTracking":
-                        o.AngularTracking = enabled;
-                        break;
                     case "LargeGrid":
                         o.LargeGrid = enabled;
                         clearTargets = true;
@@ -691,10 +688,21 @@ namespace CoreSystems.Platform
                         o.ObjectiveMode = (ProtoWeaponOverrides.ObjectiveModes)v;
                         clearTargets = true;
                         break;
+                    case "TargetClosest":
+                        o.TargetClosest = enabled;
+                        break;
+                    case "EnableFireDistribution":
+                        o.EnableFireDistribution = enabled;
+                        break;
+                    case "TurnCost":
+                        o.TurnCost = v;
+                        break;
+                    case "MinLockTime":
+                        o.MinLockTime = v;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);
-
 
                 if (Session.I.MpActive)
                     Session.I.SendComp(comp);

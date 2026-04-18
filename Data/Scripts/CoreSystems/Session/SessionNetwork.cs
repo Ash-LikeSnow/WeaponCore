@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +7,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems
 {
@@ -95,14 +96,32 @@ namespace CoreSystems
                         ClientShootSyncs(packetObj);
                         break;
                     }
-                    case PacketType.ProjectilePosSyncs:
+                    case PacketType.AdvProjectileSpawnSyncs:
                     {
-                        ClientProjectilePosSyncs(packetObj);
+                        ClientAdvProjectileSpawnSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
                         break;
                     }
-                    case PacketType.ProjectileTargetSyncs:
+                    case PacketType.AdvProjectileDeathSyncs:
                     {
-                        ClientProjectileTargetSyncs(packetObj);
+                        HandleClientAdvProjectileDeathSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
+                        break;
+                    }
+                    case PacketType.AdvProjectileUpdateTargetSyncs:
+                    {
+                        HandleClientAdvProjectileTargetSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
+                        break;
+                    }
+                    case PacketType.AdvProjectilePositionSyncs:
+                    {
+                        HandleClientAdvProjectilePositionSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
                         break;
                     }
                     case PacketType.AimTargetUpdate: 
@@ -341,11 +360,6 @@ namespace CoreSystems
                     ServerCountingDownUpdate(packetObj);
                     break;
                 }
-                case PacketType.CriticalReactionUpdate:
-                {
-                    ServerCriticalReactionUpdate(packetObj);
-                    break;
-                }
                 case PacketType.PlayerControlRequest:
                 {
                     ServerPlayerControlRequest(packetObj);
@@ -459,10 +473,11 @@ namespace CoreSystems
                     var pdInfo = deathSyncMonitor.Collection[i];
                     Projectile p = null;
                     Weapon w = null;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                    {
-                        p.State = Projectile.ProjectileState.Destroy;
-                    }
+                    //TODO AdvSync if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    //TODO AdvSync {
+                    //TODO AdvSync     p.State = Projectile.ProjectileState.Destroy;
+                    //TODO AdvSync }
+                  
                     //else
                     //    Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
                 }
@@ -475,46 +490,46 @@ namespace CoreSystems
 
         internal void ProcessDeathSyncsForClients()
         {
-            if (!AdvSyncClient)
-            {
-                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
-                var playerCount = Players.Values.Count;
-
-                DeathSyncPackets += playerCount;
-                DeathSyncDataSize += playerCount * payLoad.Length;
-
-                foreach (var p in Players.Values)
-                {
-                    if (p.Player.SteamUserId != MultiplayerId)
-                        MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
-                }
-                ProtoDeathSyncMonitor.Collection.Clear();
-            }
-            else if (Tick60)
-            {
-                for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
-
-                    var pdInfo = ProtoDeathSyncMonitor.Collection[i];
-                    Projectile p;
-                    Weapon w;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                        p.State = Projectile.ProjectileState.Destroy;
-                }
-                ProtoDeathSyncMonitor.Collection.Clear();
-            }
+            //if (!AdvSyncClient)
+            
+             // TODO AdvSync {
+             // TODO AdvSync     var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
+             // TODO AdvSync     var playerCount = Players.Values.Count;
+ // TODO AdvSync 
+             // TODO AdvSync     DeathSyncPackets += playerCount;
+             // TODO AdvSync     DeathSyncDataSize += playerCount * payLoad.Length;
+ // TODO AdvSync 
+             // TODO AdvSync     foreach (var p in Players.Values)
+             // TODO AdvSync     {
+             // TODO AdvSync         if (p.Player.SteamUserId != MultiplayerId)
+             // TODO AdvSync             MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
+             // TODO AdvSync     }
+             // TODO AdvSync     ///ProtoDeathSyncMonitor.Collection.Clear();
+             // TODO AdvSync }
+            // TODO AdvSync else if (Tick60)
+            // TODO AdvSync {
+            // TODO AdvSync     for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
+// TODO AdvSync 
+            // TODO AdvSync         var pdInfo = ProtoDeathSyncMonitor.Collection[i];
+            // TODO AdvSync         Projectile p;
+            // TODO AdvSync         Weapon w;
+            // TODO AdvSync         if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+            // TODO AdvSync             p.State = Projectile.ProjectileState.Destroy;
+            // TODO AdvSync     }
+            // TODO AdvSync     ProtoDeathSyncMonitor.Collection.Clear();
+            // TODO AdvSync }
         }
 
-        internal void ProccessServerPacketsForClients()
+        internal void ProcessServerPacketsForClients()
         {
-
-            if ((!IsServer || !MpActive))
+            if (!IsServer || !MpActive)
             {
                 Log.Line("trying to process server packets on a non-server");
                 return;
             }
 
             PacketsToClient.AddRange(PrunedPacketsToClient.Values);
-            for (int i = 0; i < PacketsToClient.Count; i++)
+            for (var i = 0; i < PacketsToClient.Count; i++)
             {
                 var packetInfo = PacketsToClient[i];
 
@@ -526,10 +541,12 @@ namespace CoreSystems
                 var reliable = !packetInfo.Unreliable;
                 var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
                 if (packetInfo.SingleClient)
+                {
                     MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, reliable);
+                }
                 else
                 {
-                    long entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
+                    var entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
                     foreach (var p in Players.Values)
                     {
                         var steamId = p.Player.SteamUserId;
@@ -541,31 +558,43 @@ namespace CoreSystems
                         byte[] bytesRewrite = null;
                         var rewrite = specialPlayer && hasRewritePlayer || addOwl;
                         if (rewrite)
+                        {
                             bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet, steamId));
-
-
+                        }
+                        
                         var sendPacket = notSender && packetInfo.Entity == null;
                         if (!sendPacket && !skipPlayer && notSender)
                         {
                             HashSet<long> entityIds;
                             if (PlayerEntityIdInRange.TryGetValue(steamId, out entityIds))
                             {
-                                if (entityIds.Contains(entityId)) {
+                                if (entityIds.Contains(entityId))
+                                {
                                     sendPacket = true;
                                 }
-                                else  {
+                                else
+                                {
                                     Ai rootAi;
                                     CoreComponent comp;
                                     var notGrid = packetInfo.Entity != null && !(packetInfo.Entity is MyCubeBlock);
                                     var entity = notGrid && IdToCompMap.TryGetValue(packetInfo.Entity.EntityId, out comp) ? comp.TopEntity : packetInfo.Entity.GetTopMostParent();
                                     if (entity != null && EntityToMasterAi.TryGetValue(entity, out rootAi) && PlayerEntityIdInRange[p.Player.SteamUserId].Contains(rootAi.TopEntity.EntityId))
+                                    {
                                         sendPacket = true;
+                                    }
                                 }
                             }
                         }
 
                         if (sendPacket)
-                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, reliable);
+                        {
+                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(
+                                ClientPacketId, 
+                                rewrite ? bytesRewrite : bytes,
+                                p.Player.SteamUserId,
+                                reliable
+                            );
+                        }
                     }
                 }
             }
@@ -575,25 +604,34 @@ namespace CoreSystems
 
         private void ServerPacketsForClientsClean()
         {
-            PacketsToClient.Clear();
-            var prunedPackets = PrunedPacketsToClient.Values.ToArray();
-            PrunedPacketsToClient.Clear();
-            foreach (var pInfo in prunedPackets)
+            /*if (Tick60)
             {
+                Log.LineShortDate($"[PoolStats] - " +
+                                  $"Cnt:{PacketConstructPool.Count} - " +
+                                  $"Foc:{PacketConstructFociPool.Count} - " +
+                                  $"Ai:{PacketAiPool.Count} - " +
+                                  $"WComp:{PacketWeaponCompPool.Count} - " +
+                                  $"UComp:{PacketUpgradeCompPool.Count} - " +
+                                  $"SComp:{PacketSupportCompPool.Count} - " +
+                                  $"CComp:{PacketControlCompPool.Count} - " +
+                                  $"WSt:{PacketWeaponStatePool.Count} - " +
+                                  $"USt:{PacketUpgradeStatePool.Count} - " +
+                                  $"SSt:{PacketSupportStatePool.Count} - " +
+                                  $"CSt:{PacketControlStatePool.Count} - " +
+                                  $"Rel:{PacketReloadPool.Count} - " +
+                                  $"Amm:{PacketAmmoPool.Count} - " +
+                                  $"Tgt:{PacketTargetPool.Count} - " +
+                                  $"ASpw:{AdvProjectileSpawnPacketPool.Count} - " +
+                                  $"ADth:{AdvProjectileDeathPacketPool.Count} - " +
+                                  $"ATgt:{AdvProjectileUpdateTargetPacketPool.Count} - " +
+                                  $"Pos:{ProtoWeaponProPosPacketPool.Count}", "stats");
+            }*/
+
+            for (var index = 0; index < PacketsToClient.Count; index++)
+            {
+                var pInfo = PacketsToClient[index];
                 switch (pInfo.Packet.PType)
                 {
-                    case PacketType.ProjectilePosSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        ProtoWeaponProPosPacketPool.Push((ProjectileSyncPositionPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.ProjectileTargetSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        ProtoWeaponProTargetPacketPool.Push((ProjectileSyncTargetPacket)pInfo.Packet);
-                        break;
-                    }
                     case PacketType.AiData:
                     {
                         PacketAiPool.Return((AiDataPacket)pInfo.Packet);
@@ -656,7 +694,7 @@ namespace CoreSystems
                     }
                     case PacketType.ControlComp:
                     {
-                            PacketControlCompPool.Return((ControlCompPacket)pInfo.Packet);
+                        PacketControlCompPool.Return((ControlCompPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.ControlState:
@@ -664,9 +702,46 @@ namespace CoreSystems
                         PacketControlStatePool.Return((ControlStatePacket)pInfo.Packet);
                         break;
                     }
+                    case PacketType.AdvProjectileSpawnSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileSpawnPacketPool.Return((AdvProjectileSpawnPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileDeathSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileDeathPacketPool.Return((AdvProjectileDeathPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectileUpdateTargetSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectileUpdateTargetPacketPool.Return((AdvProjectileUpdateTargetPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.AdvProjectilePositionSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        AdvProjectilePositionPacketPool.Return((AdvProjectilePositionPacket)pInfo.Packet);
+                        break;
+                    }
+                    default:
+                    {
+                        if (pInfo.HasPooledResource)
+                        {
+                            Log.Line($"Unreturned pooled packet {pInfo.Packet.PType}");
+                        }
+
+                        break;
+                    }
                 }
             }
+
+            PrunedPacketsToClient.Clear();
+            PacketsToClient.Clear();
         }
+        
         #endregion
     }
 }

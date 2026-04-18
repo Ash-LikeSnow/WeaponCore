@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using ProtoBuf;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
@@ -88,8 +90,6 @@ namespace CoreSystems
                 ws.Heat = 0;
                 ws.Overheated = false;
                 ws.Id = Session.I.SyncWeaponId;
-                w.ProPositionSync.WeaponSyncId = ws.Id;
-                w.ProTargetSync.WeaponSyncId = ws.Id;
                 Session.I.WeaponLookUp[ws.Id] = w;
             }
 
@@ -135,50 +135,7 @@ namespace CoreSystems
             return false;
         }
     }
-
-
-    [ProtoContract]
-    public class ProtoProPositionSync
-    {
-
-        [ProtoMember(1)] public uint WeaponSyncId;
-        [ProtoMember(2)] public readonly List<ProtoProPosition> Collection = new List<ProtoProPosition>();
-    }
-
-    [ProtoContract]
-    public class ProtoProTargetSync
-    {
-
-        [ProtoMember(1)] public uint WeaponSyncId;
-        [ProtoMember(2)] public readonly List<ProtoProTarget> Collection = new List<ProtoProTarget>();
-    }
-
-    [ProtoContract]
-    public class ProtoProPosition 
-    {
-        public enum ProSyncState
-        {
-            Alive,
-            Dead,
-            Return,
-            Stored,
-        }
-
-        [ProtoMember(1)] public ulong ProId;
-        //[ProtoMember(2)] public ushort PartId;
-        //[ProtoMember(3)] public uint CoreEntityId;
-        [ProtoMember(4)] public Vector3D Position;
-        [ProtoMember(5)] public Vector3 Velocity;
-        [ProtoMember(6)] public ProSyncState State;
-    }
-
-    [ProtoContract]
-    public class ProtoProTarget
-    {
-        [ProtoMember(1)] public ulong ProId;
-        [ProtoMember(2)] public long EntityId;
-    }
-
+    
     [ProtoContract]
     public class ProtoWeaponComp
     {
@@ -514,8 +471,6 @@ namespace CoreSystems
             if (oldId != Id)
             {
                 Session.I.WeaponLookUp[Id] = w;
-                w.ProPositionSync.WeaponSyncId = Id;
-                w.ProTargetSync.WeaponSyncId = Id;
             }
 
             if (!wasOver && Overheated)
@@ -532,12 +487,14 @@ namespace CoreSystems
         [ProtoMember(4)] public int PartId;
         [ProtoMember(5)] public WeaponRandomGenerator WeaponRandom; // save
         [ProtoMember(6)] public Vector3D TargetPos;
+        [ProtoMember(7)] public ulong TargetSyncId;
 
         internal void SyncTarget(Weapon w)
         {
             w.TargetData.Revision = Revision;
             w.TargetData.EntityId = EntityId;
             w.TargetData.TargetPos = TargetPos;
+            w.TargetData.TargetSyncId = TargetSyncId;
             w.PartId = PartId;
             w.TargetData.WeaponRandom.Sync(WeaponRandom);
 
@@ -553,6 +510,19 @@ namespace CoreSystems
 
             if (isProjectile)
             {
+                Projectile pTarget;
+                if (TargetSyncId != 0 && Session.I.ProjectilesByNetId.TryGetValue(TargetSyncId, out pTarget) && pTarget.State == Projectile.ProjectileState.Alive)
+                {
+                    target.TargetObject = pTarget;
+                    target.TargetState = Target.TargetStates.IsProjectile;
+                    target.TargetPos = pTarget.Position;
+                    target.ProjectileEndTick = 0;
+                    target.SoftProjetileReset = false;
+                    target.ClientDirty = false;
+                    target.StateChange(true, Target.States.Acquired);
+                    return;
+                }
+
                 target.ProjectileEndTick = 0;
                 target.SoftProjetileReset = false;
                 target.TargetState = Target.TargetStates.IsProjectile;
@@ -585,6 +555,7 @@ namespace CoreSystems
             ++Revision;
             EntityId = 0;
             TargetPos = Vector3D.Zero;
+            TargetSyncId = 0;
         }
     }
 
@@ -647,12 +618,13 @@ namespace CoreSystems
         [ProtoMember(31)] public bool AiEnabled = true;
         [ProtoMember(32), DefaultValue(true)] public bool LargeGrid = true;
         [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
-        [ProtoMember(34)] public bool AngularTracking;
+        //[ProtoMember(34)] public bool AngularTracking; // Deprecated
         [ProtoMember(35), DefaultValue(true)] public bool SupportingPD = true;
         [ProtoMember(36), DefaultValue(ObjectiveModes.Default)] public ObjectiveModes ObjectiveMode = ObjectiveModes.Default;
-
-
-
+        [ProtoMember(37), DefaultValue(true)] public bool TargetClosest = true;
+        [ProtoMember(38)] public bool EnableFireDistribution;
+        [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
+        [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
 
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
@@ -688,6 +660,10 @@ namespace CoreSystems
             SmallGrid = syncFrom.SmallGrid;
             SupportingPD = syncFrom.SupportingPD;
             ObjectiveMode = syncFrom.ObjectiveMode;
+            TargetClosest = syncFrom.TargetClosest;
+            EnableFireDistribution = syncFrom.EnableFireDistribution;
+            TurnCost = syncFrom.TurnCost;
+            MinLockTime = syncFrom.MinLockTime;
         }
     }
 }

@@ -266,6 +266,8 @@ namespace CoreSystems.Support
                             FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, TmpEntity.PositionComp.WorldMatrixRef);
                             FakeInfo.LinearVelocity = TmpEntity.Physics.LinearVelocity;
                             FakeInfo.Acceleration = TmpEntity.Physics.LinearAcceleration;
+                            if (Type == FakeType.Painted)
+                                FakeInfo.EntityID = TmpEntity.GetTopMostParent().EntityId;
                         }
                         else if (Type == FakeType.Painted && EntityId != 0)
                         {
@@ -307,6 +309,7 @@ namespace CoreSystems.Support
                 public Vector3D WorldPosition;
                 public Vector3 LinearVelocity;
                 public Vector3 Acceleration;
+                public long EntityID;
             }
         }
 
@@ -377,6 +380,7 @@ namespace CoreSystems.Support
             internal readonly bool Armed;
             internal readonly bool IsGrid;
             internal readonly bool LargeGrid;
+            internal readonly bool SmallGrid;
             internal readonly bool SuspectedDrone;
 
             public DetectInfo(MyEntity target, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
@@ -409,6 +413,7 @@ namespace CoreSystems.Support
                 Armed = armed;
                 IsGrid = isGrid;
                 LargeGrid = largeGrid;
+                SmallGrid = isGrid && !largeGrid;
             }
         }
 
@@ -450,6 +455,7 @@ namespace CoreSystems.Support
             internal double TargetRadius;
             internal bool IsGrid;
             internal bool LargeGrid;
+            internal bool SmallGrid;
             internal bool Approaching;
             internal bool IsStatic;
             internal bool Drone;
@@ -470,6 +476,7 @@ namespace CoreSystems.Support
                 IsStatic = Target.Physics.IsStatic;
                 IsGrid = detectInfo.IsGrid;
                 LargeGrid = detectInfo.LargeGrid;
+                SmallGrid = detectInfo.SmallGrid;
                 MyAi = myAi;
                 TargetAi = targetAi;
                 Velocity = Target.Physics.LinearVelocity;

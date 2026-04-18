@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CoreSystems.Support;
 using VRage.Game;
+using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -175,7 +176,18 @@ namespace CoreSystems.Platform
                 if (hasMonitors)
                 {
                     for (int i = 0; i < monitor.Count; i++)
-                        monitor[i].Invoke((int) state, active);
+                    {
+                        try
+                        {
+                            monitor[i].Invoke((int)state, active);
+                        }
+                        catch (Exception e)
+                        {
+                            var msg = $"!!! WC Weapon Monitor Exception !!! \n {e}";
+                            Log.Line(msg);
+                            MyLog.Default.WriteLine(msg);
+                        }
+                    }
                 }
 
                 var prevRangeEvent = PrevRangeEvent;

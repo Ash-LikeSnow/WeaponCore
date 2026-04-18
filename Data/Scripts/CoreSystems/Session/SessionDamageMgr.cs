@@ -68,12 +68,14 @@ namespace CoreSystems
 
                     if (pExpiring || tInvalid || hitMax || outOfPew)
                     {
-
                         if ((hitMax || outOfPew) && (int)p.State < 3)
                         {
                             p.State = Projectile.ProjectileState.Depleted;
-                            if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                                p.AddToDeathSyncMonitor();
+                            
+                            if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
+                            {
+                                p.SyncAdvDeath();
+                            }
                         }
 
                         hitEnt.Clean();
@@ -113,10 +115,12 @@ namespace CoreSystems
 
                 if (info.BaseDamagePool <= 0 && (int)p.State < 3)
                 {
-
                     p.State = Projectile.ProjectileState.Depleted;
-                    if (AdvSync && aConst.OnHitDeathSync && info.SyncId != ulong.MaxValue)
-                        p.AddToDeathSyncMonitor();
+                   
+                    if (I.AdvSyncServer && p.Info.AmmoDef.Const.OnHitDeathSync)
+                    {
+                        p.SyncAdvDeath();
+                    }
                 }
 
                 info.HitList.Clear();
@@ -372,8 +376,36 @@ namespace CoreSystems
                 return;
             }
 
-            if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal || (!t.AmmoDef.Const.SelfDamage && !t.AmmoDef.Const.IsCriticalReaction && !t.Storage.SmartReady) && t.Ai.AiType == Ai.AiTypes.Grid && t.Ai.GridEntity.IsInSameLogicalGroupAs(hitEnt.Blocks[0].Block.CubeGrid))
+            if ((!t.AmmoDef.Const.SelfDamage && !t.AmmoDef.Const.IsCriticalReaction && !t.Storage.SmartReady) && t.Ai.AiType == Ai.AiTypes.Grid && t.Ai.GridEntity.IsInSameLogicalGroupAs(hitEnt.Blocks[0].Block.CubeGrid))
             {
+                t.BaseDamagePool = 0;
+                return;
+            }
+
+            if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
+            {
+                if (NerdShieldApiLoaded && NerdShieldAPI.IsReady && t.BlockList != null && t.BlockList.Count > 0)
+                {
+                    var block = t.BlockList[0].Key;
+                    var grid = (MyCubeGrid)block.CubeGrid;
+
+                    if (NerdShieldAPI.GridHasShields(grid))
+                    {
+                        float gridDamageModifier = grid.GridGeneralDamageModifier;
+                        var largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
+
+                        var gridMult = largeGrid
+                                            ? t.AmmoDef.DamageScales.Grids.Large > 0 ? t.AmmoDef.DamageScales.Grids.Large : 1
+                                            : t.AmmoDef.DamageScales.Grids.Small > 0 ? t.AmmoDef.DamageScales.Grids.Small : 1;
+
+                        var nerdShieldModifier2 = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridMult;
+                        var nerdShieldPassthroughModifier2 = t.AmmoDef.DamageScales.Shields.BypassModifier;
+
+                        NerdShieldAPI.ShieldDoDamage(grid, grid.GridIntegerToWorld(block.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
+                                        -t.BaseDamagePool, nerdShieldModifier2, nerdShieldPassthroughModifier2);
+                    }
+                }
+
                 t.BaseDamagePool = 0;
                 return;
             }
@@ -487,27 +519,37 @@ namespace CoreSystems
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
                 if (NerdShieldApiLoaded && NerdShieldAPI.IsReady)
-                    if(currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid))
+                {
+                    if (currentGrid == null || !rootBlock.CubeGrid.IsInSameLogicalGroupAs(currentGrid))
                     {
                         currentGrid = rootBlock.CubeGrid;
                         HasNerdShields = NerdShieldAPI.GridHasShields(currentGrid);
-
-                        switch (t.AmmoDef.DamageScales.Shields.Type)
+                        if (HasNerdShields)
                         {
-                            case ShieldDef.ShieldType.Default:
-                                nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
-                                break;
-                            case ShieldDef.ShieldType.Bypass:
-                                nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
-                                break;
-                        }
-                        if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
-                            NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
-                                -basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
-                        else
+                            if (!t.AmmoDef.NoGridOrArmorScaling)
+                            {
+                                switch (t.AmmoDef.DamageScales.Shields.Type)
+                                {
+                                    case ShieldDef.ShieldType.Default:
+                                        var gridMult = largeGrid
+                                            ? t.AmmoDef.DamageScales.Grids.Large > 0 ? t.AmmoDef.DamageScales.Grids.Large : 1
+                                            : t.AmmoDef.DamageScales.Grids.Small > 0 ? t.AmmoDef.DamageScales.Grids.Small : 1;
+
+                                        nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridSizeBuff * gridMult;
+                                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
+                                        break;
+                                    case ShieldDef.ShieldType.Bypass:
+                                        nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.Modifier;
+                                        break;
+                                    default:
+                                        nerdShieldModifier = 1f;
+                                        nerdShieldPassthroughModifier = 0f;
+                                        break;
+                                }
+                            }
                             basePool = NerdShieldAPI.ShieldDoDamage(currentGrid, currentGrid.GridIntegerToWorld(rootBlock.Position), t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash,
-                                basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                                        basePool, nerdShieldModifier, nerdShieldPassthroughModifier);
+                        }
                         // has an edge case where main grid --> 2nd grid --> main grid but oh well, would require caching every grid hit for that
                         // it should be fine if it double hits anyways
                     }
@@ -515,6 +557,7 @@ namespace CoreSystems
                     {
                         currentGrid = rootBlock.CubeGrid; // duplicated because doing it before would invalidate the nullcheck above
                     }
+                }
 
                 if (!detRequested)
                 {
@@ -557,10 +600,10 @@ namespace CoreSystems
                     detRequested = false;
                     RadiantAoe(rootBlock.Position, grid, aoeRadius, aoeDepth, hitEnt.Intersection, ref maxAoeDistance, out foundAoeBlocks, aoeShape, showHits, out aoeHits);
                     if (HasNerdShields)
-                        if (t.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal)
-                            NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash, -aoeDamage, (float)aoeRadius, nerdShieldModifier, nerdShieldPassthroughModifier);
-                        else
-                            aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash, aoeDamage, (float)aoeRadius, nerdShieldModifier, nerdShieldPassthroughModifier);
+                    {
+                        aoeDamage = NerdShieldAPI.ShieldDoDamageExplosion(currentGrid, Vector3D.Zero, t.AmmoDef.DamageScales.DamageType.Shield == DamageTypes.Damage.Kinetic ? KineticHash : EnergyHash, 
+                            aoeDamage, (float)aoeRadius, nerdShieldModifier, nerdShieldPassthroughModifier);
+                    }
                 }
 
                 var blockStages = maxAoeDistance + 1;
@@ -1097,8 +1140,11 @@ namespace CoreSystems
 
                 pTarget.Info.BaseHealthPool = 0;
 
-                var requiresPdSync = AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.SyncId != ulong.MaxValue;
-                pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+                pTarget.State = I.AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.AdvSyncId != 0 
+                    ? Projectile.ProjectileState.ClientPhantom
+                    : Projectile.ProjectileState.Destroy;
+               
+                // TODO AdvSync What? :
                 /*
                 if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
                 {
@@ -1149,8 +1195,12 @@ namespace CoreSystems
                     {
                         attacker.DamageDoneProj += (long)objHp;
                         sTarget.Info.BaseHealthPool = 0;
-                        var requiresPdSync = AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.SyncId != ulong.MaxValue;
-                        sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+
+                        sTarget.State = I.AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.AdvSyncId != 0
+                            ? Projectile.ProjectileState.ClientPhantom 
+                            : Projectile.ProjectileState.Destroy;
+                        
+                        // TODO AdvSync What? :
                         /*
                         if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
                         {

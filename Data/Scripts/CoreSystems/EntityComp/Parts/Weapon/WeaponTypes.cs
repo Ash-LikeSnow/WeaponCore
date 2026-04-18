@@ -118,7 +118,9 @@ namespace CoreSystems.Platform
                     return;
 
                 }
-                if (Weapon.System.ClosestFirst && topAsGrid != null && topAsGrid == targetTopEnt)
+                if ((Weapon.System.AllowSwitchTargetPriority
+                        ? Weapon.Comp?.MasterOverrides?.TargetClosest ?? Weapon.System.ClosestFirst
+                        : Weapon.System.ClosestFirst) && topAsGrid != null && topAsGrid == targetTopEnt)
                 {
                     var halfExtMin = topAsGrid.PositionComp.LocalAABB.HalfExtents.Min();
                     var minSize = topAsGrid.GridSizeR * 8;

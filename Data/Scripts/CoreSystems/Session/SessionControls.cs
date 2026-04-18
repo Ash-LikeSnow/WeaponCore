@@ -220,13 +220,16 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
-            CreateCustomActions<T>.CreateAngularTracking(session);
+            //CreateCustomActions<T>.CreateAngularTracking(session);
             CreateCustomActions<T>.CreateControlModes(session);
             CreateCustomActions<T>.CreateObjectiveMode(session);
             CreateCustomActions<T>.CreateMovementState(session);
             CreateCustomActions<T>.CreateCycleAmmo(session);
             CreateCustomActions<T>.CreateForceReload(session);
 
+            CreateCustomActions<T>.CreateTargetClosest(session);
+            CreateCustomActions<T>.CreateFireDistribution(session);
+            
             CreateCustomActions<T>.CreateFocusSubSystem(session);
             CreateCustomActions<T>.CreateSubSystems(session);
 
@@ -553,7 +556,6 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
             "WC_Shoot",
-            "WC_AngularTracking",
             "WC_Repel",
             "WC_Unowned",
             "WC_Supporting PD",
@@ -567,6 +569,11 @@ namespace CoreSystems
             "Sequence Id",
             "Burst Delay",
             "Burst Count",
+            "WC_TargetClosest",
+            "WC_EnableFireDistribution",
+            "WeaponValue",
+            "TurnCost",
+            "MinLockTime",
         };
 
         private static readonly HashSet<string> HideActions = new HashSet<string>()
@@ -579,7 +586,6 @@ namespace CoreSystems
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>
         {
             "WC_Shoot",
-            "AngularTracking",
             "WC_RepelMode",
             //"ShootToggle",
             "ObjectiveMode",
