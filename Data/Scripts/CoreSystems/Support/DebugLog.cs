@@ -7,40 +7,24 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
     public static class DebugLog
     {
-        public const bool ForceDebug = true;
+        public const bool ForceDebug = false;
         
         public static void LogWithSeverity(MyLogSeverity severity, string message)
         {
-            message = $"WC DebugLog {severity}: {message}";
-            
-            Log.Line(message);
-
-            if (severity == MyLogSeverity.Error || severity == MyLogSeverity.Critical)
+            if (severity == MyLogSeverity.Warning || severity == MyLogSeverity.Error || severity == MyLogSeverity.Critical)
             {
-                if (ForceDebug)
-                {
-                    if (Session.I.IsClient)
-                    {
-                        if (ForceDebug)
-                        {
-                            MyAPIGateway.Utilities.ShowMessage($"WC {severity}", message);
-                        }
-                    }
-                    else
-                    {
-                        MyLog.Default.Log(severity, message);
-                    }   
-                }
+                Log.Line( $"WC DebugLog {severity}: {message}");
             }
-            else if (ForceDebug)
+            
+            if (ForceDebug)
             {
                 if (Session.I.IsClient)
-                {
-                    MyAPIGateway.Utilities.ShowMessage($"WC {severity}", message);
+                {                        
+                    MyAPIGateway.Utilities.ShowMessage($"WC {severity}", $"WC DebugLog {severity}: {message}");
                 }
                 else
                 {
-                    MyLog.Default.Log(severity, message);
+                    MyLog.Default.Log(severity, $"WC DebugLog {severity}: {message}");
                 }   
             }
         }
