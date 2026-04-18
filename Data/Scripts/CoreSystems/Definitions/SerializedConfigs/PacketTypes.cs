@@ -43,7 +43,6 @@ namespace CoreSystems
         FocusLockUpdate,
         ReticleUpdate,
         CountingDownUpdate,
-        CriticalReactionUpdate, //Deprecated but don't want to bork the enum Int
         ClientAiAdd,
         ClientAiRemove,
         RequestShootUpdate,
@@ -65,7 +64,6 @@ namespace CoreSystems
         BlackListRequest,
         RequestDroneSet,
         PingPong,
-        HandWeaponDebug,
         ShootingChanged,
         AdvProjectileSpawnSyncs,
         AdvProjectileDeathSyncs,
@@ -73,14 +71,13 @@ namespace CoreSystems
         AdvProjectilePositionSyncs
     }
 
-    #region packets
+    #region Packets
+    
     [ProtoContract]
-    //[ProtoInclude(5, typeof(ProjectileSyncStatePacket))]
     [ProtoInclude(6, typeof(BoolUpdatePacket))]
     [ProtoInclude(7, typeof(FakeTargetPacket))]
     [ProtoInclude(8, typeof(FocusPacket))]
     [ProtoInclude(9, typeof(WeaponIdPacket))]
-    //[ProtoInclude(10, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(11, typeof(AiDataPacket))]
     [ProtoInclude(12, typeof(FixedWeaponHitPacket))]
     [ProtoInclude(13, typeof(ProblemReportPacket))]
@@ -112,9 +109,7 @@ namespace CoreSystems
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
-    //[ProtoInclude(43, typeof(HandWeaponDebugPacket))]
     [ProtoInclude(44, typeof(PingPacket))]
-    //[ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(46, typeof(ShootingChangedPacket))]
     [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
@@ -1000,5 +995,4 @@ namespace CoreSystems
     }
 
     #endregion
-
 }
