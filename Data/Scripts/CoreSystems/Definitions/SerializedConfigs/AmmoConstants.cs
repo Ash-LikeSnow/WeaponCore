@@ -222,6 +222,9 @@ namespace CoreSystems.Support
         public readonly bool FullSync;
         public readonly bool PdDeathSync;
         public readonly bool OnHitDeathSync;
+        public readonly int PositionSyncInterval;
+        public readonly int PositionPatchWindow;
+        public readonly bool PositionUpdateOnRandomize;
         public readonly bool HasFragGroup;
         public readonly bool HasFragment;
         public readonly bool FragmentPattern;
@@ -580,9 +583,12 @@ namespace CoreSystems.Support
             if (CollisionSize > 5 && !Session.I.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
 
             FullSync = ammo.AmmoDef.Sync.Full && Session.I.MpActive && (IsDrone || IsSmart);
-            PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && Session.I.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
-            OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && Session.I.MpActive && !IsBeamWeapon && !Ewar;
-
+            PdDeathSync = FullSync && ammo.AmmoDef.Sync.PointDefense && Health > 0 && !IsBeamWeapon && !Ewar;
+            OnHitDeathSync = FullSync && ammo.AmmoDef.Sync.OnHitDeath && !IsBeamWeapon && !Ewar;
+            PositionSyncInterval = FullSync ? ammo.AmmoDef.Sync.PositionSyncInterval : 0;
+            PositionPatchWindow = FullSync ? ammo.AmmoDef.Sync.PositionPatchWindow : 0;
+            PositionUpdateOnRandomize = FullSync && ammo.AmmoDef.Sync.PositionUpdateOnRandomize;
+            
             ProjectilesFirst = system.ProjectilesFirst;
 
             PreComputedMath = new PreComputedMath(ammo, this);

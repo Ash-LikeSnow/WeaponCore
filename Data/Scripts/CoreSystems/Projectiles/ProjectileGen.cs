@@ -4,6 +4,7 @@ using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems.Projectiles
 {
@@ -11,7 +12,7 @@ namespace CoreSystems.Projectiles
     {
         private void GenProjectiles()
         {
-            for (int i = 0; i < NewProjectiles.Count; i++)
+            for (var i = 0; i < NewProjectiles.Count; i++)
             {
                 var gen = NewProjectiles[i];
                 var muzzle = gen.Muzzle;
@@ -23,7 +24,7 @@ namespace CoreSystems.Projectiles
                 var a = gen.AmmoDef;
                 var weaponAmmoDef = w.ActiveAmmoDef.AmmoDef;
                 var aConst = a.Const;
-                var t = gen.Type;
+                var genType = gen.Type;
                 var virts = gen.NewVirts;
                 var aimed = repo.Values.State.PlayerId == Session.I.PlayerId && comp.ActivePlayer || comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom;
 
@@ -33,77 +34,163 @@ namespace CoreSystems.Projectiles
                 var info = p.Info;
                 var storage = info.Storage;
                 var target = info.Target;
+            
                 info.Id = Session.I.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
                 info.CompSceneVersion = comp.SceneVersion;
                 info.Ai = comp.MasterAi;
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
-                info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
+                info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || genType == Kind.Client || !comp.ActivePlayer); // shrapnel do not run this loop, but do inherit DoDamage from parent.
                 info.RelativeAge = gen.RelativeAge;
-                target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
+                
+                var isClientOrAdvSync = genType == Kind.Client || genType == Kind.AdvSync;
 
-                if (t == Kind.Client)
-                {
-                    var tEntity = target.TargetObject as MyEntity;
-                    target.TargetState = tEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
-                    target.TargetPos = tEntity != null ? tEntity.PositionComp.WorldAABB.Center : Vector3D.Zero;
-                }
-                else
-                {
-                    target.TargetState = wTarget.TargetState;
-                    target.TargetPos = wTarget.TargetPos;
-                    target.TopEntityId = wTarget.TopEntityId;
-                }
-
-                p.TargetPosition = wTarget.TargetPos;
-
-
-                storage.DummyTargets = null;
-                info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + ((1 + w.Reload.EndId) * aConst.MagazineSize + w.ProjectileCounter) * 5));
-                info.ShieldProc = info.Random;
+                storage.DummyTargets = null; // What is the point of this?
                 if ((aConst.IsDrone || aConst.IsSmart) && comp.FakeMode)
                 {
                     Session.I.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
                     storage.ManualMode = comp.ManualMode;
                 }
 
+                if (genType == Kind.AdvSync)
+                {
+                    info.AdvSyncId = gen.AdvNetId;
+                    Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
 
-                if (Session.I.AdvSync) {
+                    info.SpawnDepth = gen.SpawnDepth;
+                    info.IsFragment = gen.SpawnDepth > 0;
+                    info.Random = gen.RandomState;
+                    info.ShieldProc = gen.RandomState;
+                    
+                    gen.AdvTargetInfo.ApplyTo(p);
+                    
+                    info.AcquiredEntity = !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity;
+                }
+                else
+                {
+                    if (genType == Kind.Client)
+                    {
+                        target.TargetObject = gen.TargetEnt;
 
-                    info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
+                        var tEntity = target.TargetObject as MyEntity;
+                        
+                        target.TargetState = tEntity != null 
+                            ? Target.TargetStates.IsEntity 
+                            : Target.TargetStates.None;
+                        
+                        target.TargetPos = tEntity != null
+                            ? tEntity.PositionComp.WorldAABB.Center 
+                            : gen.Origin;
+                        
+                        info.AcquiredEntity = !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity;
+                    }
+                    else
+                    {
+                        target.TargetObject = wTarget.TargetObject;
+                        target.TargetState = wTarget.TargetState;
+                        target.TargetPos = wTarget.TargetPos;
+                        target.TopEntityId = wTarget.TopEntityId;
+                        info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
+                    }
+                    
+                    info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + ((1 + w.Reload.EndId) * aConst.MagazineSize + w.ProjectileCounter) * 5));
+                    info.ShieldProc = info.Random;
+                    
+                    if (Session.I.AdvSyncServer && aConst.FullSync)
+                    {
+                        info.AdvSyncId = Session.I.AdvSyncNetIdCounter++;
+                        Session.I.ProjectilesByNetId[info.AdvSyncId] = p;
+
+                        var spawnPacket = Session.I.AdvProjectileSpawnPacketPool.Get();
+                    
+                        spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
+                        spawnPacket.NetId = info.AdvSyncId;
+                        spawnPacket.WeaponId = w.PartState.Id;
+                        spawnPacket.MuzzleId = muzzle.MuzzleId;
+                        spawnPacket.AmmoIndex = aConst.AmmoIdxPos;
+                        spawnPacket.Position = muzzle.Position;
+                        spawnPacket.Direction = gen.Direction;
+                        spawnPacket.Velocity = comp.Ai.TopEntityVel;
+                        spawnPacket.TargetInfo = AdvSyncTargetInfo.FromProjectile(p);
+                        spawnPacket.SpawnDepth = 0;
+                        spawnPacket.RandomState = info.Random;
+                    
+                        Session.I.PacketsToClient.Add(new Session.PacketInfo
+                        {
+                            Packet = spawnPacket,
+                            Entity = w.Comp.CoreEntity,
+                            HasPooledResource = true
+                        });
+                    }
                 }
 
+                p.TargetPosition = target.TargetPos;
+
+                if (isClientOrAdvSync && !aConst.IsBeamWeapon)
+                {
+                    p.Velocity = gen.Velocity;
+                }
+               
                 ++w.ProjectileCounter;
                 info.BaseDamagePool = aConst.BaseDamage;
-
-                info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
-                info.ShooterVel = comp.Ai.TopEntityVel;
+                info.ShooterVel = genType != Kind.AdvSync ? (Vector3D)comp.Ai.TopEntityVel : gen.Velocity;
                 info.TestModeShot = w.Comp.MasterOverrides.Override;
                 info.FactionId = comp.Ai.AiOwnerFactionId;
-                info.OriginUp = t != Kind.Client ? muzzle.UpDirection : gen.OriginUp;
-                info.MaxTrajectory = t != Kind.Client ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
-                info.MuzzleId = t != Kind.Virtual ? muzzle.MuzzleId : -1;
+               
+                info.OriginUp = isClientOrAdvSync 
+                    ? gen.OriginUp
+                    : muzzle.UpDirection;
+               
+                info.MaxTrajectory = isClientOrAdvSync 
+                    ? gen.MaxTrajectory 
+                    : aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime
+                            ? aConst.TrajectoryStep * w.FireCounter
+                            : aConst.MaxTrajectory;
+                
+                info.MuzzleId = genType == Kind.Virtual 
+                    ? -1
+                    : muzzle.MuzzleId;
+                
                 info.UniqueMuzzleId = muzzle.UniqueId;
-                w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
-                info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
-                info.OriginFwd = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
-
-                if (t == Kind.Client && !aConst.IsBeamWeapon) 
-                    p.Velocity = gen.Velocity;
+                
+                w.WeaponCache.VirutalId = genType == Kind.Virtual
+                    ? w.WeaponCache.VirutalId 
+                    : -1;
+               
+                info.Origin = isClientOrAdvSync 
+                    ? gen.Origin
+                    : genType == Kind.Virtual 
+                        ? w.MyPivotPos
+                        : muzzle.Position;
+                
+                info.OriginFwd = isClientOrAdvSync 
+                    ? gen.Direction 
+                    : genType == Kind.Virtual 
+                        ? w.MyPivotFwd
+                        : gen.Direction;
                 
                 float shotFade;
                 if (aConst.HasShotFade && !aConst.VirtualBeams)
                 {
                     if (patternCycle > a.AmmoGraphics.Lines.Tracer.VisualFadeStart)
-                        shotFade = MathHelper.Clamp(((patternCycle - a.AmmoGraphics.Lines.Tracer.VisualFadeStart)) * aConst.ShotFadeStep, 0, 1);
+                    {
+                        shotFade = MathHelper.Clamp((patternCycle - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
+                    }
                     else if (w.System.DelayCeaseFire && w.CeaseFireDelayTick != Session.I.Tick)
-                        shotFade = MathHelper.Clamp(((Session.I.Tick - w.CeaseFireDelayTick) - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
-                    else shotFade = 0;
+                    {
+                        shotFade = MathHelper.Clamp((Session.I.Tick - w.CeaseFireDelayTick - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
+                    }
+                    else
+                    {
+                        shotFade = 0;
+                    }
                 }
-                else shotFade = 0;
+                else
+                {
+                    shotFade = 0;
+                }
+                
                 info.ShotFade = shotFade;
 
                 var updateGravity = aConst.StoreGravity && info.Ai.InPlanetGravity;
@@ -118,20 +205,24 @@ namespace CoreSystems.Projectiles
 
                 p.Gravity = updateGravity ? (Vector3)w.GravityPoint : Vector3.Zero;
 
-                if (t != Kind.Virtual)
+                if (genType != Kind.Virtual)
                 {
                     if (targetable)
+                    {
                         Session.I.Projectiles.AddTargets.Add(p);
+                    }
                 }
                 else
                 {
                     w.WeaponCache.Hits = 0;
-                    for (int j = 0; j < virts.Count; j++)
+                    for (var j = 0; j < virts.Count; j++)
                     {
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
-                        if (!a.Const.RotateRealBeam) 
+                        if (!a.Const.RotateRealBeam)
+                        {
                             w.WeaponCache.VirutalId = 0;
+                        }
                         else if (v.Rotate)
                         {
                             info.Origin = v.Muzzle.Position;
@@ -139,12 +230,15 @@ namespace CoreSystems.Projectiles
                             w.WeaponCache.VirutalId = v.VirtualId;
                         }
                     }
+                    
                     virts.Clear();
                     VirtInfoPools.Push(virts);
                 }
+                
                 Session.I.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
             }
+            
             NewProjectiles.Clear();
         }
 

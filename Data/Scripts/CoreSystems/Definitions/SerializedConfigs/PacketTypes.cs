@@ -1,8 +1,14 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using CoreSystems.Projectiles;
 using CoreSystems.Settings;
+using CoreSystems.Support;
 using ProtoBuf;
+using Sandbox.Game.Entities;
+using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems
@@ -37,7 +43,6 @@ namespace CoreSystems
         FocusLockUpdate,
         ReticleUpdate,
         CountingDownUpdate,
-        CriticalReactionUpdate, //Deprecated but don't want to bork the enum Int
         ClientAiAdd,
         ClientAiRemove,
         RequestShootUpdate,
@@ -52,8 +57,6 @@ namespace CoreSystems
         ShootSync,
         EwaredBlocks,
         ClientReady,
-        ProjectilePosSyncs,
-        ProjectileTargetSyncs,
         ControlComp,
         ControlState,
         ForceReload,
@@ -61,18 +64,20 @@ namespace CoreSystems
         BlackListRequest,
         RequestDroneSet,
         PingPong,
-        HandWeaponDebug,
         ShootingChanged,
+        AdvProjectileSpawnSyncs,
+        AdvProjectileDeathSyncs,
+        AdvProjectileUpdateTargetSyncs,
+        AdvProjectilePositionSyncs
     }
 
-    #region packets
+    #region Packets
+    
     [ProtoContract]
-    //[ProtoInclude(5, typeof(ProjectileSyncStatePacket))]
     [ProtoInclude(6, typeof(BoolUpdatePacket))]
     [ProtoInclude(7, typeof(FakeTargetPacket))]
     [ProtoInclude(8, typeof(FocusPacket))]
     [ProtoInclude(9, typeof(WeaponIdPacket))]
-    //[ProtoInclude(10, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(11, typeof(AiDataPacket))]
     [ProtoInclude(12, typeof(FixedWeaponHitPacket))]
     [ProtoInclude(13, typeof(ProblemReportPacket))]
@@ -99,17 +104,17 @@ namespace CoreSystems
     [ProtoInclude(34, typeof(EwaredBlocksPacket))]
     [ProtoInclude(35, typeof(ClientReadyPacket))]
     [ProtoInclude(36, typeof(PaintedTargetPacket))]
-    [ProtoInclude(37, typeof(ProjectileSyncPositionPacket))]
     [ProtoInclude(38, typeof(ULongUpdatePacket))]
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
-    //[ProtoInclude(43, typeof(HandWeaponDebugPacket))]
     [ProtoInclude(44, typeof(PingPacket))]
-    [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(46, typeof(ShootingChangedPacket))]
-
+    [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
+    [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
+    [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
+    [ProtoInclude(50, typeof(AdvProjectilePositionPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -154,41 +159,317 @@ namespace CoreSystems
         }
     }
 
-    [ProtoContract]
-    public class ProjectileSyncPositionPacket : Packet
+    internal enum AdvSyncFakeType : byte
     {
-        [ProtoMember(1)] internal List<ProtoProPositionSync> Data = new List<ProtoProPositionSync>();
-        [ProtoMember(2)] internal float CurrentOwl;
+        Invalid = 0,
+        Manual = 1,
+        Painted = 2
+    }
+    
+    [ProtoContract]
+    internal struct AdvSyncTargetInfo
+    {
+        [ProtoMember(1)] public AdvTargetType Type;
+        /// <summary>
+        ///     The EntityId of the grid (directly taken from the <see cref="Target.TargetObject"/> when it is an entity.
+        /// </summary>
+        [ProtoMember(2)] public long EntityId;
+        /// <summary>
+        ///     The NetId of the projectile (directly taken from the <see cref="Target.TargetObject"/> when it is an AdvSync projectile.
+        /// </summary>
+        [ProtoMember(3)] public ulong ProjectileNetId;
+        /// <summary>
+        ///     The grid (actually, mik painted a suit once?) the fake target is attached to:
+        /// </summary>
+        [ProtoMember(4)] public long FakeEntityId;
+        /// <summary>
+        ///     The targeted point in the entity's local frame:
+        /// </summary>
+        [ProtoMember(5)] public Vector3D FakeLocalPos;
+        /// <summary>
+        ///     The current position of the target in the world frame:
+        /// </summary>
+        [ProtoMember(6)] public Vector3D FakeWorldPos;
+        /// <summary>
+        ///     The fake target type. Must be <see cref="AdvSyncFakeType.Manual"/> or <see cref="AdvSyncFakeType.Painted"/>.
+        /// </summary>
+        [ProtoMember(7)] public AdvSyncFakeType FakeType;
+        
+        [ProtoMember(8)] public Vector3D LinearVelocity;
+        [ProtoMember(9)] public Vector3D Acceleration;
 
-        public override void CleanUp()
+        /// <summary>
+        ///     Extracts target info from a projectile's current state.
+        /// </summary>
+        public static AdvSyncTargetInfo FromProjectile(Projectile p)
         {
-            for (int i = 0; i < Data.Count; i++)
+            var info = new AdvSyncTargetInfo();
+            var target = p.Info.Target;
+
+            var pTarget = target.TargetObject as Projectile;
+            var ent = target.TargetObject as MyEntity;
+            
+            // This should pass:
+            if (ent != null && target.TargetState == Target.TargetStates.IsFake)
             {
-                var d = Data[i];
-                d.Collection.Clear();
+                DebugLog.Error("AdvSyncTargetInfo$FromProjectile Uncleaned entity target on fake state");
             }
-            Data.Clear();
-            base.CleanUp();
+            
+            // Determines target type:
+            if (pTarget != null && pTarget.Info.AdvSyncId != 0)
+            {
+                info.Type = AdvTargetType.Projectile;
+                info.ProjectileNetId = pTarget.Info.AdvSyncId;
+                info.LinearVelocity = pTarget.Velocity;
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
+            }
+            else if (ent != null)
+            {
+                info.Type = AdvTargetType.Entity;
+                info.EntityId = ent.EntityId;
+                info.FakeWorldPos = target.TargetPos; // Reuse for entity center
+                
+                if (ent.Physics != null)
+                {
+                    info.LinearVelocity = ent.Physics.LinearVelocity;
+                    info.Acceleration = ent.Physics.LinearAcceleration;
+                }
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
+            }
+            else if (target.TargetState == Target.TargetStates.IsFake)
+            {
+                info.Type = AdvTargetType.Fake;
+                info.FakeWorldPos = target.TargetPos;
+
+                // Gets the actual needed information:
+                var storage = p.Info.Storage;
+               
+                if (storage.DummyTargets != null)
+                {
+                    var fakeTarget = !storage.ManualMode && storage.DummyTargets.PaintedTarget.EntityId != 0 
+                        ? storage.DummyTargets.PaintedTarget 
+                        : storage.DummyTargets.ManualTarget;
+                    
+                    info.FakeEntityId = fakeTarget.EntityId;
+                    info.FakeLocalPos = fakeTarget.LocalPosition;
+                    info.FakeType = fakeTarget.Type == Ai.FakeTarget.FakeType.Painted 
+                        ? AdvSyncFakeType.Painted 
+                        : AdvSyncFakeType.Manual;
+                    
+                    var fakeInfo = fakeTarget.FakeInfo;
+                    info.LinearVelocity = fakeInfo.LinearVelocity;
+                    info.Acceleration = fakeInfo.Acceleration;
+                    
+                    DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
+                }
+                else
+                {
+                    DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
+                }
+            }
+            else
+            {
+                info.Type = AdvTargetType.None;
+                
+                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
+            }
+            
+            return info;
+        }
+
+        /// <summary>
+        ///     Applies this target info to a projectile on the client.
+        /// </summary>
+        public bool ApplyTo(Projectile p)
+        {
+            var target = p.Info.Target;
+            var storage = p.Info.Storage;
+            
+            switch (Type)
+            {
+                case AdvTargetType.Entity:
+                {
+                    MyEntity targetEnt;
+                    if (MyEntities.TryGetEntityById(EntityId, out targetEnt))
+                    {
+                        target.TargetObject = targetEnt;
+                        target.TargetState = Target.TargetStates.IsEntity;
+                        target.TargetPos = FakeWorldPos;
+                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Ent {targetEnt.EntityId}");
+                        return true;
+                    }
+
+                    DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo could not get Entity {EntityId}");
+                    return false;
+                }
+                case AdvTargetType.Projectile:
+                {
+                    Projectile targetPro;
+                    if (Session.I.ProjectilesByNetId.TryGetValue(ProjectileNetId, out targetPro))
+                    {
+                        target.TargetObject = targetPro;
+                        target.TargetState = Target.TargetStates.IsProjectile;
+                        target.TargetPos = targetPro.Position;
+                        //targetPro.Seekers.Add(p);
+                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Pro {targetPro.Info.AdvSyncId}");
+                        return true;
+                    }
+
+                    DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo could not get Projectile {ProjectileNetId}");
+                    return false;
+                }
+                case AdvTargetType.Fake:
+                {
+                    target.TargetObject = null;
+                    target.TargetState = Target.TargetStates.IsFake;
+                    target.TargetPos = FakeWorldPos;
+
+                    if (storage.DummyTargets == null)
+                    {
+                        storage.DummyTargets = new Ai.FakeTargets();
+                    }
+
+                    if (FakeType == AdvSyncFakeType.Invalid || (byte)FakeType > (byte)AdvSyncFakeType.Painted)
+                    {
+                        DebugLog.Critical("AdvSyncTargetInfo$ApplyTo got Invalid FakeType");
+                        return false;
+                    }
+
+                    var fakeTarget = FakeType == AdvSyncFakeType.Painted
+                        ? storage.DummyTargets.PaintedTarget
+                        : storage.DummyTargets.ManualTarget;
+
+                    fakeTarget.EntityId = FakeEntityId;
+                    fakeTarget.LocalPosition = FakeLocalPos;
+                    fakeTarget.FakeInfo.WorldPosition = FakeWorldPos;
+                    fakeTarget.FakeInfo.LinearVelocity = LinearVelocity;
+                    fakeTarget.FakeInfo.Acceleration = Acceleration;
+
+                    storage.ManualMode = FakeType == AdvSyncFakeType.Invalid;
+                    
+                    if (FakeEntityId != 0)
+                    {
+                        MyEntities.TryGetEntityById(FakeEntityId, out fakeTarget.TmpEntity);
+
+                        if (fakeTarget.TmpEntity == null)
+                        {
+                            DebugLog.Warning($"AdvSyncTargetInfo$ApplyTo failed to get fake entity {FakeEntityId}");
+                            return false;
+                        }
+                    }
+                    
+                    DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId}: Type {FakeType}, FakeEntityId {FakeEntityId}, LocalPos {FakeLocalPos}, WorldPos {FakeWorldPos}, Resolved Ent: {fakeTarget.TmpEntity?.EntityId}");
+
+                    return true;
+                }
+                case AdvTargetType.None:
+                {
+                    target.Reset(Session.I.Tick, Target.States.ProjectileNewTarget);
+                    DebugLog.Debug("[ApplyTo] Fake applied: NONE");
+                    return true;
+                }
+                case AdvTargetType.Invalid:
+                default:
+                {
+                    throw new Exception($"Invalid AdvTargetType {Type}");
+                }
+            }
         }
     }
 
     [ProtoContract]
-    public class ProjectileSyncTargetPacket : Packet
+    public class AdvProjectileSpawnPacket : Packet
     {
-        [ProtoMember(1)] internal List<ProtoProTargetSync> Data = new List<ProtoProTargetSync>();
-
+        [ProtoMember(1)] internal uint WeaponId;
+        [ProtoMember(2)] internal int MuzzleId;
+        [ProtoMember(3)] internal int AmmoIndex;
+        [ProtoMember(4)] internal Vector3D Position;
+        [ProtoMember(5)] internal Vector3D Direction;
+        [ProtoMember(6)] internal Vector3D Velocity;
+        [ProtoMember(7)] internal ulong NetId;
+        [ProtoMember(8)] internal ushort SpawnDepth;
+        [ProtoMember(9)] internal AdvSyncTargetInfo TargetInfo;
+        [ProtoMember(10)] internal XorShiftRandomStruct RandomState;
+        
         public override void CleanUp()
         {
-            for (int i = 0; i < Data.Count; i++)
-            {
-                var d = Data[i];
-                d.Collection.Clear();
-            }
-            Data.Clear();
             base.CleanUp();
+            WeaponId = 0;
+            MuzzleId = 0;
+            AmmoIndex = 0;
+            Position = Vector3D.Zero;
+            Direction = Vector3D.Zero;
+            Velocity = Vector3D.Zero;
+            NetId = 0;
+            SpawnDepth = 0;
+            TargetInfo = default(AdvSyncTargetInfo);
+            RandomState = default(XorShiftRandomStruct);
+        }
+    }
+    
+    [ProtoContract]
+    public class AdvProjectileDeathPacket : Packet
+    {
+        [ProtoMember(1)] public ulong NetId;
+        
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            NetId = 0;
         }
     }
 
+    public enum AdvTargetType : byte
+    {
+        Invalid = 0,
+        None = 1,
+        Entity = 2,
+        Projectile = 3,
+        Fake = 4
+    }
+
+    [ProtoContract]
+    internal class AdvProjectileUpdateTargetPacket : Packet
+    {
+        [ProtoMember(1)] public ulong NetId;
+        [ProtoMember(2)] public AdvSyncTargetInfo Info;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            NetId = 0;
+            Info = default(AdvSyncTargetInfo);
+        }
+    }
+
+    [ProtoContract]
+    public class AdvProjectilePositionPacket : Packet
+    {
+        [ProtoMember(1)] internal ulong NetId;
+        [ProtoMember(2)] internal Vector3D Position;
+        [ProtoMember(4)] internal Vector3 Velocity;
+        [ProtoMember(5)] internal Vector3 PrevVelocity0;
+        [ProtoMember(6)] internal Vector3 PrevVelocity1;
+        [ProtoMember(8)] internal Vector3 RandOffsetDir;
+        [ProtoMember(9)] internal Vector3D OffsetTarget;
+        [ProtoMember(10)] internal float CurrentOwl;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            NetId = 0;
+            Position = Vector3D.Zero;
+            Velocity = Vector3.Zero;
+            PrevVelocity0 = Vector3.Zero;
+            PrevVelocity1 = Vector3.Zero;
+            RandOffsetDir = Vector3.Zero;
+            OffsetTarget = Vector3D.Zero;
+            CurrentOwl = 0;
+        }
+    }
+    
     [ProtoContract]
     public class OverRidesPacket : Packet
     {
@@ -714,5 +995,4 @@ namespace CoreSystems
     }
 
     #endregion
-
 }

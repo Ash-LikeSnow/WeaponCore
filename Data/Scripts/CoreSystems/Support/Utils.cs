@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using ProtoBuf;
 using VRage;
 using VRage.Collections;
 using VRageMath;
@@ -52,6 +53,7 @@ namespace CoreSystems.Support
         }
     }
 
+    [ProtoContract]
     public struct XorShiftRandomStruct
     {
 
@@ -59,8 +61,8 @@ namespace CoreSystems.Support
         private const double DoubleUnit = 1.0 / (int.MaxValue + 1.0);
 
         // State Fields
-        private ulong _x;
-        private ulong _y;
+        [ProtoMember(1)] private ulong _x;
+        [ProtoMember(2)] private ulong _y;
 
         // Buffer for optimized bit generation.
         private ulong _buffer;

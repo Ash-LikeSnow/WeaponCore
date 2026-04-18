@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static Sandbox.Definitions.MyDefinitionManager;
 
 namespace CoreSystems
@@ -145,10 +146,10 @@ namespace CoreSystems
             if (MpActive)
             {
                 if (IsServer && Tick30 && LastProSyncSendTick > 0 && Tick - LastProSyncSendTick < 7200)
-                    PingPong(Session.GameplayFrameCounter);
+                    PingPong((float)RelativeTime);
 
                 if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
-                    ProccessServerPacketsForClients();
+                    ProcessServerPacketsForClients();
                 if (PacketsToServer.Count > 0)
                     ProccessClientPacketsForServer();
             }
@@ -223,26 +224,26 @@ namespace CoreSystems
             DsUtil.Start("av");
             if (!DedicatedServer) Av.End();
             DsUtil.Complete("av", true);
-
-            if (AdvSyncServer && ProtoDeathSyncMonitor.Collection.Count > 0)
-                ProcessDeathSyncsForClients();
-
-            if (MpActive)  {
-                
+            
+            if (MpActive)
+            {
                 DsUtil.Start("network1");
 
-                if (GlobalProPosSyncs.Count > 0)
-                    SendProjectilePosSyncs();
-
-                if (GlobalProTargetSyncs.Count > 0)
-                    SendProjectileTargetSyncs();
-
-                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0) 
-                    ProccessServerPacketsForClients();
-                if (PacketsToServer.Count > 0) 
+                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
+                {
+                    ProcessServerPacketsForClients();
+                }
+                
+                if (PacketsToServer.Count > 0)
+                {
                     ProccessClientPacketsForServer();
+                }
+                
                 if (EwarNetDataDirty)
+                {
                     SendEwaredBlocks();
+                }
+                
                 DsUtil.Complete("network1", true);
             }
         }
@@ -405,6 +406,11 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
+
+                if (DebugSupport.DebugWeaponSync)
+                {
+                    MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(DebugSupport.WeaponSyncDebugId, DebugSupport.WeaponDesyncDebugHandler);
+                }
             }
 
             if (HandlesInput)

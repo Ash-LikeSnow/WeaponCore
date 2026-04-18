@@ -1,9 +1,13 @@
-﻿using CoreSystems.Platform;
+using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game.Entity;
+using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.Ai;
+// ReSharper disable ForCanBeConvertedToForeach
 namespace CoreSystems
 {
     public partial class Session
@@ -26,7 +30,7 @@ namespace CoreSystems
                 if (errorPacket.MaxAttempts == 0)  {
                     Log.LineShortDate($"        [ClientReprocessing] Entity:{packet.EntityId} - Type:{packet.PType}", "net");
                     //set packet retry variables, based on type
-                    errorPacket.MaxAttempts = 7;
+                    errorPacket.MaxAttempts = 512;
                     errorPacket.RetryDelayTicks = 15;
                     errorPacket.RetryTick = Tick + errorPacket.RetryDelayTicks;
                 }
@@ -452,78 +456,7 @@ namespace CoreSystems
             return true;
 
         }
-
-        private bool ClientProjectilePosSyncs(PacketObj data)
-        {
-            var packet = data.Packet;
-            var proPacket = (ProjectileSyncPositionPacket)packet;
-            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
-
-            for (int i = 0; i < proPacket.Data.Count; i++)
-            {
-                var syncPacket = proPacket.Data[i];
-                Weapon w;
-                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
-                {
-                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
-                        continue;
-
-                    for (int j = 0; j < syncPacket.Collection.Count; j++)
-                    {
-                        var sync = syncPacket.Collection[j];
-                        ClientProSync oldSync;
-                        w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPosition = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl };
-                    }
-                }
-                else 
-                    Log.Line($"ClientProjectilePosSyncs failed");
-            }
-            
-            data.Report.PacketValid = true;
-
-            proPacket.CleanUp();
-            return true;
-        }
-
-        private bool ClientProjectileTargetSyncs(PacketObj data)
-        {
-            var packet = data.Packet;
-            var proPacket = (ProjectileSyncTargetPacket)packet;
-            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
-
-            for (int i = 0; i < proPacket.Data.Count; i++)
-            {
-                var syncPacket = proPacket.Data[i];
-                Weapon w;
-                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
-                {
-                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
-                        continue;
-
-                    for (int j = 0; j < syncPacket.Collection.Count; j++)
-                    {
-                        var sync = syncPacket.Collection[j];
-                        Projectile p;
-                        MyEntity target;
-                        if (w.ProjectileSyncMonitor.TryGetValue(sync.ProId, out p) && p.State == Projectile.ProjectileState.Alive && MyEntities.TryGetEntityById(sync.EntityId, out target) && target != p.Info.Target.TargetObject)
-                        {
-                            var topEntId = target.GetTopMostParent().EntityId;
-                            var targetPos = target.PositionComp.WorldAABB.Center;
-                            p.Info.Target.Set(target, targetPos, 0, 0, topEntId);
-                        }
-                    }
-                }
-                else
-                    Log.Line($"ClientProjectileTargetSyncs failed");
-            }
-
-            data.Report.PacketValid = true;
-
-            proPacket.CleanUp();
-            return true;
-        }
-
+        
         private bool ClientShootSyncs(PacketObj data)
         {
             var packet = data.Packet;
@@ -567,6 +500,283 @@ namespace CoreSystems
 
             data.Report.PacketValid = true;
             return true;
+        }
+
+        private void ClientAdvProjectileSpawnSync(PacketObj data)
+        {
+            var packet = data.Packet;
+            var spawn = (AdvProjectileSpawnPacket)packet;
+            
+            Weapon w;
+            if (!WeaponLookUp.TryGetValue(spawn.WeaponId, out w) || w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
+            {
+                Log.Line($"ClientAdvProjectileSpawnSync: weapon {spawn.WeaponId} not found or not ready");
+                return;
+            }
+
+            if (spawn.AmmoIndex < 0 || spawn.AmmoIndex >= w.System.AmmoTypes.Length)
+            {
+                Log.Line($"ClientAdvProjectileSpawnSync: ammoIndex {spawn.AmmoIndex} out of range");
+                return;
+            }
+
+            if (spawn.MuzzleId < 0 || spawn.MuzzleId >= w.Muzzles.Length)
+            {
+                Log.Line($"ClientAdvProjectileSpawnSync: muzzleId {spawn.MuzzleId} out of range");
+                return;
+            }
+
+            var ammoType = w.System.AmmoTypes[spawn.AmmoIndex];
+            var muzzle = w.Muzzles[spawn.MuzzleId];
+            
+            Projectiles.NewProjectiles.Add(new NewProjectile
+            {
+                AmmoDef = ammoType.AmmoDef,
+                Muzzle = muzzle,
+                TargetEnt = null, // Recreated from the TargetInfo
+                Origin = spawn.Position,
+                OriginUp = muzzle.UpDirection,
+                Direction = spawn.Direction,
+                Velocity = spawn.Velocity,
+                MaxTrajectory = ammoType.AmmoDef.Const.MaxTrajectory,
+                Type = NewProjectile.Kind.AdvSync,
+                AdvNetId = spawn.NetId,
+                SpawnDepth = spawn.SpawnDepth,
+                RandomState = spawn.RandomState,
+                AdvTargetInfo = spawn.TargetInfo
+            });
+        }
+        
+        private void HandleClientAdvProjectileDeathSync(PacketObj data)
+        {
+            var packet = data.Packet;
+            var death = (AdvProjectileDeathPacket)packet;
+
+            Projectile p;
+            if (ProjectilesByNetId.TryGetValue(death.NetId, out p))
+            {
+                if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
+                {
+                    p.State = Projectile.ProjectileState.Destroy;
+                }
+            }
+            else
+            {
+                DebugLog.Warning($"ClientAdvProjectileDeathSync: Pro with NetID {death.NetId} not found");
+            } 
+        }
+
+        private void HandleClientAdvProjectileTargetSync(PacketObj data)
+        {
+            var packet = (AdvProjectileUpdateTargetPacket)data.Packet;
+
+            Projectile p;
+            if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
+            {
+                DebugLog.Warning($"ClientAdvProjectileTargetSync: Pro with NetID {packet.NetId} not found");
+                return;
+            }
+
+            packet.Info.ApplyTo(p);
+        }
+
+        private void HandleClientAdvProjectilePositionSync(PacketObj data)
+        {
+            var packet = (AdvProjectilePositionPacket)data.Packet;
+
+            Projectile p;
+            if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
+            {
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
+                return;
+            }
+            
+            // Set independent of interpolation:
+            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
+            p.OffsetTarget = packet.OffsetTarget;
+            
+            var position = packet.Position;
+            var lastPosition = packet.Position;
+            var velocity = (Vector3D)packet.Velocity;
+            var prevVelocity0 = (Vector3D)packet.PrevVelocity0;
+            var prevVelocity1 = (Vector3D)packet.PrevVelocity1;
+            var maxSpeed = p.MaxSpeed;
+            
+            const double imperceptibleFactor = 0.2;
+            const double hardSnapFactor = 5.0;
+
+            var torpedoSpeed = p.Velocity.Length();
+            var distanceToServerHistory = Vector3D.Distance(p.Position, position);
+            var window = p.Info.AmmoDef.Const.PositionPatchWindow;
+
+            if (window <= 0 || distanceToServerHistory > torpedoSpeed * StepConst * hardSnapFactor || distanceToServerHistory < torpedoSpeed * StepConst * imperceptibleFactor)
+            {
+                // Hard snap. We do this if the difference is acceptably small, or the difference is so big, we fuck off:
+                p.Position = position;
+                p.LastPosition = lastPosition;
+                p.Velocity = velocity;
+                p.PrevVelocity0 = prevVelocity0;
+                p.PrevVelocity1 = prevVelocity1;
+
+                if (!Vector3D.IsZero(velocity))
+                {
+                    Vector3D.Normalize(ref velocity, out p.Direction);
+                }
+
+                Vector3D.Dot(ref p.Velocity, ref p.Velocity, out p.VelocityLengthSqr);
+                p.TravelMagnitude = p.Velocity * StepConst;
+            }
+            else
+            {
+                // We run some interpolation:
+                
+                LimitlessPdAdvProjectilePositionSyncExtrapolate(
+                    window,
+                    ref position, ref lastPosition,
+                    ref velocity,
+                    ref prevVelocity1,
+                    ref prevVelocity0,
+                    maxSpeed
+                );
+
+                p.Info.AdvSyncInterpolator = new AdvSyncProjectileInterpolator
+                {
+                    IsSet = true,
+                    Window = window,
+                    Ticks = 0,
+                    
+                    InitialPosition = p.Position, 
+                    InitialVelocity = p.Velocity,
+                    FinalPosition = position,
+                    FinalLastPosition =  lastPosition,
+                    FinalVelocity =  velocity,
+                    FinalPrevVelocity0 = prevVelocity0,
+                    FinalPrevVelocity1 =  prevVelocity1,
+                    VelPrev0 = p.PrevVelocity1,
+                    VelPrev1 = p.Velocity
+                };
+            }
+        }
+
+        /// <summary>
+        ///     Extrapolates the projectile forward in time, so it more closely matches up with the position on the server.
+        ///     I don't know if the grids themselves are timed similarly to this, but BD wants extrapolation so here we go.
+        /// </summary>
+        /// <param name="extrapolateTicks"></param>
+        /// <param name="position"></param>
+        /// <param name="lastPosition"></param>
+        /// <param name="velocity"></param>
+        /// <param name="previousVelocity1"></param>
+        /// <param name="previousVelocity0"></param>
+        /// <param name="maxSpeed"></param>
+        private static void LimitlessPdAdvProjectilePositionSyncExtrapolate(
+            double extrapolateTicks,
+            ref Vector3D position, ref Vector3D lastPosition,
+            ref Vector3D velocity,
+            ref Vector3D previousVelocity1,
+            ref Vector3D previousVelocity0,
+            double maxSpeed
+            )
+        {
+            var fullSteps = (int)extrapolateTicks;
+            var remainder = extrapolateTicks - fullSteps;
+            var maxSpeedSqr = maxSpeed * maxSpeed;
+
+            var targetAccel0 = (previousVelocity1 - previousVelocity0) / StepConst;
+            var targetAccel1 = (velocity - previousVelocity1) / StepConst;
+
+            var targetAccel0N = targetAccel0.Length();
+            var targetAccel1N = targetAccel1.Length();
+
+            if (targetAccel0N < 1.0 || targetAccel1N < 1.0)
+            {
+                goto fallback;
+            }
+
+            var e0 = targetAccel0 / targetAccel0N;
+            var e1 = targetAccel1 / targetAccel1N;
+
+            var w = Vector3D.Cross(e0, e1);
+            var sinTheta = MathHelperD.Clamp(w.Length(), 0.0, 1.0);
+
+            if (sinTheta < 1e-6)
+            {
+                goto fallback;
+            }
+
+            w /= sinTheta;
+
+            var cosTheta = MathHelperD.Clamp(Vector3D.Dot(e0, e1), -1.0, 1.0);
+            var targetAccelWorld = targetAccel1;
+
+            // Only the integration loop taken from limitless PD:
+            for (var step = 0; step < fullSteps; step++)
+            {
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+
+                velocity += targetAccelWorld * StepConst;
+           
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+                
+                position += velocity * StepConst;
+
+                var r1 = targetAccelWorld * cosTheta;
+                var r2 = Vector3D.Cross(w, targetAccelWorld) * sinTheta;
+                var r3 = w * (Vector3D.Dot(w, targetAccelWorld) * (1.0 - cosTheta));
+                
+                targetAccelWorld = r1 + r2 + r3;
+            }
+
+            if (remainder > 1e-6)
+            {
+                var frac = remainder * StepConst;
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+
+                velocity += targetAccelWorld * frac;
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+                
+                position += velocity * frac;
+            }
+
+            return;
+
+            fallback:
+            for (var step = 0; step < fullSteps; step++)
+            {
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+                position += velocity * StepConst;
+                
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+            }
+
+            if (remainder > 1e-6)
+            {
+                var frac = remainder * StepConst;
+                previousVelocity0 = previousVelocity1;
+                previousVelocity1 = velocity;
+                lastPosition = position;
+                position += velocity * frac;
+                
+                if (velocity.LengthSquared() > maxSpeedSqr)
+                {
+                    velocity = velocity.Normalized() * maxSpeed;
+                }
+            }
         }
     }
 }

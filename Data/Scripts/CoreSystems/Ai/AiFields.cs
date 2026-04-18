@@ -13,6 +13,8 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 using static CoreSystems.Platform.Weapon;
 
@@ -63,6 +65,7 @@ namespace CoreSystems.Support
         internal readonly List<QueuedSoundEvent> QueuedSounds = new List<QueuedSoundEvent>();
         internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
         internal readonly List<WeaponComponent> WeaponComps = new List<WeaponComponent>(32);
+        internal int WeaponCompsVersion = 0;
         internal readonly List<WeaponComponent> CriticalComps = new List<WeaponComponent>();
         internal readonly List<Upgrade.UpgradeComponent> UpgradeComps = new List<Upgrade.UpgradeComponent>(32);
         internal readonly List<SupportSys.SupportComponent> SupportComps = new List<SupportSys.SupportComponent>(32);
@@ -157,7 +160,7 @@ namespace CoreSystems.Support
         internal bool IsGrid;
         internal bool SmartHandheld;
         internal bool ModOverride;
-        internal bool AcquireTargets;
+        internal bool AcquireTargets; // This is only for grids, when running on the client!
         internal uint CreatedTick;
         internal uint RotorCommandTick;
         internal uint TargetsUpdatedTick;
@@ -208,6 +211,30 @@ namespace CoreSystems.Support
         private readonly List<MyEntity> _possibleTargets = new List<MyEntity>();
         private uint _pCacheTick;
 
+        private FireDistributionManager _fireDistributionManager;
+
+        internal bool HasFireDistributionManager() => _fireDistributionManager != null;
+        
+        internal bool GetFireDistributionManager(out FireDistributionManager manager)
+        {
+            lock (this)
+            {
+                if (!IsGrid || GridEntity == null)
+                {
+                    manager = null;
+                    return false;
+                }
+
+                if (_fireDistributionManager == null)
+                {
+                    _fireDistributionManager = new FireDistributionManager(this);
+                }
+
+                manager = _fireDistributionManager;
+                return true;
+            }
+        }
+        
         public Ai()
         {
             AiComp = new AiComponent(this);
