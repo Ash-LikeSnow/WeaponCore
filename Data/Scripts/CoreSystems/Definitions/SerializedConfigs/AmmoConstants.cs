@@ -348,7 +348,17 @@ namespace CoreSystems.Support
         {
             AmmoIdxPos = ammoIndex;
             MyInventory.GetItemVolumeAndMass(ammo.AmmoDefinitionId, out MagMass, out MagVolume);
-            MagazineDef = MyDefinitionManager.Static.GetAmmoMagazineDefinition(ammo.AmmoDefinitionId);
+            try
+            {
+                MagazineDef = MyDefinitionManager.Static.GetAmmoMagazineDefinition(ammo.AmmoDefinitionId);
+            }
+            catch (Exception e)
+            {
+                var msg = $"No ammo magazine definition found for '{ammo.AmmoDefinitionId}' used by '{wDef.HardPoint.PartName}'";
+                Log.Line(msg);
+                MyLog.Default.WriteLine(msg);
+                throw e;
+            }
 
             IsCriticalReaction = wDef.HardPoint.HardWare.CriticalReaction.Enable;
 

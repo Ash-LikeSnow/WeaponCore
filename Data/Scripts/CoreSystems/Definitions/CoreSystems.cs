@@ -773,6 +773,7 @@ namespace CoreSystems.Support
 
         internal readonly float MinTargetDistance;
         internal readonly float DeviateShotAngleRads;
+        internal readonly float DeviateShotAngleRadsSG;
         internal readonly float IdlePower;
         internal readonly float HeatSinkRate;
         internal readonly float MinRateOfFire;
@@ -809,7 +810,7 @@ namespace CoreSystems.Support
 
             DeviateShotAngleRads = MathHelper.ToRadians(values.HardPoint.DeviateShotAngle);
             AimingToleranceRads = MathHelperD.ToRadians(values.HardPoint.AimingTolerance <= 0 ? 180 : values.HardPoint.AimingTolerance);
-
+            DeviateShotAngleRadsSG = MathHelper.ToRadians(values.HardPoint.DeviateShotAngleSGModifier);
             HeatPerShot = values.HardPoint.Loading.HeatPerShot;
             DisableOverheat = values.HardPoint.Loading.AllowOverheatShooting;
             HeatSinkRate = values.HardPoint.Loading.HeatSinkRate;

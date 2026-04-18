@@ -360,11 +360,6 @@ namespace CoreSystems
                     ServerCountingDownUpdate(packetObj);
                     break;
                 }
-                case PacketType.CriticalReactionUpdate:
-                {
-                    ServerCriticalReactionUpdate(packetObj);
-                    break;
-                }
                 case PacketType.PlayerControlRequest:
                 {
                     ServerPlayerControlRequest(packetObj);

@@ -23,6 +23,7 @@ namespace CoreSystems.Support
         internal bool TargetChanged;
         internal bool ClientDirty;
         internal bool IsDrone;
+        internal bool IsSG;
         internal bool ValidEstimate;
         internal uint ChangeTick;
         internal uint ProjectileEndTick;
@@ -192,7 +193,7 @@ namespace CoreSystems.Support
             target.IsDrone = drone;
             target.TargetObject = TargetObject;
             target.TargetPos = TargetPos;
-
+            target.IsSG = IsSG;
             target.HitShortDist = HitShortDist;
             target.OrigDistance = OrigDistance;
             target.TopEntityId = TopEntityId;
@@ -202,13 +203,14 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(object target, Vector3D pos, double shortDist, double origDist, long topEntId, bool isFakeTarget = false)
+        internal void Set(object target, Vector3D pos, double shortDist, double origDist, long topEntId, bool isFakeTarget = false, bool isSG = false)
         {
             TargetObject = target;
             TargetPos = pos;
             HitShortDist = shortDist;
             OrigDistance = origDist;
             TopEntityId = topEntId;
+            IsSG = isSG;
             if (TargetObject is Projectile)
                 TargetState = TargetStates.IsProjectile;
             else if (isFakeTarget)
@@ -259,7 +261,7 @@ namespace CoreSystems.Support
 
                 Weapon.JerkRunningAverage.Clean();
             }
-
+            IsSG = false;
             IsDrone = false;
             IsAligned = false;
             TargetPos = Vector3D.Zero;

@@ -76,6 +76,7 @@ namespace CoreSystems.Support
         internal bool ShieldBypassedHitOther;
         internal bool ShieldKeepBypass;
         internal bool ShieldInLine;
+        internal bool TestModeShot;
         internal uint FirstWaterHitTick;
         internal float ShieldResistMod = 1f;
         internal float ShieldBypassMod = 1f;
@@ -167,6 +168,7 @@ namespace CoreSystems.Support
             DoDamage = false;
             ShieldBypassed = false;
             ShieldInLine = false;
+            TestModeShot = false;
             ShieldKeepBypass = false;
             FirstWaterHitTick = 0;
             TriggerGrowthSteps = 0;
@@ -555,6 +557,7 @@ namespace CoreSystems.Support
 
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
 
+                frag.TestModeShot = info.TestModeShot;
                 frag.FactionId = info.FactionId;
                 frag.TargetState = targetState;
                 frag.TargetEntity = info.LastTarget;
@@ -642,6 +645,7 @@ namespace CoreSystems.Support
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShieldBypassed = frag.IgnoreShield;
                 info.CompSceneVersion = frag.SceneVersion;
+                info.TestModeShot = frag.TestModeShot;
 
                 p.TargetPosition = frag.PrevTargetPos;
                 p.Gravity = frag.Gravity;
@@ -709,6 +713,7 @@ namespace CoreSystems.Support
         public int MuzzleId;
         public ushort Depth;
         public long FactionId;
+        public bool TestModeShot;
 
         public XorShiftRandomStruct Random;
         public bool DoDamage;

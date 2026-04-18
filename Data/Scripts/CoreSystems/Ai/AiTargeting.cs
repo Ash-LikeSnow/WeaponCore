@@ -274,7 +274,7 @@ namespace CoreSystems.Support
                         var shortDist = rayDist;
                         var origDist = rayDist;
                         var topEntId = info.Target.GetTopMostParent().EntityId;
-                        target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
+                        target.Set(info.Target, targetCenter, shortDist, origDist, topEntId, isSG: info.SmallGrid);
                         target.TransferTo(w.Target, Session.I.Tick);
                         if (w.Target.TargetState == Target.TargetStates.IsEntity)
                             Session.I.NewThreat(w);
@@ -487,7 +487,7 @@ namespace CoreSystems.Support
                     w.FoundTopMostTarget = true;
                     var pos = grid.PositionComp.WorldVolume.Center;
                     Vector3D.Distance(ref weaponPos, ref pos, out rayDist);
-                    target.Set(grid, pos, rayDist, rayDist, grid.EntityId);
+                    target.Set(grid, pos, rayDist, rayDist, grid.EntityId, isSG: info.SmallGrid);
 
                     target.TransferTo(w.Target, Session.I.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
@@ -945,7 +945,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var topEntId = tInfo.Target.GetTopMostParent().EntityId;
-                target.Set(tInfo.Target, targetPos, 0, 0, topEntId);
+                target.Set(tInfo.Target, targetPos, 0, 0, topEntId, isSG: tInfo.SmallGrid);
                 acquired = true;
                 break;
             }
@@ -1108,13 +1108,14 @@ namespace CoreSystems.Support
 
             return found;
         }
+        //TODO rework to include a cheap check if everything is obscured on the target grid
         private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool focusedTarget)
         {
             var system = w.System;
             var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
             
             var checkPower = overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Default && !focusedTarget || overRides.ObjectiveMode == ProtoWeaponOverrides.ObjectiveModes.Disabled; 
-            if (system.TargetSubSystems)
+            if (system.TargetSubSystems)// && overRides.FocusSubSystem && overRides.SubSystem != Any
             {
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
@@ -1217,7 +1218,7 @@ namespace CoreSystems.Support
             var blocksSighted = 0;
             var hitTmpList = s.HitInfoTmpList;
 
-            var checkLimit = ai.PlanetSurfaceInRange ? 128 : 512;
+            var checkLimit = ai.PlanetSurfaceInRange ? 256 : 2048;
 
             for (int i = 0; i < checkSize; i++)
             {
@@ -1458,13 +1459,13 @@ namespace CoreSystems.Support
                     Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
                     var shortDist = rayDist * (1 - s.CustomHitInfo.Fraction);
                     var origDist = rayDist * s.CustomHitInfo.Fraction;
-                    target.Set(block, s.CustomHitInfo.Position, shortDist, origDist, block.GetTopMostParent().EntityId);
+                    target.Set(block, s.CustomHitInfo.Position, shortDist, origDist, block.GetTopMostParent().EntityId, isSG: info.SmallGrid);
                     foundBlock = true;
                     break;
                 }
 
                 Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
-                target.Set(block, block.PositionComp.WorldAABB.Center, rayDist, rayDist, block.GetTopMostParent().EntityId);
+                target.Set(block, block.PositionComp.WorldAABB.Center, rayDist, rayDist, block.GetTopMostParent().EntityId, isSG: info.SmallGrid);
                 foundBlock = true;
                 break;
             }
@@ -1519,8 +1520,7 @@ namespace CoreSystems.Support
                 var cube = i < top5Count ? top5[index] : cubes[index];
 
                 var grid = cube.CubeGrid;
-                if (grid == null || grid.MarkedForClose) continue;
-                if (cube.MarkedForClose || cube == newEntity || cube == newEntity0 || cube == newEntity1 || cube == newEntity2 || cube == newEntity3 || checkPower && !(cube is IMyWarhead) && !cube.IsWorking)
+                if (grid == null || grid.MarkedForClose || cube.MarkedForClose || cube == newEntity || cube == newEntity0 || cube == newEntity1 || cube == newEntity2 || cube == newEntity3 || checkPower && !(cube is IMyWarhead) && !cube.IsWorking)
                     continue;
                 
                 // Inline to keep the profiler happy:
@@ -1545,8 +1545,9 @@ namespace CoreSystems.Support
                 var cubePos = grid.GridIntegerToWorld(cube.Position);
                 var range = cubePos - weaponPos;
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
-
-                if (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint)
+                double distSqr;
+                Vector3D.DistanceSquared(ref cubePos, ref weaponPos, out distSqr);
+                if (distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceSqr || (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint))
                     continue;
 
                 if (test < minValue3)
@@ -1707,7 +1708,7 @@ namespace CoreSystems.Support
                 Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist * (1 - iHitInfo.Fraction);
                 var origDist = rayDist * iHitInfo.Fraction;
-                target.Set(newEntity, iHitInfo.Position, shortDist, origDist, newEntity.GetTopMostParent().EntityId);
+                target.Set(newEntity, iHitInfo.Position, shortDist, origDist, newEntity.GetTopMostParent().EntityId, isSG: info.SmallGrid);
                 top5.Add(newEntity);
             }
             else if (newEntity != null)
@@ -1717,7 +1718,7 @@ namespace CoreSystems.Support
                 Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist;
                 var origDist = rayDist;
-                target.Set(newEntity, bestCubePos, shortDist, origDist, newEntity.GetTopMostParent().EntityId);
+                target.Set(newEntity, bestCubePos, shortDist, origDist, newEntity.GetTopMostParent().EntityId, isSG: info.SmallGrid);
                 top5.Add(newEntity);
             }
             else target.Reset(Session.I.Tick, Target.States.NoTargetsSeen, w == null);

@@ -43,7 +43,7 @@ namespace CoreSystems
         FocusLockUpdate,
         ReticleUpdate,
         CountingDownUpdate,
-        CriticalReactionUpdate,
+        CriticalReactionUpdate, //Deprecated but don't want to bork the enum Int
         ClientAiAdd,
         ClientAiRemove,
         RequestShootUpdate,
