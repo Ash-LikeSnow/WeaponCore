@@ -208,23 +208,6 @@ namespace CoreSystems
             return true;
         }
 
-        private bool ServerCriticalReactionUpdate(PacketObj data)
-        {
-            var packet = data.Packet;
-            var countingDownPacket = (BoolUpdatePacket)packet;
-            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
-            var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
-
-            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
-
-            comp.Data.Repo.Values.State.CountingDown = countingDownPacket.Data;
-            SendState(comp);
-
-            data.Report.PacketValid = true;
-
-            return true;
-        }
-
         private bool ServerOverRidesUpdate(PacketObj data)
         {
             var packet = data.Packet;

@@ -16,6 +16,7 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 
 namespace CoreSystems
 {
@@ -59,7 +60,7 @@ namespace CoreSystems
 
                 ai.CheckProjectiles = Tick - ai.NewProjectileTick <= 1;
 
-                if (ai.AiType == Ai.AiTypes.Grid && (ai.UpdatePowerSources || !ai.HadPower && ai.GridEntity.IsPowered || ai.HasPower && !ai.GridEntity.IsPowered || Tick10))
+                if (ai.AiType == Ai.AiTypes.Grid && (ai.UpdatePowerSources || !ai.HadPower && ai.GridEntity.IsPowered || ai.HasPower && !ai.GridEntity.IsPowered || Tick10)) //BD Power switch reminder
                     ai.UpdateGridPower();
 
                 var enforcement = Settings.Enforcement;
@@ -477,7 +478,11 @@ namespace CoreSystems
                         wComp.DetectStateChanges(masterChange);
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
+                    {
+                        if ((!wComp.IsWorking || wComp.IsDisabled) && wComp.PrimaryWeapon.Loading)
+                            wComp.PrimaryWeapon.ReloadEndTick++;
                         continue;
+                    }
 
                     var cMode = overrides.Control;
 
@@ -569,22 +574,20 @@ namespace CoreSystems
                     var noShootDelay = wComp.ShootManager.ShootDelay == 0 || wComp.ShootManager.ShootDelay != 0 && wComp.ShootManager.ShootDelay-- == 0;
                     var sequenceReady = (overrides.WeaponGroupId == 0 || overrides.SequenceId == -1) || wComp.SequenceReady(rootConstruct);
 
-                    if (Tick60) {
-                        var add = wComp.TotalEffect - wComp.PreviousTotalEffect;
-                        wComp.AddEffect = add > 0 ? add : wComp.AddEffect;
-                        wComp.AverageEffect = wComp.DamageAverage.Add((int)add);
-                        wComp.PreviousTotalEffect = wComp.TotalEffect;
-                    }
-
                     ///
                     /// Weapon update section
                     ///
                     for (int j = 0; j < wComp.Platform.Weapons.Count; j++) {
 
                         var w = wComp.Platform.Weapons[j];
+                        
+                        if (DebugSupport.DebugWeaponSync && Tick60 && IsServer && w.Comp.Cube != null)
+                        {
+                            DebugSupport.ServerWeaponSyncDebug(w, j);
+                        }
+                        
                         if (w.PartReadyTick > Tick)
                         {
-
                             if (w.Target.HasTarget && !IsClient)
                                 w.Target.Reset(Tick, States.WeaponNotReady);
                             continue;
@@ -626,7 +629,7 @@ namespace CoreSystems
                         }
                         else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
                             w.Reloaded(1);
-
+                        
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
 
@@ -727,8 +730,10 @@ namespace CoreSystems
 
                         ///
                         /// Queue for target acquire or set to tracking weapon.
-                        /// 
-                        if (weaponAcquires && w.TargetAcquireTick == uint.MaxValue && (!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0) && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
+                        ///
+                        // Runs the AI loop for projectile acquire on the client:
+                        var clientProjectileSeek = !IsServer && w.ProjectilesNear;
+                        if ((weaponAcquires || clientProjectileSeek) && w.TargetAcquireTick == uint.MaxValue && (!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0) && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
                         {
                             var myTimeSlot = Tick == w.FastTargetResetTick || w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
@@ -740,7 +745,8 @@ namespace CoreSystems
                             var requiresHome = w.System.GoHomeToReload && !w.IsHome && noAmmo;
                             var weaponReady = !w.OutOfAmmo && !requiresHome && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
                             Dictionary<object, Weapon> masterTargets;
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
+                         
+                            var seek = (weaponReady && (acquireReady || w.ProjectilesNear) || clientProjectileSeek) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             var syncCTC = w.RotorTurretSlaving && ai.ControlComp != null && ai.RootComp?.PrimaryWeapon != null && (bool)ai.RootComp.PrimaryWeapon.Target?.HasTarget && w.Target.TopEntityId != ai.RootComp.PrimaryWeapon.Target.TopEntityId;
 
@@ -927,7 +933,7 @@ namespace CoreSystems
                         if (w.Target.HasTarget) {
                             w.EventTriggerStateChanged(EventTriggers.Tracking, true);
 
-                            if (MpActive)
+                            if (MpActive && IsServer)
                                 w.Target.PushTargetToClient(w);
                         }
                     }

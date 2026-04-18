@@ -227,6 +227,9 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateCycleAmmo(session);
             CreateCustomActions<T>.CreateForceReload(session);
 
+            CreateCustomActions<T>.CreateTargetClosest(session);
+            CreateCustomActions<T>.CreateFireDistribution(session);
+            
             CreateCustomActions<T>.CreateFocusSubSystem(session);
             CreateCustomActions<T>.CreateSubSystems(session);
 
@@ -566,6 +569,11 @@ namespace CoreSystems
             "Sequence Id",
             "Burst Delay",
             "Burst Count",
+            "WC_TargetClosest",
+            "WC_EnableFireDistribution",
+            "WeaponValue",
+            "TurnCost",
+            "MinLockTime",
         };
 
         private static readonly HashSet<string> HideActions = new HashSet<string>()

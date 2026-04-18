@@ -380,6 +380,7 @@ namespace CoreSystems.Support
             internal readonly bool Armed;
             internal readonly bool IsGrid;
             internal readonly bool LargeGrid;
+            internal readonly bool SmallGrid;
             internal readonly bool SuspectedDrone;
 
             public DetectInfo(MyEntity target, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
@@ -412,6 +413,7 @@ namespace CoreSystems.Support
                 Armed = armed;
                 IsGrid = isGrid;
                 LargeGrid = largeGrid;
+                SmallGrid = isGrid && !largeGrid;
             }
         }
 
@@ -453,6 +455,7 @@ namespace CoreSystems.Support
             internal double TargetRadius;
             internal bool IsGrid;
             internal bool LargeGrid;
+            internal bool SmallGrid;
             internal bool Approaching;
             internal bool IsStatic;
             internal bool Drone;
@@ -473,6 +476,7 @@ namespace CoreSystems.Support
                 IsStatic = Target.Physics.IsStatic;
                 IsGrid = detectInfo.IsGrid;
                 LargeGrid = detectInfo.LargeGrid;
+                SmallGrid = detectInfo.SmallGrid;
                 MyAi = myAi;
                 TargetAi = targetAi;
                 Velocity = Target.Physics.LinearVelocity;

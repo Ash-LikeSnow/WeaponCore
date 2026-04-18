@@ -288,7 +288,10 @@ namespace CoreSystems.Support
             [ProtoMember(21)] internal bool EvictUniqueTargets;
             [ProtoMember(22)] internal int CycleTargets;
             [ProtoMember(23)] internal int CycleBlocks;
-
+            [ProtoMember(24)] internal bool AllowSwitchTargetPriority;
+            [ProtoMember(25)] internal bool AllowFireDistribution;
+            [ProtoMember(26)] internal bool AdvancedFireDistribution;
+            
             [ProtoContract]
             public struct CommunicationDef
             {
@@ -487,6 +490,7 @@ namespace CoreSystems.Support
             [ProtoMember(15)] internal bool NpcSafe;
             [ProtoMember(16)] internal bool ScanTrackOnly;
             [ProtoMember(17)] internal bool CanTargetSubmerged;
+            [ProtoMember(18)] internal float DeviateShotAngleSGModifier;
 
             [ProtoContract]
             public struct LoadingDef
@@ -694,7 +698,11 @@ namespace CoreSystems.Support
                 [ProtoMember(1)] internal bool Full;
                 [ProtoMember(2)] internal bool PointDefense;
                 [ProtoMember(3)] internal bool OnHitDeath;
+                [ProtoMember(4)] internal int PositionSyncInterval;
+                [ProtoMember(5)] internal int PositionPatchWindow;
+                [ProtoMember(6)] internal bool PositionUpdateOnRandomize;
             }
+            
             internal AmmoConstants Const;
 
             [ProtoContract]

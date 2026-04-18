@@ -13,18 +13,15 @@ namespace CoreSystems.Settings
         internal ClientSettings ClientConfig;
         internal Session Session;
         internal bool ClientWaiting;
+        
         internal CoreSettings(Session session)
         {
             Session = session;
             VersionControl = new VersionControl(this);
             VersionControl.InitSettings();
             if (Session.IsClient)
-                ClientWaiting = true;
-            else {
-                Session.AdvSync = Enforcement.AdvancedProjectileSync && (Session.MpActive || Session.LocalVersion);
-                Session.AdvSyncServer = Session.AdvSync;
-                Session.AdvSyncClient = Session.AdvSync && Session.LocalVersion;
-            }
+                ClientWaiting = true; // What?
+           
         }
 
         [ProtoContract]
@@ -205,7 +202,7 @@ namespace CoreSystems.Settings
             [ProtoMember(16)] public bool DisableTargetCycle;
             [ProtoMember(17)] public bool DisableHudTargetInfo;
             [ProtoMember(18)] public bool DisableHudReload;
-            [ProtoMember(19)] public bool AdvancedProjectileSync;
+            //TODO AdvSync [ProtoMember(19)] public bool AdvancedProjectileSync;
             [ProtoMember(20)] public bool UnsupportedMode;
             [ProtoMember(21)] public bool DisableSmallVsLargeBuff = false;
             [ProtoMember(22)] public Overrides DefinitionOverrides;

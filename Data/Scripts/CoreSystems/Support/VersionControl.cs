@@ -90,8 +90,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             GenerateBlockDmgMap();
             GenerateWeaponValuesMap();
             GenerateAmmoValuesMap();
-            Core.Session.AdvSync = Core.Enforcement.AdvancedProjectileSync && Core.Session.MpActive;
-            Core.Session.AdvSyncClient = Core.Session.AdvSync;
+            //TODO AdvSync Core.Session.AdvSync = Core.Enforcement.AdvancedProjectileSync && Core.Session.MpActive;
+            //TODO AdvSync Core.Session.AdvSyncClient = Core.Session.AdvSync;
         }
 
         private void GenerateConfig(CoreSettings.ServerSettings oldSettings = null)
@@ -155,7 +155,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             var oldDisableLeads = oldSettings.DisableLeads;
             var oldDisableHudReload = oldSettings.DisableHudReload;
             var oldDisableHudTargetInfo = oldSettings.DisableHudTargetInfo;
-            var oldPointDefenseSyncMonitor = oldSettings.AdvancedProjectileSync;
+            //var oldPointDefenseSyncMonitor = oldSettings.AdvancedProjectileSync;
             var oldUnsupportedMode = oldSettings.UnsupportedMode;
             var oldDisableSmallVsLargeBuff = oldSettings.DisableSmallVsLargeBuff;
             Core.Enforcement = new CoreSettings.ServerSettings { Version = Session.ModVersion };
@@ -186,7 +186,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Core.Enforcement.DisableLeads = oldDisableLeads;
             Core.Enforcement.DisableHudReload = oldDisableHudReload;
             Core.Enforcement.DisableHudTargetInfo = oldDisableHudTargetInfo;
-            Core.Enforcement.AdvancedProjectileSync = oldPointDefenseSyncMonitor;
+            //Core.Enforcement.AdvancedProjectileSync = oldPointDefenseSyncMonitor;
             Core.Enforcement.UnsupportedMode = oldUnsupportedMode;
             Core.Enforcement.DisableSmallVsLargeBuff = oldDisableSmallVsLargeBuff;
             Core.Enforcement.LargeGridDamageMultiplier = 1f;
