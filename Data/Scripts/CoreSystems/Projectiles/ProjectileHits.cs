@@ -591,12 +591,11 @@ namespace CoreSystems.Projectiles
                     s.Obstacle.AvoidSphere = new BoundingSphereD(closestFutureEnt.PositionComp.WorldAABB.Center, closestFutureEnt.PositionComp.LocalVolume.Radius + aConst.FutureIntersectionRange);
                 }
             }
-
+          
             var targetProjectile = target.TargetObject as Projectile;
 
             if (target.TargetState == Target.TargetStates.IsProjectile && targetProjectile != null && targetProjectile.State != ProjectileState.Dead && aConst.NonAntiSmartEwar && !projetileInShield)
             {
-               
                 double bulletRadius;
                 
                 // LineShape is deprecated, and we use some fallback calculations to reproduce the old behavior:

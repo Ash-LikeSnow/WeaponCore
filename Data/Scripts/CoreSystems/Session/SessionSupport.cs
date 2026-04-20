@@ -188,20 +188,6 @@ namespace CoreSystems
                 }
             }
 
-            foreach (var p in ProSyncLineDebug)
-            {
-                for (var i = p.Value.Count - 1; i >= 0; i--)
-                {
-                    var info = p.Value[i];
-                    DsDebugDraw.DrawLine(info.Line, info.Color, 0.35f);
-                    if (Tick - info.CreateTick > 3600)
-                    {
-                        p.Value.RemoveAt(i);
-                    }
-                }
-            }
-
-
             foreach (var p in ApproachStageChangeDebug)
             {
                 var draw = Tick - p.Value.CreateTick <= 180;

@@ -1,5 +1,6 @@
 ﻿using CoreSystems;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game;
 using VRage.Utils;
@@ -282,7 +283,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         displayText += FakeCannotHit;
                 }
 
-                    var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
+                var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;
                 
                 var textInfo = _textDrawPool.Count > 0 ? _textDrawPool.Dequeue() :  new TextDrawRequest();

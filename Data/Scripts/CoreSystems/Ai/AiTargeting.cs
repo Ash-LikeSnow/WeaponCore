@@ -20,6 +20,8 @@ using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Sandbox.ModAPI;
 using VRage.ModAPI;
 using Sandbox.Game.EntityComponents;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
+using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 
 namespace CoreSystems.Support
 {
@@ -547,16 +549,33 @@ namespace CoreSystems.Support
             var minTargetRadius = minRadius > 0 ? minRadius : system.MinTargetRadius;
             var maxTargetRadius = maxRadius < system.MaxTargetRadius ? maxRadius : system.MaxTargetRadius;
 
-
-            int index = int.MinValue;
-            if (id != ulong.MaxValue) {
-                if (!GetProjectileIndex(collection, id, out index)) 
-                    return false;
-            }
-            else if (system.ClosestFirst)
+            var fireDistributionAccessor = new FireDistributionSystem.Accessor();
+            
+            var index = int.MinValue;
+            if (id != ulong.MaxValue)
             {
-                int length = collection.Count;
-                for (int h = length / 2; h > 0; h /= 2)
+                if (!GetProjectileIndex(collection, id, out index))
+                {
+                    return false;
+                }
+            }
+            else if(mOverrides.EnableFireDistribution)
+            {
+                FireDistributionManager fireDistributionManager;
+                if (w.Comp.MasterAi.GetFireDistributionManager(out fireDistributionManager))
+                {
+                    fireDistributionAccessor = fireDistributionManager.CreateAccessor(w);
+                }
+            }
+
+            var targetClosest = w.System.AllowSwitchTargetPriority
+                ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst
+                : w.System.ClosestFirst;
+            
+            if (targetClosest)
+            {
+                var length = collection.Count;
+                for (var h = length / 2; h > 0; h /= 2)
                 {
                     for (int i = h; i < length; i += 1)
                     {
@@ -580,7 +599,7 @@ namespace CoreSystems.Support
 
             if (index < -1)
             {
-                var numToRandomize = system.ClosestFirst ? w.System.TopTargets : numOfTargets;
+                var numToRandomize = targetClosest ? w.System.TopTargets : numOfTargets;
 
                 if (w.System.CycleTargets <= 0)
                     checkSize = numOfTargets;
@@ -596,37 +615,90 @@ namespace CoreSystems.Support
 
                 deck = GetDeck(ref s.TargetDeck, chunk, checkSize, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
             }
-
-            for (int x = 0; x < checkSize; x++)
+            
+            for (var x = 0; x < checkSize; x++)
             {
-                var card = index < -1 ? deck[x] : index;
-                var lp = collection[card];
-
+                Projectile lp; // Long pointer, yes
+                bool isFromManager;
+                
+                if (fireDistributionAccessor.IsValid && fireDistributionAccessor.TryGetAssignment(out lp))
+                {
+                    isFromManager = true;
+                }
+                else
+                {
+                    var card = index < -1 ? deck[x] : index;
+                    lp = collection[card];
+                    isFromManager = false;
+                }
+                
                 if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+                    
                     continue;
+                }
+                
                 var lpAiOwnerFactionId = lp.Info.FactionId;
                 if (!mOverrides.Neutrals && wepAiOwnerFactionId > 0 && lpAiOwnerFactionId > 0 && MyAPIGateway.Session.Factions.GetRelationBetweenFactions(lpAiOwnerFactionId, wepAiOwnerFactionId) == MyRelationsBetweenFactions.Neutral)
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+                    
                     continue;
+                }
+                
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
-                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w || lp.Info.AmmoDef.Const.ScanRangeSqr != 0 && distSqr > lp.Info.AmmoDef.Const.ScanRangeSqr) continue;
+                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed ||
+                    lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr ||
+                    w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) &&
+                    tOwner.Weapon != w || lp.Info.AmmoDef.Const.ScanRangeSqr != 0 &&
+                    distSqr > lp.Info.AmmoDef.Const.ScanRangeSqr)
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+                    
+                    continue;
+                }
 
                 var lpaConst = lp.Info.AmmoDef.Const;
 
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)))
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+                    
                     continue;
+                }
 
                 var targetRadius = lpaConst.CollisionSize;
-                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;
+                if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192)
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+                    
+                    continue;
+                }
 
-                var lpAccel = lp.Velocity - lp.PrevVelocity1;
+                var lpAccel = lp.Velocity - lp.PrevVelocity1; // Wrong btw
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
                 {
-
                     var needsCast = false;
                     if (!aConst.CheckFutureIntersection)
                     {
@@ -637,10 +709,24 @@ namespace CoreSystems.Support
                             if (ent == null)
                             {
                                 Log.Line($"AcquireProjectile had null obstruction entity");
+                                
+                                if (isFromManager)
+                                {
+                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                                }
+                                
                                 continue;
                             }
+
                             if (ent is MyPlanet)
+                            {
+                                if (isFromManager)
+                                {
+                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                                }
+                                
                                 continue;
+                            }
                             var obsSphere = ent.PositionComp.WorldVolume;
 
                             var dir = lp.Position - weaponPos;
@@ -659,8 +745,7 @@ namespace CoreSystems.Support
                             }
                         }
                     }
-
-
+                    
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
@@ -684,7 +769,14 @@ namespace CoreSystems.Support
                     {
                         Vector3D? hitInfo;
                         if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, ai))
+                        {
+                            if (isFromManager)
+                            {
+                                fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                            }
+                            
                             continue;
+                        }
 
                         double hitDist;
                         Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
@@ -692,8 +784,14 @@ namespace CoreSystems.Support
                         var origDist = hitDist;
                         target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                         target.TransferTo(w.Target, Session.I.Tick);
-
                         return true;
+                    }
+                }
+                else
+                {
+                    if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
                     }
                 }
             }
@@ -855,6 +953,11 @@ namespace CoreSystems.Support
             return acquired;
         }
 
+        /// <summary>
+        ///     Used by smarts to re-acquire a new target. Doesn't concern weapons.
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
         internal static bool ReAcquireProjectile(Projectile p)
         {
             var info = p.Info;
@@ -884,7 +987,11 @@ namespace CoreSystems.Support
             var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
             var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
 
-            if (s.ClosestFirst)
+            var targetClosest = w.System.AllowSwitchTargetPriority
+                ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst
+                : w.System.ClosestFirst;
+            
+            if (targetClosest)
             {
                 int length = collection.Count;
                 for (int h = length / 2; h > 0; h /= 2)
@@ -904,7 +1011,7 @@ namespace CoreSystems.Support
                 }
             }
 
-            var numToRandomize = s.ClosestFirst ? s.Values.Targeting.TopTargets : numOfTargets;
+            var numToRandomize = targetClosest ? s.Values.Targeting.TopTargets : numOfTargets;
             if (session.TargetDeck.Length < numOfTargets)
             {
                 session.TargetDeck = new int[numOfTargets];
@@ -1022,7 +1129,9 @@ namespace CoreSystems.Support
                     if (bt != Any && blockTypeMap != null && blockTypeMap[bt].Count > 0)
                     {
                         var subSystemList = blockTypeMap[bt];
-                        if (system.ClosestFirst)
+                        if (w.System.AllowSwitchTargetPriority
+                                ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst
+                                : w.System.ClosestFirst)
                         {
                             if (w.Top5.Count > 0 && (bt != w.LastTop5BlockType || w.Top5[0].CubeGrid != subSystemList[0].CubeGrid))
                                 w.Top5.Clear();

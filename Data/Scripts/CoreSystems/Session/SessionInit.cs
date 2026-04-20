@@ -13,6 +13,7 @@ using VRage.Input;
 using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef.HardwareDef.HardwareType;
 namespace CoreSystems
 {
@@ -26,6 +27,9 @@ namespace CoreSystems
             HandlesInput = !IsServer || IsServer && !DedicatedServer;
             IsHost = IsServer && !DedicatedServer && MpActive;
             MpServer = IsHost || DedicatedServer;
+            AdvSync = MpActive;
+            AdvSyncServer = AdvSync && IsServer;
+            AdvSyncClient = AdvSync && IsClient;
             PlayerId = DedicatedServer ? 0 : Session.Player?.IdentityId ?? -1;
 
             if (IsServer || DedicatedServer)
@@ -35,6 +39,11 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(StringPacketId, StringReceived);
+
+                if (DebugSupport.DebugWeaponSync)
+                {
+                    MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(DebugSupport.WeaponSyncDebugId, DebugSupport.WeaponDesyncDebugHandler);
+                }
             }
 
             if (IsServer)

@@ -7,6 +7,7 @@ using VRage;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
@@ -44,8 +45,9 @@ namespace CoreSystems.Support
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
-        internal ulong SyncId = ulong.MaxValue;
-
+        internal ulong AdvSyncId;
+        internal bool AdvSyncDeathSent;
+        
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -83,6 +85,8 @@ namespace CoreSystems.Support
         internal ushort SpawnDepth;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
 
+        internal AdvSyncProjectileInterpolator AdvSyncInterpolator;
+        
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef,  Weapon.Muzzle muzzle, double maxTrajectory, double shotFade)
         {
             Weapon = weapon;
@@ -100,6 +104,8 @@ namespace CoreSystems.Support
 
         internal void Clean()
         {
+            AdvSyncInterpolator = default(AdvSyncProjectileInterpolator);
+            
             var aConst = AmmoDef.Const;
 
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
@@ -122,9 +128,13 @@ namespace CoreSystems.Support
             if (aConst.IsGuided)
                 Storage.Clean(this);
 
+            if (AdvSyncId != 0)
+            {
+                // P.S. not the cleanest, but it's good...
+                Session.I.ProjectilesByNetId.Remove(AdvSyncId);
+            }
 
-            SyncId = ulong.MaxValue;
-
+            AdvSyncDeathSent = false;
 
             if (IsFragment)
             {
@@ -191,14 +201,12 @@ namespace CoreSystems.Support
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             TotalAcceleration = Vector3D.Zero;
-
         }
     }
 
     internal class SmartStorage
     {
         internal ClosestObstacles Obstacle;
-        internal FullSyncInfo FullSyncInfo;
         internal FakeTargets DummyTargets;
         internal ApproachInfo ApproachInfo;
         internal DroneInfo DroneInfo;
@@ -239,8 +247,8 @@ namespace CoreSystems.Support
 
             Sleep = false;
 
-            if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
-                info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
+            //TODO AdvSync if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
+            //TODO AdvSync     info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
 
             if (ApproachInfo != null)
             {
@@ -251,12 +259,6 @@ namespace CoreSystems.Support
             {
                 DroneInfo.Clean();
                 DroneInfo = null;
-            }
-
-            if (FullSyncInfo != null)
-            {
-                FullSyncInfo.Clean(info);
-                FullSyncInfo = null;
             }
 
             if (Obstacle != null)
@@ -272,24 +274,6 @@ namespace CoreSystems.Support
         internal MyEntity Entity;
         internal uint LastSeenTick = uint.MaxValue;
         internal BoundingSphereD AvoidSphere;
-    }
-
-    internal class FullSyncInfo
-    {
-        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
-        internal int ProSyncPosMissCount;
-
-        internal void Clean(ProInfo info)
-        {
-            for (int i = 0; i < PastProInfos.Length; i++)
-                PastProInfos[i] = Vector3D.Zero;
-
-            info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
-
-            ProSyncPosMissCount = 0;
-
-            Session.I.FullSyncInfoPool.Push(this);
-        }
     }
 
     public class ApproachInfo
@@ -515,7 +499,8 @@ namespace CoreSystems.Support
             Normal,
             Virtual,
             Frag,
-            Client
+            Client,
+            AdvSync
         }
 
         internal Weapon.Muzzle Muzzle;
@@ -530,6 +515,10 @@ namespace CoreSystems.Support
         internal float MaxTrajectory;
         internal Kind Type;
         internal double RelativeAge;
+        internal ulong AdvNetId;
+        internal ushort SpawnDepth;
+        internal XorShiftRandomStruct RandomState;
+        internal AdvSyncTargetInfo AdvTargetInfo;
     }
 
     internal class Fragments
@@ -563,7 +552,7 @@ namespace CoreSystems.Support
                     frag.ManualMode = info.Storage.ManualMode;
                 }
 
-                frag.SyncId = info.SyncId;
+                frag.SyncId = info.AdvSyncId;
                 frag.SyncedFrags = ++info.SyncedFrags;
 
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
@@ -607,11 +596,21 @@ namespace CoreSystems.Support
         internal void Spawn(out int spawned)
         {
             Session session = null;
-            spawned = Sharpnel.Count;
-            for (int i = 0; i < spawned; i++)
+            spawned = 0;
+            for (int i = 0; i < Sharpnel.Count; i++)
             {
                 var frag = Sharpnel[i];
                 session = Session.I;
+
+                var aDef = frag.AmmoDef;
+                var aConst = aDef.Const;
+
+                if (session.AdvSyncClient && aConst.FullSync)
+                {
+                    session.Projectiles.FragmentPool.Push(frag);
+                    continue;
+                }
+
                 var p = session.Projectiles.ProjectilePool.Count > 0 ? session.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 info.Weapon = frag.Weapon;
@@ -619,8 +618,6 @@ namespace CoreSystems.Support
                 info.Ai = frag.Ai;
                 info.Id = session.Projectiles.CurrentProjectileId++;
 
-                var aDef = frag.AmmoDef;
-                var aConst = aDef.Const;
                 info.AmmoDef = aDef;
                 var target = info.Target;
                 
@@ -659,16 +656,34 @@ namespace CoreSystems.Support
                     info.Storage.DummyTargets = frag.DummyTargets;
                 }
 
-                if (session.AdvSync)
+                if (session.AdvSyncServer && aConst.FullSync)
                 {
-                    var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
-                    var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
-                    info.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    info.AdvSyncId = session.AdvSyncNetIdCounter++;
+                    session.ProjectilesByNetId[info.AdvSyncId] = p;
 
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        p.Info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
+                    var spawnPacket = session.AdvProjectileSpawnPacketPool.Get();
+                   
+                    spawnPacket.PType = PacketType.AdvProjectileSpawnSyncs;
+                    spawnPacket.NetId = info.AdvSyncId;
+                    spawnPacket.WeaponId = frag.Weapon.PartState.Id;
+                    spawnPacket.MuzzleId = frag.MuzzleId;
+                    spawnPacket.AmmoIndex = aConst.AmmoIdxPos;
+                    spawnPacket.Position = frag.Origin;
+                    spawnPacket.Direction = frag.Direction;
+                    spawnPacket.Velocity = frag.Velocity;
+                    spawnPacket.TargetInfo = AdvSyncTargetInfo.FromProjectile(p);
+                    spawnPacket.SpawnDepth = frag.Depth;
+                    spawnPacket.RandomState = info.Random;
+                    
+                    Session.I.PacketsToClient.Add(new Session.PacketInfo
+                    {
+                        Packet = spawnPacket,
+                        Entity = frag.Weapon.Comp.CoreEntity,
+                        HasPooledResource = true
+                    });
                 }
 
+                spawned++;
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)
