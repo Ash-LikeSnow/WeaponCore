@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using CoreSystems.Platform;
@@ -119,7 +120,7 @@ namespace CoreSystems
                     }
                     case PacketType.AdvProjectilePositionSyncs:
                     {
-                        HandleClientAdvProjectilePositionSync(packetObj);
+                        HandleClientAdvProjectilePositionSyncBatch(packetObj);
                         packetObj.Packet.CleanUp();
                         packetObj.Report.PacketValid = true;
                         break;
@@ -487,37 +488,41 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in ClientReceivedDeathPacket: {ex}", null, true); }
         }
 
-
-        internal void ProcessDeathSyncsForClients()
+        // Not worth creating a proper networking system in WeaponCore for a single packet type.
+        // So this simple approach just batches them by core entity and generates packets that go through the old system.
+        internal void GenerateServerAdvProjectilePositionPackets()
         {
-            //if (!AdvSyncClient)
+            foreach (var entry in AdvProjectilePositionFramesByNetId.Values)
+            {
+                AdvProjectilePositionBatchPacket batch;
+                if (!AdvProjectilePositionBatchesByCoreEntity.TryGetValue(entry.TopEntity, out batch))
+                {
+                    batch = AdvProjectilePositionBatchPacketPool.Count > 0
+                        ? AdvProjectilePositionBatchPacketPool.Pop()
+                        : new AdvProjectilePositionBatchPacket();
+                    
+                    AdvProjectilePositionBatchesByCoreEntity.Add(entry.TopEntity, batch);
+                }
+
+                batch.Data.Add(entry.Frame);
+            }
             
-             // TODO AdvSync {
-             // TODO AdvSync     var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
-             // TODO AdvSync     var playerCount = Players.Values.Count;
- // TODO AdvSync 
-             // TODO AdvSync     DeathSyncPackets += playerCount;
-             // TODO AdvSync     DeathSyncDataSize += playerCount * payLoad.Length;
- // TODO AdvSync 
-             // TODO AdvSync     foreach (var p in Players.Values)
-             // TODO AdvSync     {
-             // TODO AdvSync         if (p.Player.SteamUserId != MultiplayerId)
-             // TODO AdvSync             MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
-             // TODO AdvSync     }
-             // TODO AdvSync     ///ProtoDeathSyncMonitor.Collection.Clear();
-             // TODO AdvSync }
-            // TODO AdvSync else if (Tick60)
-            // TODO AdvSync {
-            // TODO AdvSync     for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
-// TODO AdvSync 
-            // TODO AdvSync         var pdInfo = ProtoDeathSyncMonitor.Collection[i];
-            // TODO AdvSync         Projectile p;
-            // TODO AdvSync         Weapon w;
-            // TODO AdvSync         if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-            // TODO AdvSync             p.State = Projectile.ProjectileState.Destroy;
-            // TODO AdvSync     }
-            // TODO AdvSync     ProtoDeathSyncMonitor.Collection.Clear();
-            // TODO AdvSync }
+            AdvProjectilePositionFramesByNetId.Clear();
+
+            foreach (var kvp in AdvProjectilePositionBatchesByCoreEntity)
+            {
+                var packet = kvp.Value;
+                packet.PType = PacketType.AdvProjectilePositionSyncs;
+                
+                PacketsToClient.Add(new PacketInfo
+                {
+                    Entity = kvp.Key,
+                    Packet = packet,
+                    HasPooledResource = true
+                });
+            }
+            
+            AdvProjectilePositionBatchesByCoreEntity.Clear();
         }
 
         internal void ProcessServerPacketsForClients()
@@ -529,6 +534,12 @@ namespace CoreSystems
             }
 
             PacketsToClient.AddRange(PrunedPacketsToClient.Values);
+            
+            if (AdvProjectilePositionFramesByNetId.Count > 0)
+            {
+                GenerateServerAdvProjectilePositionPackets();
+            }
+            
             for (var i = 0; i < PacketsToClient.Count; i++)
             {
                 var packetInfo = PacketsToClient[i];
@@ -723,7 +734,7 @@ namespace CoreSystems
                     case PacketType.AdvProjectilePositionSyncs:
                     {
                         pInfo.Packet.CleanUp();
-                        AdvProjectilePositionPacketPool.Return((AdvProjectilePositionPacket)pInfo.Packet);
+                        AdvProjectilePositionBatchPacketPool.Push((AdvProjectilePositionBatchPacket)pInfo.Packet);
                         break;
                     }
                     default:

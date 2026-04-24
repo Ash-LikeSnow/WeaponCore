@@ -1,3 +1,4 @@
+using System.IO;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -580,26 +581,37 @@ namespace CoreSystems
             packet.Info.ApplyTo(p);
         }
 
-        private void HandleClientAdvProjectilePositionSync(PacketObj data)
+        private void HandleClientAdvProjectilePositionSyncBatch(PacketObj data)
         {
-            var packet = (AdvProjectilePositionPacket)data.Packet;
+            var batch = (AdvProjectilePositionBatchPacket)data.Packet;
+            var frameCount = batch.Data.Count;
 
-            Projectile p;
-            if (!ProjectilesByNetId.TryGetValue(packet.NetId, out p))
+            for (var i = 0; i < frameCount; i++)
             {
-                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {packet.NetId} not found");
+                var frame = batch.Data[i];
+                
+                HandleClientAdvProjectilePositionSyncFrame(ref frame);
+            }
+        }
+
+        private void HandleClientAdvProjectilePositionSyncFrame(ref AdvProjectilePositionFrame frame)
+        {
+            Projectile p;
+            if (!ProjectilesByNetId.TryGetValue(frame.NetId, out p))
+            {
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} not found");
                 return;
             }
             
             // Set independent of interpolation:
-            p.Info.Storage.RandOffsetDir = packet.RandOffsetDir;
-            p.OffsetTarget = packet.OffsetTarget;
+            p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
+            p.OffsetTarget = frame.OffsetTarget;
             
-            var position = packet.Position;
-            var lastPosition = packet.Position;
-            var velocity = (Vector3D)packet.Velocity;
-            var prevVelocity0 = (Vector3D)packet.PrevVelocity0;
-            var prevVelocity1 = (Vector3D)packet.PrevVelocity1;
+            var position = frame.Position;
+            var velocity = (Vector3D)frame.Velocity;
+            var lastPosition = frame.Position - velocity * StepConst;
+            var prevVelocity0 = (Vector3D)frame.PrevVelocity0;
+            var prevVelocity1 = (Vector3D)frame.PrevVelocity1;
             var maxSpeed = p.MaxSpeed;
             
             const double imperceptibleFactor = 0.2;
@@ -657,7 +669,7 @@ namespace CoreSystems
                 };
             }
         }
-
+        
         /// <summary>
         ///     Extrapolates the projectile forward in time, so it more closely matches up with the position on the server.
         ///     I don't know if the grids themselves are timed similarly to this, but BD wants extrapolation so here we go.

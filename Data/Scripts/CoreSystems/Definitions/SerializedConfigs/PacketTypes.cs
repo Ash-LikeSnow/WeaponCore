@@ -114,7 +114,7 @@ namespace CoreSystems
     [ProtoInclude(47, typeof(AdvProjectileSpawnPacket))]
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
     [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
-    [ProtoInclude(50, typeof(AdvProjectilePositionPacket))]
+    [ProtoInclude(50, typeof(AdvProjectilePositionBatchPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -297,7 +297,6 @@ namespace CoreSystems
                         target.TargetObject = targetEnt;
                         target.TargetState = Target.TargetStates.IsEntity;
                         target.TargetPos = FakeWorldPos;
-                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Ent {targetEnt.EntityId}");
                         return true;
                     }
 
@@ -313,7 +312,6 @@ namespace CoreSystems
                         target.TargetState = Target.TargetStates.IsProjectile;
                         target.TargetPos = targetPro.Position;
                         //targetPro.Seekers.Add(p);
-                        DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId} - Applying Pro {targetPro.Info.AdvSyncId}");
                         return true;
                     }
 
@@ -360,14 +358,11 @@ namespace CoreSystems
                         }
                     }
                     
-                    DebugLog.Debug($"[ApplyTo] Projectile {p.Info.AdvSyncId}: Type {FakeType}, FakeEntityId {FakeEntityId}, LocalPos {FakeLocalPos}, WorldPos {FakeWorldPos}, Resolved Ent: {fakeTarget.TmpEntity?.EntityId}");
-
                     return true;
                 }
                 case AdvTargetType.None:
                 {
                     target.Reset(Session.I.Tick, Target.States.ProjectileNewTarget);
-                    DebugLog.Debug("[ApplyTo] Fake applied: NONE");
                     return true;
                 }
                 case AdvTargetType.Invalid:
@@ -445,28 +440,32 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class AdvProjectilePositionPacket : Packet
+    public struct AdvProjectilePositionFrame
     {
-        [ProtoMember(1)] internal ulong NetId;
-        [ProtoMember(2)] internal Vector3D Position;
-        [ProtoMember(4)] internal Vector3 Velocity;
-        [ProtoMember(5)] internal Vector3 PrevVelocity0;
-        [ProtoMember(6)] internal Vector3 PrevVelocity1;
-        [ProtoMember(8)] internal Vector3 RandOffsetDir;
-        [ProtoMember(9)] internal Vector3D OffsetTarget;
-        [ProtoMember(10)] internal float CurrentOwl;
+        [ProtoMember(1)] public ulong NetId;
+        [ProtoMember(2)] public Vector3D Position;
+        [ProtoMember(3)] public Vector3 Velocity;
+        [ProtoMember(4)] public Vector3 PrevVelocity0;
+        [ProtoMember(5)] public Vector3 PrevVelocity1;
+        [ProtoMember(6)] public Vector3 RandOffsetDir;
+        [ProtoMember(7)] public Vector3D OffsetTarget;
+    }
 
+    public struct AdvProjectilePositionFrameEntry
+    {
+        public MyEntity TopEntity;
+        public AdvProjectilePositionFrame Frame;
+    }
+    
+    [ProtoContract]
+    public class AdvProjectilePositionBatchPacket : Packet
+    {
+        [ProtoMember(1)] public List<AdvProjectilePositionFrame> Data = new List<AdvProjectilePositionFrame>();
+  
         public override void CleanUp()
         {
             base.CleanUp();
-            NetId = 0;
-            Position = Vector3D.Zero;
-            Velocity = Vector3.Zero;
-            PrevVelocity0 = Vector3.Zero;
-            PrevVelocity1 = Vector3.Zero;
-            RandOffsetDir = Vector3.Zero;
-            OffsetTarget = Vector3D.Zero;
-            CurrentOwl = 0;
+            Data.Clear();
         }
     }
     
