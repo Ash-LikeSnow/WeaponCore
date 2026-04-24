@@ -30,7 +30,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution
             _systems = new FireDistributionSystem[]
             {
                 new AdvancedClosestFireDistributionSystem(this),
-                new AdvancedScreeningFireDistributionSystem(this)
+                new AdvancedScreeningFireDistributionSystem(this),
                 new BasicFireDistributionSystem(this)
             };
         }
