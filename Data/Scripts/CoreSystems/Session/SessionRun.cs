@@ -229,7 +229,7 @@ namespace CoreSystems
             {
                 DsUtil.Start("network1");
 
-                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
+                if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0 || AdvProjectilePositionFramesByNetId.Count > 0)
                 {
                     ProcessServerPacketsForClients();
                 }

@@ -10,6 +10,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.ProtoWeaponCompTasks;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
@@ -117,9 +118,6 @@ namespace CoreSystems.Projectiles
 
             if (aConst.CheckFutureIntersection)
                 s.Obstacle = session.ClosestObstaclesPool.Count > 0 ? session.ClosestObstaclesPool.Pop() : new ClosestObstacles();
-
-            //TODO AdvSync if (aConst.FullSync)
-            //TODO AdvSync     s.FullSyncInfo = session.FullSyncInfoPool.Count > 0 ? session.FullSyncInfoPool.Pop() : new FullSyncInfo();
 
             EndState = EndStates.None;
             Position = Info.Origin;
@@ -3779,27 +3777,30 @@ namespace CoreSystems.Projectiles
 
         internal void SendAdvSyncPositionPacket()
         {
-            Session.I.LastProSyncSendTick = Session.I.Tick;
-            var packet = Session.I.AdvProjectilePositionPacketPool.Get();
-          
-            packet.PType = PacketType.AdvProjectilePositionSyncs;
-            packet.NetId = Info.AdvSyncId;
-            packet.Position = Position;
-            packet.Velocity = Velocity;
-            packet.PrevVelocity0 = PrevVelocity0;
-            packet.PrevVelocity1 = PrevVelocity1;
-            packet.RandOffsetDir = Info.Storage.RandOffsetDir;
-            packet.OffsetTarget = OffsetTarget;
+            var coreEntity = Info.Weapon.Comp.CoreEntity?.GetTopMostParent();
 
-            // This is leaking objects from the pool, but it's probably fine for now.
-            Session.I.PrunedPacketsToClient[Info.AdvSyncId] = new Session.PacketInfo
+            if (coreEntity == null)
             {
-                Function = Session.I.RewriteAdvPositionPacketOwl,
-                SpecialPlayerId = long.MinValue,
-                Packet = packet,
-                Entity = Info.Weapon.Comp.CoreEntity,
-                HasPooledResource = true
+                DebugLog.Warning($"Null core entity in projectile {Info.AdvSyncId} pos sync");
+                return;
+            }
+            
+            Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionFrameEntry
+            {
+                TopEntity = coreEntity,
+                Frame = new AdvProjectilePositionFrame
+                {
+                    NetId = Info.AdvSyncId,
+                    Position = Position,
+                    Velocity = Velocity,
+                    PrevVelocity0 = PrevVelocity0,
+                    PrevVelocity1 = PrevVelocity1,
+                    RandOffsetDir = Info.Storage.RandOffsetDir,
+                    OffsetTarget = OffsetTarget,
+                }
             };
+            
+            Session.I.LastProSyncSendTick = Session.I.Tick;
         }
 
         #endregion
