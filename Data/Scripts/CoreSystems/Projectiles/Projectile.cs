@@ -3777,26 +3777,42 @@ namespace CoreSystems.Projectiles
 
         internal void SendAdvSyncPositionPacket()
         {
-            var coreEntity = Info.Weapon.Comp.CoreEntity?.GetTopMostParent();
+            var parentEntity = Info.Weapon.Comp.CoreEntity?.GetTopMostParent();
 
-            if (coreEntity == null)
+            if (parentEntity == null)
             {
-                DebugLog.Warning($"Null core entity in projectile {Info.AdvSyncId} pos sync");
+                DebugLog.Warning($"Null parent entity in projectile {Info.AdvSyncId} pos sync");
                 return;
+            }
+            
+            var relativePosition = Position;
+            var originEntity = 0L;
+
+            if (Info.Target?.TargetState == Target.TargetStates.IsEntity)
+            {
+                var targetEntity = (Info.Target?.TargetObject as MyEntity)?.GetTopMostParent();
+              
+                if (targetEntity?.PositionComp != null)
+                {
+                    relativePosition -= targetEntity.PositionComp.WorldMatrixRef.Translation;
+                    originEntity = targetEntity.EntityId;
+                }
             }
             
             Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionFrameEntry
             {
-                TopEntity = coreEntity,
+                TopEntity = parentEntity,
                 Frame = new AdvProjectilePositionFrame
                 {
                     NetId = Info.AdvSyncId,
-                    Position = Position,
+                    WorldPosition = Position,
                     Velocity = Velocity,
                     PrevVelocity0 = PrevVelocity0,
                     PrevVelocity1 = PrevVelocity1,
                     RandOffsetDir = Info.Storage.RandOffsetDir,
                     OffsetTarget = OffsetTarget,
+                    OriginEntityId = originEntity,
+                    RelativePosition = relativePosition
                 }
             };
             

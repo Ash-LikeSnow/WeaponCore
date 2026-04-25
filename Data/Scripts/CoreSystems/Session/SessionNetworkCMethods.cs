@@ -607,9 +607,23 @@ namespace CoreSystems
             p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
             p.OffsetTarget = frame.OffsetTarget;
             
-            var position = frame.Position;
+            var position = frame.WorldPosition;
+            if (frame.OriginEntityId != 0)
+            {
+                var originEntity = MyEntities.GetEntityByIdOrDefault(frame.OriginEntityId);
+                
+                if (originEntity?.PositionComp != null)
+                {
+                    position = originEntity.PositionComp.WorldMatrixRef.Translation + frame.RelativePosition;
+                }
+                else
+                {
+                    DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} didn't resolve relative to {frame.OriginEntityId}");
+                }
+            }
+       
             var velocity = (Vector3D)frame.Velocity;
-            var lastPosition = frame.Position - velocity * StepConst;
+            var lastPosition = position - velocity * StepConst;
             var prevVelocity0 = (Vector3D)frame.PrevVelocity0;
             var prevVelocity1 = (Vector3D)frame.PrevVelocity1;
             var maxSpeed = p.MaxSpeed;
