@@ -443,12 +443,14 @@ namespace CoreSystems
     public struct AdvProjectilePositionFrame
     {
         [ProtoMember(1)] public ulong NetId;
-        [ProtoMember(2)] public Vector3D Position;
+        [ProtoMember(2)] public Vector3D WorldPosition;
         [ProtoMember(3)] public Vector3 Velocity;
         [ProtoMember(4)] public Vector3 PrevVelocity0;
         [ProtoMember(5)] public Vector3 PrevVelocity1;
         [ProtoMember(6)] public Vector3 RandOffsetDir;
-        [ProtoMember(7)] public Vector3D OffsetTarget;
+        [ProtoMember(7)] public Vector3 OffsetTarget;
+        [ProtoMember(8)] public long OriginEntityId;
+        [ProtoMember(9)] public Vector3 RelativePosition;
     }
 
     public struct AdvProjectilePositionFrameEntry
