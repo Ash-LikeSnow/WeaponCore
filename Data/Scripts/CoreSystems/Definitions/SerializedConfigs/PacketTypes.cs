@@ -448,9 +448,7 @@ namespace CoreSystems
         [ProtoMember(4)] public Vector3 PrevVelocity0;
         [ProtoMember(5)] public Vector3 PrevVelocity1;
         [ProtoMember(6)] public Vector3 RandOffsetDir;
-        [ProtoMember(7)] public Vector3 OffsetTarget;
-        [ProtoMember(8)] public long OriginEntityId;
-        [ProtoMember(9)] public Vector3 RelativePosition;
+        [ProtoMember(7)] public Vector3D OffsetTarget;
     }
 
     public struct AdvProjectilePositionFrameEntry

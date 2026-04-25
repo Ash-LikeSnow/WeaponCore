@@ -1,14 +1,12 @@
-using System.IO;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
-using VRage.Game.Entity;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.Ai;
 // ReSharper disable ForCanBeConvertedToForeach
+
 namespace CoreSystems
 {
     public partial class Session
@@ -606,22 +604,8 @@ namespace CoreSystems
             // Set independent of interpolation:
             p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
             p.OffsetTarget = frame.OffsetTarget;
-            
+
             var position = frame.WorldPosition;
-            if (frame.OriginEntityId != 0)
-            {
-                var originEntity = MyEntities.GetEntityByIdOrDefault(frame.OriginEntityId);
-                
-                if (originEntity?.PositionComp != null)
-                {
-                    position = originEntity.PositionComp.WorldMatrixRef.Translation + frame.RelativePosition;
-                }
-                else
-                {
-                    DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} didn't resolve relative to {frame.OriginEntityId}");
-                }
-            }
-       
             var velocity = (Vector3D)frame.Velocity;
             var lastPosition = position - velocity * StepConst;
             var prevVelocity0 = (Vector3D)frame.PrevVelocity0;

@@ -3785,20 +3785,6 @@ namespace CoreSystems.Projectiles
                 return;
             }
             
-            var relativePosition = Position;
-            var originEntity = 0L;
-
-            if (Info.Target?.TargetState == Target.TargetStates.IsEntity)
-            {
-                var targetEntity = (Info.Target?.TargetObject as MyEntity)?.GetTopMostParent();
-              
-                if (targetEntity?.PositionComp != null)
-                {
-                    relativePosition -= targetEntity.PositionComp.WorldMatrixRef.Translation;
-                    originEntity = targetEntity.EntityId;
-                }
-            }
-            
             Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionFrameEntry
             {
                 TopEntity = parentEntity,
@@ -3810,9 +3796,7 @@ namespace CoreSystems.Projectiles
                     PrevVelocity0 = PrevVelocity0,
                     PrevVelocity1 = PrevVelocity1,
                     RandOffsetDir = Info.Storage.RandOffsetDir,
-                    OffsetTarget = OffsetTarget,
-                    OriginEntityId = originEntity,
-                    RelativePosition = relativePosition
+                    OffsetTarget = OffsetTarget
                 }
             };
             
