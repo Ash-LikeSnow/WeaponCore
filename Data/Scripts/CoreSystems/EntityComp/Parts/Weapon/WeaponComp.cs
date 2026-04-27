@@ -15,6 +15,7 @@ using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.WeaponDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -699,6 +700,32 @@ namespace CoreSystems.Platform
                         break;
                     case "MinLockTime":
                         o.MinLockTime = v;
+                        break;
+                    case "EnableProjectileFlagsOverride":
+                        o.EnableProjectileFlagOverrides = enabled;
+                        break;
+                    case "AllProjectileFlagsToggle":
+                        o.AllProjectileFlagsToggle = enabled;
+                        break;
+                    default:
+                        // this COULD be optimized network wise if this was separated out into its own function just sending the override changes
+                        // however thats a lot of effort for something whic will seldomly happen
+                        if (setting.StartsWith("SPF_"))
+                        {
+                            var flagStr = setting.Substring(4);
+                            ProjectileFlags flag;
+                            if (Enum.TryParse(flagStr, true, out flag))
+                            {
+                                if (enabled)
+                                {
+                                    o.ProjectileFlagOverrides |= (ulong)flag;
+                                }
+                                else
+                                {
+                                    o.ProjectileFlagOverrides &= (ulong)~flag;
+                                }
+                            }
+                        }
                         break;
                 }
 

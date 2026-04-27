@@ -574,6 +574,9 @@ namespace CoreSystems
             "WeaponValue",
             "TurnCost",
             "MinLockTime",
+            "WC_ShowPFlags",
+            "WC_PFlagsList",
+            "WC_PFlagsAndToggle",
         };
 
         private static readonly HashSet<string> HideActions = new HashSet<string>()

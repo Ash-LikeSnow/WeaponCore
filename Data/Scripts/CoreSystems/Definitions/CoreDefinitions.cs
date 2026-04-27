@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
 
@@ -208,6 +209,132 @@ namespace CoreSystems.Support
         [ProtoMember(6)] internal string ModPath;
         [ProtoMember(7)] internal Dictionary<string, UpgradeValues[]> Upgrades;
 
+        [Flags]
+        [Serializable]
+        public enum ProjectileFlags : ulong
+        {
+            /// <summary>
+            /// By default set to All on weapons, ammo defs are set based on stats below if a definition is recieved with this for backwards compat.
+            /// </summary>
+            Invalid = 0,
+
+            /// <summary>
+            /// Custom flags for modders
+            /// </summary>
+            Custom01 = 1uL << 0,
+            Custom02 = 1uL << 1,
+            Custom03 = 1uL << 2,
+            Custom04 = 1uL << 3,
+            Custom05 = 1uL << 4,
+            Custom06 = 1uL << 5,
+            Custom07 = 1uL << 6,
+            Custom08 = 1uL << 7,
+            Custom09 = 1uL << 8,
+            Custom10 = 1uL << 9,
+            Custom11 = 1uL << 10,
+            Custom12 = 1uL << 11,
+            Custom13 = 1uL << 12,
+            Custom14 = 1uL << 13,
+            Custom15 = 1uL << 14,
+            Custom16 = 1uL << 15,
+            Custom17 = 1uL << 16,
+            Custom18 = 1uL << 17,
+            Custom19 = 1uL << 18,
+            Custom20 = 1uL << 19,
+
+            /// <summary>
+            /// Automatically set if the projectile guidance is not, Smart, Drone, or Mine (aka either None or TravelTo)
+            /// </summary>
+            IsDumb = 1uL << 20,
+            /// <summary>
+            /// Automatically set if the projectile guidance is Smart
+            /// </summary>
+            IsSmart = 1uL << 21,
+            /// <summary>
+            /// Automatically set if the projectile guidance is DroneAdvanced
+            /// </summary>
+            IsDrone = 1uL << 22,
+            /// <summary>
+            /// Automatically set if the projectile guidance is a Mine
+            /// </summary>
+            IsMine = 1uL << 23,
+            /// <summary>
+            /// // Automatically set if the projectile is TravelTo
+            /// </summary>
+            IsTravelTo = 1uL << 24,
+            /// <summary>
+            /// value for backwards compat when IgnoreDumbProjectiles = true
+            /// </summary>
+            IgnoreDumbProjectiles = IsSmart | IsDrone,
+
+            /// <summary>
+            /// Automatically set if Ewar.Enable = false
+            /// </summary>
+            NoEwar = 1uL << 25,
+            /// <summary>
+            /// Automatically set if Ewar.Enable = true and Ewar.Mode = Effect
+            /// </summary>
+            EwarEffect = 1uL << 26,
+            /// <summary>
+            /// Automatically set if Ewar.Enable = true and Ewar.Mode = Field
+            /// </summary>
+            EwarField = 1uL << 27,
+            /// <summary>
+            /// Value representing Ewar.Enable = true
+            /// </summary>
+            Ewar = EwarEffect | EwarField,
+
+            /// <summary>
+            /// Automatically set if ByBlockHit.Enable = false and EndOfLife.Enable = false
+            /// </summary>
+            NonExplosive = 1uL << 28,
+            /// <summary>
+            /// Automatically set if ByBlockHit.Enable = true
+            /// </summary>
+            BBHExplosive = 1uL << 29,
+            /// <summary>
+            /// Automatically set if EndOfLife.Enable = true
+            /// </summary>
+            EOLExplosive = 1uL << 30,
+            /// <summary>
+            /// Value representing ByBlockHit.Enable = true or EndOfLife.Enable = true
+            /// </summary>
+            Explosive = BBHExplosive | EOLExplosive,
+
+            /// <summary>
+            /// Automatically set if the ammo def does not have a fragment defined
+            /// </summary>
+            NoFragments = 1uL << 31,
+            /// <summary>
+            /// Automatically set if the ammo def has a fragment defined
+            /// </summary>
+            HasFragments = 1uL << 32,
+
+            /// <summary>
+            /// Automatically set if IsSmart = true and Trajectory.Smarts.IgnoreAntiSmarts = false
+            /// </summary>
+            IgnoresAntiSmarts = 1uL << 33,
+            /// <summary>
+            /// Automatically set if IsSmart = true and Trajectory.Smarts.IgnoreAntiSmarts = true
+            /// </summary>
+            AffectedByAntiSmarts = 1uL << 34,
+
+            // room for more if needed
+            // note that bit order matters for UI - larger values will be listed lower
+            // because of this adding more Custom variables is difficult if you want them to be grouped with the other Custom variables
+
+            /// <summary>
+            /// All ones
+            /// </summary>
+            All = ~Invalid,
+
+            /// <summary>
+            /// Value representing any of the custom flags
+            /// </summary>
+            AllCustom = Custom01 | Custom02 | Custom03 | Custom04 | Custom05 | Custom06 | Custom07 | Custom08 | Custom09 | Custom10 |
+                        Custom11 | Custom12 | Custom13 | Custom14 | Custom15 | Custom16 | Custom17 | Custom18 | Custom19 | Custom20,
+        }
+
         [ProtoContract]
         public struct ModelAssignmentsDef
         {
@@ -291,7 +418,27 @@ namespace CoreSystems.Support
             [ProtoMember(24)] internal bool AllowSwitchTargetPriority;
             [ProtoMember(25)] internal bool AllowFireDistribution;
             [ProtoMember(26)] internal bool AdvancedFireDistribution;
-            
+            [ProtoMember(27)] internal ulong ProjectileThreatsInternal; // ulong is needed or ProtoBuf throws a fit :(
+            [ProtoIgnore]
+            internal ProjectileFlags[] ProjectileThreats
+            {
+                set
+                {
+                    ProjectileThreatsInternal = (ulong)ProjectileFlags.Invalid;
+                    foreach (var flag in value)
+                    {
+                        if (flag == ProjectileFlags.Invalid)
+                        {
+                            ProjectileThreatsInternal = (ulong)ProjectileFlags.Invalid;
+                            return;
+                        }
+
+                        ProjectileThreatsInternal |= (ulong)flag;
+                    }
+                }
+            }
+            [ProtoMember(28)] internal bool RequireAllProjectileThreats;
+
             [ProtoContract]
             public struct CommunicationDef
             {
@@ -554,6 +701,55 @@ namespace CoreSystems.Support
                 [ProtoMember(8)] internal bool DisableSupportingPD;
                 [ProtoMember(9)] internal bool ProhibitShotDelay;
                 [ProtoMember(10)] internal bool ProhibitBurstCount;
+                [ProtoMember(11)] internal ProjectileFlagsToggleDef UiFlagsToggle;
+
+                [ProtoContract]
+                public struct ProjectileFlagsToggleDef
+                {
+                    [ProtoMember(1)] internal bool Enable;
+                    [ProtoMember(2)] internal ulong ProjectileThreatsTogglesInternal; // ulong is needed or ProtoBuf throws a fit :(
+                    [ProtoIgnore]
+                    internal ProjectileFlags[] ProjectileThreatToggles
+                    {
+                        set
+                        {
+                            ProjectileThreatsTogglesInternal = (ulong)ProjectileFlags.Invalid;
+                            foreach (var flag in value)
+                            {
+                                if (flag == ProjectileFlags.Invalid)
+                                {
+                                    ProjectileThreatsTogglesInternal = (ulong)ProjectileFlags.Invalid;
+                                    return;
+                                }
+
+                                ProjectileThreatsTogglesInternal |= (ulong)flag;
+                            }
+                        }
+                    }
+
+                    [ProtoMember(3)] internal string Custom01DisplayName;
+                    [ProtoMember(4)] internal string Custom02DisplayName;
+                    [ProtoMember(5)] internal string Custom03DisplayName;
+                    [ProtoMember(6)] internal string Custom04DisplayName;
+                    [ProtoMember(7)] internal string Custom05DisplayName;
+                    [ProtoMember(8)] internal string Custom06DisplayName;
+                    [ProtoMember(9)] internal string Custom07DisplayName;
+                    [ProtoMember(10)] internal string Custom08DisplayName;
+                    [ProtoMember(11)] internal string Custom09DisplayName;
+                    [ProtoMember(12)] internal string Custom10DisplayName;
+                    [ProtoMember(13)] internal string Custom11DisplayName;
+                    [ProtoMember(14)] internal string Custom12DisplayName;
+                    [ProtoMember(15)] internal string Custom13DisplayName;
+                    [ProtoMember(16)] internal string Custom14DisplayName;
+                    [ProtoMember(17)] internal string Custom15DisplayName;
+                    [ProtoMember(18)] internal string Custom16DisplayName;
+                    [ProtoMember(19)] internal string Custom17DisplayName;
+                    [ProtoMember(20)] internal string Custom18DisplayName;
+                    [ProtoMember(21)] internal string Custom19DisplayName;
+                    [ProtoMember(22)] internal string Custom20DisplayName;
+
+                    [ProtoMember(23)] internal bool RequireAllProjectileThreatsToggle;
+                }
             }
 
 
@@ -690,6 +886,25 @@ namespace CoreSystems.Support
             [ProtoMember(34)] internal bool IgnoreGrids;
             [ProtoMember(35)] internal bool AllowNegativeHeatModifier;
             [ProtoMember(36)] internal int HeatNeededToFire;
+            [ProtoMember(37)] internal ulong ProjectileFlagsInternal; // ulong is needed or ProtoBuf throws a fit :(
+            [ProtoIgnore]
+            internal ProjectileFlags[] ProjectileFlagsOverride
+            {
+                set
+                {
+                    ProjectileFlagsInternal = (ulong)ProjectileFlags.Invalid;
+                    foreach (var flag in value)
+                    {
+                        if (flag == ProjectileFlags.Invalid)
+                        {
+                            ProjectileFlagsInternal = (ulong)ProjectileFlags.Invalid;
+                            return;
+                        }
+
+                        ProjectileFlagsInternal |= (ulong)flag;
+                    }
+                }
+            }
 
 
             [ProtoContract]

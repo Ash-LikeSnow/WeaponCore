@@ -330,6 +330,18 @@ namespace CoreSystems
                     {
                         if(DmgLog[subTypeIdHash].TerminalName == "") DmgLog[subTypeIdHash].TerminalName=partDef.HardPoint.PartName;
                         modPath = partDef.ModPath;
+
+                        if (partDef.Targeting.IgnoreDumbProjectiles)
+                        {
+                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.IgnoreDumbProjectiles;
+                            partDef.Targeting.RequireAllProjectileThreats = false;
+                        }
+                        else if (partDef.Targeting.ProjectileThreatsInternal == (ulong)WeaponDefinition.ProjectileFlags.Invalid)
+                        {
+                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.All;
+                            partDef.Targeting.RequireAllProjectileThreats = false;
+                        }
+
                         if (partDef.HardPoint.HardWare.Type != Phantom)
                         {
                             foreach (var def in AllDefinitions)

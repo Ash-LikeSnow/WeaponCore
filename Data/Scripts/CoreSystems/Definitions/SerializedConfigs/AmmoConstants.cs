@@ -70,6 +70,7 @@ namespace CoreSystems.Support
         public readonly FactionColor TracerFactionColor;
         public readonly FactionColor SegFactionColor;
         public readonly FactionColor TrailFactionColor;
+        public readonly ProjectileFlags ProjectileFlags;
         public readonly Vector4 LinearTracerColor;
         public readonly Vector4 LinearTracerColorStart;
         public readonly Vector4 LinearTracerColorEnd;
@@ -359,7 +360,7 @@ namespace CoreSystems.Support
                 MyLog.Default.WriteLine(msg);
                 throw e;
             }
-
+            
             IsCriticalReaction = wDef.HardPoint.HardWare.CriticalReaction.Enable;
 
             ComputeTextures(ammo, out TracerTextures, out SegmentTextures, out TrailTextures, out TracerMode, out TrailMode);
@@ -591,6 +592,8 @@ namespace CoreSystems.Support
             
             ProjectilesFirst = system.ProjectilesFirst;
 
+            PFlags(ammo, out ProjectileFlags);
+
             PreComputedMath = new PreComputedMath(ammo, this);
         }
 
@@ -625,6 +628,56 @@ namespace CoreSystems.Support
             }
         }
 
+        private void PFlags(WeaponSystem.AmmoType ammo, out ProjectileFlags projFlags)
+        {
+            projFlags = (ProjectileFlags)ammo.AmmoDef.ProjectileFlagsInternal; // do not and out the non custom flags if set by the modder in the ammo file, even if it allows for non smart projectiles to be flagged as smart and such
+                                                                               // main reason why is Drone can be smart w/ approaches for example
+
+            if (IsSmart)
+                projFlags |= ProjectileFlags.IsSmart;
+            else if (IsDrone)
+                projFlags |= ProjectileFlags.IsDrone;
+            else if (IsMine)
+                projFlags |= ProjectileFlags.IsMine;
+            else if (TravelTo)
+                projFlags |= ProjectileFlags.IsTravelTo;
+            else
+                projFlags |= ProjectileFlags.IsDumb;
+
+            if (Ewar)
+            {
+                if (EwarField)
+                    projFlags |= ProjectileFlags.EwarField;
+                else
+                    projFlags |= ProjectileFlags.EwarEffect;
+            }
+            else
+            {
+                projFlags |= ProjectileFlags.NoEwar;
+            }
+
+            if (ammo.AmmoDef.AreaOfDamage.ByBlockHit.Enable || ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable)
+            {
+                if (ammo.AmmoDef.AreaOfDamage.ByBlockHit.Enable)
+                    projFlags |= ProjectileFlags.BBHExplosive;
+                if (ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable)
+                    projFlags |= ProjectileFlags.EOLExplosive;
+            }
+            else
+                projFlags |= ProjectileFlags.NonExplosive;
+
+            if (HasFragment)
+                projFlags |= ProjectileFlags.HasFragments;
+            else
+                projFlags |= ProjectileFlags.NoFragments;
+
+            if (IsSmart && IgnoreAntiSmarts)
+                projFlags |= ProjectileFlags.IgnoresAntiSmarts;
+            else if (IsSmart)
+                projFlags |= ProjectileFlags.AffectedByAntiSmarts;
+
+            
+        }
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
             out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out bool zeroEffortNav, out double scanRangeSqr, out double offsetMinRangeSqr,
