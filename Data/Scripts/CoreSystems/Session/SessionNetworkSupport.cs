@@ -102,17 +102,6 @@ namespace CoreSystems
 
         #region ServerOnly
 
-        internal object RewriteAdvPositionPacketOwl(object o1, object o2)
-        {
-            var packet = (AdvProjectilePositionPacket)o1;
-            var targetSteamId = (ulong)o2;
-
-            TickLatency tickLatency;
-            PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
-            packet.CurrentOwl = tickLatency.CurrentLatency;
-            return packet;
-        }
-
         internal void SendConstruct(Ai ai)
         {
             if (IsServer)

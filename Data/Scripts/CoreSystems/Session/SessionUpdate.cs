@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -661,6 +661,8 @@ namespace CoreSystems
                         {
                             if (w.Target.HasTarget)
                             {
+                                // NOTE: some of this logic is duplicated on the IsClient branch along with constants!
+                                
                                 if (w.OutOfAmmo)
                                 {
                                     w.Target.Reset(Tick, States.Expired);
@@ -721,6 +723,11 @@ namespace CoreSystems
                         else if (eTarget != null && eTarget.MarkedForClose || w.Target.HasTarget && w.Target.TargetObject == null && (w.TargetData.EntityId >= 0 || w.TargetData.EntityId <= -3) || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.TargetObject != null)
                         {
                             w.Target.Reset(Tick, States.ServerReset);
+                        }
+                        else if (pTarget != null && (!ai.LiveProjectile.ContainsKey(pTarget) || w.Target.TargetState == TargetStates.IsProjectile && pTarget.State != Projectile.ProjectileState.Alive && pTarget.State != Projectile.ProjectileState.ClientPhantom))
+                        {
+                            w.Target.Reset(Tick, States.Expired);
+                            w.FastTargetResetTick = Tick + 6; // Same logic as the server loop
                         }
 
                         w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && !w.System.FocusOnly && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);

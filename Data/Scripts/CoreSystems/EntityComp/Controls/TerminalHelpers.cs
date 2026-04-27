@@ -71,6 +71,7 @@ namespace CoreSystems.Control
             
             AddOnOffSwitchNoAction<T>(session, "TargetClosest", Localization.GetText("TerminalTargetClosestTitle"), Localization.GetText("TerminalTargetClosestTooltip"), BlockUi.GetTargetClosest, BlockUi.RequestSetTargetClosest, true, AllowSwitchTargetPriority);
             AddOnOffSwitchNoAction<T>(session, "EnableFireDistribution", Localization.GetText("TerminalEnableFireDistributionTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetEnableFireDistribution, BlockUi.RequestSetEnableFireDistribution, true, AllowFireDistribution);
+<<<<<<< master
             AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionAdvancedSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
             AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
 
@@ -79,6 +80,10 @@ namespace CoreSystems.Control
             AddOnOffSwitchNoAction<T>(session, "ShowPFlags", Localization.GetText("ShowPFlagsTitle"), Localization.GetText("ShowPFlagsTooltip"), BlockUi.GetEnableProjectileFlagsOverride, BlockUi.RequestSetEnableProjectileFlagsOverride, true, AllowProjectileFlags);
             AddOnOffSwitchNoAction<T>(session, "WC_PFlagsAndToggle", Localization.GetText("PFlagsAndToggleTitle"), Localization.GetText("PFlagsAndToggleTooltip"), BlockUi.GetAllProjectileFlagsToggle, BlockUi.RequestSetAllProjectileFlagsToggle, true, ProjectileFlagsVisible);
             AddListBoxNoAction<T>(session, "PFlagsList", Localization.GetText("PFlagsListTitle"), "", BlockUi.ProjectileFlagsFill, BlockUi.ProjectileFlagsSelect, ProjectileFlagsVisible, 34, true);
+=======
+            AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalTurnCostTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionAdvancedSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
+            AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalMinLockTimeTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
+>>>>>>> master
         }
 
 

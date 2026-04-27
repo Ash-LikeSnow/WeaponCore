@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using CoreSystems.Api;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -108,7 +109,6 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileUpdateTargetPacket> AdvProjectileUpdateTargetPacketPool = new MyConcurrentPool<AdvProjectileUpdateTargetPacket>(32);
-        internal readonly MyConcurrentPool<AdvProjectilePositionPacket> AdvProjectilePositionPacketPool = new MyConcurrentPool<AdvProjectilePositionPacket>(64);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
@@ -184,6 +184,11 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
+        #region Adv Sync Position Networking Fields
+        internal readonly Dictionary<ulong, AdvProjectilePositionFrameEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionFrameEntry>();
+        internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
+        internal readonly Dictionary<MyEntity, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByCoreEntity = new Dictionary<MyEntity, AdvProjectilePositionBatchPacket>();
+        #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
         internal readonly Dictionary<string, MyMouseButtonsEnum> MouseMap = new Dictionary<string, MyMouseButtonsEnum>();
