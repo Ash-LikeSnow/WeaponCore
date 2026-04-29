@@ -91,6 +91,47 @@ namespace CoreSystems
                     }
                 }
             }
+            if (baseDefArray.ProjectileTags != null)
+                AssembleTagDefinitions(baseDefArray.ProjectileTags);
+
+            if (baseDefArray.TagAssigmnents != null)
+                AssembleTagAssignments(baseDefArray.TagAssigmnents);
+        }
+
+        public void AssembleTagDefinitions(ProjectileTagDefinition[] arr)
+        {
+            foreach (var def in arr)
+            {
+                var nsp = def.Namespace.ID;
+
+                if (string.IsNullOrEmpty(nsp))
+                    continue;
+
+                ProjectileTagDefinition prio;
+                if (!ProjectileTagDefs.TryGetValue(nsp, out prio) || prio.DefinitionPriority < def.DefinitionPriority)
+                {
+                    ProjectileTagDefs[nsp] = prio;
+                }
+            }
+        }
+
+        public void AssembleTagAssignments(ProjectileTagAssignment[] arr)
+        {
+            foreach (var assignment in arr)
+            {
+                foreach (var ammo in assignment.ProjectileAmmoNames)
+                {
+                    HashSet<string> tags;
+                    if (AmmoTags.TryGetValue(ammo, out tags))
+                    {
+                        tags.Add(assignment.Tag);
+                    }
+                    else
+                    {
+                        AmmoTags[ammo] = new HashSet<string>() { assignment.Tag };
+                    }
+                }
+            }
         }
 
         public void AssemblePartDefinitions(WeaponDefinition[] partDefs, HashSet<string> subTypes)

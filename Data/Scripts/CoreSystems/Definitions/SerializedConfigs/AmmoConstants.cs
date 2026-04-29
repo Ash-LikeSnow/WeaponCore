@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawn
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 using static CoreSystems.Settings.CoreSettings.ServerSettings;
+using static CoreSystems.Session;
 
 namespace CoreSystems.Support
 {
@@ -55,6 +56,7 @@ namespace CoreSystems.Support
         public readonly AmmoDef[] AmmoPattern;
         public readonly XorShiftRandom Random;
         public readonly AmmoOverride Overrides;
+        public readonly HashSet<uint> ProjectileTags;
 
         public readonly MyStringId[] TracerTextures;
         public readonly MyStringId[] TrailTextures;
@@ -70,7 +72,6 @@ namespace CoreSystems.Support
         public readonly FactionColor TracerFactionColor;
         public readonly FactionColor SegFactionColor;
         public readonly FactionColor TrailFactionColor;
-        public readonly ProjectileFlags ProjectileFlags;
         public readonly Vector4 LinearTracerColor;
         public readonly Vector4 LinearTracerColorStart;
         public readonly Vector4 LinearTracerColorEnd;
@@ -592,7 +593,7 @@ namespace CoreSystems.Support
             
             ProjectilesFirst = system.ProjectilesFirst;
 
-            PFlags(ammo, out ProjectileFlags);
+            PFlags(ammo, out ProjectileTags);
 
             PreComputedMath = new PreComputedMath(ammo, this);
         }
@@ -628,55 +629,32 @@ namespace CoreSystems.Support
             }
         }
 
-        private void PFlags(WeaponSystem.AmmoType ammo, out ProjectileFlags projFlags)
+        private void PFlags(WeaponSystem.AmmoType ammo, out HashSet<uint> projFlags)
         {
-            projFlags = (ProjectileFlags)ammo.AmmoDef.ProjectileFlagsInternal; // do not and out the non custom flags if set by the modder in the ammo file, even if it allows for non smart projectiles to be flagged as smart and such
-                                                                               // main reason why is Drone can be smart w/ approaches for example
+            projFlags = new HashSet<uint>();
 
-            if (IsSmart)
-                projFlags |= ProjectileFlags.IsSmart;
-            else if (IsDrone)
-                projFlags |= ProjectileFlags.IsDrone;
-            else if (IsMine)
-                projFlags |= ProjectileFlags.IsMine;
-            else if (TravelTo)
-                projFlags |= ProjectileFlags.IsTravelTo;
-            else
-                projFlags |= ProjectileFlags.IsDumb;
-
-            if (Ewar)
+            var s = Session.I;
+            uint val;
+            HashSet<string> ammotags;
+            if (s.AmmoTags.TryGetValue(ammo.AmmoDef.AmmoRound, out ammotags))
             {
-                if (EwarField)
-                    projFlags |= ProjectileFlags.EwarField;
-                else
-                    projFlags |= ProjectileFlags.EwarEffect;
-            }
-            else
-            {
-                projFlags |= ProjectileFlags.NoEwar;
+                foreach (var tag in ammotags)
+                {
+                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                        projFlags.Add(val);
+                }
             }
 
-            if (ammo.AmmoDef.AreaOfDamage.ByBlockHit.Enable || ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable)
-            {
-                if (ammo.AmmoDef.AreaOfDamage.ByBlockHit.Enable)
-                    projFlags |= ProjectileFlags.BBHExplosive;
-                if (ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable)
-                    projFlags |= ProjectileFlags.EOLExplosive;
-            }
-            else
-                projFlags |= ProjectileFlags.NonExplosive;
-
-            if (HasFragment)
-                projFlags |= ProjectileFlags.HasFragments;
-            else
-                projFlags |= ProjectileFlags.NoFragments;
-
-            if (IsSmart && IgnoreAntiSmarts)
-                projFlags |= ProjectileFlags.IgnoresAntiSmarts;
-            else if (IsSmart)
-                projFlags |= ProjectileFlags.AffectedByAntiSmarts;
-
-            
+            if (IsSmart && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_SMARTTAG}", out val))
+                projFlags.Add(val);
+            else if (IsDrone && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_DRONETAG}", out val))
+                projFlags.Add(val);
+            else if (IsMine && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_MINETAG}", out val))
+                projFlags.Add(val);
+            else if (TravelTo && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_TRAVELTOTAG}", out val))
+                projFlags.Add(val);
+            else if (s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_DUMBTAG}", out val))
+                projFlags.Add(val);
         }
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,

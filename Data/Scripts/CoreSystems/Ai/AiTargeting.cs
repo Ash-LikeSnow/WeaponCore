@@ -550,13 +550,13 @@ namespace CoreSystems.Support
 
             var fireDistributionAccessor = new FireDistributionSystem.Accessor();
 
-            var defaultProjectileFlags = system.Values.Targeting.ProjectileThreatsInternal;
-            var userAllowedFlags = system.Values.HardPoint.Ui.UiFlagsToggle.Enable ? system.Values.HardPoint.Ui.UiFlagsToggle.ProjectileThreatsTogglesInternal : (ulong)ProjectileFlags.Invalid;
-            var userSetFlags = (ulong)comp.Data.Repo.Values.Set.Overrides.ProjectileFlagOverrides;
+            var defaultProjectileTags = system.WConst.ProjectileTags;
+            var whitelist = system.Values.HardPoint.Ui.UiSetTags.Enable ? system.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist : system.Values.Targeting.ChangeProjectileTagsToWhitelist;
+            var useUserSetFlags = system.Values.HardPoint.Ui.UiSetTags.Enable;
+            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags;
 
-            var validProjectileFlags = (defaultProjectileFlags & ~userAllowedFlags) | (userSetFlags & userAllowedFlags);
-            var flagsAreAnd = system.Values.HardPoint.Ui.UiFlagsToggle.Enable && system.Values.HardPoint.Ui.UiFlagsToggle.RequireAllProjectileThreatsToggle ? comp.Data.Repo.Values.Set.Overrides.AllProjectileFlagsToggle : system.Values.Targeting.RequireAllProjectileThreats;
-
+            var smartOnly = system.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
+            
             var index = int.MinValue;
             if (id != ulong.MaxValue)
             {
@@ -679,7 +679,7 @@ namespace CoreSystems.Support
                 var lpaConst = lp.Info.AmmoDef.Const;
 
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
-                if ((flagsAreAnd ? (validProjectileFlags != ((ulong)lpaConst.ProjectileFlags & validProjectileFlags)) : ((validProjectileFlags & (ulong)lpaConst.ProjectileFlags) == 0)) || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)))
+                if ((smartOnly && !smart) || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)))
                 {
                     if (isFromManager)
                     {
@@ -687,6 +687,25 @@ namespace CoreSystems.Support
                     }
                     
                     continue;
+                }
+                bool foundTag = false;
+                foreach (var tag in lpaConst.ProjectileTags)
+                {
+                    if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                    {
+                        foundTag = true;
+                        break;
+                    }
+
+                    if ((whitelist && foundTag) || (!whitelist && !foundTag))
+                    {
+                        if (isFromManager)
+                        {
+                            fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                        }
+
+                        continue;
+                    }
                 }
 
                 var targetRadius = lpaConst.CollisionSize;
@@ -992,12 +1011,12 @@ namespace CoreSystems.Support
             var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
             var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
 
-            var defaultProjectileFlags = w.System.Values.Targeting.ProjectileThreatsInternal;
-            var userAllowedFlags = w.System.Values.HardPoint.Ui.UiFlagsToggle.Enable ? w.System.Values.HardPoint.Ui.UiFlagsToggle.ProjectileThreatsTogglesInternal : (ulong)ProjectileFlags.Invalid;
-            var userSetFlags = (ulong)w.Comp.Data.Repo.Values.Set.Overrides.ProjectileFlagOverrides;
+            var defaultProjectileTags = w.System.WConst.ProjectileTags;
+            var whitelist = w.System.Values.HardPoint.Ui.UiSetTags.Enable ? w.System.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist : w.System.Values.Targeting.ChangeProjectileTagsToWhitelist;
+            var useUserSetFlags = w.System.Values.HardPoint.Ui.UiSetTags.Enable;
+            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags;
 
-            var validProjectileFlags = (defaultProjectileFlags & ~userAllowedFlags) | (userSetFlags & userAllowedFlags);
-            var flagsAreAnd = w.System.Values.HardPoint.Ui.UiFlagsToggle.Enable && w.System.Values.HardPoint.Ui.UiFlagsToggle.RequireAllProjectileThreatsToggle ? w.Comp.Data.Repo.Values.Set.Overrides.AllProjectileFlagsToggle : w.System.Values.Targeting.RequireAllProjectileThreats;
+            var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
 
             var targetClosest = w.System.AllowSwitchTargetPriority
                 ? w.Comp?.MasterOverrides?.TargetClosest ?? w.System.ClosestFirst
@@ -1046,8 +1065,23 @@ namespace CoreSystems.Support
                 
                 var lpaConst = lp.Info.AmmoDef.Const;
 
-                if ((flagsAreAnd ? (validProjectileFlags != ((ulong)lpaConst.ProjectileFlags & validProjectileFlags)) : ((validProjectileFlags & (ulong)lpaConst.ProjectileFlags) == 0)) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
+                if (smartOnly && !(lpaConst.IsDrone || lpaConst.IsSmart) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
                     continue;
+
+                bool foundTag = false;
+                foreach (var tag in lpaConst.ProjectileTags)
+                {
+                    if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                    {
+                        foundTag = true;
+                        break;
+                    }
+
+                    if ((whitelist && foundTag) || (!whitelist && !foundTag))
+                    {
+                        continue;
+                    }
+                }
 
                 var targetRadius = lpaConst.CollisionSize;
                 if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192) continue;

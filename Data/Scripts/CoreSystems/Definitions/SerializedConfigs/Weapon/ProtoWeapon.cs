@@ -626,9 +626,9 @@ namespace CoreSystems
         [ProtoMember(38)] public bool EnableFireDistribution;
         [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
         [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
-        [ProtoMember(42)] public bool EnableProjectileFlagOverrides = false;
-        [ProtoMember(43), DefaultValue((ulong)ProjectileFlags.All)] public ulong ProjectileFlagOverrides = (ulong)ProjectileFlags.All; // can't use the enum or protobuf throws a fit
-        [ProtoMember(44)] public bool AllProjectileFlagsToggle = false;
+        [ProtoMember(42)] public bool EnableProjectileTagOverrides = false;
+        [ProtoMember(43)] public HashSet<uint> UserProjectileTags = new HashSet<uint>(); // can't use the enum or protobuf throws a fit
+        [ProtoMember(44)] public bool UserProjectileTagWhitelist = false;
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
             MoveMode = syncFrom.MoveMode;
@@ -667,9 +667,9 @@ namespace CoreSystems
             EnableFireDistribution = syncFrom.EnableFireDistribution;
             TurnCost = syncFrom.TurnCost;
             MinLockTime = syncFrom.MinLockTime;
-            EnableProjectileFlagOverrides = syncFrom.EnableProjectileFlagOverrides;
-            ProjectileFlagOverrides = syncFrom.ProjectileFlagOverrides;
-            AllProjectileFlagsToggle = syncFrom.AllProjectileFlagsToggle;
+            EnableProjectileTagOverrides = syncFrom.EnableProjectileTagOverrides;
+            UserProjectileTags = syncFrom.UserProjectileTags;
+            UserProjectileTagWhitelist = syncFrom.UserProjectileTagWhitelist;
         }
     }
 }

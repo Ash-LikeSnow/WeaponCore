@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CoreSystems.Platform;
+﻿using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using VRage.ModAPI;
 using VRage.Utils;
 // ReSharper disable MemberCanBePrivate.Global
@@ -77,9 +77,9 @@ namespace CoreSystems.Control
             
             Separator<T>(session, "WC_sep5", IsTrue);
 
-            AddOnOffSwitchNoAction<T>(session, "ShowPFlags", Localization.GetText("ShowPFlagsTitle"), Localization.GetText("ShowPFlagsTooltip"), BlockUi.GetEnableProjectileFlagsOverride, BlockUi.RequestSetEnableProjectileFlagsOverride, true, AllowProjectileFlags);
-            AddOnOffSwitchNoAction<T>(session, "WC_PFlagsAndToggle", Localization.GetText("PFlagsAndToggleTitle"), Localization.GetText("PFlagsAndToggleTooltip"), BlockUi.GetAllProjectileFlagsToggle, BlockUi.RequestSetAllProjectileFlagsToggle, true, ProjectileFlagsVisible);
-            AddListBoxNoAction<T>(session, "PFlagsList", Localization.GetText("PFlagsListTitle"), "", BlockUi.ProjectileFlagsFill, BlockUi.ProjectileFlagsSelect, ProjectileFlagsVisible, 34, true);
+            AddOnOffSwitchNoAction<T>(session, "ShowPTags", Localization.GetText("TerminalPTagSettingsToggleTitle"), Localization.GetText("TerminalPTagSettingsToggleTooltip"), BlockUi.GetEnableProjectileTagsOverride, BlockUi.RequestSetEnableProjectileTagsOverride, true, AllowProjectileTags);
+            AddComboboxNoAction<T>(session, "PTagsWhitelistToggle", Localization.GetText("TerminalPTagWhitelistToggleTitle"), Localization.GetText("TerminalPTagWhitelistToggleTooltip"), BlockUi.GetWhitelistMode, BlockUi.RequestSetPTagWhitelist, BlockUi.ListPTagsWhitelistSettings, ProjectileTagsVisible);
+            AddListBoxNoAction<T>(session, "PTagsList", Localization.GetText("PFlagsListTitle"), "", BlockUi.ProjectileTagsFill, BlockUi.ProjectileTagsSelect, ProjectileTagsVisible, 10, true);
         }
 
 
@@ -563,17 +563,17 @@ namespace CoreSystems.Control
             return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.Targeting.AllowFireDistribution && !comp.HasAlternateUi;
         }
 
-        internal static bool AllowProjectileFlags(IMyTerminalBlock block)
+        internal static bool AllowProjectileTags(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
-            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiFlagsToggle.Enable && !comp.HasAlternateUi;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.Enable && !comp.HasAlternateUi;
         }
-        internal static bool ProjectileFlagsVisible(IMyTerminalBlock block)
+        internal static bool ProjectileTagsVisible(IMyTerminalBlock block)
         {
-            return AllowProjectileFlags(block) && BlockUi.GetEnableProjectileFlagsOverride(block);
+            return AllowProjectileTags(block) && BlockUi.GetEnableProjectileTagsOverride(block);
         }
         internal static void SliderWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {

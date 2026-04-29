@@ -522,6 +522,19 @@ namespace CoreSystems
         internal bool AdvSyncServer;
         internal bool AdvSyncClient;
 
+        public const string WC_NAMESPACE = "wc";
+        public const string WC_DUMBTAG = "dumb";
+        public const string WC_SMARTTAG = "smart";
+        public const string WC_DRONETAG = "drone";
+        public const string WC_MINETAG = "mine";
+        public const string WC_TRAVELTOTAG = "travelto";
+
+        public Dictionary<string, ProjectileTagDefinition> ProjectileTagDefs = new Dictionary<string, ProjectileTagDefinition>();
+        public Dictionary<string, uint> InternalTagToInt = new Dictionary<string, uint>();
+        public Dictionary<uint, string> IntToTagInternal = new Dictionary<uint, string>();
+        public Dictionary<uint, string> IntToTagUserStr = new Dictionary<uint, string>();
+        public Dictionary<string, HashSet<string>> AmmoTags = new Dictionary<string, HashSet<string>>();
+
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {
             "LargeProductivityModule", "LargeEffectivenessModule", "LargeEnergyModule",

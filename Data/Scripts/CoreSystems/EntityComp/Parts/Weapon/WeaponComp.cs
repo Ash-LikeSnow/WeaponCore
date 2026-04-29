@@ -701,28 +701,28 @@ namespace CoreSystems.Platform
                     case "MinLockTime":
                         o.MinLockTime = v;
                         break;
-                    case "EnableProjectileFlagsOverride":
-                        o.EnableProjectileFlagOverrides = enabled;
+                    case "EnableProjectileTagOverrides":
+                        o.EnableProjectileTagOverrides = enabled;
                         break;
-                    case "AllProjectileFlagsToggle":
-                        o.AllProjectileFlagsToggle = enabled;
+                    case "UserProjectileTagWhitelist":
+                        o.UserProjectileTagWhitelist = enabled;
                         break;
                     default:
                         // this COULD be optimized network wise if this was separated out into its own function just sending the override changes
                         // however thats a lot of effort for something whic will seldomly happen
-                        if (setting.StartsWith("SPF_"))
+                        if (setting.StartsWith("UT_"))
                         {
                             var flagStr = setting.Substring(4);
-                            ProjectileFlags flag;
-                            if (Enum.TryParse(flagStr, true, out flag))
+                            uint tag;
+                            if (uint.TryParse(flagStr, out tag))
                             {
-                                if (enabled)
+                                if (enabled && comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags.Contains(tag))
                                 {
-                                    o.ProjectileFlagOverrides |= (ulong)flag;
+                                    o.UserProjectileTags.Add(tag);
                                 }
                                 else
                                 {
-                                    o.ProjectileFlagOverrides &= (ulong)~flag;
+                                    o.UserProjectileTags.Remove(tag);
                                 }
                             }
                         }

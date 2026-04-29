@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using CoreSystems.Control;
+﻿using CoreSystems.Control;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using System;
+using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Support;
 using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
-using static CoreSystems.Support.WeaponDefinition;
 
 namespace CoreSystems
 {
@@ -1256,174 +1253,121 @@ namespace CoreSystems
             return FireDistributionSupport.MaxMinLockTime;
         }
 
-        internal static bool GetEnableProjectileFlagsOverride(IMyTerminalBlock block)
+        internal static bool GetEnableProjectileTagsOverride(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return false;
-            return comp.Data.Repo.Values.Set.Overrides.EnableProjectileFlagOverrides;
+            return comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides;
         }
 
-        internal static void RequestSetEnableProjectileFlagsOverride(IMyTerminalBlock block, bool newValue)
+        internal static void RequestSetEnableProjectileTagsOverride(IMyTerminalBlock block, bool newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            var currentValue = comp.Data.Repo.Values.Set.Overrides.EnableProjectileFlagOverrides;
+            var currentValue = comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides;
 
             if (newValue != currentValue)
             {
                 if (Session.I.IsClient && Session.I.MpActive)
                 {
-                    comp.Data.Repo.Values.Set.Overrides.EnableProjectileFlagOverrides = newValue;
+                    comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides = newValue;
                 }
 
-                Weapon.WeaponComponent.RequestSetValue(comp, "EnableProjectileFlagsOverride", newValue ? 1 : 0, Session.I.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "EnableProjectileTagOverrides", newValue ? 1 : 0, Session.I.PlayerId);
                 comp.Cube.UpdateTerminalForced();
             }
         }
-        internal static bool GetAllProjectileFlagsToggle(IMyTerminalBlock block)
+        internal static long GetWhitelistMode(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return false;
-            return comp.Data.Repo.Values.Set.Overrides.AllProjectileFlagsToggle;
+                return 0;
+            return comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist ? 0 : 1;
         }
-
-        internal static void RequestSetAllProjectileFlagsToggle(IMyTerminalBlock block, bool newValue)
+        internal static void RequestSetPTagWhitelist(IMyTerminalBlock block, long newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            var currentValue = comp.Data.Repo.Values.Set.Overrides.AllProjectileFlagsToggle;
+            var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist;
 
-            if (newValue != currentValue)
+            if ((newValue == 1) != currentValue)
             {
                 if (Session.I.IsClient && Session.I.MpActive)
                 {
-                    comp.Data.Repo.Values.Set.Overrides.AllProjectileFlagsToggle = newValue;
+                    comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist = newValue == 1;
                 }
 
-                Weapon.WeaponComponent.RequestSetValue(comp, "AllProjectileFlagsToggle", newValue ? 1 : 0, Session.I.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "UserProjectileTagWhitelist", (int)newValue, Session.I.PlayerId);
                 comp.Cube.UpdateTerminalForced();
             }
         }
-        static IEnumerable<ulong> GetFlags(ulong input)
+        internal static void ListPTagsWhitelistSettings(List<MyTerminalControlComboBoxItem> controlList)
         {
-
-            for (int i = 0; i < sizeof(ulong) * 8; i++)
+            foreach (var sub in PTagsWhitelistSettings)
             {
-                var value = 1uL << i;
-
-                if ((input & value) != 0)
-                    yield return value;
-
+                controlList.Add(sub);
             }
         }
-        internal static void ProjectileFlagsFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list, List<MyTerminalControlListBoxItem> selected)
+
+        private static readonly List<MyTerminalControlComboBoxItem> PTagsWhitelistSettings = new List<MyTerminalControlComboBoxItem>
+        {
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagBlacklist")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelist")) },
+        };
+        internal static void ProjectileTagsFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list, List<MyTerminalControlListBoxItem> selected)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            foreach (var f in GetFlags(comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiFlagsToggle.ProjectileThreatsTogglesInternal)) // lmao
+            Session s = Session.I;
+
+            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags) // lmao
             {
-                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(ProjectileFlagToString((ProjectileFlags)f, ref comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiFlagsToggle)), MyStringId.GetOrCompute($"Internal flag: {(ProjectileFlags)f}"), f);
+                string intStr = s.IntToTagInternal[val];
+                string userStr = s.IntToTagUserStr[val];
+
+                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(userStr), MyStringId.GetOrCompute($"Internal tag: {intStr}"), val);
 
                 list.Add(box);
 
-                if ((comp.Data.Repo.Values.Set.Overrides.ProjectileFlagOverrides & f) != 0)
+                if (comp.Data.Repo.Values.Set.Overrides.UserProjectileTags.Contains(val))
                 {
                     selected.Add(box);
                 }
-
             }
         }
 
-        internal static string ProjectileFlagToString(ProjectileFlags flag, ref HardPointDef.UiDef.ProjectileFlagsToggleDef strs)
-        {
-            switch (flag)
-            {
-                case ProjectileFlags.Custom01:
-                    return strs.Custom01DisplayName;
-                case ProjectileFlags.Custom02:
-                    return strs.Custom02DisplayName;
-                case ProjectileFlags.Custom03:
-                    return strs.Custom03DisplayName;
-                case ProjectileFlags.Custom04:
-                    return strs.Custom04DisplayName;
-                case ProjectileFlags.Custom05:
-                    return strs.Custom05DisplayName;
-                case ProjectileFlags.Custom06:
-                    return strs.Custom06DisplayName;
-                case ProjectileFlags.Custom07:
-                    return strs.Custom07DisplayName;
-                case ProjectileFlags.Custom08:
-                    return strs.Custom08DisplayName;
-                case ProjectileFlags.Custom09:
-                    return strs.Custom09DisplayName;
-                case ProjectileFlags.Custom10:
-                    return strs.Custom10DisplayName;
-                case ProjectileFlags.Custom11:
-                    return strs.Custom11DisplayName;
-                case ProjectileFlags.Custom12:
-                    return strs.Custom12DisplayName;
-                case ProjectileFlags.Custom13:
-                    return strs.Custom13DisplayName;
-                case ProjectileFlags.Custom14:
-                    return strs.Custom14DisplayName;
-                case ProjectileFlags.Custom15:
-                    return strs.Custom15DisplayName;
-                case ProjectileFlags.Custom16:
-                    return strs.Custom16DisplayName;
-                case ProjectileFlags.Custom17:
-                    return strs.Custom17DisplayName;
-                case ProjectileFlags.Custom18:
-                    return strs.Custom18DisplayName;
-                case ProjectileFlags.Custom19:
-                    return strs.Custom19DisplayName;
-                case ProjectileFlags.Custom20:
-                    return strs.Custom20DisplayName;
-                default:
-                    string s = Localization.GetText($"SPF_{flag}");
-                    return string.IsNullOrEmpty(s) ? $"{flag}" : s;
-            }
-        }
-
-
-        internal static void ProjectileFlagsSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> selected)
+        internal static void ProjectileTagsSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> selected)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            ProjectileFlags selectedVals = ProjectileFlags.Invalid;
-            var validFlags = comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiFlagsToggle.ProjectileThreatsTogglesInternal;
-
-            // so many flag to ulong and vice versa casts, could write this better
-            foreach (var item in selected)
-            {
-                var flag = (ProjectileFlags)item.UserData;
-                if (((ulong)flag & validFlags) != 0)
-                {
-                    selectedVals |= flag;
-                }
-            }
-
             bool changed = false;
-            foreach (var f in GetFlags(validFlags))
+            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags)
             {
-                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(ProjectileFlagToString((ProjectileFlags)f, ref comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiFlagsToggle)), MyStringId.NullOrEmpty, f);
-                bool newValue = ((ulong)selectedVals & f) != 0;
-                
-                var currentValue = (comp.Data.Repo.Values.Set.Overrides.ProjectileFlagOverrides & f) != 0;
+                bool newValue = false;
+                foreach (var item in selected)
+                {
+                    if ((uint)item.UserData == val)
+                    {
+                        newValue = true;
+                        break;
+                    }
+                }
+
+                var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags.Contains(val);
 
                 if (currentValue != newValue)
                 {
                     changed = true;
-                    Weapon.WeaponComponent.RequestSetValue(comp, $"SPF_{(ProjectileFlags)f}", newValue ? 1 : 0, Session.I.PlayerId);
+                    Weapon.WeaponComponent.RequestSetValue(comp, $"UT_{val}", newValue ? 1 : 0, Session.I.PlayerId);
                 }
             }
 

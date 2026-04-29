@@ -149,6 +149,7 @@ namespace CoreSystems
             MyAPIGateway.GridGroups.OnGridGroupCreated += GridGroupsOnOnGridGroupCreated;
             MyAPIGateway.GridGroups.OnGridGroupDestroyed += GridGroupsOnOnGridGroupDestroyed;
 
+            CompileProjectileTags();
             CompileWeaponStructures();
             CompileUpgradeStructures();
             CompileSupportStructures();
@@ -216,6 +217,30 @@ namespace CoreSystems
                     }
 
                     list[j] = tempValue;
+                }
+            }
+        }
+        private void CompileProjectileTags()
+        {
+            uint id = 0;
+            foreach (var nsp in ProjectileTagDefs.Values)
+            {
+                foreach (var tag in nsp.Tags)
+                {
+                    if (string.IsNullOrEmpty(tag.ID))
+                        continue;
+
+                    string combnedTag = $"{nsp.Namespace.ID}:{tag.ID}";
+                    string nspPublicName = string.IsNullOrEmpty(nsp.Namespace.PublicName) ? "" : $"{nsp.Namespace.PublicName} ";
+                    string tagPublicName = string.IsNullOrEmpty(tag.PublicName) ? tag.ID : tag.PublicName;
+
+                    string combnedTagUser = $"{nspPublicName}{tagPublicName}";
+
+                    InternalTagToInt[combnedTag] = id;
+                    IntToTagInternal[id] = combnedTag;
+                    IntToTagUserStr[id] = tagPublicName;
+
+                    id++;
                 }
             }
         }
@@ -373,17 +398,6 @@ namespace CoreSystems
                     {
                         if(DmgLog[subTypeIdHash].TerminalName == "") DmgLog[subTypeIdHash].TerminalName=partDef.HardPoint.PartName;
                         modPath = partDef.ModPath;
-
-                        if (partDef.Targeting.IgnoreDumbProjectiles)
-                        {
-                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.IgnoreDumbProjectiles;
-                            partDef.Targeting.RequireAllProjectileThreats = false;
-                        }
-                        else if (partDef.Targeting.ProjectileThreatsInternal == (ulong)WeaponDefinition.ProjectileFlags.Invalid)
-                        {
-                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.All;
-                            partDef.Targeting.RequireAllProjectileThreats = false;
-                        }
 
                         if (partDef.HardPoint.HardWare.Type != Phantom)
                         {

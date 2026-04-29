@@ -28,6 +28,10 @@ namespace Scripts
                             LargeGatlingTurretReskin,
                             SmallGatlingTurretReskin
                             );
+
+            ProjectileTags(WCAutoAssignedTags);
+
+
         }
     }
 }

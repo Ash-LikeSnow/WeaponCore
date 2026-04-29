@@ -193,6 +193,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Coreparts\Definitions\Missiles.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\Coreparts\Definitions\ProjectileTags.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Coreparts\Definitions\RailgunAnimations.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
