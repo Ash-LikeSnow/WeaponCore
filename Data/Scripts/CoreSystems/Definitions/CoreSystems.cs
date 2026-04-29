@@ -815,14 +815,28 @@ namespace CoreSystems.Support
 
             if (values.HardPoint.Ui.UiSetTags.Enable && values.HardPoint.Ui.UiSetTags.ProjectileTagsList != null)
             {
-                foreach (var tag in values.HardPoint.Ui.UiSetTags.ProjectileTagsList)
+                if (values.HardPoint.Ui.UiSetTags.ListIsBlacklist)
                 {
-                    uint val;
-                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                    foreach (var tag in s.InternalTagToInt)
                     {
-                        ValidUserProjectileTags.Add(val);
+                        if (!values.HardPoint.Ui.UiSetTags.ProjectileTagsList.Contains(tag.Key))
+                        {
+                            ValidUserProjectileTags.Add(tag.Value);
+                        }
                     }
                 }
+                else
+                {
+                    foreach (var tag in values.HardPoint.Ui.UiSetTags.ProjectileTagsList)
+                    {
+                        uint val;
+                        if (s.InternalTagToInt.TryGetValue(tag, out val))
+                        {
+                            ValidUserProjectileTags.Add(val);
+                        }
+                    }
+                }
+                
             }
 
             FireSoundNoBurst = values.HardPoint.Audio.FireSoundNoBurst;

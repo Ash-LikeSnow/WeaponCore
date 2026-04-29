@@ -556,7 +556,7 @@ namespace CoreSystems.Support
                 : system.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = system.Values.HardPoint.Ui.UiSetTags.Enable;
             var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
-            var skipFlagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
+            var skipTagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
 
             var smartOnly = system.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
             
@@ -691,33 +691,33 @@ namespace CoreSystems.Support
                     
                     continue;
                 }
-                if (!skipFlagCheck)
+                if (!skipTagCheck)
                 {
-                    if (whitelistSystem == WhitelistSystem.WhitelistAnd)
+                    if (whitelistSystem == WhitelistSystem.BlacklistAnd || whitelistSystem == WhitelistSystem.WhitelistAnd)
                     {
-                        bool fail = false;
+                        bool checkFailed = false;
                         foreach (var tag in userSetFlags)
                         {
                             if (!lpaConst.ProjectileTags.Contains(tag))
                             {
-                                fail = true;
+                                checkFailed = true;
                                 break;
                             }
                         }
 
-                        if (!fail)
+                        if (!checkFailed)
                         {
                             foreach (var tag in defaultProjectileTags)
                             {
                                 if (!lpaConst.ProjectileTags.Contains(tag))
                                 {
-                                    fail = true;
+                                    checkFailed = true;
                                     break;
                                 }
                             }
                         }
 
-                        if (fail)
+                        if ((checkFailed && whitelistSystem == WhitelistSystem.WhitelistAnd) || (!checkFailed && whitelistSystem == WhitelistSystem.BlacklistAnd))
                         {
                             if (isFromManager)
                             {
@@ -739,7 +739,7 @@ namespace CoreSystems.Support
                             }
                         }
 
-                        if ((whitelistSystem == WhitelistSystem.Blacklist && foundTag) || (whitelistSystem != WhitelistSystem.Blacklist && !foundTag))
+                        if ((whitelistSystem == WhitelistSystem.BlacklistOr && foundTag) || (whitelistSystem == WhitelistSystem.WhitelistOr && !foundTag))
                         {
                             if (isFromManager)
                             {
@@ -749,7 +749,6 @@ namespace CoreSystems.Support
                             continue;
                         }
                     }
-                    
                 }
                 
 
@@ -1062,7 +1061,7 @@ namespace CoreSystems.Support
                 : w.System.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = w.System.Values.HardPoint.Ui.UiSetTags.Enable;
             var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
-            var skipFlagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
+            var skipTagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
 
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
 
@@ -1116,33 +1115,33 @@ namespace CoreSystems.Support
                 if (smartOnly && !(lpaConst.IsDrone || lpaConst.IsSmart) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
                     continue;
 
-                if (!skipFlagCheck)
+                if (!skipTagCheck)
                 {
-                    if (whitelistSystem == WhitelistSystem.WhitelistAnd)
+                    if (whitelistSystem == WhitelistSystem.BlacklistAnd || whitelistSystem == WhitelistSystem.WhitelistAnd)
                     {
-                        bool fail = false;
+                        bool andCheckTrue = false;
                         foreach (var tag in userSetFlags)
                         {
                             if (!lpaConst.ProjectileTags.Contains(tag))
                             {
-                                fail = true;
+                                andCheckTrue = true;
                                 break;
                             }
                         }
 
-                        if (!fail)
+                        if (!andCheckTrue)
                         {
                             foreach (var tag in defaultProjectileTags)
                             {
                                 if (!lpaConst.ProjectileTags.Contains(tag))
                                 {
-                                    fail = true;
+                                    andCheckTrue = true;
                                     break;
                                 }
                             }
                         }
 
-                        if (fail)
+                        if ((andCheckTrue && whitelistSystem == WhitelistSystem.WhitelistAnd) || (!andCheckTrue && whitelistSystem == WhitelistSystem.BlacklistAnd))
                         {
                             continue;
                         }
@@ -1159,12 +1158,11 @@ namespace CoreSystems.Support
                             }
                         }
 
-                        if ((whitelistSystem == WhitelistSystem.Blacklist && foundTag) || (whitelistSystem != WhitelistSystem.Blacklist && !foundTag))
+                        if ((whitelistSystem == WhitelistSystem.BlacklistOr && foundTag) || (whitelistSystem == WhitelistSystem.WhitelistOr && !foundTag))
                         {
                             continue;
                         }
                     }
-
                 }
 
                 var targetRadius = lpaConst.CollisionSize;

@@ -180,19 +180,22 @@ namespace CoreSystems
             return comp.Data.Repo.Values.Set.ReportTarget;
         }
 
-        private const string KeyDisable = "Inactive";
-        private const string KeyShoot = "Once";
-        private const string KeyToggle = "Toggle";
-
         internal static string GetStringShootStatus(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return string.Empty;
 
-            var value = ((int)comp.Data.Repo.Values.Set.Overrides.ShootMode);
-            var active = value >= 2;
+            var value = comp.Data.Repo.Values.Set.Overrides.ShootMode;
+            var active = (int)value >= 2;
 
-            return !active ? KeyDisable : value == 2 ? KeyToggle : KeyShoot;
+            var on = comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On;
+
+            if (!active)
+                return Localization.GetText($"ActionShootStatusStringInactive");
+            else if (active && value == Weapon.ShootManager.ShootModes.KeyFire)
+                return Localization.GetText($"ActionShootStatusStringShoot");
+            else
+                return on ? Localization.GetText($"ActionShootStatusStringToggleOn") : Localization.GetText($"ActionShootStatusStringToggleOff");
         }
 
         internal static float GetRof(IMyTerminalBlock block)
@@ -1317,9 +1320,10 @@ namespace CoreSystems
 
         private static readonly List<MyTerminalControlComboBoxItem> PTagsWhitelistSettings = new List<MyTerminalControlComboBoxItem>
         {
-            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagBlacklist")) },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelistOr")) },
-            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelistAnd")) },
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemBlacklistOr")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemBlacklistAnd")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemWhitelistOr")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemWhitelistAnd")) },
         };
         internal static void ProjectileTagsFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list, List<MyTerminalControlListBoxItem> selected)
         {

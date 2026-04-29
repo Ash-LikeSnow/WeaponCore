@@ -421,7 +421,7 @@ namespace CoreSystems.Support
             
             FixedFireAmmo = system.TurretMovement == WeaponSystem.TurretType.Fixed && ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
             IsMine = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectTravelTo;
-            IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
+            IsField = ammo.AmmoDef.Ewar.Enable && (ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0);
             IsHybrid = ammo.AmmoDef.HybridRound;
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;

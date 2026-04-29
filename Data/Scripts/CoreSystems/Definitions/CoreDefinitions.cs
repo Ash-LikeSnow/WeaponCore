@@ -294,9 +294,10 @@ namespace CoreSystems.Support
 
             public enum WhitelistSystem
             {
-                Blacklist,
-                WhitelistOr,
-                WhitelistAnd,
+                BlacklistOr = 0,
+                BlacklistAnd = 1,
+                WhitelistOr = 2,
+                WhitelistAnd = 3,
             }
 
             [ProtoMember(1)] internal int TopTargets;
@@ -598,7 +599,8 @@ namespace CoreSystems.Support
                 {
                     [ProtoMember(1)] internal bool Enable;
                     [ProtoMember(2)] internal string[] ProjectileTagsList;
-                    [ProtoMember(3)] internal bool AllowUserWhitelistChange;
+                    [ProtoMember(3)] internal bool ListIsBlacklist;
+                    [ProtoMember(4)] internal bool AllowUserWhitelistChange;
                 }
             }
 
