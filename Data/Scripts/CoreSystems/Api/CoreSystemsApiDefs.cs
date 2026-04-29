@@ -599,8 +599,7 @@ namespace CoreSystems.Api
                     {
                         [ProtoMember(1)] internal bool Enable;
                         [ProtoMember(2)] internal string[] ProjectileTagsList;
-                        [ProtoMember(3)] internal bool AllowUserChangeToWhitelist;
-                        [ProtoMember(4)] internal bool HaveUserWhitelistToggle;
+                        [ProtoMember(3)] internal bool AllowUserWhitelistChange;
                     }
                 }
 

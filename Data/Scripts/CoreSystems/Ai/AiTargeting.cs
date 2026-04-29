@@ -552,7 +552,7 @@ namespace CoreSystems.Support
 
             var defaultProjectileTags = system.WConst.ProjectileTags;
             var whitelistSystem = system.Values.HardPoint.Ui.UiSetTags.Enable 
-                ? system.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : system.Values.Targeting.ProjectileTagsMeaning
+                ? system.Values.HardPoint.Ui.UiSetTags.AllowUserWhitelistChange ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : system.Values.Targeting.ProjectileTagsMeaning
                 : system.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = system.Values.HardPoint.Ui.UiSetTags.Enable;
             var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
@@ -1058,7 +1058,7 @@ namespace CoreSystems.Support
 
             var defaultProjectileTags = w.System.WConst.ProjectileTags;
             var whitelistSystem = w.System.Values.HardPoint.Ui.UiSetTags.Enable
-                ? w.System.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : w.System.Values.Targeting.ProjectileTagsMeaning
+                ? w.System.Values.HardPoint.Ui.UiSetTags.AllowUserWhitelistChange ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : w.System.Values.Targeting.ProjectileTagsMeaning
                 : w.System.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = w.System.Values.HardPoint.Ui.UiSetTags.Enable;
             var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
