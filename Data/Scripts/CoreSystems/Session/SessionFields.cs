@@ -202,6 +202,7 @@ namespace CoreSystems
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<IMyCharacter, long, int, bool>> HudHandlers = new Dictionary<long, Func<IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>> ShootHandlers = new Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>>();
+        internal readonly Dictionary<MyStringHash, int> ArmorCorePriorityMap = new Dictionary<MyStringHash, int>();
         internal readonly Dictionary<MyStringHash, ResistanceValues> ArmorCoreBlockMap = new Dictionary<MyStringHash, ResistanceValues>();
         internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
@@ -486,7 +487,6 @@ namespace CoreSystems
         internal bool ShieldMod;
         internal bool NerdShieldMod;
         internal bool NerdShieldApiLoaded;
-        internal bool ReplaceVanilla;
         internal bool ShieldApiLoaded;
         internal bool WaterApiLoaded;
         internal bool InGridAiBlock;

@@ -55,6 +55,7 @@ namespace CoreSystems.Support
             [ProtoMember(2)] internal HardwareDef HardWare;
             [ProtoMember(3)] internal UiDef Ui;
             [ProtoMember(4)] internal OtherDef Other;
+            [ProtoMember(5)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct UiDef
@@ -121,6 +122,7 @@ namespace CoreSystems.Support
             [ProtoMember(2)] internal HardwareDef HardWare;
             [ProtoMember(3)] internal UiDef Ui;
             [ProtoMember(4)] internal OtherDef Other;
+            [ProtoMember(5)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct UiDef
@@ -196,6 +198,7 @@ namespace CoreSystems.Support
         [ProtoMember(2)] internal ArmorType Kind;
         [ProtoMember(3)] internal double KineticResistance;
         [ProtoMember(4)] internal double EnergeticResistance;
+        [ProtoMember(5)] internal int DefinitionPriority;
     }
 
     [ProtoContract]
@@ -638,6 +641,7 @@ namespace CoreSystems.Support
             [ProtoMember(16)] internal bool ScanTrackOnly;
             [ProtoMember(17)] internal bool CanTargetSubmerged;
             [ProtoMember(18)] internal float DeviateShotAngleSGModifier;
+            [ProtoMember(19)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct LoadingDef
