@@ -633,14 +633,12 @@ namespace CoreSystems
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
 
-                        // Only sync if we are not actively reloading to protect ClientMakeUpShots:
-                        if (!w.Loading)
+                        // Active sync ammo:
+                        if (!w.Loading && (w.IsShooting || w.AiShooting || (w.Target != null && w.Target.HasTarget)))
                         {
-                            var inCombat = w.IsShooting || w.AiShooting || (w.Target != null && w.Target.HasTarget);
-                            var syncInterval = inCombat ? 30 : 300; 
                             var staggerOffset = w.BaseComp?.CoreEntity?.EntityId ?? 0;
                             
-                            if ((Tick + staggerOffset) % syncInterval == 0)
+                            if ((Tick + staggerOffset) % 30 == 0)
                             {
                                 SendWeaponAmmoData(w);
                             }

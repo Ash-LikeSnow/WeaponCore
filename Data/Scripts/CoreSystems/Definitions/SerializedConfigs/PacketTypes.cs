@@ -588,13 +588,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal ProtoWeaponAmmo Data;
         [ProtoMember(2)] internal int PartId;
-
+        [ProtoMember(3)] internal uint SequenceId;
 
         public override void CleanUp()
         {
             base.CleanUp();
             Data = null;
             PartId = 0;
+            SequenceId = 0;
         }
     }
 
@@ -617,12 +618,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal ProtoWeaponReload Data;
         [ProtoMember(2)] internal int PartId;
+        [ProtoMember(3)] internal uint SequenceId;
 
         public override void CleanUp()
         {
             base.CleanUp();
             Data = null;
             PartId = 0;
+            SequenceId = 0;
         }
     }
 

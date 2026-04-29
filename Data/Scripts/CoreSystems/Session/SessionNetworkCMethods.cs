@@ -271,8 +271,19 @@ namespace CoreSystems
 
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[weaponReloadPacket.PartId];
-            w.Reload.Sync(w, weaponReloadPacket.Data, false);
 
+            if (w.LastAuthoritativeSeqId >= weaponReloadPacket.SequenceId)
+            {
+                // Out-of-sequence:
+                DebugLog.Warning($"ClientWeaponReloadUpdate out-of-sequence packet: {weaponReloadPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            else
+            {
+                w.Reload.Sync(w, weaponReloadPacket.Data, false);
+                w.LastAuthoritativeSeqId = weaponReloadPacket.SequenceId;
+                DebugLog.Debug($"ClientWeaponReloadUpdate: APPLY {weaponReloadPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            
             data.Report.PacketValid = true;
 
             return true;
@@ -305,8 +316,19 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[ammoPacket.PartId];
-            w.ProtoWeaponAmmo.Sync(w, ammoPacket.Data);
 
+            if (w.LastAuthoritativeSeqId >= ammoPacket.SequenceId)
+            {
+                // Out-of-sequence:
+                DebugLog.Warning($"ClientWeaponAmmoUpdate out-of-sequence packet: {ammoPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            else
+            {
+                w.ProtoWeaponAmmo.Sync(w, ammoPacket.Data);
+                w.LastAuthoritativeSeqId = ammoPacket.SequenceId;
+                DebugLog.Debug($"ClientWeaponReloadUpdate: APPLY {ammoPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            
             data.Report.PacketValid = true;
 
             return true;

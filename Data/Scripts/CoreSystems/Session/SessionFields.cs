@@ -430,8 +430,8 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
-        internal ulong AdvSyncNetIdCounter = 1; // 0 used as the sentinel value
-
+        internal ulong AdvSyncNetIdCounter = 1;
+        internal uint AmmoSyncRevisionId = 1;
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;

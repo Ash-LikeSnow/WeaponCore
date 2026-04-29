@@ -212,29 +212,35 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-
                 const PacketType type = PacketType.WeaponAmmo;
                 ++w.ProtoWeaponAmmo.Revision;
-
+                
                 PacketInfo oldInfo;
                 WeaponAmmoPacket iPacket;
                 if (PrunedPacketsToClient.TryGetValue(w.ProtoWeaponAmmo, out oldInfo))
                 {
                     iPacket = (WeaponAmmoPacket)oldInfo.Packet;
                     iPacket.EntityId = w.BaseComp.CoreEntity.EntityId;
-                    iPacket.Data = w.ProtoWeaponAmmo;
                 }
                 else
                 {
-
                     iPacket = PacketAmmoPool.Get();
                     iPacket.EntityId = w.BaseComp.CoreEntity.EntityId;
                     iPacket.SenderId = MultiplayerId;
                     iPacket.PType = type;
-                    iPacket.Data = w.ProtoWeaponAmmo;
                     iPacket.PartId = w.PartId;
                 }
 
+                // Bind the data for consistency:
+                iPacket.Data = new ProtoWeaponAmmo
+                {
+                    Revision = w.ProtoWeaponAmmo.Revision,
+                    CurrentAmmo = w.ProtoWeaponAmmo.CurrentAmmo,
+                    CurrentCharge = w.ProtoWeaponAmmo.CurrentCharge,
+                };
+                
+                // Increment counter on each send call:
+                iPacket.SequenceId = AmmoSyncRevisionId++;
 
                 PrunedPacketsToClient[w.ProtoWeaponAmmo] = new PacketInfo
                 {
@@ -243,7 +249,10 @@ namespace CoreSystems
                     HasPooledResource = true
                 };
             }
-            else Log.Line("SendWeaponAmmoData should never be called on Client");
+            else
+            {
+                Log.Line("SendWeaponAmmoData should never be called on Client");
+            }
         }
 
         internal void SendComp(Weapon.WeaponComponent comp)
@@ -603,11 +612,12 @@ namespace CoreSystems
             if (IsServer)
             {
                 if (resetWait)
+                {
                     w.Reload.WaitForClient = false;
+                }
 
                 if (!PrunedPacketsToClient.ContainsKey(w.Comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.WeaponReload;
                     w.Comp.Data.Repo.Values.UpdateCompPacketInfo(w.Comp);
 
@@ -617,7 +627,6 @@ namespace CoreSystems
                     {
                         iPacket = (WeaponReloadPacket)oldInfo.Packet;
                         iPacket.EntityId = w.Comp.CoreEntity.EntityId;
-                        iPacket.Data = w.Reload;
                     }
                     else
                     {
@@ -625,10 +634,25 @@ namespace CoreSystems
                         iPacket.EntityId = w.Comp.CoreEntity.EntityId;
                         iPacket.SenderId = MultiplayerId;
                         iPacket.PType = type;
-                        iPacket.Data = w.Reload;
                         iPacket.PartId = w.PartId;
                     }
-
+                    
+                    // Bind the data for consistency:
+                    iPacket.Data = new ProtoWeaponReload
+                    {
+                        Revision = w.Reload.Revision,
+                        StartId = w.Reload.StartId,
+                        EndId = w.Reload.EndId,
+                        MagsLoaded = w.Reload.MagsLoaded,
+                        WaitForClient = w.Reload.WaitForClient,
+                        AmmoTypeId = w.Reload.AmmoTypeId,
+                        CurrentMags = w.Reload.CurrentMags,
+                        LifetimeLoads = w.Reload.LifetimeLoads
+                    };
+                    
+                    // Increment counter on each send call:
+                    iPacket.SequenceId = AmmoSyncRevisionId++;
+                    
                     PrunedPacketsToClient[w.Reload] = new PacketInfo
                     {
                         Entity = w.Comp.CoreEntity,
