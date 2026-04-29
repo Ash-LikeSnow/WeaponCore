@@ -240,13 +240,14 @@ namespace CoreSystems.Support
                         { "WeaponInfoBlockOffWarn", "!! Block is off !!"},
                         { "WeaponInfoBlockFuncWarn", "!! Block is not functional !!"},
 
-                        { $"TerminalPTagSettingsToggleTitle", "Show Projectile Type Settings" },
+                        { $"TerminalPTagSettingsToggleTitle", "Show Projectile Tag Settings" },
                         { $"TerminalPTagSettingsToggleTooltip", "Toggles whether the list of toggleable projectile tags are shown" },
                         { $"TerminalPTagWhitelistToggleTitle", "Whitelist Toggle" },
-                        { $"TerminalPTagWhitelistToggleTooltip", "Determines whether the turret uses a whitelist or blacklist system to determine projectile targets." },
+                        { $"TerminalPTagWhitelistToggleTooltip", "Determines whether the turret uses a whitelist or blacklist system to determine projectile targets, and if whitelist then whether projectiles need all (And) or one (Or) tag." },
                         { $"TerminalPTagListTitle", "Projectile Tags:" },
                         { $"TerminalPTagBlacklist", "Blacklist" },
-                        { $"TerminalPTagWhitelist", "Whitelist" },
+                        { $"TerminalPTagWhitelistOr", "Whitelist, Or" },
+                        { $"TerminalPTagWhitelistAnd", "Whitelist, And" },
                     }
                 },
                {

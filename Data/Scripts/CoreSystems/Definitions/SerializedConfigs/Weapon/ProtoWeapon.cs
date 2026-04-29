@@ -627,8 +627,9 @@ namespace CoreSystems
         [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
         [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
         [ProtoMember(42)] public bool EnableProjectileTagOverrides = false;
-        [ProtoMember(43)] public HashSet<uint> UserProjectileTags = new HashSet<uint>(); // can't use the enum or protobuf throws a fit
-        [ProtoMember(44)] public bool UserProjectileTagWhitelist = false;
+        [ProtoIgnore] public HashSet<uint> UserProjectileTagsInternal = new HashSet<uint>();
+        [ProtoMember(43)] public HashSet<string> UserProjectileTags = new HashSet<string>(); // serializing needs to use the string variant because the can change
+        [ProtoMember(44)] public WhitelistSystem UserPTagWhitelistSys = WhitelistSystem.Blacklist;
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
             MoveMode = syncFrom.MoveMode;
@@ -669,7 +670,21 @@ namespace CoreSystems
             MinLockTime = syncFrom.MinLockTime;
             EnableProjectileTagOverrides = syncFrom.EnableProjectileTagOverrides;
             UserProjectileTags = syncFrom.UserProjectileTags;
-            UserProjectileTagWhitelist = syncFrom.UserProjectileTagWhitelist;
+            if (UserProjectileTagsInternal == null)
+                UserProjectileTagsInternal = new HashSet<uint>();
+            else
+                UserProjectileTagsInternal.Clear();
+
+            foreach (var str in UserProjectileTags)
+            {
+                uint val;
+                if (Session.I.InternalTagToInt.TryGetValue(str, out val))
+                {
+                    UserProjectileTagsInternal.Add(val);
+                }
+                // else uhh idk fail silently
+            }
+            UserPTagWhitelistSys = syncFrom.UserPTagWhitelistSys;
         }
     }
 }

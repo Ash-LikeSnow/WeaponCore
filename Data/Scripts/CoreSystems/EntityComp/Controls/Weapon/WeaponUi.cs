@@ -10,6 +10,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
+using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 
 namespace CoreSystems
 {
@@ -1285,7 +1286,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return 0;
-            return comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist ? 0 : 1;
+            return (long)comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys;
         }
         internal static void RequestSetPTagWhitelist(IMyTerminalBlock block, long newValue)
         {
@@ -1293,16 +1294,16 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist;
+            var currentValue = (int)comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys;
 
-            if ((newValue == 1) != currentValue)
+            if (newValue != currentValue)
             {
                 if (Session.I.IsClient && Session.I.MpActive)
                 {
-                    comp.Data.Repo.Values.Set.Overrides.UserProjectileTagWhitelist = newValue == 1;
+                    comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys = (WhitelistSystem)newValue;
                 }
 
-                Weapon.WeaponComponent.RequestSetValue(comp, "UserProjectileTagWhitelist", (int)newValue, Session.I.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "UserPTagWhitelistSys", (int)newValue, Session.I.PlayerId);
                 comp.Cube.UpdateTerminalForced();
             }
         }
@@ -1317,7 +1318,8 @@ namespace CoreSystems
         private static readonly List<MyTerminalControlComboBoxItem> PTagsWhitelistSettings = new List<MyTerminalControlComboBoxItem>
         {
             new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagBlacklist")) },
-            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelist")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelistOr")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("TerminalPTagWhitelistAnd")) },
         };
         internal static void ProjectileTagsFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list, List<MyTerminalControlListBoxItem> selected)
         {
@@ -1327,16 +1329,16 @@ namespace CoreSystems
 
             Session s = Session.I;
 
-            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags) // lmao
+            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags)
             {
                 string intStr = s.IntToTagInternal[val];
                 string userStr = s.IntToTagUserStr[val];
 
-                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(userStr), MyStringId.GetOrCompute($"Internal tag: {intStr}"), val);
+                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(userStr), MyStringId.GetOrCompute($"{intStr}"), val);
 
                 list.Add(box);
 
-                if (comp.Data.Repo.Values.Set.Overrides.UserProjectileTags.Contains(val))
+                if (comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal.Contains(val))
                 {
                     selected.Add(box);
                 }
@@ -1362,8 +1364,9 @@ namespace CoreSystems
                     }
                 }
 
-                var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags.Contains(val);
+                var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal.Contains(val);
 
+                
                 if (currentValue != newValue)
                 {
                     changed = true;

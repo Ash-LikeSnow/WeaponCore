@@ -225,22 +225,25 @@ namespace CoreSystems
             uint id = 0;
             foreach (var nsp in ProjectileTagDefs.Values)
             {
-                foreach (var tag in nsp.Tags)
+                if (nsp?.Tags != null && nsp.Tags.Length > 0)
                 {
-                    if (string.IsNullOrEmpty(tag.ID))
-                        continue;
+                    foreach (var tag in nsp.Tags)
+                    {
+                        if (string.IsNullOrEmpty(tag.ID))
+                            continue;
 
-                    string combnedTag = $"{nsp.Namespace.ID}:{tag.ID}";
-                    string nspPublicName = string.IsNullOrEmpty(nsp.Namespace.PublicName) ? "" : $"{nsp.Namespace.PublicName} ";
-                    string tagPublicName = string.IsNullOrEmpty(tag.PublicName) ? tag.ID : tag.PublicName;
+                        string combinedTag = $"{nsp.Namespace.ID}:{tag.ID}";
+                        string nspPublicName = string.IsNullOrEmpty(nsp.Namespace.PublicName) ? "" : $"{nsp.Namespace.PublicName} ";
+                        string tagPublicName = string.IsNullOrEmpty(tag.PublicName) ? tag.ID : tag.PublicName;
 
-                    string combnedTagUser = $"{nspPublicName}{tagPublicName}";
+                        string combnedTagUser = $"{nspPublicName}{tagPublicName}";
 
-                    InternalTagToInt[combnedTag] = id;
-                    IntToTagInternal[id] = combnedTag;
-                    IntToTagUserStr[id] = tagPublicName;
+                        InternalTagToInt[combinedTag] = id;
+                        IntToTagInternal[id] = combinedTag;
+                        IntToTagUserStr[id] = tagPublicName;
 
-                    id++;
+                        id++;
+                    }
                 }
             }
         }

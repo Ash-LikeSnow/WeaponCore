@@ -73,8 +73,13 @@ namespace CoreSystems
             if (baseDefArray.ArmorDefs != null)
                 AssembleArmorDefinitions(baseDefArray.ArmorDefs);
 
-            var group = MyStringHash.GetOrCompute("Charging");
+            if (baseDefArray.ProjectileTags != null)
+                AssembleTagDefinitions(baseDefArray.ProjectileTags);
 
+            if (baseDefArray.TagAssigmnents != null)
+                AssembleTagAssignments(baseDefArray.TagAssigmnents);
+
+            var group = MyStringHash.GetOrCompute("Charging");
             foreach (var def in AllDefinitions)
             {
                 if (subTypes.Contains(def.Id.SubtypeName))
@@ -91,26 +96,24 @@ namespace CoreSystems
                     }
                 }
             }
-            if (baseDefArray.ProjectileTags != null)
-                AssembleTagDefinitions(baseDefArray.ProjectileTags);
-
-            if (baseDefArray.TagAssigmnents != null)
-                AssembleTagAssignments(baseDefArray.TagAssigmnents);
         }
 
         public void AssembleTagDefinitions(ProjectileTagDefinition[] arr)
         {
             foreach (var def in arr)
             {
+                if (def == null)
+                    continue;
+
                 var nsp = def.Namespace.ID;
 
-                if (string.IsNullOrEmpty(nsp))
+                if (string.IsNullOrEmpty(nsp) || def.Tags == null || def.Tags.Length == 0)
                     continue;
 
                 ProjectileTagDefinition prio;
                 if (!ProjectileTagDefs.TryGetValue(nsp, out prio) || prio.DefinitionPriority < def.DefinitionPriority)
                 {
-                    ProjectileTagDefs[nsp] = prio;
+                    ProjectileTagDefs[nsp] = def;
                 }
             }
         }

@@ -15,7 +15,7 @@ namespace Scripts
                 ID = Session.WC_NAMESPACE,
                 PublicName = "",
             },
-            DefinitionPriority = int.MinValue,
+            DefinitionPriority = int.MaxValue,
             Tags = new[]
             {
                 new Tag 

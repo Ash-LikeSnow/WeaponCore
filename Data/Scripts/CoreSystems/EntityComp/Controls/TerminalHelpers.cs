@@ -79,7 +79,7 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "ShowPTags", Localization.GetText("TerminalPTagSettingsToggleTitle"), Localization.GetText("TerminalPTagSettingsToggleTooltip"), BlockUi.GetEnableProjectileTagsOverride, BlockUi.RequestSetEnableProjectileTagsOverride, true, AllowProjectileTags);
             AddComboboxNoAction<T>(session, "PTagsWhitelistToggle", Localization.GetText("TerminalPTagWhitelistToggleTitle"), Localization.GetText("TerminalPTagWhitelistToggleTooltip"), BlockUi.GetWhitelistMode, BlockUi.RequestSetPTagWhitelist, BlockUi.ListPTagsWhitelistSettings, ProjectileTagsVisible);
-            AddListBoxNoAction<T>(session, "PTagsList", Localization.GetText("PFlagsListTitle"), "", BlockUi.ProjectileTagsFill, BlockUi.ProjectileTagsSelect, ProjectileTagsVisible, 10, true);
+            AddListBoxNoAction<T>(session, "PTagsList", Localization.GetText("TerminalPTagListTitle"), "", BlockUi.ProjectileTagsFill, BlockUi.ProjectileTagsSelect, ProjectileTagsVisible, 10, true);
         }
 
 

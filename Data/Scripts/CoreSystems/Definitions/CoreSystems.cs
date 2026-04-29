@@ -799,17 +799,21 @@ namespace CoreSystems.Support
             ProjectileTags = new HashSet<uint>();
             ValidUserProjectileTags = new HashSet<uint>();
             Session s = Session.I;
-            foreach (var tag in values.Targeting.ProjectileTagsList)
+            if (values.Targeting.ProjectileTagsList != null)
             {
-                uint val;
-                if (s.InternalTagToInt.TryGetValue(tag, out val))
+                foreach (var tag in values.Targeting.ProjectileTagsList)
                 {
-                    ProjectileTags.Add(val);
+                    uint val;
+                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                    {
+                        ProjectileTags.Add(val);
+                    }
                 }
             }
+            
 
 
-            if (values.HardPoint.Ui.UiSetTags.Enable)
+            if (values.HardPoint.Ui.UiSetTags.Enable && values.HardPoint.Ui.UiSetTags.ProjectileTagsList != null)
             {
                 foreach (var tag in values.HardPoint.Ui.UiSetTags.ProjectileTagsList)
                 {

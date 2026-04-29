@@ -551,9 +551,12 @@ namespace CoreSystems.Support
             var fireDistributionAccessor = new FireDistributionSystem.Accessor();
 
             var defaultProjectileTags = system.WConst.ProjectileTags;
-            var whitelist = system.Values.HardPoint.Ui.UiSetTags.Enable ? system.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist : system.Values.Targeting.ChangeProjectileTagsToWhitelist;
+            var whitelistSystem = system.Values.HardPoint.Ui.UiSetTags.Enable 
+                ? system.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : system.Values.Targeting.ProjectileTagsMeaning
+                : system.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = system.Values.HardPoint.Ui.UiSetTags.Enable;
-            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags;
+            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
+            var skipFlagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
 
             var smartOnly = system.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
             
@@ -688,25 +691,67 @@ namespace CoreSystems.Support
                     
                     continue;
                 }
-                bool foundTag = false;
-                foreach (var tag in lpaConst.ProjectileTags)
+                if (!skipFlagCheck)
                 {
-                    if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                    if (whitelistSystem == WhitelistSystem.WhitelistAnd)
                     {
-                        foundTag = true;
-                        break;
-                    }
-
-                    if ((whitelist && foundTag) || (!whitelist && !foundTag))
-                    {
-                        if (isFromManager)
+                        bool fail = false;
+                        foreach (var tag in userSetFlags)
                         {
-                            fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                            if (!lpaConst.ProjectileTags.Contains(tag))
+                            {
+                                fail = true;
+                                break;
+                            }
                         }
 
-                        continue;
+                        if (!fail)
+                        {
+                            foreach (var tag in defaultProjectileTags)
+                            {
+                                if (!lpaConst.ProjectileTags.Contains(tag))
+                                {
+                                    fail = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (fail)
+                        {
+                            if (isFromManager)
+                            {
+                                fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                            }
+
+                            continue;
+                        }
                     }
+                    else
+                    {
+                        bool foundTag = false;
+                        foreach (var tag in lpaConst.ProjectileTags)
+                        {
+                            if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                            {
+                                foundTag = true;
+                                break;
+                            }
+                        }
+
+                        if ((whitelistSystem == WhitelistSystem.Blacklist && foundTag) || (whitelistSystem != WhitelistSystem.Blacklist && !foundTag))
+                        {
+                            if (isFromManager)
+                            {
+                                fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                            }
+
+                            continue;
+                        }
+                    }
+                    
                 }
+                
 
                 var targetRadius = lpaConst.CollisionSize;
                 if (targetRadius <= minTargetRadius || targetRadius >= maxTargetRadius && maxTargetRadius < 8192)
@@ -1012,9 +1057,12 @@ namespace CoreSystems.Support
             var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
 
             var defaultProjectileTags = w.System.WConst.ProjectileTags;
-            var whitelist = w.System.Values.HardPoint.Ui.UiSetTags.Enable ? w.System.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist : w.System.Values.Targeting.ChangeProjectileTagsToWhitelist;
+            var whitelistSystem = w.System.Values.HardPoint.Ui.UiSetTags.Enable
+                ? w.System.Values.HardPoint.Ui.UiSetTags.AllowUserChangeToWhitelist ? comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys : w.System.Values.Targeting.ProjectileTagsMeaning
+                : w.System.Values.Targeting.ProjectileTagsMeaning;
             var useUserSetFlags = w.System.Values.HardPoint.Ui.UiSetTags.Enable;
-            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTags;
+            var userSetFlags = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal;
+            var skipFlagCheck = defaultProjectileTags.Count == 0 && (!useUserSetFlags || userSetFlags.Count == 0);
 
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles; // keep this in the backwards compat because its easier than tag matching for it now
 
@@ -1068,19 +1116,55 @@ namespace CoreSystems.Support
                 if (smartOnly && !(lpaConst.IsDrone || lpaConst.IsSmart) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
                     continue;
 
-                bool foundTag = false;
-                foreach (var tag in lpaConst.ProjectileTags)
+                if (!skipFlagCheck)
                 {
-                    if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                    if (whitelistSystem == WhitelistSystem.WhitelistAnd)
                     {
-                        foundTag = true;
-                        break;
+                        bool fail = false;
+                        foreach (var tag in userSetFlags)
+                        {
+                            if (!lpaConst.ProjectileTags.Contains(tag))
+                            {
+                                fail = true;
+                                break;
+                            }
+                        }
+
+                        if (!fail)
+                        {
+                            foreach (var tag in defaultProjectileTags)
+                            {
+                                if (!lpaConst.ProjectileTags.Contains(tag))
+                                {
+                                    fail = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (fail)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        bool foundTag = false;
+                        foreach (var tag in lpaConst.ProjectileTags)
+                        {
+                            if ((useUserSetFlags && userSetFlags.Contains(tag)) || defaultProjectileTags.Contains(tag))
+                            {
+                                foundTag = true;
+                                break;
+                            }
+                        }
+
+                        if ((whitelistSystem == WhitelistSystem.Blacklist && foundTag) || (whitelistSystem != WhitelistSystem.Blacklist && !foundTag))
+                        {
+                            continue;
+                        }
                     }
 
-                    if ((whitelist && foundTag) || (!whitelist && !foundTag))
-                    {
-                        continue;
-                    }
                 }
 
                 var targetRadius = lpaConst.CollisionSize;

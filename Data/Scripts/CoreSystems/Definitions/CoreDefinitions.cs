@@ -292,6 +292,13 @@ namespace CoreSystems.Support
                 Steering
             }
 
+            public enum WhitelistSystem
+            {
+                Blacklist,
+                WhitelistOr,
+                WhitelistAnd,
+            }
+
             [ProtoMember(1)] internal int TopTargets;
             [ProtoMember(2)] internal int TopBlocks;
             [ProtoMember(3)] internal double StopTrackingSpeed;
@@ -319,7 +326,7 @@ namespace CoreSystems.Support
             [ProtoMember(25)] internal bool AllowFireDistribution;
             [ProtoMember(26)] internal bool AdvancedFireDistribution;
             [ProtoMember(27)] internal string[] ProjectileTagsList;
-            [ProtoMember(28)] internal bool ChangeProjectileTagsToWhitelist;
+            [ProtoMember(28)] internal WhitelistSystem ProjectileTagsMeaning;
 
             [ProtoContract]
             public struct CommunicationDef
