@@ -247,6 +247,11 @@ namespace CoreSystems
                         if (prevPrio != int.MinValue) // previous definition existed
                             CustomHeavyArmorSubtypes.Remove(type);
                     }
+                    else if (prevPrio != int.MinValue)
+                    {
+                        CustomArmorSubtypes.Remove(type);
+                        CustomHeavyArmorSubtypes.Remove(type);
+                    }
                     ArmorCorePriorityMap[type] = armorDef.DefinitionPriority;
                     if (resistanceEnabled) ArmorCoreBlockMap[type] = values;
                 }
