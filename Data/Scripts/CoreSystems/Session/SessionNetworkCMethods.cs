@@ -326,7 +326,7 @@ namespace CoreSystems
             {
                 w.ProtoWeaponAmmo.Sync(w, ammoPacket.Data);
                 w.LastAuthoritativeSeqId = ammoPacket.SequenceId;
-                DebugLog.Debug($"ClientWeaponReloadUpdate: APPLY {ammoPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+                DebugLog.Debug($"ClientWeaponReloadUpdate: APPLY {ammoPacket.SequenceId}/{w.LastAuthoritativeSeqId}{(ammoPacket.IsBurstStopMarker ? ", BURST MARKER" : "")}");
             }
             
             data.Report.PacketValid = true;

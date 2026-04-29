@@ -4,6 +4,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.CoreComponent;
 
@@ -208,7 +209,7 @@ namespace CoreSystems
             else Log.Line("SendAiData should never be called on Client");
         }
 
-        internal void SendWeaponAmmoData(Weapon w)
+        internal void SendWeaponAmmoData(Weapon w, bool isBurstStop = false)
         {
             if (IsServer)
             {
@@ -242,6 +243,22 @@ namespace CoreSystems
                 // Increment counter on each send call:
                 iPacket.SequenceId = AmmoSyncRevisionId++;
 
+                // We should always have only one of these packets ideally.
+                // But, if we get a burst stop marker, it makes sense that the enqueued packet will remain a burst stop marker.
+                if (iPacket.IsBurstStopMarker != isBurstStop)
+                {
+                    if (isBurstStop)
+                    {
+                        // No questions here, just promote it (or set it, if it's a new packet):
+                        iPacket.IsBurstStopMarker = true;
+                    }
+                    else
+                    {
+                        // Possibly an issue to fix. We will log for it:
+                        DebugLog.Warning("SendWeaponAmmoData conflicting burst stop");
+                    }
+                }
+                
                 PrunedPacketsToClient[w.ProtoWeaponAmmo] = new PacketInfo
                 {
                     Entity = w.BaseComp.CoreEntity,

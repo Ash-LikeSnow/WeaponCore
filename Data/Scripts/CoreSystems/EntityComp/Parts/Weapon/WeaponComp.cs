@@ -1047,7 +1047,9 @@ namespace CoreSystems.Platform
                     w.ClientMakeUpShots = 0;
 
                     if (Session.I.MpActive && Session.I.IsServer)
+                    {
                         Session.I.SendWeaponAmmoData(w);
+                    }
                 }
 
                 if (Session.I.IsClient)

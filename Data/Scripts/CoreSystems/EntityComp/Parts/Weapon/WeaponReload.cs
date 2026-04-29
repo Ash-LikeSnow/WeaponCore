@@ -365,11 +365,13 @@ namespace CoreSystems.Platform
                     if (Comp.TypeSpecific == CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                         --Reload.CurrentMags;
 
-                    if (Session.I.MpActive) {
-
+                    if (Session.I.MpActive) 
+                    {
                         Session.I.SendWeaponReload(this);
                         if (Reload.EndId == 1)
+                        {
                             Session.I.SendWeaponAmmoData(this);
+                        }
                     }
                 }
                 else {

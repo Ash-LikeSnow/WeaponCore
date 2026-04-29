@@ -589,13 +589,15 @@ namespace CoreSystems
         [ProtoMember(1)] internal ProtoWeaponAmmo Data;
         [ProtoMember(2)] internal int PartId;
         [ProtoMember(3)] internal uint SequenceId;
-
+        [ProtoMember(4)] internal bool IsBurstStopMarker;
+        
         public override void CleanUp()
         {
             base.CleanUp();
             Data = null;
             PartId = 0;
             SequenceId = 0;
+            IsBurstStopMarker = false;
         }
     }
 
