@@ -240,7 +240,7 @@ namespace CoreSystems
 
                         InternalTagToInt[combinedTag] = id;
                         IntToTagInternal[id] = combinedTag;
-                        IntToTagUserStr[id] = tagPublicName;
+                        IntToTagUserStr[id] = combnedTagUser;
 
                         id++;
                     }

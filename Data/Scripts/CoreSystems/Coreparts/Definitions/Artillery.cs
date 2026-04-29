@@ -47,7 +47,7 @@ namespace Scripts {
             {
                 PartName = "Artillery", // Name of the weapon in terminal, should be unique for each weapon definition that shares a SubtypeId (i.e. multiweapons).
 
-                // If there are multiple definitions with the same part name & subtype ID ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
+                // If there are multiple definitions with the same part name & subtype ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
                 // For people making their own weapon mod, its recommended to leave this at zero.
                 // For people MODIFYING other people's mod, its recommended to set this at anything greater than zero (ie. 1).
                 // This effectively allows mod adjuster-like behavior without relying on mod load order, although the entire definition must be copied for it to work properly.
@@ -132,7 +132,7 @@ namespace Scripts {
             {
                 PartName = "Artillery Turret", // Name of the weapon in terminal, should be unique for each weapon definition that shares a SubtypeId (i.e. multiweapons).
 
-                // If there are multiple definitions with the same part name & subtype ID ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
+                // If there are multiple definitions with the same part name & subtype ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
                 // For people making their own weapon mod, its recommended to leave this at zero.
                 // For people MODIFYING other people's mod, its recommended to set this at anything greater than zero (ie. 1).
                 // This effectively allows mod adjuster-like behavior without relying on mod load order, although the entire definition must be copied for it to work properly.
