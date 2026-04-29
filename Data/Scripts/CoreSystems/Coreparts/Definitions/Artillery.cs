@@ -46,6 +46,13 @@ namespace Scripts {
             HardPoint = new HardPointDef
             {
                 PartName = "Artillery", // Name of the weapon in terminal, should be unique for each weapon definition that shares a SubtypeId (i.e. multiweapons).
+
+                // If there are multiple definitions with the same part name & subtype ID ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
+                // For people making their own weapon mod, its recommended to leave this at zero.
+                // For people MODIFYING other people's mod, its recommended to set this at anything greater than zero (ie. 1).
+                // This effectively allows mod adjuster-like behavior without relying on mod load order, although the entire definition must be copied for it to work properly.
+                //  - those modifying stats can just have the definitions in their place w/o copying any models, sbc files, or sounds to the modified mod.
+                DefinitionPriority = int.MinValue,
                 DeviateShotAngle = 0.15f, // Projectile inaccuracy in degrees.
                 AimingTolerance = 2f, // How many degrees off target a turret can fire at. 0 - 180 firing angle.
 
@@ -124,6 +131,13 @@ namespace Scripts {
             HardPoint = new HardPointDef
             {
                 PartName = "Artillery Turret", // Name of the weapon in terminal, should be unique for each weapon definition that shares a SubtypeId (i.e. multiweapons).
+
+                // If there are multiple definitions with the same part name & subtype ID ID (like say someone is adjusting stats of another's mod), then the definition with the highest priority will be loaded.
+                // For people making their own weapon mod, its recommended to leave this at zero.
+                // For people MODIFYING other people's mod, its recommended to set this at anything greater than zero (ie. 1).
+                // This effectively allows mod adjuster-like behavior without relying on mod load order, although the entire definition must be copied for it to work properly.
+                //  - those modifying stats can just have the definitions in their place w/o copying any models, sbc files, or sounds to the modified mod.
+                DefinitionPriority = int.MinValue,
                 DeviateShotAngle = 0.3f, // Projectile inaccuracy in degrees.
                 AimingTolerance = 2f, // How many degrees off target a turret can fire at. 0 - 180 firing angle.
                 AimLeadingPrediction = Advanced, // Level of turret aim prediction; Off, Basic, Accurate, Advanced

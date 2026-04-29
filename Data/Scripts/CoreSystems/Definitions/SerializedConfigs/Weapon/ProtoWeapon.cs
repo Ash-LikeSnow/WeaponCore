@@ -626,9 +626,10 @@ namespace CoreSystems
         [ProtoMember(38)] public bool EnableFireDistribution;
         [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
         [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
-        [ProtoMember(42)] public bool EnableProjectileFlagOverrides = false;
-        [ProtoMember(43), DefaultValue((ulong)ProjectileFlags.All)] public ulong ProjectileFlagOverrides = (ulong)ProjectileFlags.All; // can't use the enum or protobuf throws a fit
-        [ProtoMember(44)] public bool AllProjectileFlagsToggle = false;
+        [ProtoMember(42)] public bool EnableProjectileTagOverrides = false;
+        [ProtoIgnore] public HashSet<uint> UserProjectileTagsInternal = new HashSet<uint>();
+        [ProtoMember(43)] public HashSet<string> UserProjectileTags = new HashSet<string>(); // serializing needs to use the string variant because the can change
+        [ProtoMember(44)] public WhitelistSystem UserPTagWhitelistSys = WhitelistSystem.Blacklist;
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
             MoveMode = syncFrom.MoveMode;
@@ -667,9 +668,23 @@ namespace CoreSystems
             EnableFireDistribution = syncFrom.EnableFireDistribution;
             TurnCost = syncFrom.TurnCost;
             MinLockTime = syncFrom.MinLockTime;
-            EnableProjectileFlagOverrides = syncFrom.EnableProjectileFlagOverrides;
-            ProjectileFlagOverrides = syncFrom.ProjectileFlagOverrides;
-            AllProjectileFlagsToggle = syncFrom.AllProjectileFlagsToggle;
+            EnableProjectileTagOverrides = syncFrom.EnableProjectileTagOverrides;
+            UserProjectileTags = syncFrom.UserProjectileTags;
+            if (UserProjectileTagsInternal == null)
+                UserProjectileTagsInternal = new HashSet<uint>();
+            else
+                UserProjectileTagsInternal.Clear();
+
+            foreach (var str in UserProjectileTags)
+            {
+                uint val;
+                if (Session.I.InternalTagToInt.TryGetValue(str, out val))
+                {
+                    UserProjectileTagsInternal.Add(val);
+                }
+                // else uhh idk fail silently
+            }
+            UserPTagWhitelistSys = syncFrom.UserPTagWhitelistSys;
         }
     }
 }

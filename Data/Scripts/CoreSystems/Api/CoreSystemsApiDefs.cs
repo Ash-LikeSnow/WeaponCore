@@ -13,6 +13,29 @@ namespace CoreSystems.Api
             [ProtoMember(2)] internal ArmorDefinition[] ArmorDefs;
             [ProtoMember(3)] internal UpgradeDefinition[] UpgradeDefs;
             [ProtoMember(4)] internal SupportDefinition[] SupportDefs;
+            [ProtoMember(5)] internal ProjectileTagDefinition[] ProjectileTags;
+            [ProtoMember(6)] internal ProjectileTagAssignment[] TagAssigmnents;
+        }
+
+        [ProtoContract]
+        public class ProjectileTagDefinition
+        {
+            [ProtoMember(1)] internal Tag Namespace;
+            [ProtoMember(2)] internal int DefinitionPriority;
+            [ProtoMember(3)] internal Tag[] Tags;
+
+            [ProtoContract]
+            public struct Tag
+            {
+                [ProtoMember(1)] internal string ID;
+                [ProtoMember(2)] internal string PublicName;
+            }
+        }
+        [ProtoContract]
+        public class ProjectileTagAssignment
+        {
+            [ProtoMember(1)] internal string Tag;
+            [ProtoMember(2)] internal string[] ProjectileAmmoNames;
         }
 
         [ProtoContract]
@@ -56,6 +79,7 @@ namespace CoreSystems.Api
                 [ProtoMember(2)] internal HardwareDef HardWare;
                 [ProtoMember(3)] internal UiDef Ui;
                 [ProtoMember(4)] internal OtherDef Other;
+                [ProtoMember(5)] internal int DefinitionPriority;
 
                 [ProtoContract]
                 public struct UiDef
@@ -74,6 +98,7 @@ namespace CoreSystems.Api
                     [ProtoMember(1)] internal float InventorySize;
                     [ProtoMember(2)] internal HardwareType Type;
                     [ProtoMember(3)] internal int BlockDistance;
+                    [ProtoMember(4)] internal float IdlePower;
 
                 }
 
@@ -121,6 +146,7 @@ namespace CoreSystems.Api
                 [ProtoMember(2)] internal HardwareDef HardWare;
                 [ProtoMember(3)] internal UiDef Ui;
                 [ProtoMember(4)] internal OtherDef Other;
+                [ProtoMember(5)] internal int DefinitionPriority;
 
                 [ProtoContract]
                 public struct UiDef
@@ -132,6 +158,7 @@ namespace CoreSystems.Api
                 public struct HardwareDef
                 {
                     [ProtoMember(1)] internal float InventorySize;
+                    [ProtoMember(2)] internal float IdlePower;
                 }
 
                 [ProtoContract]
@@ -195,6 +222,7 @@ namespace CoreSystems.Api
             [ProtoMember(2)] internal ArmorType Kind;
             [ProtoMember(3)] internal double KineticResistance;
             [ProtoMember(4)] internal double EnergeticResistance;
+            [ProtoMember(5)] internal int DefinitionPriority;
         }
 
         [ProtoContract]
@@ -226,6 +254,7 @@ namespace CoreSystems.Api
                     [ProtoMember(5)] internal string ElevationPartId;
                     [ProtoMember(6)] internal float DurabilityMod;
                     [ProtoMember(7)] internal string IconName;
+                    [ProtoMember(8)] internal string PhantomModel;
                 }
             }
 
@@ -249,7 +278,7 @@ namespace CoreSystems.Api
                     ScanEnemyGrid,
                     ScanNeutralCharacter,
                     ScanUnOwnedGrid,
-                    ScanOwnersGrid
+                    ScanOwnersGrid,
                 }
 
                 public enum BlockTypes
@@ -262,6 +291,13 @@ namespace CoreSystems.Api
                     Thrust,
                     Jumping,
                     Steering
+                }
+
+                public enum WhitelistSystem
+                {
+                    Blacklist,
+                    WhitelistOr,
+                    WhitelistAnd,
                 }
 
                 [ProtoMember(1)] internal int TopTargets;
@@ -279,6 +315,9 @@ namespace CoreSystems.Api
                 [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
                 [ProtoMember(14)] internal int MaxTrackingTime;
                 [ProtoMember(15)] internal bool ShootBlanks;
+                //[ProtoMember(16)] internal bool ExportTargets;
+                //[ProtoMember(17)] internal string ChannelId;
+                //[ProtoMember(18)] internal int ExportLimit;
                 [ProtoMember(19)] internal CommunicationDef Communications;
                 [ProtoMember(20)] internal bool FocusOnly;
                 [ProtoMember(21)] internal bool EvictUniqueTargets;
@@ -287,17 +326,20 @@ namespace CoreSystems.Api
                 [ProtoMember(24)] internal bool AllowSwitchTargetPriority;
                 [ProtoMember(25)] internal bool AllowFireDistribution;
                 [ProtoMember(26)] internal bool AdvancedFireDistribution;
-                
+                [ProtoMember(27)] internal string[] ProjectileTagsList;
+                [ProtoMember(28)] internal WhitelistSystem ProjectileTagsMeaning;
+
                 [ProtoContract]
                 public struct CommunicationDef
                 {
                     public enum Comms
                     {
                         NoComms,
+                        LocalNetwork,
                         BroadCast,
                         Relay,
+                        Repeat,
                         Jamming,
-                        RelayAndBroadCast,
                     }
 
                     public enum SecurityMode
@@ -320,6 +362,7 @@ namespace CoreSystems.Api
                     [ProtoMember(11)] internal bool TargetPersists;
                     [ProtoMember(12)] internal bool StoreLimitPerBlock;
                     [ProtoMember(13)] internal int MaxConnections;
+
                 }
             }
 
@@ -350,6 +393,14 @@ namespace CoreSystems.Api
                         StopFiring,
                         StopTracking,
                         LockDelay,
+                        Init,
+                        Homing,
+                        TargetAligned,
+                        WhileOn,
+                        TargetRanged100,
+                        TargetRanged75,
+                        TargetRanged50,
+                        TargetRanged25,
                     }
 
                     public enum ResetConditions
@@ -475,6 +526,9 @@ namespace CoreSystems.Api
                 [ProtoMember(14)] internal bool CanShootSubmerged;
                 [ProtoMember(15)] internal bool NpcSafe;
                 [ProtoMember(16)] internal bool ScanTrackOnly;
+                [ProtoMember(17)] internal bool CanTargetSubmerged;
+                [ProtoMember(18)] internal float DeviateShotAngleSGModifier;
+                [ProtoMember(19)] internal int DefinitionPriority;
 
                 [ProtoContract]
                 public struct LoadingDef
@@ -503,6 +557,25 @@ namespace CoreSystems.Api
                     [ProtoMember(22)] internal int MaxReloads;
                     [ProtoMember(23)] internal bool GoHomeToReload;
                     [ProtoMember(24)] internal bool DropTargetUntilLoaded;
+                    [ProtoMember(25)] internal bool ProhibitCoolingWhenOff;
+                    [ProtoMember(26)] internal float InventoryFillAmount;
+                    [ProtoMember(27)] internal float InventoryLowAmount;
+                    [ProtoMember(28)] internal bool UseWorldInventoryVolumeMultiplier;
+                    [ProtoMember(29)] internal bool AllowOverheatShooting;
+                    [ProtoMember(30)] internal DegradeSettingsDef DegradeRofSettings;
+                    [ProtoMember(31)] internal float HeatSinkRateOverheatMult;
+
+                    [ProtoContract]
+                    public struct DegradeSettingsDef
+                    {
+                        [ProtoMember(1)] internal float HeatThresholdStart;
+                        [ProtoMember(2)] internal float HeatThresholdEnd;
+                        [ProtoMember(3)] internal float RofAt0Heat;
+                        [ProtoMember(4)] internal float RofAt100Heat;
+
+                        // if DegradeRof is active (heat went above HeatThresholdStart and has not went below HeatThresholdEnd,
+                        // then lerp between RofAt0Heat and RofAt100Heat using heat percentage.
+                    }
                 }
 
 
@@ -515,6 +588,20 @@ namespace CoreSystems.Api
                     [ProtoMember(4)] internal bool EnableOverload;
                     [ProtoMember(5)] internal bool AlternateUi;
                     [ProtoMember(6)] internal bool DisableStatus;
+                    [ProtoMember(7)] internal float RateOfFireMin;
+                    [ProtoMember(8)] internal bool DisableSupportingPD;
+                    [ProtoMember(9)] internal bool ProhibitShotDelay;
+                    [ProtoMember(10)] internal bool ProhibitBurstCount;
+                    [ProtoMember(11)] internal UiSetTagsDef UiSetTags;
+
+                    [ProtoContract]
+                    public struct UiSetTagsDef
+                    {
+                        [ProtoMember(1)] internal bool Enable;
+                        [ProtoMember(2)] internal string[] ProjectileTagsList;
+                        [ProtoMember(3)] internal bool AllowUserChangeToWhitelist;
+                        [ProtoMember(4)] internal bool HaveUserWhitelistToggle;
+                    }
                 }
 
 
@@ -530,6 +617,8 @@ namespace CoreSystems.Api
                     [ProtoMember(7)] internal bool OverrideLeads;
                     [ProtoMember(8)] internal int DefaultLeadGroup;
                     [ProtoMember(9)] internal bool TargetGridCenter;
+                    [ProtoMember(10)] internal bool PainterUseMaxTargeting;
+                    [ProtoMember(11)] internal bool UseLimitlessPDSolver;
                 }
 
                 [ProtoContract]
@@ -556,6 +645,7 @@ namespace CoreSystems.Api
                     [ProtoMember(12)] internal int HomeElevation;
                     [ProtoMember(13)] internal CriticalDef CriticalReaction;
                     [ProtoMember(14)] internal float IdlePower;
+                    [ProtoMember(15)] internal bool FixedInventorySize;
 
                     [ProtoContract]
                     public struct CriticalDef
@@ -595,6 +685,10 @@ namespace CoreSystems.Api
                     [ProtoMember(8)] internal bool CheckForAnyWeapon;
                     [ProtoMember(9)] internal bool DisableLosCheck;
                     [ProtoMember(10)] internal bool NoVoxelLosCheck;
+                    [ProtoMember(11)] internal bool AllowScopeOutsideObb;
+                    [ProtoMember(12)] internal bool ProhibitLGTargeting;
+                    [ProtoMember(13)] internal bool ProhibitSGTargeting;
+                    [ProtoMember(14)] internal bool ProhibitSubsystemChanges;
                 }
 
                 [ProtoContract]
@@ -639,6 +733,12 @@ namespace CoreSystems.Api
                 [ProtoMember(29)] internal bool NpcSafe;
                 [ProtoMember(30)] internal SynchronizeDef Sync;
                 [ProtoMember(31)] internal bool NoGridOrArmorScaling;
+                [ProtoMember(32)] internal string TerminalName;
+                [ProtoMember(33)] internal float BaseDamageCutoff;
+                [ProtoMember(34)] internal bool IgnoreGrids;
+                [ProtoMember(35)] internal bool AllowNegativeHeatModifier;
+                [ProtoMember(36)] internal int HeatNeededToFire;
+
 
                 [ProtoContract]
                 public struct SynchronizeDef
@@ -772,6 +872,7 @@ namespace CoreSystems.Api
                 {
                     [ProtoMember(1)] internal int MaxObjectsHit;
                     [ProtoMember(2)] internal bool CountBlocks;
+                    [ProtoMember(3)] internal bool SkipBlocksForAOE;
                 }
 
 
@@ -798,6 +899,10 @@ namespace CoreSystems.Api
                         [ProtoMember(1)] internal ParticleDef Ammo;
                         [ProtoMember(2)] internal ParticleDef Hit;
                         [ProtoMember(3)] internal ParticleDef Eject;
+                        [ProtoMember(4)] internal ParticleDef WeaponEffect1Override;
+                        [ProtoMember(5)] internal ParticleDef ShieldHit;
+                        [ProtoMember(6)] internal ParticleDef VoxelHit;
+                        [ProtoMember(7)] internal ParticleDef WaterHit;
                     }
 
                     [ProtoContract]
@@ -810,6 +915,7 @@ namespace CoreSystems.Api
                             Chaos,
                             Wave,
                         }
+
                         public enum FactionColor
                         {
                             DontUse,
@@ -909,7 +1015,7 @@ namespace CoreSystems.Api
                     [ProtoMember(3)] internal bool VirtualBeams;
                     [ProtoMember(4)] internal bool RotateRealBeam;
                     [ProtoMember(5)] internal bool OneParticle;
-                    [ProtoMember(6)] internal bool FakeVoxelHits;
+                    [ProtoMember(6)] internal int FakeVoxelHitTicks;
                 }
 
                 [ProtoContract]
@@ -926,9 +1032,10 @@ namespace CoreSystems.Api
                     [ProtoMember(9)] internal float Offset;
                     [ProtoMember(10)] internal int MaxChildren;
                     [ProtoMember(11)] internal TimedSpawnDef TimedSpawns;
-                    [ProtoMember(12)] internal bool FireSound;
+                    [ProtoMember(12)] internal bool FireSound; // not used can remove
                     [ProtoMember(13)] internal Vector3D AdvOffset;
                     [ProtoMember(14)] internal bool ArmWhenHit;
+                    [ProtoMember(15)] internal Vector2D AdvRotationOffset;
 
                     [ProtoContract]
                     public struct TimedSpawnDef
@@ -950,6 +1057,7 @@ namespace CoreSystems.Api
                         [ProtoMember(8)] internal int GroupSize;
                         [ProtoMember(9)] internal int GroupDelay;
                         [ProtoMember(10)] internal PointTypes PointType;
+                        [ProtoMember(11)] internal float DirectAimCone;
                     }
                 }
 
@@ -963,7 +1071,6 @@ namespace CoreSystems.Api
                         Fragment,
                         Both,
                     }
-
 
                     [ProtoMember(1)] internal string[] Patterns;
                     [ProtoMember(2)] internal bool Enable;
@@ -988,6 +1095,11 @@ namespace CoreSystems.Api
                     [ProtoMember(2)] internal float SpawnChance;
                     [ProtoMember(3)] internal SpawnType Type;
                     [ProtoMember(4)] internal ComponentDef CompDef;
+                    [ProtoMember(5)] internal Randomize SpeedVariance;
+                    [ProtoMember(6)] internal Randomize DirectionVariance;
+                    [ProtoMember(7)] internal Vector3D Rotation;
+                    [ProtoMember(8)] internal Randomize RotationVariance;
+
 
                     [ProtoContract]
                     public struct ComponentDef
@@ -1032,6 +1144,7 @@ namespace CoreSystems.Api
                         [ProtoMember(5)] internal float MaxAbsorb;
                         [ProtoMember(6)] internal Falloff Falloff;
                         [ProtoMember(7)] internal AoeShape Shape;
+
                     }
 
                     [ProtoContract]
@@ -1070,6 +1183,7 @@ namespace CoreSystems.Api
                         Push,
                         Pull,
                         Tractor,
+                        AntiSmartv2,
                     }
 
                     public enum EwarMode
@@ -1242,6 +1356,8 @@ namespace CoreSystems.Api
                     [ProtoMember(7)] internal string FloatingHitSound;
                     [ProtoMember(8)] internal string ShieldHitSound;
                     [ProtoMember(9)] internal string ShotSound;
+                    [ProtoMember(10)] internal string WaterHitSound;
+                    [ProtoMember(11)] internal bool OverrideShotSound;
                 }
 
                 [ProtoContract]
@@ -1275,6 +1391,9 @@ namespace CoreSystems.Api
                     [ProtoMember(14)] internal uint MaxTrajectoryTime;
                     [ProtoMember(15)] internal ApproachDef[] Approaches;
                     [ProtoMember(16)] internal double TotalAcceleration;
+                    [ProtoMember(17)] internal OnHitDef OnHit; //Deprecated
+                    [ProtoMember(18)] internal float DragPerSecond;
+                    [ProtoMember(19)] internal float DragMinSpeed;
 
                     [ProtoContract]
                     public struct SmartsDef
@@ -1304,6 +1423,7 @@ namespace CoreSystems.Api
                         [ProtoMember(23)] internal double MinTurnSpeed;
                         [ProtoMember(24)] internal bool NoTargetApproach;
                         [ProtoMember(25)] internal bool AltNavigation;
+                        [ProtoMember(26)] internal bool IgnoreAntiSmarts;
                     }
 
                     [ProtoContract]
@@ -1505,6 +1625,21 @@ namespace CoreSystems.Api
                         [ProtoMember(3)] internal int FieldTime;
                         [ProtoMember(4)] internal bool Cloak;
                         [ProtoMember(5)] internal bool Persist;
+                    }
+
+                    [ProtoContract]
+                    public struct OnHitDef
+                    {
+                        /*
+                        [ProtoMember(1)] internal int Duration;
+                        [ProtoMember(2)] internal int ProcInterval;
+                        [ProtoMember(3)] internal double ProcAmount;
+                        [ProtoMember(4)] internal bool ProcOnVoxels;
+                        [ProtoMember(5)] internal bool FragOnProc;
+                        [ProtoMember(6)] internal bool DieOnEnd;
+                        [ProtoMember(7)] internal bool StickOnHit;
+                        [ProtoMember(8)] internal bool AlignFragtoImpactAngle;
+                        */
                     }
                 }
 

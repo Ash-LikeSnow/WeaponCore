@@ -768,6 +768,8 @@ namespace CoreSystems.Support
 
     internal class WeaponConstants
     {
+        public readonly HashSet<uint> ProjectileTags;
+        public readonly HashSet<uint> ValidUserProjectileTags;
         internal readonly double MaxTargetDistance;
         internal readonly double AimingToleranceRads;
 
@@ -794,6 +796,35 @@ namespace CoreSystems.Support
 
         internal WeaponConstants(WeaponDefinition values)
         {
+            ProjectileTags = new HashSet<uint>();
+            ValidUserProjectileTags = new HashSet<uint>();
+            Session s = Session.I;
+            if (values.Targeting.ProjectileTagsList != null)
+            {
+                foreach (var tag in values.Targeting.ProjectileTagsList)
+                {
+                    uint val;
+                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                    {
+                        ProjectileTags.Add(val);
+                    }
+                }
+            }
+            
+
+
+            if (values.HardPoint.Ui.UiSetTags.Enable && values.HardPoint.Ui.UiSetTags.ProjectileTagsList != null)
+            {
+                foreach (var tag in values.HardPoint.Ui.UiSetTags.ProjectileTagsList)
+                {
+                    uint val;
+                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                    {
+                        ValidUserProjectileTags.Add(val);
+                    }
+                }
+            }
+
             FireSoundNoBurst = values.HardPoint.Audio.FireSoundNoBurst;
             FireSoundEndDelay = values.HardPoint.Audio.FireSoundEndDelay;
             DelayAfterBurst = values.HardPoint.Loading.DelayAfterBurst;

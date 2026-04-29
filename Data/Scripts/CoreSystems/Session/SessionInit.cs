@@ -149,6 +149,7 @@ namespace CoreSystems
             MyAPIGateway.GridGroups.OnGridGroupCreated += GridGroupsOnOnGridGroupCreated;
             MyAPIGateway.GridGroups.OnGridGroupDestroyed += GridGroupsOnOnGridGroupDestroyed;
 
+            CompileProjectileTags();
             CompileWeaponStructures();
             CompileUpgradeStructures();
             CompileSupportStructures();
@@ -219,9 +220,38 @@ namespace CoreSystems
                 }
             }
         }
+        private void CompileProjectileTags()
+        {
+            uint id = 0;
+            foreach (var nsp in ProjectileTagDefs.Values)
+            {
+                if (nsp?.Tags != null && nsp.Tags.Length > 0)
+                {
+                    foreach (var tag in nsp.Tags)
+                    {
+                        if (string.IsNullOrEmpty(tag.ID))
+                            continue;
+
+                        string combinedTag = $"{nsp.Namespace.ID}:{tag.ID}";
+                        string nspPublicName = string.IsNullOrEmpty(nsp.Namespace.PublicName) ? "" : $"{nsp.Namespace.PublicName} ";
+                        string tagPublicName = string.IsNullOrEmpty(tag.PublicName) ? tag.ID : tag.PublicName;
+
+                        string combnedTagUser = $"{nspPublicName}{tagPublicName}";
+
+                        InternalTagToInt[combinedTag] = id;
+                        IntToTagInternal[id] = combinedTag;
+                        IntToTagUserStr[id] = tagPublicName;
+
+                        id++;
+                    }
+                }
+            }
+        }
 
         private void CompileWeaponStructures()
         {
+            List<string> ammoStrings = new List<string>();
+
             foreach (var x in WeaponDefinitions)
             {
                 for (int i = 0; i < x.Assignments.MountPoints.Length; i++)
@@ -239,6 +269,7 @@ namespace CoreSystems
 
                     var extraInfo = new MyTuple<string, string, string, string> { Item1 = x.HardPoint.PartName, Item2 = azimuthPartId, Item3 = elevationPartId, Item4 = spinPartId };
                     var tempammo = "";
+                    ammoStrings.Clear();
 
                     for (int y = 0; y < x.Ammos.Length; y++)
                     {
@@ -272,12 +303,10 @@ namespace CoreSystems
                             tempammostring += "0\t0\t0\t0\tNoFallOff\t";
                         }
                         tempammostring += $"{x.Ammos[y].Trajectory.AccelPerSec}\t{x.Ammos[y].Trajectory.DesiredSpeed}\t{x.Ammos[y].Trajectory.MaxTrajectory}\t{ x.Ammos[y].Trajectory.MaxLifeTime}";
-                        Log.Stats($"{tempammostring}", "ammostats");
+                        ammoStrings.Add(tempammostring);
                         tempammo = tempammo + "\t" + x.Ammos[y].AmmoRound;
                     }
 
-                    Log.Stats($"{x.HardPoint.PartName}\t{x.Targeting.MaxTargetDistance}\t{x.Targeting.MinTargetDistance}\t{x.HardPoint.DeviateShotAngle}\t{x.HardPoint.AimingTolerance}\t{x.HardPoint.AimLeadingPrediction}\t{x.HardPoint.HardWare.RotateRate}\t{x.HardPoint.HardWare.ElevateRate}\t{x.HardPoint.HardWare.IdlePower}\t{x.HardPoint.Loading.RateOfFire}\t" +
-                        $"{x.HardPoint.Loading.ReloadTime}\t{x.HardPoint.Loading.HeatPerShot}\t{x.HardPoint.Loading.MaxHeat}\t{x.HardPoint.Loading.HeatSinkRate}\t{x.HardPoint.Loading.ShotsInBurst}\t{x.HardPoint.Loading.DelayAfterBurst}\t{tempammo}","wepstats");
                     if (!_subTypeMaps.ContainsKey(subTypeId))
                     {
                         _subTypeMaps[subTypeId] = new Dictionary<string, MyTuple<string, string, string, string>> { [partAttachmentId] = extraInfo };
@@ -285,9 +314,51 @@ namespace CoreSystems
                     }
                     else
                     {
+                        var prevDefs = _subTypeIdWeaponDefs[subTypeId];
+
+                        int prevPrio = int.MinValue;
+                        WeaponDefinition prevDef = null;
+                        foreach (var def in prevDefs)
+                        {
+                            if (def.HardPoint.PartName == x.HardPoint.PartName && def.HardPoint.HardWare.Type == x.HardPoint.HardWare.Type)
+                            {
+                                prevPrio = def.HardPoint.DefinitionPriority;
+                                prevDef = def;
+                                break;
+                            }
+                        }
+                        if (prevPrio >= x.HardPoint.DefinitionPriority)
+                        {
+                            continue;
+                        }
+                        if (prevDef != null)
+                        {
+                            prevDefs.Remove(prevDef);
+                            int prevIndex = 0;
+                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            {
+                                if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
+                                    break;
+                            }
+                            var prevAttachmentId = weapon ? muzzlePartId : prevDef.HardPoint.PartName + $" {prevIndex}";
+                            _subTypeMaps[subTypeId].Remove(prevAttachmentId);
+
+                            Log.Stats($"{x.HardPoint.PartName}\tWAS REPLACED BELOW", "wepstats");
+                        }
+
                         _subTypeMaps[subTypeId][partAttachmentId] = extraInfo;
                         _subTypeIdWeaponDefs[subTypeId].Add(x);
                     }
+
+                    // this will still duplicate log values if something is replaced, but idk if its worth it to separate logging into its own function over just adding something
+                    foreach (var tempammostring in ammoStrings)
+                    {
+                        Log.Stats($"{tempammostring}", "ammostats");
+                    }
+
+                    Log.Stats($"{x.HardPoint.PartName}\t{x.Targeting.MaxTargetDistance}\t{x.Targeting.MinTargetDistance}\t{x.HardPoint.DeviateShotAngle}\t{x.HardPoint.AimingTolerance}\t{x.HardPoint.AimLeadingPrediction}\t{x.HardPoint.HardWare.RotateRate}\t{x.HardPoint.HardWare.ElevateRate}\t{x.HardPoint.HardWare.IdlePower}\t{x.HardPoint.Loading.RateOfFire}\t" +
+                        $"{x.HardPoint.Loading.ReloadTime}\t{x.HardPoint.Loading.HeatPerShot}\t{x.HardPoint.Loading.MaxHeat}\t{x.HardPoint.Loading.HeatSinkRate}\t{x.HardPoint.Loading.ShotsInBurst}\t{x.HardPoint.Loading.DelayAfterBurst}\t{tempammo}", "wepstats");
+
 
                     if (!string.IsNullOrEmpty(phantomModel))
                         ModelMaps[subTypeId] = x.ModPath + phantomModel;
@@ -330,17 +401,6 @@ namespace CoreSystems
                     {
                         if(DmgLog[subTypeIdHash].TerminalName == "") DmgLog[subTypeIdHash].TerminalName=partDef.HardPoint.PartName;
                         modPath = partDef.ModPath;
-
-                        if (partDef.Targeting.IgnoreDumbProjectiles)
-                        {
-                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.IgnoreDumbProjectiles;
-                            partDef.Targeting.RequireAllProjectileThreats = false;
-                        }
-                        else if (partDef.Targeting.ProjectileThreatsInternal == (ulong)WeaponDefinition.ProjectileFlags.Invalid)
-                        {
-                            partDef.Targeting.ProjectileThreatsInternal = (ulong)WeaponDefinition.ProjectileFlags.All;
-                            partDef.Targeting.RequireAllProjectileThreats = false;
-                        }
 
                         if (partDef.HardPoint.HardWare.Type != Phantom)
                         {
@@ -520,6 +580,36 @@ namespace CoreSystems
                     }
                     else
                     {
+                        var prevDefs = _subTypeIdSupportDefs[subTypeId];
+
+                        int prevPrio = int.MinValue;
+                        SupportDefinition prevDef = null;
+                        foreach (var def in prevDefs)
+                        {
+                            if (def.HardPoint.PartName == x.HardPoint.PartName)
+                            {
+                                prevPrio = def.HardPoint.DefinitionPriority;
+                                prevDef = def;
+                                break;
+                            }
+                        }
+                        if (prevPrio >= x.HardPoint.DefinitionPriority)
+                        {
+                            continue;
+                        }
+                        if (prevDef != null)
+                        {
+                            prevDefs.Remove(prevDef);
+                            int prevIndex = 0;
+                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            {
+                                if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
+                                    break;
+                            }
+                            var prevAttachmentId = prevDef.HardPoint.PartName + $" {prevIndex}";
+                            _subTypeMaps[subTypeId].Remove(prevAttachmentId);
+                        }
+
                         _subTypeMaps[subTypeId][partAttachmentId] = extraInfo;
                         _subTypeIdSupportDefs[subTypeId].Add(x);
                     }
@@ -646,13 +736,41 @@ namespace CoreSystems
 
                     if (!_subTypeMaps.ContainsKey(subTypeId))
                     {
-
                         _subTypeMaps[subTypeId] = new Dictionary<string, MyTuple<string, string, string, string>> { [partAttachmentId] = extraInfo };
-
                         _subTypeIdUpgradeDefs[subTypeId] = new List<UpgradeDefinition> { x };
                     }
                     else
                     {
+                        var prevDefs = _subTypeIdUpgradeDefs[subTypeId];
+
+                        int prevPrio = int.MinValue;
+                        UpgradeDefinition prevDef = null;
+                        foreach (var def in prevDefs)
+                        {
+                            if (def.HardPoint.PartName == x.HardPoint.PartName)
+                            {
+                                prevPrio = def.HardPoint.DefinitionPriority;
+                                prevDef = def;
+                                break;
+                            }
+                        }
+                        if (prevPrio >= x.HardPoint.DefinitionPriority)
+                        {
+                            continue;
+                        }
+                        if (prevDef != null)
+                        {
+                            prevDefs.Remove(prevDef);
+                            int prevIndex = 0;
+                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            {
+                                if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
+                                    break;
+                            }
+                            var prevAttachmentId = prevDef.HardPoint.PartName + $" {prevIndex}";
+                            _subTypeMaps[subTypeId].Remove(prevAttachmentId);
+                        }
+
                         _subTypeMaps[subTypeId][partAttachmentId] = extraInfo;
                         _subTypeIdUpgradeDefs[subTypeId].Add(x);
                     }
