@@ -250,8 +250,6 @@ namespace CoreSystems
 
         private void CompileWeaponStructures()
         {
-            List<string> ammoStrings = new List<string>();
-
             foreach (var x in WeaponDefinitions)
             {
                 for (int i = 0; i < x.Assignments.MountPoints.Length; i++)
@@ -269,8 +267,6 @@ namespace CoreSystems
 
                     var extraInfo = new MyTuple<string, string, string, string> { Item1 = x.HardPoint.PartName, Item2 = azimuthPartId, Item3 = elevationPartId, Item4 = spinPartId };
                     var tempammo = "";
-                    ammoStrings.Clear();
-
                     for (int y = 0; y < x.Ammos.Length; y++)
                     {
                         var tempammostring = $"{x.Ammos[y].AmmoRound}\t{x.Ammos[y].BaseDamage}\t{x.Ammos[y].DamageScales.DamageType.Base}\t{x.Ammos[y].DamageScales.DamageType.AreaEffect}\t{x.Ammos[y].DamageScales.DamageType.Detonation}\t{x.Ammos[y].DamageScales.DamageType.Shield}\t" +
@@ -303,7 +299,6 @@ namespace CoreSystems
                             tempammostring += "0\t0\t0\t0\tNoFallOff\t";
                         }
                         tempammostring += $"{x.Ammos[y].Trajectory.AccelPerSec}\t{x.Ammos[y].Trajectory.DesiredSpeed}\t{x.Ammos[y].Trajectory.MaxTrajectory}\t{ x.Ammos[y].Trajectory.MaxLifeTime}";
-                        ammoStrings.Add(tempammostring);
                         tempammo = tempammo + "\t" + x.Ammos[y].AmmoRound;
                     }
 
@@ -343,21 +338,15 @@ namespace CoreSystems
                             var prevAttachmentId = weapon ? muzzlePartId : prevDef.HardPoint.PartName + $" {prevIndex}";
                             _subTypeMaps[subTypeId].Remove(prevAttachmentId);
 
-                            Log.Stats($"{x.HardPoint.PartName}\tWAS REPLACED BELOW", "wepstats");
+                            var prevName = prevDef.ModPath.Split('\\');
+                            var wepName = x.ModPath.Split('\\');
+                            
+                            Log.Stats($"WeaponDef '{x.HardPoint.PartName}' was overriden for {mount.SubtypeId}! prev prio: {prevPrio} --> new prio: {x.HardPoint.DefinitionPriority}, old mod: {prevName[prevName.Length-1]}, new mod: {wepName[wepName.Length-1]}", "debug");
                         }
 
                         _subTypeMaps[subTypeId][partAttachmentId] = extraInfo;
                         _subTypeIdWeaponDefs[subTypeId].Add(x);
                     }
-
-                    // this will still duplicate log values if something is replaced, but idk if its worth it to separate logging into its own function over just adding something
-                    foreach (var tempammostring in ammoStrings)
-                    {
-                        Log.Stats($"{tempammostring}", "ammostats");
-                    }
-
-                    Log.Stats($"{x.HardPoint.PartName}\t{x.Targeting.MaxTargetDistance}\t{x.Targeting.MinTargetDistance}\t{x.HardPoint.DeviateShotAngle}\t{x.HardPoint.AimingTolerance}\t{x.HardPoint.AimLeadingPrediction}\t{x.HardPoint.HardWare.RotateRate}\t{x.HardPoint.HardWare.ElevateRate}\t{x.HardPoint.HardWare.IdlePower}\t{x.HardPoint.Loading.RateOfFire}\t" +
-                        $"{x.HardPoint.Loading.ReloadTime}\t{x.HardPoint.Loading.HeatPerShot}\t{x.HardPoint.Loading.MaxHeat}\t{x.HardPoint.Loading.HeatSinkRate}\t{x.HardPoint.Loading.ShotsInBurst}\t{x.HardPoint.Loading.DelayAfterBurst}\t{tempammo}", "wepstats");
 
 
                     if (!string.IsNullOrEmpty(phantomModel))
@@ -368,6 +357,75 @@ namespace CoreSystems
                     if (x.HardPoint.HardWare.Type == Phantom || x.HardPoint.HardWare.CriticalReaction.Enable)
                     {
                         PhantomDatabase[subTypeId] = new Dictionary<long, Weapon.WeaponComponent>();
+                    }
+                }
+            }
+            HashSet<WeaponDefinition> prevdefs = new HashSet<WeaponDefinition>();
+            // needed because of definition priority overwrites
+            foreach (var wepdefs in _subTypeIdWeaponDefs.Values)
+            {
+                foreach (var x in wepdefs)
+                {
+                    if (prevdefs.Contains(x))
+                    {
+                        continue;
+                    }
+
+                    prevdefs.Add(x); // filter out the duplicates from having 27 million subtype IDs per definition
+
+                    for (int i = 0; i < x.Assignments.MountPoints.Length; i++)
+                    {
+                        var mount = x.Assignments.MountPoints[i];
+
+                        var subTypeId = mount.SubtypeId;
+                        var muzzlePartId = mount.MuzzlePartId;
+                        var weapon = x.HardPoint.HardWare.Type == BlockWeapon || x.HardPoint.HardWare.Type == HandWeapon || x.HardPoint.HardWare.Type == Phantom;
+                        var partAttachmentId = weapon ? muzzlePartId : x.HardPoint.PartName + $" {i}";
+                        var azimuthPartId = mount.AzimuthPartId;
+                        var elevationPartId = mount.ElevationPartId;
+                        var spinPartId = mount.SpinPartId;
+                        var phantomModel = mount.PhantomModel;
+
+                        var extraInfo = new MyTuple<string, string, string, string> { Item1 = x.HardPoint.PartName, Item2 = azimuthPartId, Item3 = elevationPartId, Item4 = spinPartId };
+                        var tempammo = "";
+                        for (int y = 0; y < x.Ammos.Length; y++)
+                        {
+                            var tempammostring = $"{x.Ammos[y].AmmoRound}\t{x.Ammos[y].BaseDamage}\t{x.Ammos[y].DamageScales.DamageType.Base}\t{x.Ammos[y].DamageScales.DamageType.AreaEffect}\t{x.Ammos[y].DamageScales.DamageType.Detonation}\t{x.Ammos[y].DamageScales.DamageType.Shield}\t" +
+                                $"{x.Ammos[y].DamageScales.Grids.Large}\t{x.Ammos[y].DamageScales.Grids.Small}\t{x.Ammos[y].DamageScales.Armor.Armor}\t{x.Ammos[y].DamageScales.Armor.Light}\t{x.Ammos[y].DamageScales.Armor.Heavy}\t{x.Ammos[y].DamageScales.Armor.NonArmor}\t" +
+                                $"{x.Ammos[y].DamageScales.Shields.Modifier}\t{x.Ammos[y].DamageScales.Shields.BypassModifier}\t";
+
+                            if (x.Ammos[y].Fragment.AmmoRound == "")
+                            {
+                                tempammostring += "None\t0\t0\t";
+                            }
+                            else
+                            {
+                                tempammostring += $"{x.Ammos[y].Fragment.AmmoRound}\t{x.Ammos[y].Fragment.Fragments}\t{x.Ammos[y].Fragment.Degrees}\t";
+                            }
+                            if (x.Ammos[y].AreaOfDamage.ByBlockHit.Enable == true)
+                            {
+                                tempammostring += $"{x.Ammos[y].AreaOfDamage.ByBlockHit.Radius}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Damage}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Depth}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.MaxAbsorb}\t{x.Ammos[y].AreaOfDamage.ByBlockHit.Falloff}\t" +
+                                    $"t";
+                            }
+                            else
+                            {
+                                tempammostring += "0\t0\t0\t0\tNoFallOff\t";
+                            }
+                            if (x.Ammos[y].AreaOfDamage.EndOfLife.Enable == true)
+                            {
+                                tempammostring += $"{x.Ammos[y].AreaOfDamage.EndOfLife.Radius}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Damage}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Depth}\t{x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb}\t{x.Ammos[y].AreaOfDamage.EndOfLife.Falloff}\t";
+                            }
+                            else
+                            {
+                                tempammostring += "0\t0\t0\t0\tNoFallOff\t";
+                            }
+                            tempammostring += $"{x.Ammos[y].Trajectory.AccelPerSec}\t{x.Ammos[y].Trajectory.DesiredSpeed}\t{x.Ammos[y].Trajectory.MaxTrajectory}\t{x.Ammos[y].Trajectory.MaxLifeTime}";
+                            Log.Stats($"{tempammostring}", "ammostats");
+                            tempammo = tempammo + "\t" + x.Ammos[y].AmmoRound;
+                        }
+
+                        Log.Stats($"{x.HardPoint.PartName}\t{x.Targeting.MaxTargetDistance}\t{x.Targeting.MinTargetDistance}\t{x.HardPoint.DeviateShotAngle}\t{x.HardPoint.AimingTolerance}\t{x.HardPoint.AimLeadingPrediction}\t{x.HardPoint.HardWare.RotateRate}\t{x.HardPoint.HardWare.ElevateRate}\t{x.HardPoint.HardWare.IdlePower}\t{x.HardPoint.Loading.RateOfFire}\t" +
+                            $"{x.HardPoint.Loading.ReloadTime}\t{x.HardPoint.Loading.HeatPerShot}\t{x.HardPoint.Loading.MaxHeat}\t{x.HardPoint.Loading.HeatSinkRate}\t{x.HardPoint.Loading.ShotsInBurst}\t{x.HardPoint.Loading.DelayAfterBurst}\t{tempammo}", "wepstats");
                     }
                 }
             }
