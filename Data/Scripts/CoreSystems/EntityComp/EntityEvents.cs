@@ -393,7 +393,7 @@ namespace CoreSystems.Support
                             targ += Localization.GetText("WeaponInfoNoneTarget");
                         stringBuilder.Append($"\n{targ}");
 
-                        if (w.ActiveAmmoDef.AmmoDef.Const.ProjectileTags.Count > 0)
+                        if (w.ActiveAmmoDef.AmmoDef.Const.ProjectileTags.Count > 0 && w.ActiveAmmoDef.AmmoDef.Const.Health > 0)
                         {
                             stringBuilder.Append($"\n{Localization.GetText("WeaponInfoAmmoTagList")}");
                             foreach (var val in w.ActiveAmmoDef.AmmoDef.Const.ProjectileTags)
@@ -405,6 +405,10 @@ namespace CoreSystems.Support
                                     stringBuilder.Append($"\n-{str} ({id}),");
                                 }
                             }
+                        }
+                        else if (w.ActiveAmmoDef.AmmoDef.Const.Health == 0)
+                        {
+                            stringBuilder.Append($"\n{Localization.GetText("WeaponInfoAmmoUntargetable")}");
                         }
                     }
 

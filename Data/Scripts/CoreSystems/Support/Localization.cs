@@ -184,6 +184,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoSystemWhitelistAnd", "Whitelist, And" },
                         { "WeaponInfoTags", "Current Weapon Projectile Tags:" },
                         { "WeaponInfoAmmoTagList", "Selected Ammo's Tags:" },
+                        { "WeaponInfoAmmoUntargetable", "Selected Ammo is untargetable!" },
                         { "WeaponInfoAmmoType", "Ammo Types (Mag if different)" },
                         { "WeaponInfoServerModdedLine1", "Weapon modified by server!" },
                         { "WeaponInfoServerModdedLine2", "Report issues to server admins." },
