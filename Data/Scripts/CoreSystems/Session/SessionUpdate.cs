@@ -140,10 +140,11 @@ namespace CoreSystems
                         {
 
                             if (IsServer && (p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.CheckInventorySystem))
+                            {
                                 p.ComputeServerStorage();
+                            }
                             else if (IsClient)
                             {
-
                                 if (p.ClientReloading && p.Reload.EndId > p.ClientEndId && p.Reload.StartId == p.ClientStartId)
                                     p.Reloaded();
                                 else

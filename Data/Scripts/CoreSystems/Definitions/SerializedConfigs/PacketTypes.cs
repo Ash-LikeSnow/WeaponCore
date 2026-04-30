@@ -68,7 +68,8 @@ namespace CoreSystems
         AdvProjectileSpawnSyncs,
         AdvProjectileDeathSyncs,
         AdvProjectileUpdateTargetSyncs,
-        AdvProjectilePositionSyncs
+        AdvProjectilePositionSyncs,
+        ClientAmmoRequest
     }
 
     #region Packets
@@ -115,6 +116,7 @@ namespace CoreSystems
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
     [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
     [ProtoInclude(50, typeof(AdvProjectilePositionBatchPacket))]
+    [ProtoInclude(51, typeof(ClientAmmoRequestPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -995,6 +997,20 @@ namespace CoreSystems
         {
             base.CleanUp();
             Value = false;
+        }
+    }
+
+    [ProtoContract]
+    public class ClientAmmoRequestPacket : Packet
+    {
+        [ProtoMember(1)] internal int  PartId;
+        [ProtoMember(2)] internal uint LastSequenceId;
+        
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            PartId = 0;
+            LastSequenceId = 0;
         }
     }
 

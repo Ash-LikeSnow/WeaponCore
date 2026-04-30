@@ -1458,5 +1458,23 @@ namespace CoreSystems
             
             LastPongTick = Tick;
         }
+
+        internal void SendClientAmmoRequest(Weapon w)
+        {
+            if (!IsClient)
+            {
+                DebugLog.Critical("SendClientAmmoRequest called non-client");
+                return;
+            }
+            
+            PacketsToServer.Add(new ClientAmmoRequestPacket
+            {
+                EntityId = w.BaseComp.CoreEntity.EntityId,
+                SenderId = MultiplayerId,
+                PType = PacketType.ClientAmmoRequest,
+                PartId = w.PartId, 
+                LastSequenceId = w.LastAuthoritativeSeqId
+            });
+        }
     }
 }

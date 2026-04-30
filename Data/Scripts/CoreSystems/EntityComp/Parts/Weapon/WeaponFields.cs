@@ -196,6 +196,8 @@ namespace CoreSystems.Platform
         internal bool TurretActive;
         internal bool TargetLock;
         internal bool ClientReloading;
+        internal bool ClientReloadWaitingForServer;
+        internal uint ClientReloadWaitingForServerBeginTick;
         internal bool ServerQueuedAmmo;
         internal uint LastAuthoritativeSeqId = 0;
         internal bool Rotating;
