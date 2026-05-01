@@ -20,6 +20,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.ModAPI;
+using VRage.Replication;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.Ai;
@@ -1130,6 +1131,8 @@ namespace CoreSystems
                 DebugMod = true;
             }
 
+            bool ReplaceVanilla = false;
+
             foreach (var mod in Session.Mods)
             {
                 var modPath = mod.GetPath();
@@ -1146,11 +1149,13 @@ namespace CoreSystems
                     WaterMod = true;
                 else if (mod.PublishedFileId == 3514216428 || mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\NerdShieldsFramework"))
                     NerdShieldMod = true;
+                else if (mod.PublishedFileId == 1931509062)
+                    ReplaceVanilla = true;
             }
 
             SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);
-            
-            if (!SuppressWc)
+
+            if (!SuppressWc && !ReplaceVanilla)
             {
                 ContainerDefinition baseDefs;
                 Parts.GetBaseDefinitions(out baseDefs);
@@ -1159,6 +1164,14 @@ namespace CoreSystems
                     Parts.SetModPath(baseDefs, ModContext.ModPath);
                     PickDef(baseDefs);
                 }
+            }
+            else if (ReplaceVanilla)
+            {
+                ContainerDefinition baseDefs;
+                Parts.GetBaseDefinitions(out baseDefs);
+
+                if (baseDefs.ProjectileTags != null)
+                    AssembleTagDefinitions(baseDefs.ProjectileTags);
             }
 
         }
