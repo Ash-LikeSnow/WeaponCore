@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 
@@ -127,6 +128,21 @@ namespace CoreSystems.Platform
 
                     if (Session.I.IsClient)
                         Comp.ShootManager.ClientToggleCount = Repo.Values.State.ToggleCount;
+                }
+
+                if (Repo.Values.Set.Overrides.UserProjectileTagsInternal == null)
+                    Repo.Values.Set.Overrides.UserProjectileTagsInternal = new HashSet<uint>();
+                else
+                    Repo.Values.Set.Overrides.UserProjectileTagsInternal.Clear();
+
+                foreach (var str in Repo.Values.Set.Overrides.UserProjectileTags)
+                {
+                    uint val;
+                    if (Session.I.InternalTagToInt.TryGetValue(str, out val))
+                    {
+                        Repo.Values.Set.Overrides.UserProjectileTagsInternal.Add(val);
+                    }
+                    // else uhh idk fail silently
                 }
 
                 ProtoRepoBase = Repo;

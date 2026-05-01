@@ -92,7 +92,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         internal readonly TextureMap[] OutofAmmoTexture = new TextureMap[2];
         internal readonly TextureMap[] ChargingTexture = new TextureMap[10];
         internal readonly TextureMap[] InfoBackground = new TextureMap[3];
-        internal readonly TextureMap[] HeatBarTexture = new TextureMap[12];
+        internal readonly TextureMap[] HeatBarTexture = new TextureMap[26];
 
         internal int TexturesToAdd;
         internal bool NeedsUpdate = true;
@@ -128,7 +128,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             LoadTextMaps("EN", out CharacterMap); // possible translations in future
 
             BuildMap(MyStringId.GetOrCompute("WeaponStatWindow"), 0, 0, 0, 128, 768, 128, 768, 384, ref InfoBackground);
-            BuildMap(MyStringId.GetOrCompute("HeatAtlasBar"), 0, 0, 0, 64, 1024, 64, 1024, 1024, ref HeatBarTexture);
+            BuildMap(MyStringId.GetOrCompute("HeatAtlasBar"), 0, 0, 0, 64, 1024, 64, 1024, 2048, ref HeatBarTexture);
             BuildMap(MyStringId.GetOrCompute("ReloadingIcons"), 0, 0, 0, 64, 64, 64, 64, 512, ref ReloadingTexture);
             BuildMap(MyStringId.GetOrCompute("ReloadingIcons"), 0, 384, 0, 64, 64, 64, 64, 512, ref OutofAmmoTexture);
             BuildMap(MyStringId.GetOrCompute("RechargingIcons"), 0, 0, 0, 64, 64, 64, 64, 640, ref ChargingTexture);

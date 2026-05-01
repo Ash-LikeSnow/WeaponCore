@@ -94,6 +94,12 @@ namespace CoreSystems.Projectiles
                 var grid = ent as MyCubeGrid;
                 var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
 
+                if (entIsSelf && Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncId != 0 && aConst.OnHitDeathSync)
+                {
+                    // Prevents client-only self-hit due to position differences:
+                    continue;
+                }
+
                 if (entIsSelf && aConst.IsSmart && (!info.Storage.SmartReady || aPhaseSelf) || ent.MarkedForClose || !ent.InScene || !selfDamage && ent == ai.MyShield || (!selfDamage && !isGrid && ent == topEntity)) continue;
 
                 var character = ent as IMyCharacter;

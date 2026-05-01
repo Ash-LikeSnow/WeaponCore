@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using CoreSystems.Api;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -108,7 +109,6 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<AdvProjectileSpawnPacket> AdvProjectileSpawnPacketPool = new MyConcurrentPool<AdvProjectileSpawnPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileDeathPacket> AdvProjectileDeathPacketPool = new MyConcurrentPool<AdvProjectileDeathPacket>(32);
         internal readonly MyConcurrentPool<AdvProjectileUpdateTargetPacket> AdvProjectileUpdateTargetPacketPool = new MyConcurrentPool<AdvProjectileUpdateTargetPacket>(32);
-        internal readonly MyConcurrentPool<AdvProjectilePositionPacket> AdvProjectilePositionPacketPool = new MyConcurrentPool<AdvProjectilePositionPacket>(64);
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
 
         internal readonly Stack<Dictionary<object, Weapon>> TrackingDictPool = new Stack<Dictionary<object, Weapon>>();
@@ -184,6 +184,11 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
+        #region Adv Sync Position Networking Fields
+        internal readonly Dictionary<ulong, AdvProjectilePositionFrameEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionFrameEntry>();
+        internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
+        internal readonly Dictionary<MyEntity, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByCoreEntity = new Dictionary<MyEntity, AdvProjectilePositionBatchPacket>();
+        #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
         internal readonly Dictionary<string, MyMouseButtonsEnum> MouseMap = new Dictionary<string, MyMouseButtonsEnum>();
@@ -197,6 +202,7 @@ namespace CoreSystems
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<IMyCharacter, long, int, bool>> HudHandlers = new Dictionary<long, Func<IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>> ShootHandlers = new Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>>();
+        internal readonly Dictionary<MyStringHash, int> ArmorCorePriorityMap = new Dictionary<MyStringHash, int>();
         internal readonly Dictionary<MyStringHash, ResistanceValues> ArmorCoreBlockMap = new Dictionary<MyStringHash, ResistanceValues>();
         internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
@@ -481,7 +487,6 @@ namespace CoreSystems
         internal bool ShieldMod;
         internal bool NerdShieldMod;
         internal bool NerdShieldApiLoaded;
-        internal bool ReplaceVanilla;
         internal bool ShieldApiLoaded;
         internal bool WaterApiLoaded;
         internal bool InGridAiBlock;
@@ -516,6 +521,19 @@ namespace CoreSystems
         internal bool AdvSync;
         internal bool AdvSyncServer;
         internal bool AdvSyncClient;
+
+        public const string WC_NAMESPACE = "wc";
+        public const string WC_DUMBTAG = "dumb";
+        public const string WC_SMARTTAG = "smart";
+        public const string WC_DRONETAG = "drone";
+        public const string WC_MINETAG = "mine";
+        public const string WC_TRAVELTOTAG = "travelto";
+
+        public Dictionary<string, ProjectileTagDefinition> ProjectileTagDefs = new Dictionary<string, ProjectileTagDefinition>();
+        public Dictionary<string, uint> InternalTagToInt = new Dictionary<string, uint>();
+        public Dictionary<uint, string> IntToTagInternal = new Dictionary<uint, string>();
+        public Dictionary<uint, string> IntToTagUserStr = new Dictionary<uint, string>();
+        public Dictionary<string, HashSet<string>> AmmoTags = new Dictionary<string, HashSet<string>>();
 
         internal readonly HashSet<string> VanillaUpgradeModuleHashes = new HashSet<string>()
         {
