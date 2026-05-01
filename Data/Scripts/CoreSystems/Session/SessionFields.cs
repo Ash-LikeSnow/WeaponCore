@@ -55,6 +55,7 @@ namespace CoreSystems
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
         internal static Session I;
+        internal volatile bool LogInit;
         internal volatile bool Inited;
         internal volatile bool TurretControls;
         internal volatile bool FixedMissileControls;
@@ -254,6 +255,7 @@ namespace CoreSystems
         internal readonly HashSet<MyDefinitionId> CoreSystemsPhantomDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<ArmorDefinition> CoreSystemsArmorDefs = new HashSet<ArmorDefinition>();
         internal readonly HashSet<string> VanillaSubtypes = new HashSet<string>();
+        internal readonly Dictionary<string, string> VanillaPartNames = new Dictionary<string, string>();
         internal readonly HashSet<MyStringHash> PerformanceWarning = new HashSet<MyStringHash>();
         internal readonly HashSet<Ai> GridsToUpdateInventories = new HashSet<Ai>();
         internal readonly List<MyCubeGrid> DirtyGridsTmp = new List<MyCubeGrid>(10);

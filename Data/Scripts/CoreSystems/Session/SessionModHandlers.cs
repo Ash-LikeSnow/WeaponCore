@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.ModAPI;
@@ -141,10 +142,62 @@ namespace CoreSystems
         {
             foreach (var wepDef in partDefs)
             {
-                WeaponDefinitions.Add(wepDef);
+                for (int i = wepDef.Assignments.MountPoints.Length - 1; i >= 0; i--)
+                {
+                    var subtypeID = wepDef.Assignments.MountPoints[i].SubtypeId;
+                    subTypes.Add(subtypeID);
 
-                for (int i = 0; i < wepDef.Assignments.MountPoints.Length; i++)
-                    subTypes.Add(wepDef.Assignments.MountPoints[i].SubtypeId);
+
+                    // old vanilla replacer compat... aaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    string partName;
+                    if (VanillaPartNames.TryGetValue(subtypeID, out partName)
+                        && (partName != wepDef.HardPoint.PartName || wepDef.HardPoint.HardWare.Type != WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon))
+                    {
+                        Log.Line($"WeaponDef '{wepDef.HardPoint.PartName}' has the vanilla subtype {subtypeID} with: {(partName != wepDef.HardPoint.PartName ? "a different part name," : "")}{(wepDef.HardPoint.HardWare.Type != WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon ? "a weapon type not equal to BlockWeapon," : "")}. Setting partname to {partName} and Type to BlockWeapon and generating a new weapon definition!", "debug");
+                        var mount = wepDef.Assignments.MountPoints[i];
+
+                        var newArr = new WeaponDefinition.ModelAssignmentsDef.MountPointDef[wepDef.Assignments.MountPoints.Length - 1];
+                        if (wepDef.Assignments.MountPoints.Length > 1)
+                        {
+                            Array.Copy(wepDef.Assignments.MountPoints, 0, newArr, 0, i);
+                            Array.Copy(wepDef.Assignments.MountPoints, i + 1, newArr, i, wepDef.Assignments.MountPoints.Length - i - 1);
+                            wepDef.Assignments.MountPoints = newArr;
+                        }
+                        else
+                        {
+                            wepDef.Assignments.MountPoints = new WeaponDefinition.ModelAssignmentsDef.MountPointDef[0];
+                        }
+
+                        var newDef = new WeaponDefinition
+                        {
+                            Assignments = new WeaponDefinition.ModelAssignmentsDef
+                            {
+                                MountPoints = new[]
+                                    {
+                                    mount
+                                },
+                                Ejector = wepDef.Assignments.Ejector,
+                                Muzzles = wepDef.Assignments.Muzzles,
+                                Scope = wepDef.Assignments.Scope,
+                            },
+                            HardPoint = wepDef.HardPoint,
+                            Upgrades = wepDef.Upgrades,
+                            Targeting = wepDef.Targeting,
+                            ModPath = wepDef.ModPath,
+                            Animations = wepDef.Animations,
+                            Ammos = wepDef.Ammos,
+                        };
+                        newDef.HardPoint.PartName = partName;
+                        newDef.HardPoint.HardWare.Type = WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon;
+                        WeaponDefinitions.Add(newDef);
+
+                    }
+                }
+
+                if (wepDef.Assignments.MountPoints.Length > 0)
+                {
+                    WeaponDefinitions.Add(wepDef);
+                }
             }
         }
 
