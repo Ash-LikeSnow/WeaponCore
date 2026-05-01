@@ -125,17 +125,7 @@ namespace CoreSystems
         {
             if (Inited) return;
             Inited = true;
-            Log.Init("debug", this);
-            Log.Init("perf", this, false);
-            Log.Init("stats", this, false);
-            Log.Init("net", this, false);
-            Log.Init("report", this, false);
-            Log.Init("combat", this, false);
-            Log.Init("ammostats", this, false);
-            Log.Init("wepstats", this, false);
-            Log.Init("dmgstats", this, false);
-            Log.Init("griddmgstats", this, false);
-            Log.Init(InputLog, this, false);
+            
             MpActive = MyAPIGateway.Multiplayer.MultiplayerActive;
             IsServer = MyAPIGateway.Multiplayer.IsServer;
             DedicatedServer = MyAPIGateway.Utilities.IsDedicated;
@@ -324,6 +314,9 @@ namespace CoreSystems
                         }
                         if (prevPrio >= x.HardPoint.DefinitionPriority)
                         {
+                            var prevName = prevDef.ModPath.Split('\\');
+                            var wepName = x.ModPath.Split('\\');
+                            Log.Line($"WeaponDef '{x.HardPoint.PartName}' has a definition with a higher priority present for {mount.SubtypeId}! current prio: {prevPrio} --> attempted prio: {x.HardPoint.DefinitionPriority}, current mod: {prevName[prevName.Length - 1]}, attempted mod: {wepName[wepName.Length - 1]}", "debug");
                             continue;
                         }
                         if (prevDef != null)
@@ -341,7 +334,7 @@ namespace CoreSystems
                             var prevName = prevDef.ModPath.Split('\\');
                             var wepName = x.ModPath.Split('\\');
                             
-                            Log.Stats($"WeaponDef '{x.HardPoint.PartName}' was overriden for {mount.SubtypeId}! prev prio: {prevPrio} --> new prio: {x.HardPoint.DefinitionPriority}, old mod: {prevName[prevName.Length-1]}, new mod: {wepName[wepName.Length-1]}", "debug");
+                            Log.Line($"WeaponDef '{x.HardPoint.PartName}' was overriden for {mount.SubtypeId}! prev prio: {prevPrio} --> new prio: {x.HardPoint.DefinitionPriority}, old mod: {prevName[prevName.Length-1]}, new mod: {wepName[wepName.Length-1]}", "debug");
                         }
 
                         _subTypeMaps[subTypeId][partAttachmentId] = extraInfo;

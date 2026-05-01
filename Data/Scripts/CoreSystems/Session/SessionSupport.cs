@@ -1130,8 +1130,6 @@ namespace CoreSystems
                 DebugMod = true;
             }
 
-            bool ReplaceVanilla = false;
-
             foreach (var mod in Session.Mods)
             {
                 var modPath = mod.GetPath();
@@ -1148,13 +1146,11 @@ namespace CoreSystems
                     WaterMod = true;
                 else if (mod.PublishedFileId == 3514216428 || mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\NerdShieldsFramework"))
                     NerdShieldMod = true;
-                else if (mod.PublishedFileId == 1931509062)
-                    ReplaceVanilla = true;
             }
 
             SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);
 
-            if (!SuppressWc && !ReplaceVanilla)
+            if (!SuppressWc)
             {
                 ContainerDefinition baseDefs;
                 Parts.GetBaseDefinitions(out baseDefs);
@@ -1162,18 +1158,22 @@ namespace CoreSystems
                 {
                     Parts.SetModPath(baseDefs, ModContext.ModPath);
                     PickDef(baseDefs);
+
+                    if (baseDefs.WeaponDefs != null)
+                    {
+                        foreach (var wep in baseDefs.WeaponDefs)
+                        {
+                            foreach (var subtype in wep.Assignments.MountPoints)
+                            {
+                                VanillaPartNames[subtype.SubtypeId] = wep.HardPoint.PartName;
+                            }
+                        }
+                    }
                 }
             }
-            else if (ReplaceVanilla)
-            {
-                ContainerDefinition baseDefs;
-                Parts.GetBaseDefinitions(out baseDefs);
-
-                if (baseDefs.ProjectileTags != null)
-                    AssembleTagDefinitions(baseDefs.ProjectileTags);
-            }
-
         }
+
+        
         public string ModPath()
         {
             var modPath = ModContext.ModPath;
