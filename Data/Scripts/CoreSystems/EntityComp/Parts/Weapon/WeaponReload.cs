@@ -2,6 +2,7 @@
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRage.Utils;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
@@ -150,32 +151,39 @@ namespace CoreSystems.Platform
         {
             var syncUp = Reload.StartId > ClientStartId;
 
-            if (!syncUp) {
+            if (!syncUp) 
+            {
                 var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
-                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading) {
-                    
-                    if (!Session.I.IsCreative) {
-
+                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading)
+                {
+                    if (!Session.I.IsCreative)
+                    {
                         if (!NoMagsToLoad)
+                        {
                             EventTriggerStateChanged(EventTriggers.NoMagsToLoad, true);
+                        }
+                        
                         NoMagsToLoad = true;
                     }
                 }
                 
                 if (Loading && ClientMakeUpShots < 1 && LoadingWait && Reload.EndId > ClientEndId)
+                {
                     Reloaded(1);
+                }
 
                 return false;
             }
+
+            ClientReloadWaitingForServer = false;
             ClientStartId = Reload.StartId;
             ClientMakeUpShots += ProtoWeaponAmmo.CurrentAmmo;
-
-
             ProtoWeaponAmmo.CurrentAmmo = 0;
 
-            if (!Session.I.IsCreative) {
-
-                if (NoMagsToLoad) {
+            if (!Session.I.IsCreative)
+            {
+                if (NoMagsToLoad) 
+                {
                     EventTriggerStateChanged(EventTriggers.NoMagsToLoad, false);
                     NoMagsToLoad = false;
                 }
@@ -365,11 +373,13 @@ namespace CoreSystems.Platform
                     if (Comp.TypeSpecific == CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                         --Reload.CurrentMags;
 
-                    if (Session.I.MpActive) {
-
+                    if (Session.I.MpActive) 
+                    {
                         Session.I.SendWeaponReload(this);
                         if (Reload.EndId == 1)
+                        {
                             Session.I.SendWeaponAmmoData(this);
+                        }
                     }
                 }
                 else {
@@ -378,6 +388,7 @@ namespace CoreSystems.Platform
                     ClientMakeUpShots = 0;
                     ClientEndId = Reload.EndId;
                     ServerQueuedAmmo = false;
+                    ClientReloadWaitingForServer = false;
 
                     if (DelayedCycleId == ActiveAmmoDef.AmmoDef.Const.AmmoIdxPos)
                     {

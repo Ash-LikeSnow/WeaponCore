@@ -175,7 +175,8 @@ namespace CoreSystems.Platform
         internal double MaxTargetDistance50Sqr;
         internal double MaxTargetDistance25Sqr;
         internal double ShootTime;
-
+        internal uint ServerLastAmmoSyncStepSend = 0; 
+        
         internal double MinTargetDistance;
         internal double MinTargetDistanceSqr;
         internal double MinTargetDistanceBufferSqr;
@@ -187,6 +188,7 @@ namespace CoreSystems.Platform
         internal bool AlternateForward;
         internal bool BurstAvDelay;
         internal bool HeatLoopRunning;
+        internal uint ServerHeatSyncTimer;
         internal bool PreFired;
         internal bool FinishShots;
         internal bool ScheduleAmmoChange;
@@ -196,7 +198,10 @@ namespace CoreSystems.Platform
         internal bool TurretActive;
         internal bool TargetLock;
         internal bool ClientReloading;
+        internal bool ClientReloadWaitingForServer;
+        internal uint ClientReloadWaitingForServerBeginTick;
         internal bool ServerQueuedAmmo;
+        internal uint LastAuthoritativeSeqId = 0;
         internal bool Rotating;
         internal bool TurretAttached;
         internal bool TurretController;
@@ -228,10 +233,10 @@ namespace CoreSystems.Platform
         {
             get
             {
-                var reloading = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient);
+                var reloadingGate = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient || ClientReloadWaitingForServer);
                 var overHeat = PartState.Overheated && OverHeatCountDown == 0;
                 var needsHeat = ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 ? PartState.Heat < ActiveAmmoDef.AmmoDef.HeatNeededToFire : false;
-                return !overHeat && !reloading && !needsHeat;
+                return !overHeat && !reloadingGate && !needsHeat;
             }
         }
 

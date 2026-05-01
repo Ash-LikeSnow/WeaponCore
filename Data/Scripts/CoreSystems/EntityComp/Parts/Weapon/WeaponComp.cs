@@ -1076,9 +1076,12 @@ namespace CoreSystems.Platform
                     w.ProtoWeaponAmmo.CurrentAmmo = 0;
                     w.ProtoWeaponAmmo.CurrentCharge = 0;
                     w.ClientMakeUpShots = 0;
+                    w.ClientReloadWaitingForServer = false;
 
                     if (Session.I.MpActive && Session.I.IsServer)
+                    {
                         Session.I.SendWeaponAmmoData(w);
+                    }
                 }
 
                 if (Session.I.IsClient)

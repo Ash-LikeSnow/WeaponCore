@@ -5,6 +5,9 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.CoreComponent;
 using Sandbox.ModAPI;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
+
+// ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems.Platform
 {
@@ -258,7 +261,6 @@ namespace CoreSystems.Platform
         {
             if (!System.ProhibitCoolingWhenOff || System.ProhibitCoolingWhenOff && Comp.Cube.IsWorking)
             {
-
                 var hsRateMod = HsRate * (PartState.Overheated && System.HeatSinkRateOverheatMult != 0 ? System.HeatSinkRateOverheatMult : 1f) + (float)Comp.HeatLoss;
                 Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
                 PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
@@ -283,12 +285,18 @@ namespace CoreSystems.Platform
 
                     var color = Session.I.HeatEmissives[(int)(heatOffset * 100)];
 
-                    for(int i = 0; i < HeatingParts.Count; i++)
+                    for(var i = 0; i < HeatingParts.Count; i++)
+                    {
                         HeatingParts[i]?.SetEmissiveParts("Heating", color, intensity);
+                    }
                 }
                 else if (set)
-                    for(int i = 0; i < HeatingParts.Count; i++)
+                {
+                    for (var i = 0; i < HeatingParts.Count; i++)
+                    {
                         HeatingParts[i]?.SetEmissiveParts("Heating", Color.Transparent, 0);
+                    }
+                }
 
                 LastHeat = PartState.Heat;
             }
@@ -300,32 +308,51 @@ namespace CoreSystems.Platform
             }
             else if (set && CurrentlyDegrading)
             {
-                if (PartState.Heat <= (System.MaxHeat * System.HeatThresholdEnd)) 
+                if (PartState.Heat <= System.MaxHeat * System.HeatThresholdEnd)
+                {
                     CurrentlyDegrading = false;
+                }
 
                 UpdateRof();
             }
 
-            if (PartState.Overheated && PartState.Heat <= (System.MaxHeat * System.WepCoolDown))
+            // If we send the full state, we also reset the timer so we don't send a heat update.
+            if (PartState.Overheated && PartState.Heat <= System.MaxHeat * System.WepCoolDown)
             {
                 EventTriggerStateChanged(EventTriggers.Overheated, false);
                 if (Session.I.IsServer)
                 {
                     PartState.Overheated = false;
-
                     OverHeatCountDown = 0;
+                    
                     if (Session.I.MpActive)
+                    {
                         Session.I.SendState(Comp);
+
+                        ServerHeatSyncTimer = 0;
+                    }
                 }
-
             }
-
+            
             if (PartState.Heat > 0)
+            {
                 Session.I.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
+            }
             else
             {
                 HeatLoopRunning = false;
                 LastHeatUpdateTick = 0;
+            }
+            
+            // This will not send an update when the code above sends the full state.
+            if (Session.I.IsServer && Session.I.MpActive && (!PartState.Overheated || OverHeatCountDown == 0))
+            {
+                if (++ServerHeatSyncTimer == 6)
+                {
+                    Session.I.SendWeaponHeatSyncLoop(this);
+                    
+                    ServerHeatSyncTimer = 0;   
+                }
             }
         }
 

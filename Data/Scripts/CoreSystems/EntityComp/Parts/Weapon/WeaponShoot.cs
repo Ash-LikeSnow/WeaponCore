@@ -77,46 +77,75 @@ namespace CoreSystems.Platform
                 LastShootTick = Session.I.Tick;
                 Comp.ShootManager.LastShootTick = Session.I.Tick;
 
-                for (int i = 0; i < loading.BarrelsPerShot; i++) {
-
+                for (var i = 0; i < loading.BarrelsPerShot; i++)
+                {
                     #region Update ProtoWeaponAmmo state
-                    if (aConst.Reloadable) {
-
-                        if (ProtoWeaponAmmo.CurrentAmmo == 0) {
-
-                            if (ClientMakeUpShots == 0) {
-                                if (s.MpActive && s.IsServer)
+                    if (aConst.Reloadable) 
+                    {
+                        if (ProtoWeaponAmmo.CurrentAmmo == 0) 
+                        {
+                            if (ClientMakeUpShots == 0)  
+                            {
+                                if (s.MpActive && s.IsServer) // What?
+                                {
                                     s.SendWeaponReload(this);
+                                }
+                            
                                 break;
                             }
                         }
 
-                        if (ProtoWeaponAmmo.CurrentAmmo > 0) {
-
+                        if (ProtoWeaponAmmo.CurrentAmmo > 0)
+                        {
                             --ProtoWeaponAmmo.CurrentAmmo;
 
-
+                            if (Session.I.IsServer && Session.I.MpActive && ProtoWeaponAmmo.CurrentAmmo > 0)
+                            {                                    
+                                if (Session.I.Tick - ServerLastAmmoSyncStepSend >= 30)
+                                {
+                                    Session.I.SendWeaponAmmoData(this, isSyncStep: true);
+                                    ServerLastAmmoSyncStepSend = Session.I.Tick;
+                                }
+                            }
+                            
                             if (ShootCount > 0)
+                            {
                                 Comp.ShootManager.UpdateShootSync(this);
+                            }
 
-                            if (ProtoWeaponAmmo.CurrentAmmo == 0) {
+                            if (ProtoWeaponAmmo.CurrentAmmo == 0) 
+                            {
                                 ClientLastShotId = Reload.StartId;
+                                if (s.MpActive && s.IsClient && !ClientReloadWaitingForServer)
+                                {
+                                    ClientReloadWaitingForServer = true;
+                                    ClientReloadWaitingForServerBeginTick = s.Tick;
+                                    s.SendClientAmmoRequest(this);
+                                }
                             }
                         }
-                        else if (ClientMakeUpShots > 0) {
+                        else if (ClientMakeUpShots > 0) 
+                        {
                             --ClientMakeUpShots;
 
                             if (ShootCount > 0)
+                            {
                                 Comp.ShootManager.UpdateShootSync(this);
+                            }
                         }
 
-                        if (System.HasEjector && aConst.HasEjectEffect)  {
+                        if (System.HasEjector && aConst.HasEjectEffect)  
+                        {
                             if (ActiveAmmoDef.AmmoDef.Ejection.SpawnChance >= 1 || rnd.AcquireRandom.Range(0f, 1f) >= ActiveAmmoDef.AmmoDef.Ejection.SpawnChance)
+                            {
                                 SpawnEjection();
+                            }
                         }
                     }
                     else if (ShootCount > 0)
-                            Comp.ShootManager.UpdateShootSync(this);
+                    {
+                        Comp.ShootManager.UpdateShootSync(this);
+                    }
 
                     #endregion
 
@@ -275,7 +304,8 @@ namespace CoreSystems.Platform
 
                     if (HeatPShot > 0 || ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier) {
 
-                        if (!HeatLoopRunning) {
+                        if (!HeatLoopRunning)
+                        {
                             s.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
                             HeatLoopRunning = true;
                         }

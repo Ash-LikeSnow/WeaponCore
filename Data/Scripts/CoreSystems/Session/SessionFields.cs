@@ -96,6 +96,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<ControlCompPacket> PacketControlCompPool = new MyConcurrentPool<ControlCompPacket>(64, packet => packet.CleanUp());
 
         internal readonly MyConcurrentPool<WeaponStatePacket> PacketWeaponStatePool = new MyConcurrentPool<WeaponStatePacket>(64, packet => packet.CleanUp());
+        internal readonly Stack<WeaponHeatSyncPacket> PacketWeaponHeatSyncPool = new Stack<WeaponHeatSyncPacket>();
         internal readonly MyConcurrentPool<UpgradeStatePacket> PacketUpgradeStatePool = new MyConcurrentPool<UpgradeStatePacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<SupportStatePacket> PacketSupportStatePool = new MyConcurrentPool<SupportStatePacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<ControlStatePacket> PacketControlStatePool = new MyConcurrentPool<ControlStatePacket>(64, packet => packet.CleanUp());
@@ -433,8 +434,8 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
-        internal ulong AdvSyncNetIdCounter = 1; // 0 used as the sentinel value
-
+        internal ulong AdvSyncNetIdCounter = 1;
+        internal uint AmmoSyncRevisionId = 1;
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;
