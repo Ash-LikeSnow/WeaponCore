@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
 
@@ -11,6 +12,29 @@ namespace CoreSystems.Support
         [ProtoMember(2)] internal ArmorDefinition[] ArmorDefs;
         [ProtoMember(3)] internal UpgradeDefinition[] UpgradeDefs;
         [ProtoMember(4)] internal SupportDefinition[] SupportDefs;
+        [ProtoMember(5)] internal ProjectileTagDefinition[] ProjectileTags;
+        [ProtoMember(6)] internal ProjectileTagAssignment[] TagAssigmnents;
+    }
+
+    [ProtoContract]
+    public class ProjectileTagDefinition
+    {
+        [ProtoMember(1)] internal Tag Namespace;
+        [ProtoMember(2)] internal int DefinitionPriority;
+        [ProtoMember(3)] internal Tag[] Tags;
+
+        [ProtoContract]
+        public struct Tag
+        {
+            [ProtoMember(1)] internal string ID;
+            [ProtoMember(2)] internal string PublicName;
+        }
+    }
+    [ProtoContract]
+    public class ProjectileTagAssignment
+    {
+        [ProtoMember(1)] internal string Tag;
+        [ProtoMember(2)] internal string[] ProjectileAmmoNames;
     }
 
     [ProtoContract]
@@ -54,6 +78,7 @@ namespace CoreSystems.Support
             [ProtoMember(2)] internal HardwareDef HardWare;
             [ProtoMember(3)] internal UiDef Ui;
             [ProtoMember(4)] internal OtherDef Other;
+            [ProtoMember(5)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct UiDef
@@ -120,6 +145,7 @@ namespace CoreSystems.Support
             [ProtoMember(2)] internal HardwareDef HardWare;
             [ProtoMember(3)] internal UiDef Ui;
             [ProtoMember(4)] internal OtherDef Other;
+            [ProtoMember(5)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct UiDef
@@ -195,6 +221,7 @@ namespace CoreSystems.Support
         [ProtoMember(2)] internal ArmorType Kind;
         [ProtoMember(3)] internal double KineticResistance;
         [ProtoMember(4)] internal double EnergeticResistance;
+        [ProtoMember(5)] internal int DefinitionPriority;
     }
 
     [ProtoContract]
@@ -265,6 +292,14 @@ namespace CoreSystems.Support
                 Steering
             }
 
+            public enum WhitelistSystem
+            {
+                BlacklistOr = 0,
+                BlacklistAnd = 1,
+                WhitelistOr = 2,
+                WhitelistAnd = 3,
+            }
+
             [ProtoMember(1)] internal int TopTargets;
             [ProtoMember(2)] internal int TopBlocks;
             [ProtoMember(3)] internal double StopTrackingSpeed;
@@ -291,7 +326,9 @@ namespace CoreSystems.Support
             [ProtoMember(24)] internal bool AllowSwitchTargetPriority;
             [ProtoMember(25)] internal bool AllowFireDistribution;
             [ProtoMember(26)] internal bool AdvancedFireDistribution;
-            
+            [ProtoMember(27)] internal string[] ProjectileTagsList;
+            [ProtoMember(28)] internal WhitelistSystem ProjectileTagsMeaning;
+
             [ProtoContract]
             public struct CommunicationDef
             {
@@ -491,6 +528,7 @@ namespace CoreSystems.Support
             [ProtoMember(16)] internal bool ScanTrackOnly;
             [ProtoMember(17)] internal bool CanTargetSubmerged;
             [ProtoMember(18)] internal float DeviateShotAngleSGModifier;
+            [ProtoMember(19)] internal int DefinitionPriority;
 
             [ProtoContract]
             public struct LoadingDef
@@ -554,6 +592,16 @@ namespace CoreSystems.Support
                 [ProtoMember(8)] internal bool DisableSupportingPD;
                 [ProtoMember(9)] internal bool ProhibitShotDelay;
                 [ProtoMember(10)] internal bool ProhibitBurstCount;
+                [ProtoMember(11)] internal UiSetTagsDef UiSetTags;
+
+                [ProtoContract]
+                public struct UiSetTagsDef
+                {
+                    [ProtoMember(1)] internal bool Enable;
+                    [ProtoMember(2)] internal string[] ProjectileTagsList;
+                    [ProtoMember(3)] internal bool ListIsBlacklist;
+                    [ProtoMember(4)] internal bool AllowUserWhitelistChange;
+                }
             }
 
 

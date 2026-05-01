@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using CoreSystems.Control;
+﻿using CoreSystems.Control;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using System;
+using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Support;
 using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
+using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 
 namespace CoreSystems
 {
@@ -180,19 +180,22 @@ namespace CoreSystems
             return comp.Data.Repo.Values.Set.ReportTarget;
         }
 
-        private const string KeyDisable = "Inactive";
-        private const string KeyShoot = "Once";
-        private const string KeyToggle = "Toggle";
-
         internal static string GetStringShootStatus(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return string.Empty;
 
-            var value = ((int)comp.Data.Repo.Values.Set.Overrides.ShootMode);
-            var active = value >= 2;
+            var value = comp.Data.Repo.Values.Set.Overrides.ShootMode;
+            var active = (int)value >= 2;
 
-            return !active ? KeyDisable : value == 2 ? KeyToggle : KeyShoot;
+            var on = comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On;
+
+            if (!active)
+                return Localization.GetText($"ActionShootStatusStringInactive");
+            else if (active && value == Weapon.ShootManager.ShootModes.KeyFire)
+                return Localization.GetText($"ActionShootStatusStringShoot");
+            else
+                return on ? Localization.GetText($"ActionShootStatusStringToggleOn") : Localization.GetText($"ActionShootStatusStringToggleOff");
         }
 
         internal static float GetRof(IMyTerminalBlock block)
@@ -1252,6 +1255,132 @@ namespace CoreSystems
         internal static float GetMaxMinLockTime(IMyTerminalBlock block)
         {
             return FireDistributionSupport.MaxMinLockTime;
+        }
+
+        internal static bool GetEnableProjectileTagsOverride(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return false;
+            return comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides;
+        }
+
+        internal static void RequestSetEnableProjectileTagsOverride(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var currentValue = comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides;
+
+            if (newValue != currentValue)
+            {
+                if (Session.I.IsClient && Session.I.MpActive)
+                {
+                    comp.Data.Repo.Values.Set.Overrides.EnableProjectileTagOverrides = newValue;
+                }
+
+                Weapon.WeaponComponent.RequestSetValue(comp, "EnableProjectileTagOverrides", newValue ? 1 : 0, Session.I.PlayerId);
+                comp.Cube.UpdateTerminalForced();
+            }
+        }
+        internal static long GetWhitelistMode(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return 0;
+            return (long)comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys;
+        }
+        internal static void RequestSetPTagWhitelist(IMyTerminalBlock block, long newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var currentValue = (int)comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys;
+
+            if (newValue != currentValue)
+            {
+                if (Session.I.IsClient && Session.I.MpActive)
+                {
+                    comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys = (WhitelistSystem)newValue;
+                }
+
+                Weapon.WeaponComponent.RequestSetValue(comp, "UserPTagWhitelistSys", (int)newValue, Session.I.PlayerId);
+                comp.Cube.UpdateTerminalForced();
+            }
+        }
+        internal static void ListPTagsWhitelistSettings(List<MyTerminalControlComboBoxItem> controlList)
+        {
+            foreach (var sub in PTagsWhitelistSettings)
+            {
+                controlList.Add(sub);
+            }
+        }
+
+        private static readonly List<MyTerminalControlComboBoxItem> PTagsWhitelistSettings = new List<MyTerminalControlComboBoxItem>
+        {
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemBlacklistOr")) },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemBlacklistAnd")) },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemWhitelistOr")) },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute(Localization.GetText("WeaponInfoSystemWhitelistAnd")) },
+        };
+        internal static void ProjectileTagsFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list, List<MyTerminalControlListBoxItem> selected)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            Session s = Session.I;
+
+            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags)
+            {
+                string intStr = s.IntToTagInternal[val];
+                string userStr = s.IntToTagUserStr[val];
+
+                var box = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(userStr), MyStringId.GetOrCompute($"{intStr}"), val);
+
+                list.Add(box);
+
+                if (comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal.Contains(val))
+                {
+                    selected.Add(box);
+                }
+            }
+        }
+
+        internal static void ProjectileTagsSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> selected)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            bool changed = false;
+            foreach (var val in comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags)
+            {
+                bool newValue = false;
+                foreach (var item in selected)
+                {
+                    if ((uint)item.UserData == val)
+                    {
+                        newValue = true;
+                        break;
+                    }
+                }
+
+                var currentValue = comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal.Contains(val);
+
+                
+                if (currentValue != newValue)
+                {
+                    changed = true;
+                    Weapon.WeaponComponent.RequestSetValue(comp, $"UT_{val}", newValue ? 1 : 0, Session.I.PlayerId);
+                }
+            }
+
+
+            if (changed)
+                comp.Cube.UpdateTerminalForced();
         }
     }
 }

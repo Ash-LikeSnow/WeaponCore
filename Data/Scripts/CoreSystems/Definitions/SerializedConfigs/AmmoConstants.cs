@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawn
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 using static CoreSystems.Settings.CoreSettings.ServerSettings;
+using static CoreSystems.Session;
 
 namespace CoreSystems.Support
 {
@@ -55,6 +56,7 @@ namespace CoreSystems.Support
         public readonly AmmoDef[] AmmoPattern;
         public readonly XorShiftRandom Random;
         public readonly AmmoOverride Overrides;
+        public readonly HashSet<uint> ProjectileTags;
 
         public readonly MyStringId[] TracerTextures;
         public readonly MyStringId[] TrailTextures;
@@ -359,7 +361,7 @@ namespace CoreSystems.Support
                 MyLog.Default.WriteLine(msg);
                 throw e;
             }
-
+            
             IsCriticalReaction = wDef.HardPoint.HardWare.CriticalReaction.Enable;
 
             ComputeTextures(ammo, out TracerTextures, out SegmentTextures, out TrailTextures, out TracerMode, out TrailMode);
@@ -419,7 +421,7 @@ namespace CoreSystems.Support
             
             FixedFireAmmo = system.TurretMovement == WeaponSystem.TurretType.Fixed && ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
             IsMine = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectTravelTo;
-            IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
+            IsField = ammo.AmmoDef.Ewar.Enable && (ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0);
             IsHybrid = ammo.AmmoDef.HybridRound;
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
@@ -591,6 +593,8 @@ namespace CoreSystems.Support
             
             ProjectilesFirst = system.ProjectilesFirst;
 
+            PFlags(ammo, out ProjectileTags);
+
             PreComputedMath = new PreComputedMath(ammo, this);
         }
 
@@ -625,6 +629,33 @@ namespace CoreSystems.Support
             }
         }
 
+        private void PFlags(WeaponSystem.AmmoType ammo, out HashSet<uint> projFlags)
+        {
+            projFlags = new HashSet<uint>();
+
+            var s = Session.I;
+            uint val;
+            HashSet<string> ammotags;
+            if (s.AmmoTags.TryGetValue(ammo.AmmoDef.AmmoRound, out ammotags))
+            {
+                foreach (var tag in ammotags)
+                {
+                    if (s.InternalTagToInt.TryGetValue(tag, out val))
+                        projFlags.Add(val);
+                }
+            }
+
+            if (IsSmart && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_SMARTTAG}", out val))
+                projFlags.Add(val);
+            else if (IsDrone && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_DRONETAG}", out val))
+                projFlags.Add(val);
+            else if (IsMine && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_MINETAG}", out val))
+                projFlags.Add(val);
+            else if (TravelTo && s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_TRAVELTOTAG}", out val))
+                projFlags.Add(val);
+            else if (s.InternalTagToInt.TryGetValue($"{WC_NAMESPACE}:{WC_DUMBTAG}", out val))
+                projFlags.Add(val);
+        }
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
             out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out bool zeroEffortNav, out double scanRangeSqr, out double offsetMinRangeSqr,

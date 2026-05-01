@@ -22,7 +22,7 @@ namespace CoreSystems.Support
         internal readonly List<int> ConsumableSelectionPartIds = new List<int>();
         internal List<Action<long, int, ulong, long, Vector3D, bool>>[] ProjectileMonitors;
         internal List<Action<int, bool>>[] EventMonitors;
-
+        private HashSet<uint> CustomInfoTagsDumpList = new HashSet<uint>();
         internal bool InControlPanel => MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
 
         internal bool InventoryInited;

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CoreSystems.Platform;
+﻿using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using VRage.ModAPI;
 using VRage.Utils;
 // ReSharper disable MemberCanBePrivate.Global
@@ -71,8 +71,15 @@ namespace CoreSystems.Control
             
             AddOnOffSwitchNoAction<T>(session, "TargetClosest", Localization.GetText("TerminalTargetClosestTitle"), Localization.GetText("TerminalTargetClosestTooltip"), BlockUi.GetTargetClosest, BlockUi.RequestSetTargetClosest, true, AllowSwitchTargetPriority);
             AddOnOffSwitchNoAction<T>(session, "EnableFireDistribution", Localization.GetText("TerminalEnableFireDistributionTitle"), Localization.GetText("TerminalEnableFireDistributionTooltip"), BlockUi.GetEnableFireDistribution, BlockUi.RequestSetEnableFireDistribution, true, AllowFireDistribution);
+
             AddTurnCostSliderRange<T>(session, "TurnCost", Localization.GetText("TerminalTurnCostTitle"), Localization.GetText("TerminalTurnCostTooltip"), BlockUi.GetTurnCost, BlockUi.RequestSetTurnCost, FireDistributionAdvancedSlidersVisible, BlockUi.GetMinTurnCost, BlockUi.GetMaxTurnCost, true);
             AddMinLockTimeSliderRange<T>(session, "MinLockTime", Localization.GetText("TerminalMinLockTimeTitle"), Localization.GetText("TerminalMinLockTimeTooltip"), BlockUi.GetMinLockTime, BlockUi.RequestSetMinLockTime, FireDistributionSlidersVisible, BlockUi.GetMinMinLockTime, BlockUi.GetMaxMinLockTime, true);
+            
+            Separator<T>(session, "WC_sep5", IsTrue);
+
+            AddOnOffSwitchNoAction<T>(session, "ShowPTags", Localization.GetText("TerminalPTagSettingsToggleTitle"), Localization.GetText("TerminalPTagSettingsToggleTooltip"), BlockUi.GetEnableProjectileTagsOverride, BlockUi.RequestSetEnableProjectileTagsOverride, true, AllowProjectileTags);
+            AddComboboxNoAction<T>(session, "PTagsWhitelistToggle", Localization.GetText("TerminalPTagWhitelistToggleTitle"), Localization.GetText("TerminalPTagWhitelistToggleTooltip"), BlockUi.GetWhitelistMode, BlockUi.RequestSetPTagWhitelist, BlockUi.ListPTagsWhitelistSettings, ProjectileTagsVisible);
+            AddListBoxNoAction<T>(session, "PTagsList", Localization.GetText("TerminalPTagListTitle"), "", BlockUi.ProjectileTagsFill, BlockUi.ProjectileTagsSelect, ProjectileTagsVisible, 10, true);
         }
 
 
@@ -556,6 +563,18 @@ namespace CoreSystems.Control
             return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.Targeting.AllowFireDistribution && !comp.HasAlternateUi;
         }
 
+        internal static bool AllowProjectileTags(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.Enable && !comp.HasAlternateUi;
+        }
+        internal static bool ProjectileTagsVisible(IMyTerminalBlock block)
+        {
+            return AllowProjectileTags(block) && BlockUi.GetEnableProjectileTagsOverride(block);
+        }
         internal static void SliderWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
             builder.Append(BlockUi.GetRange(block).ToString("N2"));
