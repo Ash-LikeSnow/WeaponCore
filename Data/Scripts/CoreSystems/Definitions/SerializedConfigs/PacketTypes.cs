@@ -224,7 +224,7 @@ namespace CoreSystems
                 info.ProjectileNetId = pTarget.Info.AdvSyncId;
                 info.LinearVelocity = pTarget.Velocity;
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
             }
             else if (ent != null)
             {
@@ -238,7 +238,7 @@ namespace CoreSystems
                     info.Acceleration = ent.Physics.LinearAcceleration;
                 }
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
             }
             else if (target.TargetState == Target.TargetStates.IsFake)
             {
@@ -264,18 +264,18 @@ namespace CoreSystems
                     info.LinearVelocity = fakeInfo.LinearVelocity;
                     info.Acceleration = fakeInfo.Acceleration;
                     
-                    DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
+                    //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
                 }
                 else
                 {
-                    DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
+                    //DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
                 }
             }
             else
             {
                 info.Type = AdvTargetType.None;
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
             }
             
             return info;
@@ -591,7 +591,16 @@ namespace CoreSystems
         [ProtoMember(1)] internal ProtoWeaponAmmo Data;
         [ProtoMember(2)] internal int PartId;
         [ProtoMember(3)] internal uint SequenceId;
+        /// <summary>
+        ///     If true, this is the special packet the server sends after the weapon stops shooting.
+        ///     This syncs the final ammo count.
+        /// </summary>
         [ProtoMember(4)] internal bool IsBurstStopMarker;
+        /// <summary>
+        ///     If true, this is an ammo packet from the active sync loop.
+        ///     The sending is timed to be after each shot is sent (with a cooldown), so the client resets the firing sequence when seeing this flag.
+        /// </summary>
+        [ProtoMember(5)] internal bool IsSyncStepMarker;
         
         public override void CleanUp()
         {
@@ -600,6 +609,7 @@ namespace CoreSystems
             PartId = 0;
             SequenceId = 0;
             IsBurstStopMarker = false;
+            IsSyncStepMarker = false;
         }
     }
 

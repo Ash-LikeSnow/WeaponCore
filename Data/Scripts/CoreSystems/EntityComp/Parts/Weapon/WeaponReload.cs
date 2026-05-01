@@ -151,34 +151,39 @@ namespace CoreSystems.Platform
         {
             var syncUp = Reload.StartId > ClientStartId;
 
-            if (!syncUp) {
+            if (!syncUp) 
+            {
                 var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
-                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading) {
-                    
-                    if (!Session.I.IsCreative) {
-
+                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading)
+                {
+                    if (!Session.I.IsCreative)
+                    {
                         if (!NoMagsToLoad)
+                        {
                             EventTriggerStateChanged(EventTriggers.NoMagsToLoad, true);
+                        }
+                        
                         NoMagsToLoad = true;
                     }
                 }
                 
                 if (Loading && ClientMakeUpShots < 1 && LoadingWait && Reload.EndId > ClientEndId)
+                {
                     Reloaded(1);
+                }
 
                 return false;
             }
-            DebugLog.Debug($"ClientReload: LIFTING WaitingForServer guard via syncUp");
+
             ClientReloadWaitingForServer = false;
             ClientStartId = Reload.StartId;
             ClientMakeUpShots += ProtoWeaponAmmo.CurrentAmmo;
-
-
             ProtoWeaponAmmo.CurrentAmmo = 0;
 
-            if (!Session.I.IsCreative) {
-
-                if (NoMagsToLoad) {
+            if (!Session.I.IsCreative)
+            {
+                if (NoMagsToLoad) 
+                {
                     EventTriggerStateChanged(EventTriggers.NoMagsToLoad, false);
                     NoMagsToLoad = false;
                 }

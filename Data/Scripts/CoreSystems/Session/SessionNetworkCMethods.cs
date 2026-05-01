@@ -280,15 +280,8 @@ namespace CoreSystems
             else
             {
                 w.Reload.Sync(w, weaponReloadPacket.Data, false);
-
-                if (w.ClientReloadWaitingForServer)
-                {
-                    w.ClientReloadWaitingForServer = false;
-                    DebugLog.Debug("ClientWeaponReloadUpdate: LIFTED WaitingForServer guard");
-                }
-
+                w.ClientReloadWaitingForServer = false;
                 w.LastAuthoritativeSeqId = weaponReloadPacket.SequenceId;
-                DebugLog.Debug($"ClientWeaponReloadUpdate: APPLY {weaponReloadPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
             }
             
             data.Report.PacketValid = true;
@@ -338,10 +331,14 @@ namespace CoreSystems
                     w.StopShooting();
                 }
 
+                if (ammoPacket.IsSyncStepMarker)
+                {
+                    w.ShootTime = w.TicksPerShot * StepConst + RelativeTime;
+                }
+                
                 if (w.ClientReloadWaitingForServer)
                 {
                     w.ClientReloadWaitingForServer = false;
-                    DebugLog.Debug("ClientWeaponAmmoUpdate: LIFTED WaitingForServer guard");
                 }
 
                 w.LastAuthoritativeSeqId = ammoPacket.SequenceId;

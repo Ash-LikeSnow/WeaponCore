@@ -504,23 +504,29 @@ namespace CoreSystems
 
             if (w.ProtoWeaponAmmo.CurrentAmmo > 0)
             {
-                // Scenario 1: Server has ammo: phantom burst.
-                // Send authoritative ammo state.
-                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 1 (phantom burst), PartId={w.PartId}, ServerAmmo={w.ProtoWeaponAmmo.CurrentAmmo}");
+                /*
+                 * The scene isn't perfectly synchronized between the server and client.
+                 * A (supposedly) rare thing that can occur is the local client AI acquiring a target and shooting it, while the server didn't shoot anything.
+                 * If the game isn't totally screwed, it should be a short phantom burst.
+                 * The client's AI will decide to stop shooting, and we will know that we may be in this case because we didn't get the server burst stop packet.
+                 * The server also isn't sending any active ammo updates. So, we send a request for ammo to the server, so we can correct our local ammo count.
+                 */
                 SendWeaponAmmoData(w);
             }
             else if (w.HasAmmo())
             {
-                // Scenario 2: Server is empty but has mags: valid reload.
-                // Trigger server reload which will send reload packet.
-                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 2 (valid reload), PartId={w.PartId}, Mags={w.Reload.CurrentMags}");
+                /*
+                 * Same as above, but instead, the server did shoot, the weapon is empty, and the burst stop just didn't arrive yet.
+                 * We won't respond explicitly, because the burst marker should be on the way, and then it should be followed by a reload.
+                 * They will lift the guard.
+                 */
                 w.ComputeServerStorage();
             }
             else
             {
-                // Scenario 3: Server is truly empty: no ammo.
-                // Send ammo data confirming 0.
-                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 3 (true empty), PartId={w.PartId}");
+                /*
+                 * The weapon is dry. To lift the guard, we will ensure an ammo packet with 0 ammo gets sent.
+                 */
                 SendWeaponAmmoData(w);
             }
 

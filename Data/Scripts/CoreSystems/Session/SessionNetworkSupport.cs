@@ -209,7 +209,7 @@ namespace CoreSystems
             else Log.Line("SendAiData should never be called on Client");
         }
 
-        internal void SendWeaponAmmoData(Weapon w, bool isBurstStop = false)
+        internal void SendWeaponAmmoData(Weapon w, bool isBurstStop = false, bool isSyncStep = false)
         {
             if (IsServer)
             {
@@ -257,6 +257,13 @@ namespace CoreSystems
                         // Possibly an issue to fix. We will log for it:
                         DebugLog.Warning("SendWeaponAmmoData conflicting burst stop");
                     }
+                }
+
+                // We should always have only one of these packets ideally.
+                // But, if we get a sync step marker, then this tick should always be a sync step for the weapon.
+                if (isSyncStep)
+                {
+                    iPacket.IsSyncStepMarker = true;
                 }
                 
                 PrunedPacketsToClient[w.ProtoWeaponAmmo] = new PacketInfo

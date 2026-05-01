@@ -175,7 +175,8 @@ namespace CoreSystems.Platform
         internal double MaxTargetDistance50Sqr;
         internal double MaxTargetDistance25Sqr;
         internal double ShootTime;
-
+        internal uint ServerLastAmmoSyncStepSend = 0; 
+        
         internal double MinTargetDistance;
         internal double MinTargetDistanceSqr;
         internal double MinTargetDistanceBufferSqr;

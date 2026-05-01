@@ -633,18 +633,7 @@ namespace CoreSystems
                         
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
-
-                        // Active sync ammo:
-                        if (!w.Loading && (w.IsShooting || w.AiShooting || (w.Target != null && w.Target.HasTarget)))
-                        {
-                            var staggerOffset = w.BaseComp?.CoreEntity?.EntityId ?? 0;
-                            
-                            if ((Tick + staggerOffset) % 30 == 0)
-                            {
-                                SendWeaponAmmoData(w);
-                            }
-                        }
-
+                        
                         ///
                         /// Update Weapon Hud Info
                         /// 
