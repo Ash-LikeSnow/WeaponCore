@@ -20,7 +20,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.ModAPI;
-using VRage.Replication;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.Ai;
