@@ -6,6 +6,8 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using VRage.Game.Entity;
+
 // ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems
@@ -543,6 +545,48 @@ namespace CoreSystems
             AdvProjectilePositionBatchesByCoreEntity.Clear();
         }
 
+        // Extracted legacy logic from that method. P.S. These results can be memoized, but I doubt it would actually matter.
+        internal void GetPlayersInRangeForPacket(MyEntity contextEntity, List<PlayerMap> results)
+        {
+             var entityId = contextEntity?.GetTopMostParent().EntityId ?? -1;
+             
+             foreach (var p in Players.Values)
+             {
+                 var steamId = p.Player.SteamUserId;
+                 var sendPacket = contextEntity == null;
+                
+                 if (!sendPacket)
+                 {
+                     HashSet<long> entityIds;
+                     if (!PlayerEntityIdInRange.TryGetValue(steamId, out entityIds))
+                     {
+                         continue;
+                     }
+                     
+                     if (entityIds.Contains(entityId))
+                     {
+                         sendPacket = true;
+                     }
+                     else
+                     {
+                         Ai rootAi;
+                         CoreComponent comp;
+                         var notGrid = !(contextEntity is MyCubeBlock);
+                         var entity = notGrid && IdToCompMap.TryGetValue(contextEntity.EntityId, out comp) ? comp.TopEntity : contextEntity.GetTopMostParent();
+                         if (entity != null && EntityToMasterAi.TryGetValue(entity, out rootAi) && PlayerEntityIdInRange[p.Player.SteamUserId].Contains(rootAi.TopEntity.EntityId))
+                         {
+                             sendPacket = true;
+                         }
+                     }
+                 }
+
+                 if (sendPacket)
+                 {
+                     results.Add(p);
+                 }
+             }
+        }
+        
         internal void ProcessServerPacketsForClients()
         {
             if (!IsServer || !MpActive)
