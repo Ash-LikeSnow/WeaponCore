@@ -69,7 +69,8 @@ namespace CoreSystems
         AdvProjectileDeathSyncs,
         AdvProjectileUpdateTargetSyncs,
         AdvProjectilePositionSyncs,
-        ClientAmmoRequest
+        ClientAmmoRequest,
+        WeaponHeatSync
     }
 
     #region Packets
@@ -117,6 +118,8 @@ namespace CoreSystems
     [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
     [ProtoInclude(50, typeof(AdvProjectilePositionBatchPacket))]
     [ProtoInclude(51, typeof(ClientAmmoRequestPacket))]
+    [ProtoInclude(52, typeof(WeaponAmmoPacket))]
+    [ProtoInclude(53, typeof(WeaponHeatSyncPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -1024,5 +1027,21 @@ namespace CoreSystems
         }
     }
 
+    [ProtoContract]
+    public class WeaponHeatSyncPacket : Packet
+    {
+        [ProtoMember(1)] internal int PartId;
+        [ProtoMember(2)] internal float Heat;
+        [ProtoMember(3)] internal bool Overheated;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            PartId = 0;
+            Heat = 0;
+            Overheated = false;
+        }
+    }
+    
     #endregion
 }

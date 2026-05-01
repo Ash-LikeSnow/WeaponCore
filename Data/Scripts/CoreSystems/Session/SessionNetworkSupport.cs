@@ -428,7 +428,6 @@ namespace CoreSystems
 
                 if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.WeaponState;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp);
 
@@ -551,10 +550,8 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-
                 if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.ControlState;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp);
 
@@ -685,9 +682,14 @@ namespace CoreSystems
                     };
                 }
                 else
+                {
                     SendComp(w.Comp);
+                }
             }
-            else Log.Line("SendWeaponReload should never be called on Client");
+            else
+            {
+                Log.Line("SendWeaponReload should never be called on Client");
+            }
         }
 
         internal void SendClientNotify(long id, string message, bool singleClient = false, string color = null, int duration = 0, bool soundClick = false)
@@ -949,7 +951,10 @@ namespace CoreSystems
             {
                 ai.Construct.NetRefreshAi();
             }
-            else Log.Line("SendActiveControlUpdate should never be called on Dedicated");
+            else
+            {
+                Log.Line("SendActiveControlUpdate should never be called on Dedicated");
+            }
         }
 
         internal void SendActionShootUpdate(CoreComponent comp, Trigger action)
@@ -1481,6 +1486,37 @@ namespace CoreSystems
                 PType = PacketType.ClientAmmoRequest,
                 PartId = w.PartId, 
                 LastSequenceId = w.LastAuthoritativeSeqId
+            });
+        }
+        
+        /// <summary>
+        ///     Only used by the active send loop. Do not call anywhere else!
+        /// </summary>
+        /// <param name="w"></param>
+        internal void SendWeaponHeatSyncLoop(Weapon w)
+        {
+            if (!IsServer || !MpActive)
+            {
+                DebugLog.Critical("SendWeaponHeatSync called non-server");
+                return;
+            }
+            
+            // No need for pruned packets. We only have one call site.
+            var heatPacket = PacketWeaponHeatSyncPool.Count > 0
+                ? PacketWeaponHeatSyncPool.Pop()
+                : new WeaponHeatSyncPacket();
+
+            heatPacket.EntityId = w.Comp.CoreEntity.EntityId;
+            heatPacket.PType = PacketType.WeaponHeatSync;
+            heatPacket.PartId = w.PartId;
+            heatPacket.Heat = w.PartState.Heat;
+            heatPacket.Overheated = w.PartState.Overheated;
+            
+            PacketsToClient.Add(new PacketInfo
+            {
+                Entity = w.Comp.CoreEntity,
+                Packet = heatPacket,
+                HasPooledResource = true
             });
         }
     }

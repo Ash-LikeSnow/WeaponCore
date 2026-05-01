@@ -304,7 +304,8 @@ namespace CoreSystems.Platform
 
                     if (HeatPShot > 0 || ActiveAmmoDef.AmmoDef.AllowNegativeHeatModifier) {
 
-                        if (!HeatLoopRunning) {
+                        if (!HeatLoopRunning)
+                        {
                             s.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
                             HeatLoopRunning = true;
                         }

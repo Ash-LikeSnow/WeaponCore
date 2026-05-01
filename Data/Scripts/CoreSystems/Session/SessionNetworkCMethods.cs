@@ -2,6 +2,7 @@ using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.Ai;
@@ -824,6 +825,40 @@ namespace CoreSystems
                     velocity = velocity.Normalized() * maxSpeed;
                 }
             }
+        }
+
+        private bool HandleClientWeaponHeatSync(PacketObj data)
+        {
+            var heatPacket = (WeaponHeatSyncPacket)data.Packet;
+            
+            var ent = MyEntities.GetEntityByIdOrDefault(heatPacket.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>();
+
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {heatPacket.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+            var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+            var w = collection[heatPacket.PartId];
+         
+            var partState = w.PartState;
+            var wasOver = partState.Overheated;
+            partState.Heat = heatPacket.Heat;
+            partState.Overheated = heatPacket.Overheated;
+            
+            // Same legacy logic:
+            if (!wasOver && partState.Overheated)
+            {
+                w.OverHeatCountDown = 15;
+            }
+            
+            // Special edge case: we receive a nonzero heat, and our heat loop is not running.
+            // The server may not send a packet when heat reaches zero due to the timer. We could modify it to do so.
+            // But, more robustly, we can just re-start the heat loop.
+            if (!w.HeatLoopRunning)
+            {
+                w.HeatLoopRunning = true;
+                FutureEvents.Schedule(w.UpdateWeaponHeat, null, 20);
+            }
+            
+            return true;
         }
     }
 }

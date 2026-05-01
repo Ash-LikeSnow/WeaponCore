@@ -188,6 +188,7 @@ namespace CoreSystems.Platform
         internal bool AlternateForward;
         internal bool BurstAvDelay;
         internal bool HeatLoopRunning;
+        internal uint ServerHeatSyncTimer;
         internal bool PreFired;
         internal bool FinishShots;
         internal bool ScheduleAmmoChange;

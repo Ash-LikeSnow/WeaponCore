@@ -234,13 +234,24 @@ namespace CoreSystems
                         break;
                     }
                     case PacketType.ShootingChanged:
-
+                    {
                         if (Settings.Enforcement.ProhibitShooting != ((ShootingChangedPacket)packetObj.Packet).Value)
                         {
                             Settings.Enforcement.ProhibitShooting = ((ShootingChangedPacket)packetObj.Packet).Value;
-                            ShowLocalNotify($"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000, "White");
+                            ShowLocalNotify(
+                                $"Shooting {(Settings.Enforcement.ProhibitShooting ? "Disabled" : "Enabled")}", 5000,
+                                "White");
                         }
+
                         break;
+                    }
+                    case PacketType.WeaponHeatSync:
+                    {
+                        HandleClientWeaponHeatSync(packetObj);
+                        packetObj.Packet.CleanUp();
+                        packetObj.Report.PacketValid = true;
+                        break;
+                    }
                     case PacketType.Invalid:
                     {
                         Log.Line($"invalid packet: {packetObj.PacketSize} - {packetObj.Packet.PType}");
@@ -249,11 +260,15 @@ namespace CoreSystems
                         break;
                     }
                     default:
-                        Log.LineShortDate($"        [BadClientPacket] Type:{packetObj.Packet.PType} - Size:{packetObj.PacketSize}", "net");
+                    {
+                        Log.LineShortDate(
+                            $"        [BadClientPacket] Type:{packetObj.Packet.PType} - Size:{packetObj.PacketSize}",
+                            "net");
                         Reporter.ReportData[PacketType.Invalid].Add(packetObj.Report);
                         invalidType = true;
                         packetObj.Report.PacketValid = false;
                         break;
+                    }
                 }
                 if (firstRun && !packetObj.Report.PacketValid && !invalidType && !packetObj.ErrorPacket.Retry && !packetObj.ErrorPacket.NoReprocess)
                 {
@@ -738,6 +753,12 @@ namespace CoreSystems
                     {
                         pInfo.Packet.CleanUp();
                         AdvProjectilePositionBatchPacketPool.Push((AdvProjectilePositionBatchPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.WeaponHeatSync:
+                    {
+                        pInfo.Packet.CleanUp();
+                        PacketWeaponHeatSyncPool.Push((WeaponHeatSyncPacket)pInfo.Packet);
                         break;
                     }
                     default:
