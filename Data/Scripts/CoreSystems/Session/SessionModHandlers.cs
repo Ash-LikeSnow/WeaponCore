@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.ModAPI;
@@ -29,7 +30,29 @@ namespace CoreSystems
                 else {
                     var legacyArray = MyAPIGateway.Utilities.SerializeFromBinary<WeaponDefinition[]>(message);
                     if (legacyArray != null)
-                        AssemblePartDefinitions(legacyArray);
+                    {
+                        var subTypes = new HashSet<string>();
+                        AssemblePartDefinitions(legacyArray, subTypes);
+
+                        var group = MyStringHash.GetOrCompute("Charging");
+
+                        foreach (var def in AllDefinitions)
+                        {
+                            if (subTypes.Contains(def.Id.SubtypeName))
+                            {
+                                if (def is MyLargeTurretBaseDefinition)
+                                {
+                                    var weaponDef = def as MyLargeTurretBaseDefinition;
+                                    weaponDef.ResourceSinkGroup = group;
+                                }
+                                else if (def is MyConveyorSorterDefinition)
+                                {
+                                    var weaponDef = def as MyConveyorSorterDefinition;
+                                    weaponDef.ResourceSinkGroup = group;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex) { MyLog.Default.WriteLine($"Exception in Handler: {ex}"); }
@@ -37,34 +60,27 @@ namespace CoreSystems
 
         private void PickDef(ContainerDefinition baseDefArray)
         {
+            var subTypes = new HashSet<string>();
+
             if (baseDefArray.WeaponDefs != null)
-                AssemblePartDefinitions(baseDefArray.WeaponDefs);
+                AssemblePartDefinitions(baseDefArray.WeaponDefs, subTypes);
 
             if (baseDefArray.SupportDefs != null)
-                AssemblePartDefinitions(baseDefArray.SupportDefs);
+                AssemblePartDefinitions(baseDefArray.SupportDefs, subTypes);
 
             if (baseDefArray.UpgradeDefs != null)
-                AssemblePartDefinitions(baseDefArray.UpgradeDefs);
+                AssemblePartDefinitions(baseDefArray.UpgradeDefs, subTypes);
 
             if (baseDefArray.ArmorDefs != null)
                 AssembleArmorDefinitions(baseDefArray.ArmorDefs);
-        }
 
-        public void AssemblePartDefinitions(WeaponDefinition[] partDefs)
-        {
-            if (DuplicateReplacer(partDefs))
-                return;
+            if (baseDefArray.ProjectileTags != null)
+                AssembleTagDefinitions(baseDefArray.ProjectileTags);
 
-            var subTypes = new HashSet<string>();
-            foreach (var wepDef in partDefs)
-            {
-                WeaponDefinitions.Add(wepDef);
+            if (baseDefArray.TagAssigmnents != null)
+                AssembleTagAssignments(baseDefArray.TagAssigmnents);
 
-                for (int i = 0; i < wepDef.Assignments.MountPoints.Length; i++)
-                    subTypes.Add(wepDef.Assignments.MountPoints[i].SubtypeId);
-            }
             var group = MyStringHash.GetOrCompute("Charging");
-
             foreach (var def in AllDefinitions)
             {
                 if (subTypes.Contains(def.Id.SubtypeName))
@@ -83,85 +99,163 @@ namespace CoreSystems
             }
         }
 
-        private int _replacerCount;
-        private bool DuplicateReplacer(WeaponDefinition[] partDefs)
+        public void AssembleTagDefinitions(ProjectileTagDefinition[] arr)
+        {
+            foreach (var def in arr)
+            {
+                if (def == null)
+                    continue;
+
+                var nsp = def.Namespace.ID;
+
+                if (string.IsNullOrEmpty(nsp) || def.Tags == null || def.Tags.Length == 0)
+                    continue;
+
+                ProjectileTagDefinition prio;
+                if (!ProjectileTagDefs.TryGetValue(nsp, out prio) || prio.DefinitionPriority < def.DefinitionPriority)
+                {
+                    ProjectileTagDefs[nsp] = def;
+                }
+            }
+        }
+
+        public void AssembleTagAssignments(ProjectileTagAssignment[] arr)
+        {
+            foreach (var assignment in arr)
+            {
+                foreach (var ammo in assignment.ProjectileAmmoNames)
+                {
+                    HashSet<string> tags;
+                    if (AmmoTags.TryGetValue(ammo, out tags))
+                    {
+                        tags.Add(assignment.Tag);
+                    }
+                    else
+                    {
+                        AmmoTags[ammo] = new HashSet<string>() { assignment.Tag };
+                    }
+                }
+            }
+        }
+
+        public void AssemblePartDefinitions(WeaponDefinition[] partDefs, HashSet<string> subTypes)
         {
             foreach (var wepDef in partDefs)
             {
-                bool detected = false;
-                foreach (var mount in wepDef.Assignments.MountPoints)
+                for (int i = wepDef.Assignments.MountPoints.Length - 1; i >= 0; i--)
                 {
-                    if (VanillaSubtypes.Contains(mount.SubtypeId))
+                    var subtypeID = wepDef.Assignments.MountPoints[i].SubtypeId;
+                    subTypes.Add(subtypeID);
+
+
+                    // old vanilla replacer compat... aaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    string partName;
+                    if (VanillaPartNames.TryGetValue(subtypeID, out partName)
+                        && (partName != wepDef.HardPoint.PartName || wepDef.HardPoint.HardWare.Type != WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon))
                     {
-                        detected = true;
-                        break;
+                        Log.Line($"WeaponDef '{wepDef.HardPoint.PartName}' has the vanilla subtype {subtypeID} with: {(partName != wepDef.HardPoint.PartName ? "a different part name," : "")}{(wepDef.HardPoint.HardWare.Type != WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon ? "a weapon type not equal to BlockWeapon," : "")}. Setting partname to {partName} and Type to BlockWeapon and generating a new weapon definition!", "debug");
+                        var mount = wepDef.Assignments.MountPoints[i];
+
+                        var newArr = new WeaponDefinition.ModelAssignmentsDef.MountPointDef[wepDef.Assignments.MountPoints.Length - 1];
+                        if (wepDef.Assignments.MountPoints.Length > 1)
+                        {
+                            Array.Copy(wepDef.Assignments.MountPoints, 0, newArr, 0, i);
+                            Array.Copy(wepDef.Assignments.MountPoints, i + 1, newArr, i, wepDef.Assignments.MountPoints.Length - i - 1);
+                            wepDef.Assignments.MountPoints = newArr;
+                        }
+                        else
+                        {
+                            wepDef.Assignments.MountPoints = new WeaponDefinition.ModelAssignmentsDef.MountPointDef[0];
+                        }
+
+                        var newDef = new WeaponDefinition
+                        {
+                            Assignments = new WeaponDefinition.ModelAssignmentsDef
+                            {
+                                MountPoints = new[]
+                                    {
+                                    mount
+                                },
+                                Ejector = wepDef.Assignments.Ejector,
+                                Muzzles = wepDef.Assignments.Muzzles,
+                                Scope = wepDef.Assignments.Scope,
+                            },
+                            HardPoint = wepDef.HardPoint,
+                            Upgrades = wepDef.Upgrades,
+                            Targeting = wepDef.Targeting,
+                            ModPath = wepDef.ModPath,
+                            Animations = wepDef.Animations,
+                            Ammos = wepDef.Ammos,
+                        };
+                        newDef.HardPoint.PartName = partName;
+                        newDef.HardPoint.HardWare.Type = WeaponDefinition.HardPointDef.HardwareDef.HardwareType.BlockWeapon;
+                        WeaponDefinitions.Add(newDef);
+
                     }
                 }
 
-                if (detected)
-                    return _replacerCount++ > 0;
+                if (wepDef.Assignments.MountPoints.Length > 0)
+                {
+                    WeaponDefinitions.Add(wepDef);
+                }
             }
-
-            return false;
         }
 
-        public void AssemblePartDefinitions(UpgradeDefinition[] partDefs)
+        public void AssemblePartDefinitions(UpgradeDefinition[] partDefs, HashSet<string> subTypes)
         {
-            var subTypes = new HashSet<string>();
             foreach (var upgradeDef in partDefs)
             {
+                int prevPrio = int.MinValue;
+                UpgradeDefinition prevDef = null;
+                foreach (var def in UpgradeDefinitions)
+                {
+                    if (def.HardPoint.PartName == upgradeDef.HardPoint.PartName)
+                    {
+                        prevPrio = def.HardPoint.DefinitionPriority;
+                        prevDef = def;
+                        break;
+                    }
+                }
+                if (prevPrio >= upgradeDef.HardPoint.DefinitionPriority)
+                {
+                    continue;
+                }
+                if (prevDef != null)
+                    UpgradeDefinitions.Remove(prevDef);
+
                 UpgradeDefinitions.Add(upgradeDef);
 
                 for (int i = 0; i < upgradeDef.Assignments.MountPoints.Length; i++)
                     subTypes.Add(upgradeDef.Assignments.MountPoints[i].SubtypeId);
             }
-            var group = MyStringHash.GetOrCompute("Charging");
-
-            foreach (var def in AllDefinitions)
-            {
-                if (subTypes.Contains(def.Id.SubtypeName))
-                {
-                    if (def is MyLargeTurretBaseDefinition)
-                    {
-                        var weaponDef = def as MyLargeTurretBaseDefinition;
-                        weaponDef.ResourceSinkGroup = group;
-                    }
-                    else if (def is MyConveyorSorterDefinition)
-                    {
-                        var weaponDef = def as MyConveyorSorterDefinition;
-                        weaponDef.ResourceSinkGroup = group;
-                    }
-                }
-            }
         }
 
-        public void AssemblePartDefinitions(SupportDefinition[] partDefs)
+        public void AssemblePartDefinitions(SupportDefinition[] partDefs, HashSet<string> subTypes)
         {
-            var subTypes = new HashSet<string>();
             foreach (var supportDef in partDefs)
             {
+                int prevPrio = int.MinValue;
+                SupportDefinition prevDef = null;
+                foreach (var def in SupportDefinitions)
+                {
+                    if (def.HardPoint.PartName == supportDef.HardPoint.PartName)
+                    {
+                        prevPrio = def.HardPoint.DefinitionPriority;
+                        prevDef = def;
+                        break;
+                    }
+                }
+                if (prevPrio >= supportDef.HardPoint.DefinitionPriority)
+                {
+                    continue;
+                }
+                if (prevDef != null)
+                    SupportDefinitions.Remove(prevDef);
+
                 SupportDefinitions.Add(supportDef);
 
                 for (int i = 0; i < supportDef.Assignments.MountPoints.Length; i++)
                     subTypes.Add(supportDef.Assignments.MountPoints[i].SubtypeId);
-            }
-            var group = MyStringHash.GetOrCompute("Charging");
-
-            foreach (var def in AllDefinitions)
-            {
-                if (subTypes.Contains(def.Id.SubtypeName))
-                {
-                    if (def is MyLargeTurretBaseDefinition)
-                    {
-                        var weaponDef = def as MyLargeTurretBaseDefinition;
-                        weaponDef.ResourceSinkGroup = group;
-                    }
-                    else if (def is MyConveyorSorterDefinition)
-                    {
-                        var weaponDef = def as MyConveyorSorterDefinition;
-                        weaponDef.ResourceSinkGroup = group;
-                    }
-                }
             }
         }
 
@@ -185,6 +279,15 @@ namespace CoreSystems
                 {
                     var type = MyStringHash.GetOrCompute(subtype);
 
+                    int prevPrio;
+                    if (ArmorCorePriorityMap.TryGetValue(type, out prevPrio));
+                        prevPrio = int.MinValue;
+
+                    if (prevPrio >= armorDef.DefinitionPriority)
+                    {
+                        continue;
+                    }
+
                     if (armorDef.Kind == ArmorDefinition.ArmorType.Heavy)
                     {
                         CustomArmorSubtypes.Add(type);
@@ -193,9 +296,17 @@ namespace CoreSystems
                     else if (armorDef.Kind == ArmorDefinition.ArmorType.Light)
                     {
                         CustomArmorSubtypes.Add(type);
-                    }
 
-                    if (resistanceEnabled) ArmorCoreBlockMap.Add(type, values);
+                        if (prevPrio != int.MinValue) // previous definition existed
+                            CustomHeavyArmorSubtypes.Remove(type);
+                    }
+                    else if (prevPrio != int.MinValue)
+                    {
+                        CustomArmorSubtypes.Remove(type);
+                        CustomHeavyArmorSubtypes.Remove(type);
+                    }
+                    ArmorCorePriorityMap[type] = armorDef.DefinitionPriority;
+                    if (resistanceEnabled) ArmorCoreBlockMap[type] = values;
                 }
             }
         }

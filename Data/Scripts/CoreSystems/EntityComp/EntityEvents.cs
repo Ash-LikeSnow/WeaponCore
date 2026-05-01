@@ -210,7 +210,7 @@ namespace CoreSystems.Support
             if (!Cube.IsWorking) return Localization.GetText("SystemStatusOffline");
             return Ai.AiOwner != 0 ? Localization.GetText("SystemStatusOnline") : Localization.GetText("SystemStatusRogueAi");
         }
-
+        
         private void AppendingCustomInfoWeapon(IMyTerminalBlock block, StringBuilder stringBuilder)
         {
             var comp = ((Weapon.WeaponComponent)this);
@@ -267,6 +267,41 @@ namespace CoreSystems.Support
                 }
                 if (!comp.IsWorking || comp.IsDisabled)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoBlockOffWarn")}");
+
+                foreach (var val in comp.PrimaryWeapon.System.WConst.ProjectileTags)
+                {
+                    CustomInfoTagsDumpList.Add(val);
+                }
+                bool userSetFlags = comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.Enable;
+                if (userSetFlags)
+                {
+                    foreach (var val in comp.Data.Repo.Values.Set.Overrides.UserProjectileTagsInternal)
+                    {
+                        CustomInfoTagsDumpList.Add(val);
+                    }
+                }
+                if (CustomInfoTagsDumpList.Count > 0)
+                {
+                    bool userSetSystem = userSetFlags && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.AllowUserWhitelistChange;
+                    WeaponDefinition.TargetingDef.WhitelistSystem system;
+                    if (userSetSystem)
+                        system = comp.Data.Repo.Values.Set.Overrides.UserPTagWhitelistSys;
+                    else
+                        system = comp.PrimaryWeapon.System.Values.Targeting.ProjectileTagsMeaning;
+
+                    stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoSystem")} {Localization.GetText($"WeaponInfoSystem{system}")}");
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoTags")}");
+                    foreach (var val in CustomInfoTagsDumpList)
+                    {
+                        string internalName;
+                        string pubName;
+                        if (I.IntToTagInternal.TryGetValue(val, out internalName) && I.IntToTagUserStr.TryGetValue(val, out pubName))
+                        {
+                            stringBuilder.Append($"\n-{pubName} ({internalName}),");
+                        }
+                    }
+                }
+                CustomInfoTagsDumpList.Clear();
 
                 for (int i = 0; i < collection.Count; i++)
                 {
@@ -366,6 +401,24 @@ namespace CoreSystems.Support
                         else
                             targ += Localization.GetText("WeaponInfoNoneTarget");
                         stringBuilder.Append($"\n{targ}");
+
+                        if (w.ActiveAmmoDef.AmmoDef.Const.ProjectileTags.Count > 0 && w.ActiveAmmoDef.AmmoDef.Const.Health > 0)
+                        {
+                            stringBuilder.Append($"\n{Localization.GetText("WeaponInfoAmmoTagList")}");
+                            foreach (var val in w.ActiveAmmoDef.AmmoDef.Const.ProjectileTags)
+                            {
+                                string id;
+                                string str;
+                                if (I.IntToTagInternal.TryGetValue(val, out id) && I.IntToTagUserStr.TryGetValue(val, out str))
+                                {
+                                    stringBuilder.Append($"\n-{str} ({id}),");
+                                }
+                            }
+                        }
+                        else if (w.ActiveAmmoDef.AmmoDef.Const.Health == 0)
+                        {
+                            stringBuilder.Append($"\n{Localization.GetText("WeaponInfoAmmoUntargetable")}");
+                        }
                     }
 
                     string otherAmmo = null;

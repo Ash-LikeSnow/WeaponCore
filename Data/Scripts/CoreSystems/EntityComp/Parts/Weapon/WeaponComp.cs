@@ -15,6 +15,7 @@ using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.WeaponDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -699,6 +700,36 @@ namespace CoreSystems.Platform
                         break;
                     case "MinLockTime":
                         o.MinLockTime = v;
+                        break;
+                    case "EnableProjectileTagOverrides":
+                        o.EnableProjectileTagOverrides = enabled;
+                        break;
+                    case "UserPTagWhitelistSys":
+                        o.UserPTagWhitelistSys = (TargetingDef.WhitelistSystem)v;
+                        break;
+                    default:
+                        // this COULD be optimized network wise if this was separated out into its own function just sending the override changes
+                        // however thats a lot of effort for something whic will seldomly happen
+                        if (setting.StartsWith("UT_"))
+                        {
+                            var flagStr = setting.Substring(3);
+                            uint tag;
+                            string tagStr;
+                            if (uint.TryParse(flagStr, out tag) && Session.I.IntToTagInternal.TryGetValue(tag, out tagStr))
+                            {
+                                if (enabled && comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags.Contains(tag))
+                                {
+                                    o.UserProjectileTagsInternal.Add(tag);
+                                    o.UserProjectileTags.Add(tagStr);
+                                    
+                                }
+                                else
+                                {
+                                    o.UserProjectileTagsInternal.Remove(tag);
+                                    o.UserProjectileTags.Remove(tagStr);
+                                }
+                            }
+                        }
                         break;
                 }
 

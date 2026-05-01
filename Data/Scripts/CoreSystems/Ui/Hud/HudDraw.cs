@@ -327,13 +327,17 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         private void HasHeat(Weapon weapon, StackedWeaponInfo stackedInfo, ref Vector2D currWeaponDisplayPos, bool reset)
         {
             int heatBarIndex;
-            if (weapon.PartState.Overheated || (weapon.HeatPerc >= 0.95f && weapon.System.WConst.DisableOverheat))
+            if (weapon.PartState.Overheated)
             {
-                var index = Session.I.SCount < 30 ? 1 : 2;
-                heatBarIndex = HeatBarTexture.Length - 2;
+                heatBarIndex = (int)MathHelper.Clamp(weapon.HeatPerc * 10 + 15 + 1, 15, 25);
             }
             else
-                heatBarIndex = (int)MathHelper.Clamp(weapon.HeatPerc * 10, 0, HeatBarTexture.Length - 1);
+            {
+                heatBarIndex = (int)MathHelper.Clamp(weapon.HeatPerc * 10, 0, 10);
+
+                if (weapon.System.WConst.DisableOverheat && heatBarIndex >= 8)
+                    heatBarIndex += 2;
+            }
 
             stackedInfo.CachedHeatTexture.Material = HeatBarTexture[heatBarIndex].Material;
             stackedInfo.CachedHeatTexture.Color = Vector4.Zero;

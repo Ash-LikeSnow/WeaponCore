@@ -12,6 +12,7 @@ using WeaponCore.Data.Scripts.CoreSystems.Support.FireDistribution;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
+using static CoreSystems.Support.WeaponDefinition;
 
 namespace CoreSystems
 {
@@ -625,7 +626,10 @@ namespace CoreSystems
         [ProtoMember(38)] public bool EnableFireDistribution;
         [ProtoMember(40), DefaultValue(FireDistributionSupport.MaxTurnCost)] public int TurnCost = FireDistributionSupport.MaxTurnCost;
         [ProtoMember(41), DefaultValue(FireDistributionSupport.MinMinLockTime)] public int MinLockTime = FireDistributionSupport.MinMinLockTime;
-
+        [ProtoMember(42)] public bool EnableProjectileTagOverrides = false;
+        [ProtoIgnore] public HashSet<uint> UserProjectileTagsInternal = new HashSet<uint>();
+        [ProtoMember(43)] public HashSet<string> UserProjectileTags = new HashSet<string>(); // serializing needs to use the string variant because the can change
+        [ProtoMember(44)] public WhitelistSystem UserPTagWhitelistSys = WhitelistSystem.BlacklistOr;
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
             MoveMode = syncFrom.MoveMode;
@@ -664,6 +668,23 @@ namespace CoreSystems
             EnableFireDistribution = syncFrom.EnableFireDistribution;
             TurnCost = syncFrom.TurnCost;
             MinLockTime = syncFrom.MinLockTime;
+            EnableProjectileTagOverrides = syncFrom.EnableProjectileTagOverrides;
+            UserProjectileTags = syncFrom.UserProjectileTags;
+            if (UserProjectileTagsInternal == null)
+                UserProjectileTagsInternal = new HashSet<uint>();
+            else
+                UserProjectileTagsInternal.Clear();
+
+            foreach (var str in UserProjectileTags)
+            {
+                uint val;
+                if (Session.I.InternalTagToInt.TryGetValue(str, out val))
+                {
+                    UserProjectileTagsInternal.Add(val);
+                }
+                // else uhh idk fail silently
+            }
+            UserPTagWhitelistSys = syncFrom.UserPTagWhitelistSys;
         }
     }
 }

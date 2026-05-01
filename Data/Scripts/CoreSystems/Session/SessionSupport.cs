@@ -1140,12 +1140,6 @@ namespace CoreSystems
                     ShieldMod = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\DefenseShields"))
                     ShieldMod = true;
-                else if (mod.PublishedFileId == 1931509062 || mod.PublishedFileId == 1995197719 || mod.PublishedFileId == 2006751214 || mod.PublishedFileId == 2015560129)
-                    ReplaceVanilla = true;
-                else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\VanillaReplacement") || mod.Name.Contains("WCVanilla") || mod.FriendlyName != null && mod.FriendlyName.Contains("WCVanilla"))
-                    ReplaceVanilla = true;
-                else if (MyAPIGateway.Utilities.FileExistsInModLocation("Data\\WCVanilla.txt", mod))
-                    ReplaceVanilla = true;
                 else if (mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390)
                     DebugVersion = true;
                 else if (mod.PublishedFileId == 2200451495 || mod.PublishedFileId == 3283226082)
@@ -1156,7 +1150,7 @@ namespace CoreSystems
 
             SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);
 
-            if (!SuppressWc && !ReplaceVanilla)
+            if (!SuppressWc)
             {
                 ContainerDefinition baseDefs;
                 Parts.GetBaseDefinitions(out baseDefs);
@@ -1164,11 +1158,22 @@ namespace CoreSystems
                 {
                     Parts.SetModPath(baseDefs, ModContext.ModPath);
                     PickDef(baseDefs);
+
+                    if (baseDefs.WeaponDefs != null)
+                    {
+                        foreach (var wep in baseDefs.WeaponDefs)
+                        {
+                            foreach (var subtype in wep.Assignments.MountPoints)
+                            {
+                                VanillaPartNames[subtype.SubtypeId] = wep.HardPoint.PartName;
+                            }
+                        }
+                    }
                 }
             }
-
         }
 
+        
         public string ModPath()
         {
             var modPath = ModContext.ModPath;
