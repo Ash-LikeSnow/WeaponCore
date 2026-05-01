@@ -154,10 +154,10 @@ namespace CoreSystems
                         else if (p.Loading && Tick >= p.ReloadEndTick)
                             p.Reloaded(1);
 
-                        var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
+                        var reloadingGuard = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.ClientReloadWaitingForServer);
                         var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
                         var needsHeat = p.ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 && p.PartState.Heat < p.ActiveAmmoDef.AmmoDef.HeatNeededToFire;
-                        var canShoot = !overHeat && !reloading && !needsHeat;
+                        var canShoot = !overHeat && !reloadingGuard && !needsHeat;
 
                         var autoShot = pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
                         var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
@@ -792,11 +792,11 @@ namespace CoreSystems
                         ///
                         w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || w.Target.TargetState == TargetStates.IsProjectile && (aConst.IsSmart || aConst.IsDrone) || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
-                        var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient);
+                        var reloadingGuard = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient || w.ClientReloadWaitingForServer);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
                         var needsHeat = w.ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 && w.PartState.Heat < w.ActiveAmmoDef.AmmoDef.HeatNeededToFire;
 
-                        var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady && !needsHeat;
+                        var canShoot = !overHeat && !reloadingGuard && !w.System.DesignatorWeapon && sequenceReady && !needsHeat;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;

@@ -231,10 +231,10 @@ namespace CoreSystems.Platform
         {
             get
             {
-                var reloading = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient);
+                var reloadingGate = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient || ClientReloadWaitingForServer);
                 var overHeat = PartState.Overheated && OverHeatCountDown == 0;
                 var needsHeat = ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 ? PartState.Heat < ActiveAmmoDef.AmmoDef.HeatNeededToFire : false;
-                return !overHeat && !reloading && !needsHeat;
+                return !overHeat && !reloadingGate && !needsHeat;
             }
         }
 

@@ -3,6 +3,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.Focus;
 
@@ -483,6 +484,44 @@ namespace CoreSystems
                 {
                     Log.Line($"ServerShootSyncs failed: - mode:{signal} - {type}", InputLog);
                 }
+            }
+
+            data.Report.PacketValid = true;
+            return true;
+        }
+
+        private bool ServerClientAmmoRequest(PacketObj data)
+        {
+            var packet = data.Packet;
+            var ammoRequestPacket = (ClientAmmoRequestPacket)packet;
+            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+
+            var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+            var w = collection[ammoRequestPacket.PartId];
+
+            if (w.ProtoWeaponAmmo.CurrentAmmo > 0)
+            {
+                // Scenario 1: Server has ammo: phantom burst.
+                // Send authoritative ammo state.
+                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 1 (phantom burst), PartId={w.PartId}, ServerAmmo={w.ProtoWeaponAmmo.CurrentAmmo}");
+                SendWeaponAmmoData(w);
+            }
+            else if (w.HasAmmo())
+            {
+                // Scenario 2: Server is empty but has mags: valid reload.
+                // Trigger server reload which will send reload packet.
+                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 2 (valid reload), PartId={w.PartId}, Mags={w.Reload.CurrentMags}");
+                w.ComputeServerStorage();
+            }
+            else
+            {
+                // Scenario 3: Server is truly empty: no ammo.
+                // Send ammo data confirming 0.
+                DebugLog.Debug($"ServerClientAmmoRequest: SCENARIO 3 (true empty), PartId={w.PartId}");
+                SendWeaponAmmoData(w);
             }
 
             data.Report.PacketValid = true;

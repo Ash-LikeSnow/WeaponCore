@@ -2,6 +2,7 @@
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRage.Utils;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
@@ -167,6 +168,8 @@ namespace CoreSystems.Platform
 
                 return false;
             }
+            DebugLog.Debug($"ClientReload: LIFTING WaitingForServer guard via syncUp");
+            ClientReloadWaitingForServer = false;
             ClientStartId = Reload.StartId;
             ClientMakeUpShots += ProtoWeaponAmmo.CurrentAmmo;
 
@@ -380,6 +383,7 @@ namespace CoreSystems.Platform
                     ClientMakeUpShots = 0;
                     ClientEndId = Reload.EndId;
                     ServerQueuedAmmo = false;
+                    ClientReloadWaitingForServer = false;
 
                     if (DelayedCycleId == ActiveAmmoDef.AmmoDef.Const.AmmoIdxPos)
                     {

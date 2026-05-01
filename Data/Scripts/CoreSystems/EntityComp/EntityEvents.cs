@@ -221,11 +221,11 @@ namespace CoreSystems.Support
             var e = "[/color]";
             stringBuilder.Append($"{r}Red{e} {y}Yellow{e} {g}Green{e}");
             */
-
+            
             var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
             var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
             var advanced = (I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
-
+            
             if (I.Settings.Enforcement.ProhibitShooting)
             {
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoShootingDisabled")}");
@@ -237,6 +237,15 @@ namespace CoreSystems.Support
 
             if (comp.IsFunctional)
             {
+                if (debug && I.IsClient)
+                {
+                    var w = comp.PrimaryWeapon;
+
+                    if (w.ClientReloadWaitingForServer)
+                    {
+                        stringBuilder.AppendLine($"Reload Wait {I.Tick - w.ClientReloadWaitingForServerBeginTick}");
+;                    }
+                }
 
                 if (comp.PrimaryWeapon.System.TrackProhibitLG)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoNoLarge")}");
@@ -378,7 +387,7 @@ namespace CoreSystems.Support
                             stringBuilder.Append(otherAmmo);
                     }
                 }
-
+                
                 // Mod API Subsystem filters:
                 var subsystemCustomization = I.SubsystemTargetingCustomization;
                 if (subsystemCustomization != null)
@@ -396,8 +405,6 @@ namespace CoreSystems.Support
                     }
                 }
             }
-
-
         }
 
         private List<Weapon> SortAndGetTargetTypes()

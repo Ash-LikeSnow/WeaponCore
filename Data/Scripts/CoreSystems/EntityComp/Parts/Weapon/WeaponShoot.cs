@@ -9,6 +9,7 @@ using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems.Platform
 {
@@ -99,8 +100,16 @@ namespace CoreSystems.Platform
                             if (ShootCount > 0)
                                 Comp.ShootManager.UpdateShootSync(this);
 
-                            if (ProtoWeaponAmmo.CurrentAmmo == 0) {
+                            if (ProtoWeaponAmmo.CurrentAmmo == 0) 
+                            {
                                 ClientLastShotId = Reload.StartId;
+                                if (s.MpActive && s.IsClient && !ClientReloadWaitingForServer)
+                                {
+                                    ClientReloadWaitingForServer = true;
+                                    ClientReloadWaitingForServerBeginTick = s.Tick;
+                                    s.SendClientAmmoRequest(this);
+                                    DebugLog.Debug($"Shoot: SET WaitingForServer guard, Tick {s.Tick}");
+                                }
                             }
                         }
                         else if (ClientMakeUpShots > 0) {

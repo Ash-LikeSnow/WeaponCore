@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -383,6 +381,11 @@ namespace CoreSystems
                 case PacketType.ClientReady:
                 {
                         ServerClientReady(packetObj);
+                    break;
+                }
+                case PacketType.ClientAmmoRequest:
+                {
+                    ServerClientAmmoRequest(packetObj);
                     break;
                 }
                 case PacketType.RequestShootUpdate: {
