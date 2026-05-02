@@ -401,6 +401,16 @@ namespace CoreSystems.Projectiles
             deathPacket.PType = PacketType.AdvProjectileDeathSyncs;
             deathPacket.NetId = Info.AdvSyncId;
             
+            var grid = Info.ProHit.Entity as MyCubeGrid;
+            if (grid != null && !grid.Closed)
+            {
+                var txWorldTarget = MatrixD.Invert(grid.PositionComp.WorldMatrixRef);
+                
+                deathPacket.HitEntityId = grid.EntityId;
+                deathPacket.HitPositionTarget = Vector3D.Transform(Info.ProHit.LastHit, txWorldTarget);
+                deathPacket.HitVelocityTarget = Vector3D.TransformNormal(Velocity, txWorldTarget);
+            }
+            
             Session.I.PacketsToClient.Add(new Session.PacketInfo
             {
                 Packet = deathPacket,

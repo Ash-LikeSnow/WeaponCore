@@ -1,3 +1,4 @@
+using System;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -594,7 +595,46 @@ namespace CoreSystems
             {
                 if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
                 {
-                    p.State = Projectile.ProjectileState.Destroy;
+                    if (death.HitEntityId != 0)
+                    {
+                        var grid = MyEntities.GetEntityByIdOrDefault(death.HitEntityId) as MyCubeGrid;
+                        
+                        if (grid != null && !grid.Closed && grid.InScene)
+                        {
+                            var hitPositionWorld = Vector3D.Transform(death.HitPositionTarget, grid.PositionComp.WorldMatrixRef);
+                            var distanceError = Vector3D.Distance(hitPositionWorld, p.Position);
+                            var hitSpeed = MathHelperD.Max(death.HitVelocityTarget.Length(), 1e-6);
+
+                            var window = MathHelper.Clamp(
+                                (int)Math.Ceiling(distanceError / (hitSpeed * StepConst)),
+                                1, 
+                                5 // Test
+                            );
+
+                            p.Info.AdvSyncFlightController = default(AdvSyncProjectileFlightController);
+                          
+                            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Start death controller with {window}, {distanceError:F}, {hitSpeed:F}");
+                            p.Info.AdvSyncHitController = new AdvSyncProjectileHitController
+                            {
+                                IsSet = true,
+                                Window = window,
+                                Ticks = 0,
+                                TargetGrid = grid,
+                                HitPositionTarget = death.HitPositionTarget,
+                                HitVelocityTarget = death.HitVelocityTarget,
+                                InitialPositionWorld = p.Position,
+                                InitialVelocityWorld = p.Velocity
+                            };
+                        }
+                        else
+                        {
+                            p.State = Projectile.ProjectileState.Destroy;
+                        }
+                    }
+                    else
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
                 }
             }
             else
@@ -638,6 +678,13 @@ namespace CoreSystems
             if (!ProjectilesByNetId.TryGetValue(frame.NetId, out p))
             {
                 DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} not found");
+                return;
+            }
+
+            if (p.Info.AdvSyncHitController.IsSet)
+            {
+                // The order is not guaranteed with our position sync system, and we will also use unreliable transport in the future.
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received position sync with death controller running");
                 return;
             }
             
@@ -689,7 +736,7 @@ namespace CoreSystems
                     maxSpeed
                 );
 
-                p.Info.AdvSyncInterpolator = new AdvSyncProjectileInterpolator
+                p.Info.AdvSyncFlightController = new AdvSyncProjectileFlightController
                 {
                     IsSet = true,
                     Window = window,

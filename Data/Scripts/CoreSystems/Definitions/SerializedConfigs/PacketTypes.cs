@@ -413,11 +413,17 @@ namespace CoreSystems
     public class AdvProjectileDeathPacket : Packet
     {
         [ProtoMember(1)] public ulong NetId;
+        [ProtoMember(2)] public long HitEntityId;
+        [ProtoMember(3)] public Vector3D HitPositionTarget;
+        [ProtoMember(4)] public Vector3D HitVelocityTarget;
         
         public override void CleanUp()
         {
             base.CleanUp();
             NetId = 0;
+            HitEntityId = 0;
+            HitPositionTarget = Vector3D.Zero;
+            HitVelocityTarget = Vector3D.Zero;
         }
     }
 
@@ -465,11 +471,13 @@ namespace CoreSystems
     [ProtoContract]
     public class AdvProjectilePositionBatchPacket : Packet
     {
-        [ProtoMember(1)] public List<AdvProjectilePositionFrame> Data = new List<AdvProjectilePositionFrame>();
-  
+        [ProtoMember(1)] public uint SequenceId;
+        [ProtoMember(2)] public List<AdvProjectilePositionFrame> Data = new List<AdvProjectilePositionFrame>();
+        
         public override void CleanUp()
         {
             base.CleanUp();
+            SequenceId = 0;
             Data.Clear();
         }
     }

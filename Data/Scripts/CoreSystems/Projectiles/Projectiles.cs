@@ -283,9 +283,17 @@ namespace CoreSystems.Projectiles
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
-                        if (Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncInterpolator.IsSet)
+                        if (Session.I.AdvSyncClient && aConst.FullSync && (info.AdvSyncFlightController.IsSet || info.AdvSyncHitController.IsSet))
                         {
-                            info.AdvSyncInterpolator.Step(p);
+                            if (info.AdvSyncHitController.IsSet)
+                            {
+                                info.AdvSyncHitController.Step(p);
+                            }
+                            else
+                            {
+                                info.AdvSyncFlightController.Step(p);
+                            }
+                            
                             p.LastPosition = prevPos;
                             p.TravelMagnitude = p.Position - prevPos;
                         }

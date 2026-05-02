@@ -542,6 +542,8 @@ namespace CoreSystems
                             ? AdvProjectilePositionBatchPacketPool.Pop()
                             : new AdvProjectilePositionBatchPacket();
 
+                        batch.SequenceId = AdvSyncSequenceCounter++;
+
                         AdvProjectilePositionBatchesByPlayerMap.Add(playerMap, batch);
                     }
 

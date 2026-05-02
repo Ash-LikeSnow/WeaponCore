@@ -435,6 +435,7 @@ namespace CoreSystems
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
         internal ulong AdvSyncNetIdCounter = 1;
+        internal uint AdvSyncSequenceCounter = 1;
         internal uint AmmoSyncRevisionId = 1;
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;
