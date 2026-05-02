@@ -47,7 +47,10 @@ namespace CoreSystems.Support
         internal ulong Id;
         internal ulong AdvSyncId;
         internal bool AdvSyncDeathSent;
-        
+        /// <summary>
+        ///     History of kinematic states for network latency compensation for the AdvSync projectiles.
+        /// </summary>
+        internal readonly RingBuffer<AdvProjectilePositionFrame> AdvSyncPositionBuffer = new RingBuffer<AdvProjectilePositionFrame>(60);
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -135,7 +138,8 @@ namespace CoreSystems.Support
             }
 
             AdvSyncDeathSent = false;
-
+            AdvSyncPositionBuffer.Clear();
+            
             if (IsFragment)
             {
                 if (VoxelCache != null)

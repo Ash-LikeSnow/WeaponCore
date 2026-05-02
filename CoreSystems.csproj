@@ -375,6 +375,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Support\Localization.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\Support\RingBuffer.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\VersionControl.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

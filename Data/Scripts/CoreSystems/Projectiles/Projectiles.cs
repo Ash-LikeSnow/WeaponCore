@@ -292,6 +292,25 @@ namespace CoreSystems.Projectiles
 
                         info.PrevDistanceTraveled = info.DistanceTraveled;
 
+                        if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0)
+                        {
+                            if (info.AdvSyncPositionBuffer.Count == info.AdvSyncPositionBuffer.Capacity)
+                            {
+                                info.AdvSyncPositionBuffer.Dequeue();
+                            }
+                            
+                            info.AdvSyncPositionBuffer.Enqueue(new AdvProjectilePositionFrame
+                            {
+                                NetId = info.AdvSyncId,
+                                WorldPosition = p.Position,
+                                Velocity = p.Velocity,
+                                PrevVelocity0 = p.PrevVelocity0,
+                                PrevVelocity1 = p.PrevVelocity1,
+                                RandOffsetDir = info.Storage.RandOffsetDir,
+                                OffsetTarget = p.OffsetTarget
+                            });
+                        }
+
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out distChanged);
                         info.DistanceTraveled += Math.Abs(distChanged);

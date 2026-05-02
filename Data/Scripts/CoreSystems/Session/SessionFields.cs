@@ -187,9 +187,9 @@ namespace CoreSystems
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
         #region Adv Sync Position Networking Fields
-        internal readonly Dictionary<ulong, AdvProjectilePositionFrameEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionFrameEntry>();
+        internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
         internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
-        internal readonly Dictionary<MyEntity, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByCoreEntity = new Dictionary<MyEntity, AdvProjectilePositionBatchPacket>();
+        internal readonly Dictionary<PlayerMap, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByPlayerMap = new Dictionary<PlayerMap, AdvProjectilePositionBatchPacket>();
         #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();

@@ -456,10 +456,10 @@ namespace CoreSystems
         [ProtoMember(7)] public Vector3D OffsetTarget;
     }
 
-    public struct AdvProjectilePositionFrameEntry
+    internal struct AdvProjectilePositionSyncEntry
     {
         public MyEntity TopEntity;
-        public AdvProjectilePositionFrame Frame;
+        public Projectile Pro;
     }
     
     [ProtoContract]

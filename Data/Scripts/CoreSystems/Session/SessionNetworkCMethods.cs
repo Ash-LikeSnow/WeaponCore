@@ -627,6 +627,8 @@ namespace CoreSystems
                 var frame = batch.Data[i];
                 
                 HandleClientAdvProjectilePositionSyncFrame(ref frame);
+                
+                DebugLog.Debug($"Batch: {batch.Data.Count}");
             }
         }
 

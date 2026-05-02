@@ -7,6 +7,8 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
+using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 
 // ReSharper disable ForCanBeConvertedToForeach
 
@@ -509,43 +511,119 @@ namespace CoreSystems
         }
 
         // Not worth creating a proper networking system in WeaponCore for a single packet type.
-        // So this simple approach just batches them by core entity and generates packets that go through the old system.
-        internal void GenerateServerAdvProjectilePositionPackets()
+        internal void SendAdvProjectilePositionPackets()
         {
-            foreach (var entry in AdvProjectilePositionFramesByNetId.Values)
+            /*
+             * Builds a list of packets for each client that will receive them.
+             * The states recorded in the list are rolled back in time by ~OWL, with some applied interpolation (for the smoothed OWL).
+             */
+            var players = new List<PlayerMap>();
+            foreach (var packetEntry in AdvProjectilePositionFramesByNetId.Values)
             {
-                AdvProjectilePositionBatchPacket batch;
-                if (!AdvProjectilePositionBatchesByCoreEntity.TryGetValue(entry.TopEntity, out batch))
+                var pro = packetEntry.Pro;
+                var buffer = pro.Info.AdvSyncPositionBuffer;
+                
+                if (buffer.Count == 0 || pro.Info.AdvSyncId == 0)
                 {
-                    batch = AdvProjectilePositionBatchPacketPool.Count > 0
-                        ? AdvProjectilePositionBatchPacketPool.Pop()
-                        : new AdvProjectilePositionBatchPacket();
+                    continue;
+                }
+                
+                // P.S. These results can be memoized, but I doubt it would actually matter.
+                GetPlayersInRangeForPacket(packetEntry.TopEntity, players);
+
+                for (var playerIndex = 0; playerIndex < players.Count; playerIndex++)
+                {
+                    var playerMap = players[playerIndex];
                     
-                    AdvProjectilePositionBatchesByCoreEntity.Add(entry.TopEntity, batch);
+                    AdvProjectilePositionBatchPacket batch;
+                    if (!AdvProjectilePositionBatchesByPlayerMap.TryGetValue(playerMap, out batch))
+                    {
+                        batch = AdvProjectilePositionBatchPacketPool.Count > 0
+                            ? AdvProjectilePositionBatchPacketPool.Pop()
+                            : new AdvProjectilePositionBatchPacket();
+
+                        AdvProjectilePositionBatchesByPlayerMap.Add(playerMap, batch);
+                    }
+
+                    TickLatency latency;
+                    if (!PlayerTickLatency.TryGetValue(playerMap.Player.SteamUserId, out latency))
+                    {
+                        latency = new TickLatency
+                        {
+                            CurrentLatency = 0,
+                            PreviousLatency = 0
+                        };
+                    }
+
+                    var newIdx = (int)Math.Floor(latency.CurrentLatency);
+                    var oldIdx = newIdx + 1;
+
+                    newIdx = MathHelper.Clamp(newIdx, 0, buffer.Count - 1);
+                    oldIdx = MathHelper.Clamp(oldIdx, 0, buffer.Count - 1);
+
+                    AdvProjectilePositionFrame adjustedFrame;
+                    if (newIdx == oldIdx)
+                    {
+                        adjustedFrame = buffer.GetHistory(newIdx);
+                        DebugLog.Debug($"Single: {newIdx}");
+                    }
+                    else
+                    {
+                        var oldFrame = buffer.GetHistory(oldIdx);
+                        var newFrame = buffer.GetHistory(newIdx);
+                        var t = latency.CurrentLatency - newIdx;
+                        
+                        DebugLog.Warning($"Int: {newIdx}, {oldIdx} -> {t:F2}");
+
+                        adjustedFrame = new AdvProjectilePositionFrame
+                        {
+                            NetId = pro.Info.AdvSyncId,
+                            RandOffsetDir = newFrame.RandOffsetDir,
+                            OffsetTarget = newFrame.OffsetTarget,
+                            
+                            // Interpolate between these two states using the smoothed OWL.
+                            WorldPosition = Vector3D.Lerp(newFrame.WorldPosition, oldFrame.WorldPosition, t),
+                            Velocity = Vector3.Lerp(newFrame.Velocity, oldFrame.Velocity, t),
+                            PrevVelocity0 = Vector3.Lerp(newFrame.PrevVelocity0, oldFrame.PrevVelocity0, t),
+                            PrevVelocity1 = Vector3.Lerp(newFrame.PrevVelocity1, oldFrame.PrevVelocity1, t)
+                        };
+                    }
+                    
+                    batch.Data.Add(adjustedFrame);
                 }
 
-                batch.Data.Add(entry.Frame);
+                players.Clear();
             }
             
             AdvProjectilePositionFramesByNetId.Clear();
 
-            foreach (var kvp in AdvProjectilePositionBatchesByCoreEntity)
+            /*
+             * Then sends all batches to the players.
+             * We will implement sequencing and unreliable delivery next.
+             */
+            foreach (var kvp in AdvProjectilePositionBatchesByPlayerMap)
             {
+                var player = kvp.Key;
                 var packet = kvp.Value;
+                
                 packet.PType = PacketType.AdvProjectilePositionSyncs;
                 
-                PacketsToClient.Add(new PacketInfo
-                {
-                    Entity = kvp.Key,
-                    Packet = packet,
-                    HasPooledResource = true
-                });
+                MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(
+                    ClientPacketId, 
+                    MyAPIGateway.Utilities.SerializeToBinary(packet),
+                    player.Player.SteamUserId,
+                    true
+                );
+                
+                packet.CleanUp();
+                
+                AdvProjectilePositionBatchPacketPool.Push(packet);
             }
             
-            AdvProjectilePositionBatchesByCoreEntity.Clear();
+            AdvProjectilePositionBatchesByPlayerMap.Clear();
         }
 
-        // Extracted legacy logic from that method. P.S. These results can be memoized, but I doubt it would actually matter.
+        // Extracted legacy logic from that method.
         internal void GetPlayersInRangeForPacket(MyEntity contextEntity, List<PlayerMap> results)
         {
              var entityId = contextEntity?.GetTopMostParent().EntityId ?? -1;
@@ -599,7 +677,7 @@ namespace CoreSystems
             
             if (AdvProjectilePositionFramesByNetId.Count > 0)
             {
-                GenerateServerAdvProjectilePositionPackets();
+                SendAdvProjectilePositionPackets();
             }
             
             for (var i = 0; i < PacketsToClient.Count; i++)

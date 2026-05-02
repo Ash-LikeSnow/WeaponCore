@@ -3785,19 +3785,10 @@ namespace CoreSystems.Projectiles
                 return;
             }
             
-            Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionFrameEntry
+            Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionSyncEntry
             {
                 TopEntity = parentEntity,
-                Frame = new AdvProjectilePositionFrame
-                {
-                    NetId = Info.AdvSyncId,
-                    WorldPosition = Position,
-                    Velocity = Velocity,
-                    PrevVelocity0 = PrevVelocity0,
-                    PrevVelocity1 = PrevVelocity1,
-                    RandOffsetDir = Info.Storage.RandOffsetDir,
-                    OffsetTarget = OffsetTarget
-                }
+                Pro = this
             };
             
             Session.I.LastProSyncSendTick = Session.I.Tick;
