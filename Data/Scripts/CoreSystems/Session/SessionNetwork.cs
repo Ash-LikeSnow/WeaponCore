@@ -516,8 +516,8 @@ namespace CoreSystems
         internal void SendAdvProjectilePositionPackets()
         {
             /*
-             * Builds a list of packets for each client that will receive them.
-             * The states recorded in the list are rolled back in time by ~OWL, with some applied interpolation (for the smoothed OWL).
+             * Builds a queue of packets for each client.
+             * The states recorded in the queue are rolled back in time by each client's estimated OWL, with some applied interpolation (for the OWL smoothing).
              */
             var players = new List<PlayerMap>();
             foreach (var packetEntry in AdvProjectilePositionFramesByNetId.Values)
@@ -537,16 +537,14 @@ namespace CoreSystems
                 {
                     var playerMap = players[playerIndex];
                     
-                    AdvProjectilePositionBatchPacket batch;
-                    if (!AdvProjectilePositionBatchesByPlayerMap.TryGetValue(playerMap, out batch))
+                    Queue<AdvProjectilePositionFrame> batch;
+                    if (!AdvProjectilePositionQueueByPlayerMap.TryGetValue(playerMap, out batch))
                     {
-                        batch = AdvProjectilePositionBatchPacketPool.Count > 0
-                            ? AdvProjectilePositionBatchPacketPool.Pop()
-                            : new AdvProjectilePositionBatchPacket();
-
-                        batch.SequenceId = AdvSyncSequenceCounter++;
-
-                        AdvProjectilePositionBatchesByPlayerMap.Add(playerMap, batch);
+                        batch = AdvProjectilePositionQueuePool.Count > 0
+                            ? AdvProjectilePositionQueuePool.Pop()
+                            : new Queue<AdvProjectilePositionFrame>();
+                        
+                        AdvProjectilePositionQueueByPlayerMap.Add(playerMap, batch);
                     }
 
                     TickLatency latency;
@@ -569,7 +567,6 @@ namespace CoreSystems
                     if (newIdx == oldIdx)
                     {
                         adjustedFrame = buffer.GetHistory(newIdx);
-                        DebugLog.Debug($"Single: {newIdx}");
                     }
                     else
                     {
@@ -577,8 +574,6 @@ namespace CoreSystems
                         var newFrame = buffer.GetHistory(newIdx);
                         var t = latency.CurrentLatency - newIdx;
                         
-                        DebugLog.Warning($"Int: {newIdx}, {oldIdx} -> {t:F2}");
-
                         adjustedFrame = new AdvProjectilePositionFrame
                         {
                             NetId = pro.Info.AdvSyncId,
@@ -593,7 +588,7 @@ namespace CoreSystems
                         };
                     }
                     
-                    batch.Data.Add(adjustedFrame);
+                    batch.Enqueue(adjustedFrame);
                 }
 
                 players.Clear();
@@ -601,30 +596,46 @@ namespace CoreSystems
             
             AdvProjectilePositionFramesByNetId.Clear();
 
+            var protoContainer = new AdvProjectilePositionBatchPacket
+            {
+                PType = PacketType.AdvProjectilePositionSyncs
+            };
+            
+            const int framesPerPacket = 4;
+            
             /*
-             * Then sends all batches to the players.
-             * We will implement sequencing and unreliable delivery next.
+             * Chunks the queues to a limited binary size for unreliable transport and sends packets stamped with a sequence ID.
              */
-            foreach (var kvp in AdvProjectilePositionBatchesByPlayerMap)
+            foreach (var kvp in AdvProjectilePositionQueueByPlayerMap)
             {
                 var player = kvp.Key;
-                var packet = kvp.Value;
+                var queue = kvp.Value;
+
+                while (queue.Count > 0)
+                {
+                    protoContainer.Data.Add(queue.Dequeue());
+
+                    if (protoContainer.Data.Count == framesPerPacket || queue.Count == 0)
+                    {
+                        protoContainer.SequenceId = AdvSyncSequenceCounter++;
+                        
+                        MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(
+                            ClientPacketId, 
+                            MyAPIGateway.Utilities.SerializeToBinary(protoContainer),
+                            player.Player.SteamUserId,
+                            false
+                        );
+                        
+                        protoContainer.Data.Clear();
+                    }
+                }
                 
-                packet.PType = PacketType.AdvProjectilePositionSyncs;
-                
-                MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(
-                    ClientPacketId, 
-                    MyAPIGateway.Utilities.SerializeToBinary(packet),
-                    player.Player.SteamUserId,
-                    true
-                );
-                
-                packet.CleanUp();
-                
-                AdvProjectilePositionBatchPacketPool.Push(packet);
+                AdvProjectilePositionQueuePool.Push(queue);
             }
             
-            AdvProjectilePositionBatchesByPlayerMap.Clear();
+            protoContainer.CleanUp();
+            
+            AdvProjectilePositionQueueByPlayerMap.Clear();
         }
 
         // Extracted legacy logic from that method.
@@ -874,12 +885,6 @@ namespace CoreSystems
                     {
                         pInfo.Packet.CleanUp();
                         AdvProjectileUpdateTargetPacketPool.Return((AdvProjectileUpdateTargetPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.AdvProjectilePositionSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        AdvProjectilePositionBatchPacketPool.Push((AdvProjectilePositionBatchPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.WeaponHeatSync:

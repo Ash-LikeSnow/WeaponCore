@@ -7,7 +7,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 {
     public static class DebugLog
     {
-        public const bool ForceDebug = true;
+        public const bool ForceDebug = false;
         
         public static void LogWithSeverity(MyLogSeverity severity, string message)
         {

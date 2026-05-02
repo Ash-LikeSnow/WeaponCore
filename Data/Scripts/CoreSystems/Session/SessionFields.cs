@@ -188,8 +188,8 @@ namespace CoreSystems
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
         #region Adv Sync Position Networking Fields
         internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
-        internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
-        internal readonly Dictionary<PlayerMap, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByPlayerMap = new Dictionary<PlayerMap, AdvProjectilePositionBatchPacket>();
+        internal readonly Stack<Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueuePool = new Stack<Queue<AdvProjectilePositionFrame>>();
+        internal readonly Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueueByPlayerMap = new Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>>();
         #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();

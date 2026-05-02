@@ -613,7 +613,6 @@ namespace CoreSystems
 
                             p.Info.AdvSyncFlightController = default(AdvSyncProjectileFlightController);
                           
-                            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Start death controller with {window}/{ClientOwlTicks:F}, {distanceError:F}, {hitSpeed:F}");
                             p.Info.AdvSyncHitController = new AdvSyncProjectileHitController
                             {
                                 IsSet = true,
@@ -660,19 +659,18 @@ namespace CoreSystems
         private void HandleClientAdvProjectilePositionSyncBatch(PacketObj data)
         {
             var batch = (AdvProjectilePositionBatchPacket)data.Packet;
+            var sequence = batch.SequenceId;
             var frameCount = batch.Data.Count;
 
             for (var i = 0; i < frameCount; i++)
             {
                 var frame = batch.Data[i];
                 
-                HandleClientAdvProjectilePositionSyncFrame(ref frame);
-                
-                DebugLog.Debug($"Batch: {batch.Data.Count}");
+                HandleClientAdvProjectilePositionSyncFrame(sequence, ref frame);
             }
         }
 
-        private void HandleClientAdvProjectilePositionSyncFrame(ref AdvProjectilePositionFrame frame)
+        private void HandleClientAdvProjectilePositionSyncFrame(uint sequence, ref AdvProjectilePositionFrame frame)
         {
             Projectile p;
             if (!ProjectilesByNetId.TryGetValue(frame.NetId, out p))
@@ -687,6 +685,14 @@ namespace CoreSystems
                 DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received position sync with death controller running");
                 return;
             }
+
+            if (sequence <= p.Info.ClientAdvSyncSequence)
+            {
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received out-of-order position {sequence}/{p.Info.ClientAdvSyncSequence}");
+                return;
+            }
+            
+            p.Info.ClientAdvSyncSequence = sequence;
             
             // Set independent of interpolation:
             p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
