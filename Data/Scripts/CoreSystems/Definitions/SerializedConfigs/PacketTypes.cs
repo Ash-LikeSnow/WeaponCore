@@ -157,10 +157,13 @@ namespace CoreSystems
     public class PingPacket : Packet
     {
         [ProtoMember(1)] internal float RelativeTime;
+        [ProtoMember(2)] internal float OwlTicks;
 
+        
         public override void CleanUp()
         {
             base.CleanUp();
+            OwlTicks = 0;
         }
     }
 

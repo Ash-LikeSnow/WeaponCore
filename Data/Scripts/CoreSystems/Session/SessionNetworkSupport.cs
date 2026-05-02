@@ -1443,6 +1443,22 @@ namespace CoreSystems
                 {
                     Entity = null,
                     Packet = _pingPongPacket,
+                    SpecialPlayerId = long.MinValue,
+                    Function = (packet, steamId) =>
+                    {
+                        var ping = (PingPacket)packet;
+                        TickLatency latency;
+                        if (PlayerTickLatency.TryGetValue((ulong)steamId, out latency))
+                        {
+                            ping.OwlTicks = latency.CurrentLatency;
+                        }
+                        else
+                        {
+                            ping.OwlTicks = 0;
+                        }
+                        
+                        return ping;
+                    }
                 });
             }
         }

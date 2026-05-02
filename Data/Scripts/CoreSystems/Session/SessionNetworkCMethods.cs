@@ -607,13 +607,13 @@ namespace CoreSystems
 
                             var window = MathHelper.Clamp(
                                 (int)Math.Ceiling(distanceError / (hitSpeed * StepConst)),
-                                1, 
-                                5 // Test
+                                1,
+                                Math.Max(5, (int)Math.Ceiling(ClientOwlTicks * 1.5))
                             );
 
                             p.Info.AdvSyncFlightController = default(AdvSyncProjectileFlightController);
                           
-                            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Start death controller with {window}, {distanceError:F}, {hitSpeed:F}");
+                            MyAPIGateway.Utilities.ShowMessage("AdvSync", $"Start death controller with {window}/{ClientOwlTicks:F}, {distanceError:F}, {hitSpeed:F}");
                             p.Info.AdvSyncHitController = new AdvSyncProjectileHitController
                             {
                                 IsSet = true,

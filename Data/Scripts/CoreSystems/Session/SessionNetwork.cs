@@ -72,7 +72,9 @@ namespace CoreSystems
 
                 if (packet.PType == PacketType.PingPong)
                 {
-                    PingPong(((PingPacket)packet).RelativeTime);
+                    var ping = (PingPacket)packet;
+                    ClientOwlTicks = ping.OwlTicks;
+                    PingPong(ping.RelativeTime);
                     return;
                 }
                 var packetSize = rawData.Length;
@@ -686,6 +688,7 @@ namespace CoreSystems
             {
                 var packetInfo = PacketsToClient[i];
 
+                // I fucking hate this. Who wrote it?
                 var sPlayerId = packetInfo.SpecialPlayerId;
                 var hasRewritePlayer = sPlayerId > 0 && packetInfo.Function != null;
                 var addOwl = sPlayerId == long.MinValue && packetInfo.Function != null;

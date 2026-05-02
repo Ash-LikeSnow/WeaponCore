@@ -134,7 +134,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                         EventType = HitEntity.Type.Grid,
                         SurfaceHit = hitPositionWorld,
                         LastHit = hitPositionWorld,
-                        HitVelocity = hitVelocityWorld,
+                        HitVelocity = TargetGrid.Physics?.LinearVelocity ?? Vector3D.Zero,
                         HitTick = Session.I.Tick
                     };
                 }
