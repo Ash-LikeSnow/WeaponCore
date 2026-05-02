@@ -283,14 +283,41 @@ namespace CoreSystems.Projectiles
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
-                        if (Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncInterpolator.IsSet)
+                        if (Session.I.AdvSyncClient && aConst.FullSync && (info.AdvSyncFlightController.IsSet || info.AdvSyncHitController.IsSet))
                         {
-                            info.AdvSyncInterpolator.Step(p);
+                            if (info.AdvSyncHitController.IsSet)
+                            {
+                                info.AdvSyncHitController.Step(p);
+                            }
+                            else
+                            {
+                                info.AdvSyncFlightController.Step(p);
+                            }
+                            
                             p.LastPosition = prevPos;
                             p.TravelMagnitude = p.Position - prevPos;
                         }
 
                         info.PrevDistanceTraveled = info.DistanceTraveled;
+
+                        if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0)
+                        {
+                            if (info.AdvSyncPositionBuffer.Count == info.AdvSyncPositionBuffer.Capacity)
+                            {
+                                info.AdvSyncPositionBuffer.Dequeue();
+                            }
+                            
+                            info.AdvSyncPositionBuffer.Enqueue(new AdvProjectilePositionFrame
+                            {
+                                NetId = info.AdvSyncId,
+                                WorldPosition = p.Position,
+                                Velocity = p.Velocity,
+                                PrevVelocity0 = p.PrevVelocity0,
+                                PrevVelocity1 = p.PrevVelocity1,
+                                RandOffsetDir = info.Storage.RandOffsetDir,
+                                OffsetTarget = p.OffsetTarget
+                            });
+                        }
 
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out distChanged);

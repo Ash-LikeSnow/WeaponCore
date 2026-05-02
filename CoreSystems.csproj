@@ -356,7 +356,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Session\SessionNetworkSupport.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\AdvSyncProjectileInterpolator.cs" />
+    <Compile Include="Data\Scripts\CoreSystems\Support\AdvSyncProjectileController.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\Api\NerdShieldAPI.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\Api\WaterModAPI.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -375,6 +375,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Support\Localization.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\Support\RingBuffer.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Support\VersionControl.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

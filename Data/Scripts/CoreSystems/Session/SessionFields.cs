@@ -187,9 +187,9 @@ namespace CoreSystems
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
         #region Adv Sync Position Networking Fields
-        internal readonly Dictionary<ulong, AdvProjectilePositionFrameEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionFrameEntry>();
-        internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
-        internal readonly Dictionary<MyEntity, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByCoreEntity = new Dictionary<MyEntity, AdvProjectilePositionBatchPacket>();
+        internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
+        internal readonly Stack<Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueuePool = new Stack<Queue<AdvProjectilePositionFrame>>();
+        internal readonly Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueueByPlayerMap = new Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>>();
         #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
@@ -199,6 +199,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
 
+        internal float ClientOwlTicks;
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
@@ -435,6 +436,7 @@ namespace CoreSystems
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
         internal ulong AdvSyncNetIdCounter = 1;
+        internal uint AdvSyncSequenceCounter = 1;
         internal uint AmmoSyncRevisionId = 1;
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;

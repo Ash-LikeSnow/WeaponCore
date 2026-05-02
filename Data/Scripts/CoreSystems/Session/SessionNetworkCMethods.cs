@@ -1,3 +1,4 @@
+using System;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -594,7 +595,45 @@ namespace CoreSystems
             {
                 if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
                 {
-                    p.State = Projectile.ProjectileState.Destroy;
+                    if (death.HitEntityId != 0)
+                    {
+                        var grid = MyEntities.GetEntityByIdOrDefault(death.HitEntityId) as MyCubeGrid;
+                        
+                        if (grid != null && !grid.Closed && grid.InScene)
+                        {
+                            var hitPositionWorld = Vector3D.Transform(death.HitPositionTarget, grid.PositionComp.WorldMatrixRef);
+                            var distanceError = Vector3D.Distance(hitPositionWorld, p.Position);
+                            var hitSpeed = MathHelperD.Max(death.HitVelocityTarget.Length(), 1e-6);
+
+                            var window = MathHelper.Clamp(
+                                (int)Math.Ceiling(distanceError / (hitSpeed * StepConst)),
+                                1,
+                                Math.Max(5, (int)Math.Ceiling(ClientOwlTicks * 1.5))
+                            );
+
+                            p.Info.AdvSyncFlightController = default(AdvSyncProjectileFlightController);
+                          
+                            p.Info.AdvSyncHitController = new AdvSyncProjectileHitController
+                            {
+                                IsSet = true,
+                                Window = window,
+                                Ticks = 0,
+                                TargetGrid = grid,
+                                HitPositionTarget = death.HitPositionTarget,
+                                HitVelocityTarget = death.HitVelocityTarget,
+                                InitialPositionWorld = p.Position,
+                                InitialVelocityWorld = p.Velocity
+                            };
+                        }
+                        else
+                        {
+                            p.State = Projectile.ProjectileState.Destroy;
+                        }
+                    }
+                    else
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
                 }
             }
             else
@@ -620,17 +659,18 @@ namespace CoreSystems
         private void HandleClientAdvProjectilePositionSyncBatch(PacketObj data)
         {
             var batch = (AdvProjectilePositionBatchPacket)data.Packet;
+            var sequence = batch.SequenceId;
             var frameCount = batch.Data.Count;
 
             for (var i = 0; i < frameCount; i++)
             {
                 var frame = batch.Data[i];
                 
-                HandleClientAdvProjectilePositionSyncFrame(ref frame);
+                HandleClientAdvProjectilePositionSyncFrame(sequence, ref frame);
             }
         }
 
-        private void HandleClientAdvProjectilePositionSyncFrame(ref AdvProjectilePositionFrame frame)
+        private void HandleClientAdvProjectilePositionSyncFrame(uint sequence, ref AdvProjectilePositionFrame frame)
         {
             Projectile p;
             if (!ProjectilesByNetId.TryGetValue(frame.NetId, out p))
@@ -638,6 +678,21 @@ namespace CoreSystems
                 DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} not found");
                 return;
             }
+
+            if (p.Info.AdvSyncHitController.IsSet)
+            {
+                // The order is not guaranteed with our position sync system, and we will also use unreliable transport in the future.
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received position sync with death controller running");
+                return;
+            }
+
+            if (sequence <= p.Info.ClientAdvSyncSequence)
+            {
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received out-of-order position {sequence}/{p.Info.ClientAdvSyncSequence}");
+                return;
+            }
+            
+            p.Info.ClientAdvSyncSequence = sequence;
             
             // Set independent of interpolation:
             p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
@@ -687,7 +742,7 @@ namespace CoreSystems
                     maxSpeed
                 );
 
-                p.Info.AdvSyncInterpolator = new AdvSyncProjectileInterpolator
+                p.Info.AdvSyncFlightController = new AdvSyncProjectileFlightController
                 {
                     IsSet = true,
                     Window = window,
