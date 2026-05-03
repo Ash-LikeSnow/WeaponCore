@@ -8,8 +8,6 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Support;
-
 // ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems
@@ -688,7 +686,7 @@ namespace CoreSystems
                 return;
             }
 
-            PacketsToClient.AddRange(PrunedPacketsToClient.Values);
+            PrunedPacketsToClient.Transfer(PacketsToClient);
             
             if (AdvProjectilePositionFramesByNetId.Count > 0)
             {
@@ -905,7 +903,6 @@ namespace CoreSystems
                 }
             }
 
-            PrunedPacketsToClient.Clear();
             PacketsToClient.Clear();
         }
         

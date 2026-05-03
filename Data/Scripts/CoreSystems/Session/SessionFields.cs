@@ -185,7 +185,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, AvInfoCache> AvShotCache = new Dictionary<ulong, AvInfoCache>();
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
-        internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
+        internal readonly OrderedPacketDictionary PrunedPacketsToClient = new OrderedPacketDictionary();
         #region Adv Sync Position Networking Fields
         internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
         internal readonly Stack<Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueuePool = new Stack<Queue<AdvProjectilePositionFrame>>();
