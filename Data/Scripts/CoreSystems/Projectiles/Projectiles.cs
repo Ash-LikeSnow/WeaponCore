@@ -130,20 +130,7 @@ namespace CoreSystems.Projectiles
                 info.RelativeAge += Session.I.DeltaTimeRatio;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.I.Tick;
-
-                //TODO AdvSync if (Session.I.AdvSync && aConst.FullSync)
-                //TODO AdvSync {
-                //TODO AdvSync     if (Session.I.IsClient) 
-                //TODO AdvSync     {
-                //TODO AdvSync         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
-                //TODO AdvSync         storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
-                //TODO AdvSync         if (info.Weapon.WeaponProSyncs.Count > 0)
-                //TODO AdvSync             p.SyncClientProjectile(posSlot);
-                //TODO AdvSync     }
-                //TODO AdvSync     else if (info.Age > 0 && info.Age % 29 == 0)
-                //TODO AdvSync         p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
-                //TODO AdvSync }
-
+                
                 if (storage.Sleep)
                 {
                     var prevCheck = info.PrevRelativeAge % 100;

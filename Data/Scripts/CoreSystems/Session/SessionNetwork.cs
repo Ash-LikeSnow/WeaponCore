@@ -477,38 +477,6 @@ namespace CoreSystems
         #endregion
 
         #region ProcessRequests
-        private void ClientReceivedDeathPacket(byte[] rawData)
-        {
-            try
-            {
-                var deathSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoDeathSyncMonitor>(rawData);
-                if (deathSyncMonitor == null || deathSyncMonitor.Collection.Count == 0)
-                {
-                    Log.Line("ClientReceivedPdPacket null or empty packet");
-                    return;
-                }
-
-                ++DeathSyncPackets;
-                DeathSyncDataSize += rawData.Length;
-
-                for (int i = 0; i < deathSyncMonitor.Collection.Count; i++)
-                {
-                    var pdInfo = deathSyncMonitor.Collection[i];
-                    Projectile p = null;
-                    Weapon w = null;
-                    //TODO AdvSync if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                    //TODO AdvSync {
-                    //TODO AdvSync     p.State = Projectile.ProjectileState.Destroy;
-                    //TODO AdvSync }
-                  
-                    //else
-                    //    Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
-                }
-                deathSyncMonitor.Collection.Clear();
-
-            }
-            catch (Exception ex) { Log.Line($"Exception in ClientReceivedDeathPacket: {ex}", null, true); }
-        }
 
         // Not worth creating a proper networking system in WeaponCore for a single packet type.
         internal void SendAdvProjectilePositionPackets()
