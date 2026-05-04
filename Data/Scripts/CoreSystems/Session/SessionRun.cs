@@ -361,6 +361,22 @@ namespace CoreSystems
                     searchLight.MaxRangeMeters = 0.1f;
             }
 
+            if (!LogInit)
+            {
+                LogInit = true;
+                Log.Init("debug", this);
+                Log.Init("perf", this, false);
+                Log.Init("stats", this, false);
+                Log.Init("net", this, false);
+                Log.Init("report", this, false);
+                Log.Init("combat", this, false);
+                Log.Init("ammostats", this, false);
+                Log.Init("wepstats", this, false);
+                Log.Init("dmgstats", this, false);
+                Log.Init("griddmgstats", this, false);
+                Log.Init(InputLog, this, false);
+            }
+
             ModChecker();
 
             if (SuppressWc)
@@ -405,7 +421,6 @@ namespace CoreSystems
             {
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
 
                 if (DebugSupport.DebugWeaponSync)
                 {

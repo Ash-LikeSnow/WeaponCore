@@ -40,7 +40,7 @@ namespace CoreSystems
     public partial class Session
     {
         internal const double StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-        internal const ushort ClientPdPacketId = 62516;
+        //internal const ushort ClientPdPacketId = 62516; - Safe to re-use the number if needed
         internal const ushort StringPacketId = 62517;
         internal const ushort ServerPacketId = 62518;
         internal const ushort ClientPacketId = 62519;
@@ -55,6 +55,7 @@ namespace CoreSystems
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
         internal static Session I;
+        internal volatile bool LogInit;
         internal volatile bool Inited;
         internal volatile bool TurretControls;
         internal volatile bool FixedMissileControls;
@@ -95,6 +96,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<ControlCompPacket> PacketControlCompPool = new MyConcurrentPool<ControlCompPacket>(64, packet => packet.CleanUp());
 
         internal readonly MyConcurrentPool<WeaponStatePacket> PacketWeaponStatePool = new MyConcurrentPool<WeaponStatePacket>(64, packet => packet.CleanUp());
+        internal readonly Stack<WeaponHeatSyncPacket> PacketWeaponHeatSyncPool = new Stack<WeaponHeatSyncPacket>();
         internal readonly MyConcurrentPool<UpgradeStatePacket> PacketUpgradeStatePool = new MyConcurrentPool<UpgradeStatePacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<SupportStatePacket> PacketSupportStatePool = new MyConcurrentPool<SupportStatePacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<ControlStatePacket> PacketControlStatePool = new MyConcurrentPool<ControlStatePacket>(64, packet => packet.CleanUp());
@@ -183,11 +185,11 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, AvInfoCache> AvShotCache = new Dictionary<ulong, AvInfoCache>();
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
-        internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
+        internal readonly OrderedPacketDictionary PrunedPacketsToClient = new OrderedPacketDictionary();
         #region Adv Sync Position Networking Fields
-        internal readonly Dictionary<ulong, AdvProjectilePositionFrameEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionFrameEntry>();
-        internal readonly Stack<AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchPacketPool = new Stack<AdvProjectilePositionBatchPacket>();
-        internal readonly Dictionary<MyEntity, AdvProjectilePositionBatchPacket> AdvProjectilePositionBatchesByCoreEntity = new Dictionary<MyEntity, AdvProjectilePositionBatchPacket>();
+        internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
+        internal readonly Stack<Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueuePool = new Stack<Queue<AdvProjectilePositionFrame>>();
+        internal readonly Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueueByPlayerMap = new Dictionary<PlayerMap, Queue<AdvProjectilePositionFrame>>();
         #endregion
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<string, MyKeys> KeyMap = new Dictionary<string, MyKeys>();
@@ -197,6 +199,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<ulong, Projectile> ProjectilesByNetId = new Dictionary<ulong, Projectile>();
 
+        internal float ClientOwlTicks;
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
@@ -230,7 +233,6 @@ namespace CoreSystems
         internal readonly HashSet<SupportSys> DisplayAffectedArmor = new HashSet<SupportSys>();
         internal readonly HashSet<Type> ControlTypeActivated = new HashSet<Type>();
         internal readonly HashSet<IMyPlayer> PlayerControllerMonitor = new HashSet<IMyPlayer>();
-        internal readonly List<int> PointDefenseSyncs = new List<int>();
         internal readonly List<GridGroupMap> GridGroupUpdates = new List<GridGroupMap>();
         internal readonly List<Weapon> InvPullClean = new List<Weapon>();
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
@@ -254,6 +256,7 @@ namespace CoreSystems
         internal readonly HashSet<MyDefinitionId> CoreSystemsPhantomDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<ArmorDefinition> CoreSystemsArmorDefs = new HashSet<ArmorDefinition>();
         internal readonly HashSet<string> VanillaSubtypes = new HashSet<string>();
+        internal readonly Dictionary<string, string> VanillaPartNames = new Dictionary<string, string>();
         internal readonly HashSet<MyStringHash> PerformanceWarning = new HashSet<MyStringHash>();
         internal readonly HashSet<Ai> GridsToUpdateInventories = new HashSet<Ai>();
         internal readonly List<MyCubeGrid> DirtyGridsTmp = new List<MyCubeGrid>(10);
@@ -304,7 +307,6 @@ namespace CoreSystems
 
         internal readonly Spectrum Spectrum;
 
-        // TODO AdvSync internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -431,8 +433,9 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
-        internal ulong AdvSyncNetIdCounter = 1; // 0 used as the sentinel value
-
+        internal ulong AdvSyncNetIdCounter = 1;
+        internal uint AdvSyncSequenceCounter = 1;
+        internal uint AmmoSyncRevisionId = 1;
         internal long SeamlessEntID;
         internal long PreFetchMaxDist;
         internal long PlayerId;

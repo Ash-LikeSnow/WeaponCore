@@ -46,8 +46,12 @@ namespace CoreSystems.Support
         internal ulong UniqueMuzzleId;
         internal ulong Id;
         internal ulong AdvSyncId;
+        internal uint ClientAdvSyncSequence;
         internal bool AdvSyncDeathSent;
-        
+        /// <summary>
+        ///     History of kinematic states for network latency compensation for the AdvSync projectiles.
+        /// </summary>
+        internal readonly RingBuffer<AdvProjectilePositionFrame> AdvSyncPositionBuffer = new RingBuffer<AdvProjectilePositionFrame>(60);
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -85,7 +89,8 @@ namespace CoreSystems.Support
         internal ushort SpawnDepth;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
 
-        internal AdvSyncProjectileInterpolator AdvSyncInterpolator;
+        internal AdvSyncProjectileFlightController AdvSyncFlightController;
+        internal AdvSyncProjectileHitController AdvSyncHitController;
         
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef,  Weapon.Muzzle muzzle, double maxTrajectory, double shotFade)
         {
@@ -104,7 +109,8 @@ namespace CoreSystems.Support
 
         internal void Clean()
         {
-            AdvSyncInterpolator = default(AdvSyncProjectileInterpolator);
+            AdvSyncFlightController = default(AdvSyncProjectileFlightController);
+            AdvSyncHitController = default(AdvSyncProjectileHitController);
             
             var aConst = AmmoDef.Const;
 
@@ -132,10 +138,14 @@ namespace CoreSystems.Support
             {
                 // P.S. not the cleanest, but it's good...
                 Session.I.ProjectilesByNetId.Remove(AdvSyncId);
+                AdvSyncId = 0;
             }
 
-            AdvSyncDeathSent = false;
+            ClientAdvSyncSequence = 0;
 
+            AdvSyncDeathSent = false;
+            AdvSyncPositionBuffer.Clear();
+            
             if (IsFragment)
             {
                 if (VoxelCache != null)
@@ -246,10 +256,7 @@ namespace CoreSystems.Support
             ManualMode = false;
 
             Sleep = false;
-
-            //TODO AdvSync if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
-            //TODO AdvSync     info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
-
+            
             if (ApproachInfo != null)
             {
                 ApproachInfo.Clean(info);

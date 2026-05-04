@@ -202,7 +202,6 @@ namespace CoreSystems.Settings
             [ProtoMember(16)] public bool DisableTargetCycle;
             [ProtoMember(17)] public bool DisableHudTargetInfo;
             [ProtoMember(18)] public bool DisableHudReload;
-            //TODO AdvSync [ProtoMember(19)] public bool AdvancedProjectileSync;
             [ProtoMember(20)] public bool UnsupportedMode;
             [ProtoMember(21)] public bool DisableSmallVsLargeBuff = false;
             [ProtoMember(22)] public Overrides DefinitionOverrides;

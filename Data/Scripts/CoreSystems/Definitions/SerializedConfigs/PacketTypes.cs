@@ -68,7 +68,9 @@ namespace CoreSystems
         AdvProjectileSpawnSyncs,
         AdvProjectileDeathSyncs,
         AdvProjectileUpdateTargetSyncs,
-        AdvProjectilePositionSyncs
+        AdvProjectilePositionSyncs,
+        ClientAmmoRequest,
+        WeaponHeatSync
     }
 
     #region Packets
@@ -115,6 +117,9 @@ namespace CoreSystems
     [ProtoInclude(48, typeof(AdvProjectileDeathPacket))]
     [ProtoInclude(49, typeof(AdvProjectileUpdateTargetPacket))]
     [ProtoInclude(50, typeof(AdvProjectilePositionBatchPacket))]
+    [ProtoInclude(51, typeof(ClientAmmoRequestPacket))]
+    [ProtoInclude(52, typeof(WeaponAmmoPacket))]
+    [ProtoInclude(53, typeof(WeaponHeatSyncPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
@@ -152,10 +157,13 @@ namespace CoreSystems
     public class PingPacket : Packet
     {
         [ProtoMember(1)] internal float RelativeTime;
+        [ProtoMember(2)] internal float OwlTicks;
 
+        
         public override void CleanUp()
         {
             base.CleanUp();
+            OwlTicks = 0;
         }
     }
 
@@ -222,7 +230,7 @@ namespace CoreSystems
                 info.ProjectileNetId = pTarget.Info.AdvSyncId;
                 info.LinearVelocity = pTarget.Velocity;
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Projectile Target: {pTarget.Info.AdvSyncId}");
             }
             else if (ent != null)
             {
@@ -236,7 +244,7 @@ namespace CoreSystems
                     info.Acceleration = ent.Physics.LinearAcceleration;
                 }
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Entity Target: {ent.EntityId}");
             }
             else if (target.TargetState == Target.TargetStates.IsFake)
             {
@@ -262,18 +270,18 @@ namespace CoreSystems
                     info.LinearVelocity = fakeInfo.LinearVelocity;
                     info.Acceleration = fakeInfo.Acceleration;
                     
-                    DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
+                    //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - Fake target: Type={info.FakeType}, EntityId={info.FakeEntityId}, LocalPos={info.FakeLocalPos}, WorldPos={info.FakeWorldPos}");
                 }
                 else
                 {
-                    DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
+                    //DebugLog.Debug("AdvSyncTargetInfo$FromProjectile Dummy targets null");
                 }
             }
             else
             {
                 info.Type = AdvTargetType.None;
                 
-                DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
+                //DebugLog.Debug($"[FromProjectile] Projectile {p.Info.AdvSyncId} - NO TARGET");
             }
             
             return info;
@@ -408,11 +416,17 @@ namespace CoreSystems
     public class AdvProjectileDeathPacket : Packet
     {
         [ProtoMember(1)] public ulong NetId;
+        [ProtoMember(2)] public long HitEntityId;
+        [ProtoMember(3)] public Vector3D HitPositionTarget;
+        [ProtoMember(4)] public Vector3D HitVelocityTarget;
         
         public override void CleanUp()
         {
             base.CleanUp();
             NetId = 0;
+            HitEntityId = 0;
+            HitPositionTarget = Vector3D.Zero;
+            HitVelocityTarget = Vector3D.Zero;
         }
     }
 
@@ -451,20 +465,22 @@ namespace CoreSystems
         [ProtoMember(7)] public Vector3D OffsetTarget;
     }
 
-    public struct AdvProjectilePositionFrameEntry
+    internal struct AdvProjectilePositionSyncEntry
     {
         public MyEntity TopEntity;
-        public AdvProjectilePositionFrame Frame;
+        public Projectile Pro;
     }
     
     [ProtoContract]
     public class AdvProjectilePositionBatchPacket : Packet
     {
-        [ProtoMember(1)] public List<AdvProjectilePositionFrame> Data = new List<AdvProjectilePositionFrame>();
-  
+        [ProtoMember(1)] public uint SequenceId;
+        [ProtoMember(2)] public List<AdvProjectilePositionFrame> Data = new List<AdvProjectilePositionFrame>();
+        
         public override void CleanUp()
         {
             base.CleanUp();
+            SequenceId = 0;
             Data.Clear();
         }
     }
@@ -588,13 +604,26 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal ProtoWeaponAmmo Data;
         [ProtoMember(2)] internal int PartId;
-
-
+        [ProtoMember(3)] internal uint SequenceId;
+        /// <summary>
+        ///     If true, this is the special packet the server sends after the weapon stops shooting.
+        ///     This syncs the final ammo count.
+        /// </summary>
+        [ProtoMember(4)] internal bool IsBurstStopMarker;
+        /// <summary>
+        ///     If true, this is an ammo packet from the active sync loop.
+        ///     The sending is timed to be after each shot is sent (with a cooldown), so the client resets the firing sequence when seeing this flag.
+        /// </summary>
+        [ProtoMember(5)] internal bool IsSyncStepMarker;
+        
         public override void CleanUp()
         {
             base.CleanUp();
             Data = null;
             PartId = 0;
+            SequenceId = 0;
+            IsBurstStopMarker = false;
+            IsSyncStepMarker = false;
         }
     }
 
@@ -617,12 +646,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal ProtoWeaponReload Data;
         [ProtoMember(2)] internal int PartId;
+        [ProtoMember(3)] internal uint SequenceId;
 
         public override void CleanUp()
         {
             base.CleanUp();
             Data = null;
             PartId = 0;
+            SequenceId = 0;
         }
     }
 
@@ -993,5 +1024,35 @@ namespace CoreSystems
         }
     }
 
+    [ProtoContract]
+    public class ClientAmmoRequestPacket : Packet
+    {
+        [ProtoMember(1)] internal int  PartId;
+        [ProtoMember(2)] internal uint LastSequenceId;
+        
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            PartId = 0;
+            LastSequenceId = 0;
+        }
+    }
+
+    [ProtoContract]
+    public class WeaponHeatSyncPacket : Packet
+    {
+        [ProtoMember(1)] internal int PartId;
+        [ProtoMember(2)] internal float Heat;
+        [ProtoMember(3)] internal bool Overheated;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            PartId = 0;
+            Heat = 0;
+            Overheated = false;
+        }
+    }
+    
     #endregion
 }

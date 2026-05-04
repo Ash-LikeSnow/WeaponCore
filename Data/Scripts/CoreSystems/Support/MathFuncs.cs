@@ -7,6 +7,26 @@ namespace CoreSystems.Support
 {
     internal static class MathFuncs
     {
+        public static Vector3D HermiteCubic(ref Vector3D p0, ref Vector3D v0, ref Vector3D v1, ref Vector3D p1, double t)
+        {
+            var h0 = 1.0 - 3.0 * (t * t) + 2.0 * (t * t * t);
+            var h1 = t - 2.0 * (t * t) + t * t * t;
+            var h2 = -(t * t) + t * t * t;
+            var h3 = 3.0 * (t * t) - 2.0 * (t * t * t);
+
+            return h0 * p0 + h1 * v0 + h2 * v1 + h3 * p1;
+        }
+        
+        public static Vector3D HermiteCubicDerivative(ref Vector3D p0, ref Vector3D v0, ref Vector3D v1, ref Vector3D p1, double t)
+        {
+            var dh0 = -6.0 * t + 6.0 * t * t;
+            var dh1 = 1.0 - 4.0 * t + 3.0 * t * t;
+            var dh2 = -2.0 * t + 3.0 * t * t;
+            var dh3 =  6.0 * t - 6.0 * t * t;
+
+            return dh0 * p0 + dh1 * v0 + dh2 * v1 + dh3 * p1;
+        }
+        
         internal struct Cone
         {
             internal Vector3D ConeDir;
@@ -410,5 +430,4 @@ namespace CoreSystems.Support
             return medianValue;
         }
     }
-
 }

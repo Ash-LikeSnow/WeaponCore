@@ -1149,7 +1149,7 @@ namespace CoreSystems
             }
 
             SuppressWc = LocalVersion ? false : !SUtils.ModActivate(ModContext, Session);
-            
+
             if (!SuppressWc)
             {
                 ContainerDefinition baseDefs;
@@ -1158,10 +1158,22 @@ namespace CoreSystems
                 {
                     Parts.SetModPath(baseDefs, ModContext.ModPath);
                     PickDef(baseDefs);
+
+                    if (baseDefs.WeaponDefs != null)
+                    {
+                        foreach (var wep in baseDefs.WeaponDefs)
+                        {
+                            foreach (var subtype in wep.Assignments.MountPoints)
+                            {
+                                VanillaPartNames[subtype.SubtypeId] = wep.HardPoint.PartName;
+                            }
+                        }
+                    }
                 }
             }
-
         }
+
+        
         public string ModPath()
         {
             var modPath = ModContext.ModPath;

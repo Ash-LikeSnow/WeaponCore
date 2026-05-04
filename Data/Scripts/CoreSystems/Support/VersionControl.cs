@@ -90,8 +90,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             GenerateBlockDmgMap();
             GenerateWeaponValuesMap();
             GenerateAmmoValuesMap();
-            //TODO AdvSync Core.Session.AdvSync = Core.Enforcement.AdvancedProjectileSync && Core.Session.MpActive;
-            //TODO AdvSync Core.Session.AdvSyncClient = Core.Session.AdvSync;
         }
 
         private void GenerateConfig(CoreSettings.ServerSettings oldSettings = null)

@@ -401,6 +401,16 @@ namespace CoreSystems.Projectiles
             deathPacket.PType = PacketType.AdvProjectileDeathSyncs;
             deathPacket.NetId = Info.AdvSyncId;
             
+            var grid = Info.ProHit.Entity as MyCubeGrid;
+            if (grid != null && !grid.Closed)
+            {
+                var txWorldTarget = MatrixD.Invert(grid.PositionComp.WorldMatrixRef);
+                
+                deathPacket.HitEntityId = grid.EntityId;
+                deathPacket.HitPositionTarget = Vector3D.Transform(Info.ProHit.LastHit, txWorldTarget);
+                deathPacket.HitVelocityTarget = Vector3D.TransformNormal(Velocity, txWorldTarget);
+            }
+            
             Session.I.PacketsToClient.Add(new Session.PacketInfo
             {
                 Packet = deathPacket,
@@ -3785,19 +3795,10 @@ namespace CoreSystems.Projectiles
                 return;
             }
             
-            Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionFrameEntry
+            Session.I.AdvProjectilePositionFramesByNetId[Info.AdvSyncId] = new AdvProjectilePositionSyncEntry
             {
                 TopEntity = parentEntity,
-                Frame = new AdvProjectilePositionFrame
-                {
-                    NetId = Info.AdvSyncId,
-                    WorldPosition = Position,
-                    Velocity = Velocity,
-                    PrevVelocity0 = PrevVelocity0,
-                    PrevVelocity1 = PrevVelocity1,
-                    RandOffsetDir = Info.Storage.RandOffsetDir,
-                    OffsetTarget = OffsetTarget
-                }
+                Pro = this
             };
             
             Session.I.LastProSyncSendTick = Session.I.Tick;

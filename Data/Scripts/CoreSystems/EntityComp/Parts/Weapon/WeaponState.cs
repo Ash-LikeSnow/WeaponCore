@@ -137,8 +137,16 @@ namespace CoreSystems.Platform
             }
 
             if (Session.I.HandlesInput)
+            {
                 StopShootingAv(burst);
+            }
 
+            if (IsShooting && Session.I.IsServer && Session.I.MpActive)
+            {
+                // Send the burst shot end on state change:
+                Session.I.SendWeaponAmmoData(this, true);
+            }
+            
             ResetShotState();
         }
 

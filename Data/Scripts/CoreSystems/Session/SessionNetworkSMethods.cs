@@ -3,6 +3,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.Focus;
 
@@ -483,6 +484,50 @@ namespace CoreSystems
                 {
                     Log.Line($"ServerShootSyncs failed: - mode:{signal} - {type}", InputLog);
                 }
+            }
+
+            data.Report.PacketValid = true;
+            return true;
+        }
+
+        private bool ServerClientAmmoRequest(PacketObj data)
+        {
+            var packet = data.Packet;
+            var ammoRequestPacket = (ClientAmmoRequestPacket)packet;
+            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+
+            var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+            var w = collection[ammoRequestPacket.PartId];
+
+            if (w.ProtoWeaponAmmo.CurrentAmmo > 0)
+            {
+                /*
+                 * The scene isn't perfectly synchronized between the server and client.
+                 * A (supposedly) rare thing that can occur is the local client AI acquiring a target and shooting it, while the server didn't shoot anything.
+                 * If the game isn't totally screwed, it should be a short phantom burst.
+                 * The client's AI will decide to stop shooting, and we will know that we may be in this case because we didn't get the server burst stop packet.
+                 * The server also isn't sending any active ammo updates. So, we send a request for ammo to the server, so we can correct our local ammo count.
+                 */
+                SendWeaponAmmoData(w);
+            }
+            else if (w.HasAmmo())
+            {
+                /*
+                 * Same as above, but instead, the server did shoot, the weapon is empty, and the burst stop just didn't arrive yet.
+                 * We won't respond explicitly, because the burst marker should be on the way, and then it should be followed by a reload.
+                 * They will lift the guard.
+                 */
+                w.ComputeServerStorage();
+            }
+            else
+            {
+                /*
+                 * The weapon is dry. To lift the guard, we will ensure an ammo packet with 0 ammo gets sent.
+                 */
+                SendWeaponAmmoData(w);
             }
 
             data.Report.PacketValid = true;

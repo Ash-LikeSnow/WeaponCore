@@ -4,6 +4,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.CoreComponent;
 
@@ -208,34 +209,63 @@ namespace CoreSystems
             else Log.Line("SendAiData should never be called on Client");
         }
 
-        internal void SendWeaponAmmoData(Weapon w)
+        internal void SendWeaponAmmoData(Weapon w, bool isBurstStop = false, bool isSyncStep = false)
         {
             if (IsServer)
             {
-
                 const PacketType type = PacketType.WeaponAmmo;
                 ++w.ProtoWeaponAmmo.Revision;
-
+                
                 PacketInfo oldInfo;
                 WeaponAmmoPacket iPacket;
                 if (PrunedPacketsToClient.TryGetValue(w.ProtoWeaponAmmo, out oldInfo))
                 {
                     iPacket = (WeaponAmmoPacket)oldInfo.Packet;
                     iPacket.EntityId = w.BaseComp.CoreEntity.EntityId;
-                    iPacket.Data = w.ProtoWeaponAmmo;
                 }
                 else
                 {
-
                     iPacket = PacketAmmoPool.Get();
                     iPacket.EntityId = w.BaseComp.CoreEntity.EntityId;
                     iPacket.SenderId = MultiplayerId;
                     iPacket.PType = type;
-                    iPacket.Data = w.ProtoWeaponAmmo;
                     iPacket.PartId = w.PartId;
                 }
 
+                // Bind the data for consistency:
+                iPacket.Data = new ProtoWeaponAmmo
+                {
+                    Revision = w.ProtoWeaponAmmo.Revision,
+                    CurrentAmmo = w.ProtoWeaponAmmo.CurrentAmmo,
+                    CurrentCharge = w.ProtoWeaponAmmo.CurrentCharge,
+                };
+                
+                // Increment counter on each send call:
+                iPacket.SequenceId = AmmoSyncRevisionId++;
 
+                // We should always have only one of these packets ideally.
+                // But, if we get a burst stop marker, it makes sense that the enqueued packet will remain a burst stop marker.
+                if (iPacket.IsBurstStopMarker != isBurstStop)
+                {
+                    if (isBurstStop)
+                    {
+                        // No questions here, just promote it (or set it, if it's a new packet):
+                        iPacket.IsBurstStopMarker = true;
+                    }
+                    else
+                    {
+                        // Possibly an issue to fix. We will log for it:
+                        DebugLog.Warning("SendWeaponAmmoData conflicting burst stop");
+                    }
+                }
+
+                // We should always have only one of these packets ideally.
+                // But, if we get a sync step marker, then this tick should always be a sync step for the weapon.
+                if (isSyncStep)
+                {
+                    iPacket.IsSyncStepMarker = true;
+                }
+                
                 PrunedPacketsToClient[w.ProtoWeaponAmmo] = new PacketInfo
                 {
                     Entity = w.BaseComp.CoreEntity,
@@ -243,7 +273,10 @@ namespace CoreSystems
                     HasPooledResource = true
                 };
             }
-            else Log.Line("SendWeaponAmmoData should never be called on Client");
+            else
+            {
+                Log.Line("SendWeaponAmmoData should never be called on Client");
+            }
         }
 
         internal void SendComp(Weapon.WeaponComponent comp)
@@ -395,7 +428,6 @@ namespace CoreSystems
 
                 if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.WeaponState;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp);
 
@@ -518,10 +550,8 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-
                 if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.ControlState;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp);
 
@@ -603,11 +633,12 @@ namespace CoreSystems
             if (IsServer)
             {
                 if (resetWait)
+                {
                     w.Reload.WaitForClient = false;
+                }
 
                 if (!PrunedPacketsToClient.ContainsKey(w.Comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.WeaponReload;
                     w.Comp.Data.Repo.Values.UpdateCompPacketInfo(w.Comp);
 
@@ -617,7 +648,6 @@ namespace CoreSystems
                     {
                         iPacket = (WeaponReloadPacket)oldInfo.Packet;
                         iPacket.EntityId = w.Comp.CoreEntity.EntityId;
-                        iPacket.Data = w.Reload;
                     }
                     else
                     {
@@ -625,10 +655,25 @@ namespace CoreSystems
                         iPacket.EntityId = w.Comp.CoreEntity.EntityId;
                         iPacket.SenderId = MultiplayerId;
                         iPacket.PType = type;
-                        iPacket.Data = w.Reload;
                         iPacket.PartId = w.PartId;
                     }
-
+                    
+                    // Bind the data for consistency:
+                    iPacket.Data = new ProtoWeaponReload
+                    {
+                        Revision = w.Reload.Revision,
+                        StartId = w.Reload.StartId,
+                        EndId = w.Reload.EndId,
+                        MagsLoaded = w.Reload.MagsLoaded,
+                        WaitForClient = w.Reload.WaitForClient,
+                        AmmoTypeId = w.Reload.AmmoTypeId,
+                        CurrentMags = w.Reload.CurrentMags,
+                        LifetimeLoads = w.Reload.LifetimeLoads
+                    };
+                    
+                    // Increment counter on each send call:
+                    iPacket.SequenceId = AmmoSyncRevisionId++;
+                    
                     PrunedPacketsToClient[w.Reload] = new PacketInfo
                     {
                         Entity = w.Comp.CoreEntity,
@@ -637,9 +682,14 @@ namespace CoreSystems
                     };
                 }
                 else
+                {
                     SendComp(w.Comp);
+                }
             }
-            else Log.Line("SendWeaponReload should never be called on Client");
+            else
+            {
+                Log.Line("SendWeaponReload should never be called on Client");
+            }
         }
 
         internal void SendClientNotify(long id, string message, bool singleClient = false, string color = null, int duration = 0, bool soundClick = false)
@@ -901,7 +951,10 @@ namespace CoreSystems
             {
                 ai.Construct.NetRefreshAi();
             }
-            else Log.Line("SendActiveControlUpdate should never be called on Dedicated");
+            else
+            {
+                Log.Line("SendActiveControlUpdate should never be called on Dedicated");
+            }
         }
 
         internal void SendActionShootUpdate(CoreComponent comp, Trigger action)
@@ -1390,6 +1443,22 @@ namespace CoreSystems
                 {
                     Entity = null,
                     Packet = _pingPongPacket,
+                    SpecialPlayerId = long.MinValue,
+                    Function = (packet, steamId) =>
+                    {
+                        var ping = (PingPacket)packet;
+                        TickLatency latency;
+                        if (PlayerTickLatency.TryGetValue((ulong)steamId, out latency))
+                        {
+                            ping.OwlTicks = latency.CurrentLatency;
+                        }
+                        else
+                        {
+                            ping.OwlTicks = 0;
+                        }
+                        
+                        return ping;
+                    }
                 });
             }
         }
@@ -1416,6 +1485,55 @@ namespace CoreSystems
             };
             
             LastPongTick = Tick;
+        }
+
+        internal void SendClientAmmoRequest(Weapon w)
+        {
+            if (!IsClient)
+            {
+                DebugLog.Critical("SendClientAmmoRequest called non-client");
+                return;
+            }
+            
+            PacketsToServer.Add(new ClientAmmoRequestPacket
+            {
+                EntityId = w.BaseComp.CoreEntity.EntityId,
+                SenderId = MultiplayerId,
+                PType = PacketType.ClientAmmoRequest,
+                PartId = w.PartId, 
+                LastSequenceId = w.LastAuthoritativeSeqId
+            });
+        }
+        
+        /// <summary>
+        ///     Only used by the active send loop. Do not call anywhere else!
+        /// </summary>
+        /// <param name="w"></param>
+        internal void SendWeaponHeatSyncLoop(Weapon w)
+        {
+            if (!IsServer || !MpActive)
+            {
+                DebugLog.Critical("SendWeaponHeatSync called non-server");
+                return;
+            }
+            
+            // No need for pruned packets. We only have one call site.
+            var heatPacket = PacketWeaponHeatSyncPool.Count > 0
+                ? PacketWeaponHeatSyncPool.Pop()
+                : new WeaponHeatSyncPacket();
+
+            heatPacket.EntityId = w.Comp.CoreEntity.EntityId;
+            heatPacket.PType = PacketType.WeaponHeatSync;
+            heatPacket.PartId = w.PartId;
+            heatPacket.Heat = w.PartState.Heat;
+            heatPacket.Overheated = w.PartState.Overheated;
+            
+            PacketsToClient.Add(new PacketInfo
+            {
+                Entity = w.Comp.CoreEntity,
+                Packet = heatPacket,
+                HasPooledResource = true
+            });
         }
     }
 }

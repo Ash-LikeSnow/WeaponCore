@@ -130,20 +130,7 @@ namespace CoreSystems.Projectiles
                 info.RelativeAge += Session.I.DeltaTimeRatio;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.I.Tick;
-
-                //TODO AdvSync if (Session.I.AdvSync && aConst.FullSync)
-                //TODO AdvSync {
-                //TODO AdvSync     if (Session.I.IsClient) 
-                //TODO AdvSync     {
-                //TODO AdvSync         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
-                //TODO AdvSync         storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
-                //TODO AdvSync         if (info.Weapon.WeaponProSyncs.Count > 0)
-                //TODO AdvSync             p.SyncClientProjectile(posSlot);
-                //TODO AdvSync     }
-                //TODO AdvSync     else if (info.Age > 0 && info.Age % 29 == 0)
-                //TODO AdvSync         p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
-                //TODO AdvSync }
-
+                
                 if (storage.Sleep)
                 {
                     var prevCheck = info.PrevRelativeAge % 100;
@@ -283,14 +270,41 @@ namespace CoreSystems.Projectiles
                         p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
-                        if (Session.I.AdvSyncClient && aConst.FullSync && info.AdvSyncInterpolator.IsSet)
+                        if (Session.I.AdvSyncClient && aConst.FullSync && (info.AdvSyncFlightController.IsSet || info.AdvSyncHitController.IsSet))
                         {
-                            info.AdvSyncInterpolator.Step(p);
+                            if (info.AdvSyncHitController.IsSet)
+                            {
+                                info.AdvSyncHitController.Step(p);
+                            }
+                            else
+                            {
+                                info.AdvSyncFlightController.Step(p);
+                            }
+                            
                             p.LastPosition = prevPos;
                             p.TravelMagnitude = p.Position - prevPos;
                         }
 
                         info.PrevDistanceTraveled = info.DistanceTraveled;
+
+                        if (Session.I.AdvSyncServer && aConst.FullSync && info.AdvSyncId != 0)
+                        {
+                            if (info.AdvSyncPositionBuffer.Count == info.AdvSyncPositionBuffer.Capacity)
+                            {
+                                info.AdvSyncPositionBuffer.Dequeue();
+                            }
+                            
+                            info.AdvSyncPositionBuffer.Enqueue(new AdvProjectilePositionFrame
+                            {
+                                NetId = info.AdvSyncId,
+                                WorldPosition = p.Position,
+                                Velocity = p.Velocity,
+                                PrevVelocity0 = p.PrevVelocity0,
+                                PrevVelocity1 = p.PrevVelocity1,
+                                RandOffsetDir = info.Storage.RandOffsetDir,
+                                OffsetTarget = p.OffsetTarget
+                            });
+                        }
 
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref p.TravelMagnitude, out distChanged);

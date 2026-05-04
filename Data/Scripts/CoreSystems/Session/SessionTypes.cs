@@ -1245,19 +1245,6 @@ namespace CoreSystems
         public uint DestroyTick;
     }
 
-    [ProtoContract]
-    public struct ProjectileSync
-    {
-        [ProtoMember(1)] public uint WeaponId;
-        [ProtoMember(2)] public ulong SyncId;
-    }
-
-    [ProtoContract]
-    public class ProtoDeathSyncMonitor
-    {
-        [ProtoMember(1)] public readonly List<ProjectileSync> Collection = new List<ProjectileSync>(32);
-    }
-
     public struct BlockDestroyInfo
     {
         public IMySlimBlock Block;

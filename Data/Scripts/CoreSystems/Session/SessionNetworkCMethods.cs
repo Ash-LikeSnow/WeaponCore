@@ -1,7 +1,9 @@
+using System;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.Ai;
@@ -271,8 +273,19 @@ namespace CoreSystems
 
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[weaponReloadPacket.PartId];
-            w.Reload.Sync(w, weaponReloadPacket.Data, false);
 
+            if (w.LastAuthoritativeSeqId >= weaponReloadPacket.SequenceId)
+            {
+                // Out-of-sequence:
+                DebugLog.Warning($"ClientWeaponReloadUpdate out-of-sequence packet: {weaponReloadPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            else
+            {
+                w.Reload.Sync(w, weaponReloadPacket.Data, false);
+                w.ClientReloadWaitingForServer = false;
+                w.LastAuthoritativeSeqId = weaponReloadPacket.SequenceId;
+            }
+            
             data.Report.PacketValid = true;
 
             return true;
@@ -305,8 +318,34 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[ammoPacket.PartId];
-            w.ProtoWeaponAmmo.Sync(w, ammoPacket.Data);
 
+            if (w.LastAuthoritativeSeqId >= ammoPacket.SequenceId)
+            {
+                // Out-of-sequence:
+                DebugLog.Warning($"ClientWeaponAmmoUpdate out-of-sequence packet: {ammoPacket.SequenceId}/{w.LastAuthoritativeSeqId}");
+            }
+            else
+            {
+                w.ProtoWeaponAmmo.Sync(w, ammoPacket.Data);
+             
+                if (ammoPacket.IsBurstStopMarker)
+                {
+                    w.StopShooting();
+                }
+
+                if (ammoPacket.IsSyncStepMarker)
+                {
+                    w.ShootTime = w.TicksPerShot * StepConst + RelativeTime;
+                }
+                
+                if (w.ClientReloadWaitingForServer)
+                {
+                    w.ClientReloadWaitingForServer = false;
+                }
+
+                w.LastAuthoritativeSeqId = ammoPacket.SequenceId;
+            }
+            
             data.Report.PacketValid = true;
 
             return true;
@@ -556,7 +595,45 @@ namespace CoreSystems
             {
                 if (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom)
                 {
-                    p.State = Projectile.ProjectileState.Destroy;
+                    if (death.HitEntityId != 0)
+                    {
+                        var grid = MyEntities.GetEntityByIdOrDefault(death.HitEntityId) as MyCubeGrid;
+                        
+                        if (grid != null && !grid.Closed && grid.InScene)
+                        {
+                            var hitPositionWorld = Vector3D.Transform(death.HitPositionTarget, grid.PositionComp.WorldMatrixRef);
+                            var distanceError = Vector3D.Distance(hitPositionWorld, p.Position);
+                            var hitSpeed = MathHelperD.Max(death.HitVelocityTarget.Length(), 1e-6);
+
+                            var window = MathHelper.Clamp(
+                                (int)Math.Ceiling(distanceError / (hitSpeed * StepConst)),
+                                1,
+                                Math.Max(5, (int)Math.Ceiling(ClientOwlTicks * 1.5))
+                            );
+
+                            p.Info.AdvSyncFlightController = default(AdvSyncProjectileFlightController);
+                          
+                            p.Info.AdvSyncHitController = new AdvSyncProjectileHitController
+                            {
+                                IsSet = true,
+                                Window = window,
+                                Ticks = 0,
+                                TargetGrid = grid,
+                                HitPositionTarget = death.HitPositionTarget,
+                                HitVelocityTarget = death.HitVelocityTarget,
+                                InitialPositionWorld = p.Position,
+                                InitialVelocityWorld = p.Velocity
+                            };
+                        }
+                        else
+                        {
+                            p.State = Projectile.ProjectileState.Destroy;
+                        }
+                    }
+                    else
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
                 }
             }
             else
@@ -582,17 +659,18 @@ namespace CoreSystems
         private void HandleClientAdvProjectilePositionSyncBatch(PacketObj data)
         {
             var batch = (AdvProjectilePositionBatchPacket)data.Packet;
+            var sequence = batch.SequenceId;
             var frameCount = batch.Data.Count;
 
             for (var i = 0; i < frameCount; i++)
             {
                 var frame = batch.Data[i];
                 
-                HandleClientAdvProjectilePositionSyncFrame(ref frame);
+                HandleClientAdvProjectilePositionSyncFrame(sequence, ref frame);
             }
         }
 
-        private void HandleClientAdvProjectilePositionSyncFrame(ref AdvProjectilePositionFrame frame)
+        private void HandleClientAdvProjectilePositionSyncFrame(uint sequence, ref AdvProjectilePositionFrame frame)
         {
             Projectile p;
             if (!ProjectilesByNetId.TryGetValue(frame.NetId, out p))
@@ -600,6 +678,21 @@ namespace CoreSystems
                 DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} not found");
                 return;
             }
+
+            if (p.Info.AdvSyncHitController.IsSet)
+            {
+                // The order is not guaranteed with our position sync system, and we will also use unreliable transport in the future.
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received position sync with death controller running");
+                return;
+            }
+
+            if (sequence <= p.Info.ClientAdvSyncSequence)
+            {
+                DebugLog.Warning($"ClientAdvProjectilePositionSync: Pro with NetId {frame.NetId} received out-of-order position {sequence}/{p.Info.ClientAdvSyncSequence}");
+                return;
+            }
+            
+            p.Info.ClientAdvSyncSequence = sequence;
             
             // Set independent of interpolation:
             p.Info.Storage.RandOffsetDir = frame.RandOffsetDir;
@@ -649,7 +742,7 @@ namespace CoreSystems
                     maxSpeed
                 );
 
-                p.Info.AdvSyncInterpolator = new AdvSyncProjectileInterpolator
+                p.Info.AdvSyncFlightController = new AdvSyncProjectileFlightController
                 {
                     IsSet = true,
                     Window = window,
@@ -787,6 +880,40 @@ namespace CoreSystems
                     velocity = velocity.Normalized() * maxSpeed;
                 }
             }
+        }
+
+        private bool HandleClientWeaponHeatSync(PacketObj data)
+        {
+            var heatPacket = (WeaponHeatSyncPacket)data.Packet;
+            
+            var ent = MyEntities.GetEntityByIdOrDefault(heatPacket.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>();
+
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {heatPacket.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+            var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+            var w = collection[heatPacket.PartId];
+         
+            var partState = w.PartState;
+            var wasOver = partState.Overheated;
+            partState.Heat = heatPacket.Heat;
+            partState.Overheated = heatPacket.Overheated;
+            
+            // Same legacy logic:
+            if (!wasOver && partState.Overheated)
+            {
+                w.OverHeatCountDown = 15;
+            }
+            
+            // Special edge case: we receive a nonzero heat, and our heat loop is not running.
+            // The server may not send a packet when heat reaches zero due to the timer. We could modify it to do so.
+            // But, more robustly, we can just re-start the heat loop.
+            if (!w.HeatLoopRunning)
+            {
+                w.HeatLoopRunning = true;
+                FutureEvents.Schedule(w.UpdateWeaponHeat, null, 20);
+            }
+            
+            return true;
         }
     }
 }
