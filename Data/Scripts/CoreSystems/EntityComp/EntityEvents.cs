@@ -12,6 +12,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Platform.CorePlatform;
 using static CoreSystems.Session;
 
@@ -237,13 +238,13 @@ namespace CoreSystems.Support
 
             if (comp.IsFunctional)
             {
-                if (debug && I.IsClient)
+                if ((debug || DebugLog.ForceDebug) && I.IsClient)
                 {
                     var w = comp.PrimaryWeapon;
 
                     if (w.ClientReloadWaitingForServer)
                     {
-                        stringBuilder.AppendLine($"Reload Wait {I.Tick - w.ClientReloadWaitingForServerBeginTick}");
+                        stringBuilder.AppendLine($"ClientReloadWaitingForServer: Reload Wait {I.Tick - w.ClientReloadWaitingForServerBeginTick}t");
 ;                    }
                 }
 

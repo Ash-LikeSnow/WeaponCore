@@ -256,10 +256,7 @@ namespace CoreSystems.Support
             ManualMode = false;
 
             Sleep = false;
-
-            //TODO AdvSync if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
-            //TODO AdvSync     info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
-
+            
             if (ApproachInfo != null)
             {
                 ApproachInfo.Clean(info);

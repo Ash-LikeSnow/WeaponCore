@@ -1143,15 +1143,6 @@ namespace CoreSystems
                 pTarget.State = I.AdvSyncClient && pTarget.Info.AmmoDef.Const.PdDeathSync && pTarget.Info.AdvSyncId != 0 
                     ? Projectile.ProjectileState.ClientPhantom
                     : Projectile.ProjectileState.Destroy;
-               
-                // TODO AdvSync What? :
-                /*
-                if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
-                {
-                    ProtoPdSyncMonitor.Collection.Add(pTarget.Info.Storage.SyncId);
-                    pTarget.Info.Storage.SyncId = ulong.MaxValue;
-                }
-                */
             }
             else
             {
@@ -1199,15 +1190,6 @@ namespace CoreSystems
                         sTarget.State = I.AdvSyncClient && sTarget.Info.AmmoDef.Const.PdDeathSync && sTarget.Info.AdvSyncId != 0
                             ? Projectile.ProjectileState.ClientPhantom 
                             : Projectile.ProjectileState.Destroy;
-                        
-                        // TODO AdvSync What? :
-                        /*
-                        if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
-                        {
-                            ProtoPdSyncMonitor.Collection.Add(sTarget.Info.Storage.SyncId);
-                            sTarget.Info.Storage.SyncId = ulong.MaxValue;
-                        }
-                        */
                     }
                     else
                     {

@@ -40,7 +40,7 @@ namespace CoreSystems
     public partial class Session
     {
         internal const double StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-        internal const ushort ClientPdPacketId = 62516;
+        //internal const ushort ClientPdPacketId = 62516; - Safe to re-use the number if needed
         internal const ushort StringPacketId = 62517;
         internal const ushort ServerPacketId = 62518;
         internal const ushort ClientPacketId = 62519;
@@ -185,7 +185,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, AvInfoCache> AvShotCache = new Dictionary<ulong, AvInfoCache>();
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
-        internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
+        internal readonly OrderedPacketDictionary PrunedPacketsToClient = new OrderedPacketDictionary();
         #region Adv Sync Position Networking Fields
         internal readonly Dictionary<ulong, AdvProjectilePositionSyncEntry>  AdvProjectilePositionFramesByNetId = new Dictionary<ulong, AdvProjectilePositionSyncEntry>();
         internal readonly Stack<Queue<AdvProjectilePositionFrame>> AdvProjectilePositionQueuePool = new Stack<Queue<AdvProjectilePositionFrame>>();
@@ -233,7 +233,6 @@ namespace CoreSystems
         internal readonly HashSet<SupportSys> DisplayAffectedArmor = new HashSet<SupportSys>();
         internal readonly HashSet<Type> ControlTypeActivated = new HashSet<Type>();
         internal readonly HashSet<IMyPlayer> PlayerControllerMonitor = new HashSet<IMyPlayer>();
-        internal readonly List<int> PointDefenseSyncs = new List<int>();
         internal readonly List<GridGroupMap> GridGroupUpdates = new List<GridGroupMap>();
         internal readonly List<Weapon> InvPullClean = new List<Weapon>();
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
@@ -308,7 +307,6 @@ namespace CoreSystems
 
         internal readonly Spectrum Spectrum;
 
-        // TODO AdvSync internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
