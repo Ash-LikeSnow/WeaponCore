@@ -135,8 +135,7 @@ namespace CoreSystems.Support
             }
             catch (Exception e)
             {
-                MyAPIGateway.Utilities.ShowNotification(e.Message, 5000);
-                MyLog.Default.Error($"WC failed to initialize log {name} \n {e.Message}");
+                MyLog.Default.Error($"Exception: WC failed to initialize log {name} \n {e.Message}");
             }
         }
 
@@ -155,7 +154,18 @@ namespace CoreSystems.Support
 
                 using (var write = MyAPIGateway.Utilities.WriteFileInLocalStorage(sb.ToString(), anyObjectInYourMod))
                 {
-                    write.Write(read.ReadToEnd());
+                    int n = 0;
+                    while (read.Peek() != -1)
+                    {
+                        write.Write(Convert.ToChar(read.Read()));
+                        n++;
+
+                        if (n > short.MaxValue)
+                        {
+                            write.Flush();
+                            n = 0;
+                        }
+                    }
                     write.Flush();
                     write.Dispose();
                 }
