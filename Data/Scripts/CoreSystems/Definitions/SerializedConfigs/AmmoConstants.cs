@@ -259,6 +259,7 @@ namespace CoreSystems.Support
         public readonly bool ProjectilesFirst;
         public readonly bool OverrideWeaponEffect;
         public readonly bool IgnoreAntiSmarts;
+        public readonly bool GridsTargetSeekersTargetingThis;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float CharacterDmgScale;
@@ -430,7 +431,7 @@ namespace CoreSystems.Support
 
             ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
                 out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ZeroEffortNav, out ScanRangeSqr, out OffsetMinRangeSqr,
-                out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime, out IgnoreAntiSmarts);
+                out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime, out IgnoreAntiSmarts, out GridsTargetSeekersTargetingThis);
 
             IsGuided = TravelTo || IsMine || IsDrone || IsSmart;
 
@@ -659,7 +660,7 @@ namespace CoreSystems.Support
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
             out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out bool zeroEffortNav, out double scanRangeSqr, out double offsetMinRangeSqr,
-            out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime, out bool ignoreAntiSmarts)
+            out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime, out bool ignoreAntiSmarts, out bool gridsTargetSeekersTargetingThis)
         {
             isSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
 
@@ -695,6 +696,8 @@ namespace CoreSystems.Support
             noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
             zeroEffortNav = ammo.AmmoDef.Trajectory.Smarts.AltNavigation;
             ignoreAntiSmarts = ammo.AmmoDef.Trajectory.Smarts.IgnoreAntiSmarts;
+
+            gridsTargetSeekersTargetingThis = ammo.AmmoDef.GridsTargetSeekersTargetingThis && ammo.AmmoDef.Health > 0;
         }
 
 
@@ -1910,6 +1913,8 @@ namespace CoreSystems.Support
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon1;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon2;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon3;
+        public readonly TrajectoryDef.ApproachDef.Conditions EndCon4;
+        public readonly TrajectoryDef.ApproachDef.Conditions EndCon5;
         public readonly bool AdjustForward;
         public readonly bool AdjustUp;
         public readonly bool DisableAvoidance;
@@ -1945,6 +1950,8 @@ namespace CoreSystems.Support
         public readonly double End1Value;
         public readonly double End2Value;
         public readonly double End3Value;
+        public readonly double End4Value;
+        public readonly double End5Value;
         public readonly double ElevationTolerance;
 
         public readonly int OffsetTime;
@@ -1985,6 +1992,8 @@ namespace CoreSystems.Support
             EndCon1 = def.EndCondition1;
             EndCon2 = def.EndCondition2;
             EndCon3 = def.EndCondition3;
+            EndCon4 = def.EndCondition4;
+            EndCon5 = def.EndCondition5;
             AdjustForward = def.AdjustForward;
             AdjustUp = def.AdjustUp;
             Orbit = def.Orbit;
@@ -2008,6 +2017,8 @@ namespace CoreSystems.Support
             End1Value = def.End1Value;
             End2Value = def.End2Value;
             End3Value = def.End3Value;
+            End4Value = def.End4Value;
+            End5Value = def.End5Value;
             TrackingDistance = def.TrackingDistance;
             LeadDistance = def.LeadDistance;
             AccelMulti = def.AccelMulti;
@@ -2066,7 +2077,7 @@ namespace CoreSystems.Support
             }
         }
 
-        public int GetRestartId(ProInfo info, bool end1, bool end2, bool end3)
+        public int GetRestartId(ProInfo info, bool end1, bool end2, bool end3, bool end4, bool end5)
         {
             var array = Definition.RestartList;
             
@@ -2085,43 +2096,31 @@ namespace CoreSystems.Support
                     if (runCount >= item.MaxRuns && item.MaxRuns > 0)
                         continue;
 
+                    var forced = end1 && item.End1WeightMod == double.MaxValue || end2 && item.End2WeightMod == double.MaxValue || end3 && item.End3WeightMod == double.MaxValue || end4 && item.End4WeightMod == double.MaxValue || end5 && item.End5WeightMod == double.MaxValue;
+                    if (forced)
+                    {
+                        highestRoll = 1;
+                        rngSelectedId = item.ApproachId;
+                        break;
+                    }
+
+                    
                     var mod1Enabled = end1 && !MyUtils.IsZero(item.End1WeightMod);
                     var mod2Enabled = end2 && !MyUtils.IsZero(item.End2WeightMod);
                     var mod3Enabled = end3 && !MyUtils.IsZero(item.End3WeightMod);
+                    var mod4Enabled = end4 && !MyUtils.IsZero(item.End4WeightMod);
+                    var mod5Enabled = end5 && !MyUtils.IsZero(item.End5WeightMod);
 
-                    float rng;
-                    if (mod1Enabled && mod2Enabled && mod3Enabled)
-                    {
-                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
-                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
-                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
-                        rng = Math.Max(rng1, Math.Max(rng2, rng3));
-                    }
-                    else if (mod1Enabled && mod3Enabled)
-                    {
-                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
-                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
-                        rng = Math.Max(rng1, rng3);
-                    }
-                    else if (mod2Enabled && mod3Enabled)
-                    {
-                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
-                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
-                        rng = Math.Max(rng2, rng3);
-                    }
-                    else if (mod1Enabled && mod2Enabled) {
-                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
-                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
-                        rng = Math.Max(rng1, rng2);
-                    }
-                    else if (mod1Enabled)
-                        rng = (float) info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
-                    else if (mod2Enabled)
-                        rng = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
-                    else if (mod3Enabled)
-                        rng = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
-                    else 
-                        rng = info.Random.Range(item.Weight.Start, item.Weight.End);
+                    // beygone if statement horde
+                    float rng = mod1Enabled || mod2Enabled || mod3Enabled || mod4Enabled ? info.Random.Range(item.Weight.Start, item.Weight.End) : float.MinValue;
+                    var rng1 = mod1Enabled ? (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod) : float.MinValue;
+                    var rng2 = mod2Enabled ? (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod) : float.MinValue;
+                    var rng3 = mod3Enabled ? (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod) : float.MinValue;
+                    var rng4 = mod4Enabled ? (float)info.Random.Range(item.Weight.Start * item.End4WeightMod, item.Weight.End * item.End4WeightMod) : float.MinValue;
+                    var rng5 = mod5Enabled ? (float)info.Random.Range(item.Weight.Start * item.End5WeightMod, item.Weight.End * item.End5WeightMod) : float.MinValue;
+
+                    if (mod1Enabled || mod2Enabled || mod3Enabled || mod4Enabled || mod5Enabled)
+                        rng = Math.Max(rng, Math.Max(rng1, Math.Max(rng2, Math.Max(rng3, Math.Max(rng4, rng5)))));
 
                     if (rng > highestRoll)
                     {

@@ -208,14 +208,14 @@ namespace CoreSystems
                 {
                     if (ApproachDebug.TimeSinceSpawn <= double.MinValue)
                     {
-                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2} - End3:{ApproachDebug.Approach.Definition.EndCondition3}:{ApproachDebug.End3}", 160, "White");
+                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2} - End3:{ApproachDebug.Approach.Definition.EndCondition3}:{ApproachDebug.End3}\n - End4:{ApproachDebug.Approach.Definition.EndCondition4}:{ApproachDebug.End4} - End5:{ApproachDebug.Approach.Definition.EndCondition5}:{ApproachDebug.End5}", 160, "White");
                         ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - RestartType:{ApproachDebug.Approach.Definition.RestartCondition}]", 160, "White");
                         ShowLocalNotify($"[Forward:{ApproachDebug.Approach.Forward} - Up:{ApproachDebug.Approach.Up} - Source:{ApproachDebug.Approach.PositionB} Destination:{ApproachDebug.Approach.PositionC}", 160, "White");
 
                     }
                     else
                     {
-                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2} - End3:{ApproachDebug.Approach.Definition.EndCondition3}:{ApproachDebug.End3}", 160, "White");
+                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2} - End3:{ApproachDebug.Approach.Definition.EndCondition3}:{ApproachDebug.End3}\n - End4:{ApproachDebug.Approach.Definition.EndCondition4}:{ApproachDebug.End4} - End5:{ApproachDebug.Approach.Definition.EndCondition5}:{ApproachDebug.End5}", 160, "White");
                         ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - RestartType:{ApproachDebug.Approach.Definition.RestartCondition}", 160, "White");
                         ShowLocalNotify($"[Forward:{ApproachDebug.Approach.Forward} - Up:{ApproachDebug.Approach.Up} - Source:{ApproachDebug.Approach.PositionB} Destination:{ApproachDebug.Approach.PositionC}", 160, "White");
                         ShowLocalNotify($"[TimeSinceSpawn:{ApproachDebug.TimeSinceSpawn} - NextSpawn:{ApproachDebug.NextSpawn}", 160, "White");
@@ -226,9 +226,9 @@ namespace CoreSystems
             else if (ApproachDebug.LastTick == Tick - 1 && Tick != 1)
             {
                 if (ApproachDebug.TimeSinceSpawn <= double.MinValue)
-                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}", 2000, "White");
+                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}:{ApproachDebug.End3}:{ApproachDebug.End4}:{ApproachDebug.End5}", 2000, "White");
                 else
-                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2} - {ApproachDebug.TimeSinceSpawn}:{ApproachDebug.NextSpawn}", 2000, "White");
+                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}:{ApproachDebug.End3}:{ApproachDebug.End4}:{ApproachDebug.End5} - {ApproachDebug.TimeSinceSpawn}:{ApproachDebug.NextSpawn}", 2000, "White");
             }
 
             if (PersistentDebugDraws.Count > 0)

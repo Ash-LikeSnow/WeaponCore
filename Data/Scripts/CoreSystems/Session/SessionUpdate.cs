@@ -795,7 +795,8 @@ namespace CoreSystems
                         var shootRequest = (anyShot || finish);
 
                         var shotReady = canShoot && shootRequest;
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                        var noFireTarget = w.System.Values.HardPoint.Other.AllowNoTargetFiring;
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || noFireTarget || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
                         if (shoot) {
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))

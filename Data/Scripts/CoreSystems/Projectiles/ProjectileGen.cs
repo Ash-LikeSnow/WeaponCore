@@ -1,5 +1,6 @@
 ﻿using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
@@ -33,7 +34,7 @@ namespace CoreSystems.Projectiles
                 var p = Session.I.Projectiles.ProjectilePool.Count > 0 ? Session.I.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 var storage = info.Storage;
-                var target = info.Target;
+                var target = info.Target;  
             
                 info.Id = Session.I.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
@@ -266,7 +267,7 @@ namespace CoreSystems.Projectiles
                 var p = reAdd ?? AddTargets[i];
                 var info = p.Info;
                 var ai = info.Ai;
-                var target = info.Target;
+                var ptarget = info.Target;
                 var ammoDef = info.AmmoDef;
 
                 for (int t = 0; t < ai.TargetAis.Count; t++)
@@ -282,13 +283,13 @@ namespace CoreSystems.Projectiles
 
                         var dumbAdd = false;
 
-                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || p.Info.TestModeShot && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
+                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || info.TestModeShot && p.HadTarget == Projectile.HadTargetState.None || info.Weapon.Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
                             if (Vector3.Dot((Vector3)p.Direction, (Vector3)(info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation)) < 0)
                             {
                                 var testRay = new RayD(info.Origin, p.Direction);
-                                var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null || p.Info.TestModeShot;
+                                var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null || info.TestModeShot;
 
                                 if (!quickCheck)
                                 {
@@ -304,10 +305,10 @@ namespace CoreSystems.Projectiles
                             }
                         }
 
-                        var cubeTarget = target.TargetObject as MyCubeBlock;
+                        var cubeTarget = ptarget.TargetObject as MyCubeBlock;
 
                         // Targeting grid center or painter of the currently checked grid
-                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
+                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == ptarget.TopEntityId;
 
                         // Targeting a cube on the grid being checked
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid);
@@ -317,15 +318,19 @@ namespace CoreSystems.Projectiles
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         
                         // Manual only
-                        var condition4 = target.TargetState == Target.TargetStates.IsFake && target.TopEntityId == 0;
+                        var condition4 = ptarget.TargetState == Target.TargetStates.IsFake && ptarget.TopEntityId == 0;
 
                         // ScanRange limitation, appears to be non functional
                         //var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
 
                         // TargetGridCenter only for subgrids/support, position within grid center + MaxTargetingRange of the grid being checked
-                        var condition6 = !notSmart && target.TargetObject is MyCubeGrid && targetSphere.Contains(target.TargetPos) == ContainmentType.Contains;
+                        var condition6 = !notSmart && ptarget.TargetObject is MyCubeGrid && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
 
-                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition6);
+                        // Projectile is targeting a projectile that wants any targets it has to be added
+                        var condition7 = !condition1 && !condition2 && !condition3 && !condition4 && !condition6 && !notSmart && ptarget.TargetObject != null && ptarget.TargetState == Target.TargetStates.IsProjectile // why is HasTarget false when it has targets???
+                            && (((Projectile)ptarget.TargetObject)?.Info.AmmoDef.Const.GridsTargetSeekersTargetingThis ?? false) && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
+
+                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition6 || condition7);
 
                         if (dumbAdd || validAi)
                         {

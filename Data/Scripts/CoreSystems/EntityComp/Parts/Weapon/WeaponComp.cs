@@ -317,7 +317,7 @@ namespace CoreSystems.Platform
                     if (sequence.Weapons.Count > 1 && sequence.Weapons.ContainsKey(this))
                         return false;
 
-                    var working = IsFunctional && IsWorking && (!TurretController || MasterOverrides.Override || ModOverride || PartTracking == Collection.Count);
+                    var working = IsFunctional && IsWorking && (!TurretController || MasterOverrides.Override || PrimaryWeapon.System.Values.HardPoint.Other.AllowNoTargetFiring || ModOverride || PartTracking == Collection.Count);
 
                     if (ShootManager.LastShootTick > ShootManager.PrevShootEventTick || !working)
                     {

@@ -689,6 +689,8 @@ namespace CoreSystems.Support
                 [ProtoMember(12)] internal bool ProhibitLGTargeting;
                 [ProtoMember(13)] internal bool ProhibitSGTargeting;
                 [ProtoMember(14)] internal bool ProhibitSubsystemChanges;
+                [ProtoMember(15)] internal bool DisableOwnGridLosCheck;
+                [ProtoMember(16)] internal bool AllowNoTargetFiring;
             }
 
             [ProtoContract]
@@ -738,7 +740,7 @@ namespace CoreSystems.Support
             [ProtoMember(34)] internal bool IgnoreGrids;
             [ProtoMember(35)] internal bool AllowNegativeHeatModifier;
             [ProtoMember(36)] internal int HeatNeededToFire;
-
+            [ProtoMember(37)] internal bool GridsTargetSeekersTargetingThis;
 
             [ProtoContract]
             public struct SynchronizeDef
@@ -1464,6 +1466,9 @@ namespace CoreSystems.Support
                         DistanceToTarget,
                         DistanceFromEndTrajectory,
                         DistanceToEndTrajectory,
+                        ReaquiredTarget,
+                        EnemySeekersGreaterThanEqualTo,
+                        EnemySeekersLessThanEqualTo,
                     }
 
                     public enum UpRelativeTo
@@ -1536,6 +1541,7 @@ namespace CoreSystems.Support
                         StorePositionA,
                         StorePositionB,
                         StorePositionC,
+                        ForceRetarget,
                     }
 
                     [ProtoContract]
@@ -1548,6 +1554,8 @@ namespace CoreSystems.Support
                         [ProtoMember(4)] public double End2WeightMod;
                         [ProtoMember(5)] public int MaxRuns;
                         [ProtoMember(6)] public double End3WeightMod;
+                        [ProtoMember(7)] public double End4WeightMod;
+                        [ProtoMember(8)] public double End5WeightMod;
                     }
 
                     [ProtoMember(1)] internal ReInitCondition RestartCondition;
@@ -1617,6 +1625,10 @@ namespace CoreSystems.Support
                     [ProtoMember(65)] internal double End3Value;
                     [ProtoMember(66)] internal bool SwapNavigationType;
                     [ProtoMember(67)] internal bool ElevationRelativeToC;
+                    [ProtoMember(68)] internal Conditions EndCondition4;
+                    [ProtoMember(69)] internal double End4Value;
+                    [ProtoMember(70)] internal Conditions EndCondition5;
+                    [ProtoMember(71)] internal double End5Value;
                 }
 
                 [ProtoContract]
