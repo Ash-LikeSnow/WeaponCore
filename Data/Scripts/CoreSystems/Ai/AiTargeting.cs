@@ -837,7 +837,7 @@ namespace CoreSystems.Support
                     else
                     {
                         Vector3D? hitInfo;
-                        if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, ai))
+                        if (ai.AiType == AiTypes.Grid && !w.System.Values.HardPoint.Other.DisableOwnGridLosCheck && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, ai))
                         {
                             if (isFromManager)
                             {
@@ -1216,6 +1216,10 @@ namespace CoreSystems.Support
                         target.Set(lp, lp.Position,  0, 0, long.MaxValue);
                         p.TargetPosition = lp.Position;
                         lp.Seekers.Add(p);
+                        if (aConst.Health > 0 && lp.Info.AmmoDef.Const.GridsTargetSeekersTargetingThis)
+                        {
+                            session.Projectiles.AddProjectileTargets(p);
+                        }
                         found = true;
                         break;
                     }
@@ -1229,6 +1233,10 @@ namespace CoreSystems.Support
                     target.Set(lp, lp.Position, 0, 0, long.MaxValue);
                     p.TargetPosition = lp.Position;
                     lp.Seekers.Add(p);
+                    if (aConst.Health > 0 && lp.Info.AmmoDef.Const.GridsTargetSeekersTargetingThis)
+                    {
+                        session.Projectiles.AddProjectileTargets(p);
+                    }
                     found = true;
                     break;
                 }

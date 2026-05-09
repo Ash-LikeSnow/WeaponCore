@@ -247,6 +247,7 @@ namespace CoreSystems.Support
                 I.OnPlayerControl(null, CoreEntity);
             }
             Status = !IsWorking ? Start.Starting : Start.ReInit;
+            IsWorkingChanged(Cube);
         }
 
         public override void OnRemovedFromScene()

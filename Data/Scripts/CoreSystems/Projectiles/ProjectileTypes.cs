@@ -747,6 +747,8 @@ namespace CoreSystems.Support
         public bool End1;
         public bool End2;
         public bool End3;
+        public bool End4;
+        public bool End5;
         public double TimeSinceSpawn;
         public double NextSpawn;
     }

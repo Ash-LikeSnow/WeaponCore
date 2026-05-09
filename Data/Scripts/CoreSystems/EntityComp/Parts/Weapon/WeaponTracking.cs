@@ -1486,7 +1486,7 @@ namespace CoreSystems.Platform
 
         public bool MuzzleHitSelf()
         {
-            if (ActiveAmmoDef.AmmoDef.IgnoreGrids)
+            if (ActiveAmmoDef.AmmoDef.IgnoreGrids || System.Values.HardPoint.Other.DisableOwnGridLosCheck)
                 return false;
 
             for (int i = 0; i < Muzzles.Length; i++)
