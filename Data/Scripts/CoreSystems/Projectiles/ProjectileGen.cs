@@ -328,7 +328,7 @@ namespace CoreSystems.Projectiles
 
                         // Projectile is targeting a projectile that wants any targets it has to be added
                         var condition7 = !condition1 && !condition2 && !condition3 && !condition4 && !condition6 && !notSmart && ptarget.TargetObject != null && ptarget.TargetState == Target.TargetStates.IsProjectile // why is HasTarget false when it has targets???
-                            && (((Projectile)ptarget.TargetObject)?.Info.AmmoDef.Const.GridsTargetSeekersTargetingThis ?? false) && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
+                            && (((Projectile)ptarget.TargetObject)?.Info?.AmmoDef.Const.GridsTargetSeekersTargetingThis ?? false) && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
 
                         var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition6 || condition7);
 
