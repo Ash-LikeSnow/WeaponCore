@@ -26,7 +26,6 @@ namespace CoreSystems.Support
             {
                 if (Registered)
                     Log.Line("BaseComp RegisterEvents error");
-                //TODO change this
                 Registered = true;
                 if (IsBlock)
                 {
@@ -40,7 +39,6 @@ namespace CoreSystems.Support
                         TerminalBlock.AppendingCustomInfo += AppendingCustomInfoControl;
 
                     Cube.IsWorkingChanged += IsWorkingChanged;
-                    IsWorkingChanged(Cube);
                 }
 
                 if (CoreInventory == null)
@@ -173,7 +171,6 @@ namespace CoreSystems.Support
                         I.FutureEvents.Schedule(wComp.DeActivateWhileOn, null, 30);
 
                 }
-                if (Cube.ResourceSink.CurrentInputByType(GId) < 0) Log.Line($"IsWorking:{IsWorking}(was:{wasFunctional}) - Func:{IsFunctional} - GridAvailPow:{Ai.GridAvailablePower} - SinkPow:{SinkPower} - SinkReq:{Cube.ResourceSink.RequiredInputByType(GId)} - SinkCur:{Cube.ResourceSink.CurrentInputByType(GId)}");
 
                 if (!IsWorking && Registered) {
 
@@ -256,17 +253,16 @@ namespace CoreSystems.Support
 
                 if (comp.PrimaryWeapon.System.TargetGridCenter)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoCenter")}");
-
                 if (IdlePower > 0.01)
                 {
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoIdlePower")}: {IdlePower:0.00} {Localization.GetText("WeaponInfoMWLabel")}");
 
                     if (I.CurrentClientEwaredCubes.ContainsKey(comp.Cube.EntityId))
                         stringBuilder.Append($"\n{Localization.GetText("WeaponInfoEWARed")}");
-                    else if (comp.Cube.IsFunctional && comp.Cube.IsWorking && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
+                    else if (comp.Cube.IsFunctional && comp.FunctionalBlock.Enabled && comp.Cube.ResourceSink.CurrentInputByType(GId) < IdlePower)
                         stringBuilder.Append($"\n{Localization.GetText("WeaponInfoInsufficientPower")}");
                 }
-                if (!comp.IsWorking || comp.IsDisabled)
+                if (!comp.FunctionalBlock.Enabled)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoBlockOffWarn")}");
 
                 foreach (var val in comp.PrimaryWeapon.System.WConst.ProjectileTags)
@@ -321,11 +317,11 @@ namespace CoreSystems.Support
                     var showName = w.ActiveAmmoDef.AmmoDef.Const.TerminalName != w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText;
                     var displayName = showName ? w.ActiveAmmoDef.AmmoDef.Const.TerminalName + " (" + w.ActiveAmmoDef.AmmoDef.Const.MagazineDef.DisplayNameText + ")" : w.ActiveAmmoDef.AmmoDef.Const.TerminalName;
                     stringBuilder.Append($"\n\n" + w.System.PartName + $" {(w.Comp.ProhibitSubsystemChanges ? $"\n{Localization.GetText("WeaponInfoNoSubsystem")}" : "")}  " + shots);
-                    stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : loadTimeMessage : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : (w.System.MaxReloads > 0 && w.Reload.LifetimeLoads >= w.System.MaxReloads) ? w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxReloadsDrone") : Localization.GetText("WeaponInfoMaxReloadsHit") : (!w.Comp.IsWorking || w.Comp.IsDisabled) ? Localization.GetText("WeaponInfoBlockOff") : Localization.GetText("WeaponInfoNoammo")))}");
+                    stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo ? string.Empty : $"\n{Localization.GetText("WeaponInfoAmmoLabel")}: " + (w.Loading ? timeToLoad < 0 ? Localization.GetText("WeaponInfoWaitingCharge") : loadTimeMessage : w.ProtoWeaponAmmo.CurrentAmmo > 0 ? Localization.GetText("WeaponInfoLoaded") + " " + w.ProtoWeaponAmmo.CurrentAmmo + "x " + displayName : w.Comp.CurrentInventoryVolume > 0 ? Localization.GetText("WeaponInfoCheckAmmoType") : (w.System.MaxReloads > 0 && w.Reload.LifetimeLoads >= w.System.MaxReloads) ? w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxReloadsDrone") : Localization.GetText("WeaponInfoMaxReloadsHit") : (!comp.FunctionalBlock.Enabled) ? Localization.GetText("WeaponInfoBlockOff") : Localization.GetText("WeaponInfoNoammo")))}");
                     stringBuilder.Append($" {(w.System.MaxReloads <= 0 ? string.Empty : $"\n{(w.ActiveAmmoDef.AmmoDef.Const.HasRefund ? Localization.GetText("WeaponInfoMaxDroneLabel") : Localization.GetText("WeaponInfoMaxReloadLabel"))}: {w.System.MaxReloads - w.Reload.LifetimeLoads}/{w.System.MaxReloads}")}");
                     if (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget)
                     {
-                        if (w.Comp.IsWorking)
+                        if (comp.FunctionalBlock.Enabled)
                         {
                             stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoHasTarget") + ": " + (w.Target.HasTarget ? Localization.GetText("WeaponTargTrue") : w.Comp.MasterAi.DetectionInfo.SomethingInRange && (w.Target.CurrentState == Target.States.NotSet || w.Target.CurrentState == Target.States.Expired) ? Localization.GetText("WeaponTargNeedSelection") : w.MinTargetDistanceSqr > 0 && (comp.MasterAi.DetectionInfo.OtherRangeSqr < w.MinTargetDistanceSqr || comp.MasterAi.DetectionInfo.PriorityRangeSqr < w.MinTargetDistanceSqr) ? Localization.GetText("WeaponTargTooClose") : w.BaseComp.MasterAi.DetectionInfo.SomethingInRange ? Localization.GetText("WeaponTargRange") : Localization.GetText("WeaponTargFalse")) : string.Empty)}");
                             stringBuilder.Append($" {(w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? "\n" + Localization.GetText("WeaponInfoLoS") + ": " + (w.Target.HasTarget ? "" + !w.PauseShoot : Localization.GetText("WeaponInfoNoTarget")) : string.Empty)}");
