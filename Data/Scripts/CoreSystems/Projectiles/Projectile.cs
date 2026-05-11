@@ -3355,19 +3355,19 @@ namespace CoreSystems.Projectiles
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
             }
 
-            // why is this necessary
-            if (timedSpawn && aConst.GridsTargetSeekersTargetingThis)
-            {
-                Session.I.Projectiles.AddTargets.Add(this);
-            }
-
             if (!spawn)
                 return;
 
             ++Info.SpawnDepth;
 
             if (timedSpawn && ++Info.Frags == aConst.MaxFrags && aConst.FragParentDies)
+            {
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+            }
+            else if (timedSpawn && aConst.GridsTargetSeekersTargetingThis && aConst.Health > 0)
+            {
+                Session.I.Projectiles.AddTargets.Add(this);
+            }
             Info.LastFragTime = (int) Info.RelativeAge;
         }
 
