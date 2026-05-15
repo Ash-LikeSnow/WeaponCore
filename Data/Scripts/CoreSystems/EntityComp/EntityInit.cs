@@ -93,7 +93,12 @@ namespace CoreSystems.Support
                 CoreInventory.Constraint.Clear();
 
                 if (!string.IsNullOrEmpty(CustomIcon)) {
-                    var iconPath = Path.Combine($"Textures\\GUI\\Icons\\", CustomIcon);
+                    string iconPath;
+                    if (Path.GetFileName(CustomIcon) == CustomIcon) // idk if theres a better way to do this
+                        iconPath = Path.Combine($"Textures\\GUI\\Icons\\", CustomIcon);
+                    else
+                        iconPath = CustomIcon;
+
                     CoreInventory.Constraint.Icon = iconPath;
                     CoreInventory.Constraint.UpdateIcon();
                 }
