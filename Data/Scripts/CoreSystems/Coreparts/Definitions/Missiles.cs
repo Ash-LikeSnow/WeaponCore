@@ -22,7 +22,7 @@ namespace Scripts {
                         AzimuthPartId = "None", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "None",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                     
                  },
@@ -113,7 +113,7 @@ namespace Scripts {
                         AzimuthPartId = "MissileTurretBase1", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "MissileTurretBarrels",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                         new MountPointDef {
                         SubtypeId = "LargeMissileTurretReskin", // Block Subtypeid. Your Cubeblocks contain this information
@@ -122,7 +122,7 @@ namespace Scripts {
                         AzimuthPartId = "MissileTurretBase1", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "MissileTurretBarrels",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
 
                  },
@@ -213,7 +213,7 @@ namespace Scripts {
                         AzimuthPartId = "None", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "None",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.25f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                     new MountPointDef {
                         SubtypeId = "SmallMissileLauncherWarfare2", // Block Subtypeid. Your Cubeblocks contain this information
@@ -222,7 +222,7 @@ namespace Scripts {
                         AzimuthPartId = "None", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "None",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.25f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                  },
                 Muzzles = new[] {
@@ -296,7 +296,7 @@ namespace Scripts {
                         AzimuthPartId = "None", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "None",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.25f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                     
                  },
@@ -371,7 +371,7 @@ namespace Scripts {
                         AzimuthPartId = "MissileTurretBase1", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "MissileTurretBarrels",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                     new MountPointDef {
                         SubtypeId = "SmallMissileTurretReskin", // Block Subtypeid. Your Cubeblocks contain this information
@@ -380,7 +380,7 @@ namespace Scripts {
                         AzimuthPartId = "MissileTurretBase1", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "MissileTurretBarrels",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterMissile.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
 
                  },

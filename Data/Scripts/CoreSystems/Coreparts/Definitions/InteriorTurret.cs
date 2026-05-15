@@ -22,7 +22,7 @@ namespace Scripts {
                         AzimuthPartId = "InteriorTurretBase1", // Your Rotating Subpart, the bit that moves sideways.
                         ElevationPartId = "InteriorTurretBase2",// Your Elevating Subpart, that bit that moves up.
                         DurabilityMod = 0.5f, // GeneralDamageMultiplier, 0.25f = 25% damage taken.
-                        IconName = "FilterAmmo5.54mm.dds" // Overlay for block inventory slots, like reactors, refineries, etc.
+                        IconName = "" // Overlay for block inventory slots, like reactors, refineries, etc.
                     },
                     
                  },
