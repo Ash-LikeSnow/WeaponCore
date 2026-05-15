@@ -97,7 +97,7 @@ namespace CoreSystems.Support
                     if (Path.GetFileName(CustomIcon) == CustomIcon) // idk if theres a better way to do this
                         iconPath = Path.Combine(Path.Combine(Platform.Structure.ModPath, $"Textures\\GUI\\Icons\\"), CustomIcon);
                     else if (CustomIcon.StartsWith("\\"))
-                        iconPath = Path.Combine(Platform.Structure.ModPath, CustomIcon);
+                        iconPath = Path.Combine(Platform.Structure.ModPath, CustomIcon.Substring(1));
                     else
                         iconPath = CustomIcon;
 
