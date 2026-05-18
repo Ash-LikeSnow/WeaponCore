@@ -1629,6 +1629,7 @@ namespace CoreSystems.Support
                     [ProtoMember(69)] internal double End4Value;
                     [ProtoMember(70)] internal Conditions EndCondition5;
                     [ProtoMember(71)] internal double End5Value;
+                    [ProtoMember(72)] internal bool DockOnEnd;
                 }
 
                 [ProtoContract]
