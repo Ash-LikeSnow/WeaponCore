@@ -2092,9 +2092,11 @@ namespace CoreSystems.Support
                 {
                     var item = array[i];
                     var runCount = aStorageArray[item.ApproachId].RunCount;
-                    
+
                     if (runCount >= item.MaxRuns && item.MaxRuns > 0)
+                    {
                         continue;
+                    }
 
                     var forced = end1 && item.End1WeightMod == double.MaxValue || end2 && item.End2WeightMod == double.MaxValue || end3 && item.End3WeightMod == double.MaxValue || end4 && item.End4WeightMod == double.MaxValue || end5 && item.End5WeightMod == double.MaxValue;
                     if (forced)
@@ -2112,13 +2114,12 @@ namespace CoreSystems.Support
                     var mod5Enabled = end5 && !MyUtils.IsZero(item.End5WeightMod);
 
                     // beygone if statement horde
-                    float rng = mod1Enabled || mod2Enabled || mod3Enabled || mod4Enabled ? info.Random.Range(item.Weight.Start, item.Weight.End) : float.MinValue;
+                    float rng = !(mod1Enabled || mod2Enabled || mod3Enabled || mod4Enabled || mod5Enabled) ? info.Random.Range(item.Weight.Start, item.Weight.End) : float.MinValue;
                     var rng1 = mod1Enabled ? (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod) : float.MinValue;
                     var rng2 = mod2Enabled ? (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod) : float.MinValue;
                     var rng3 = mod3Enabled ? (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod) : float.MinValue;
                     var rng4 = mod4Enabled ? (float)info.Random.Range(item.Weight.Start * item.End4WeightMod, item.Weight.End * item.End4WeightMod) : float.MinValue;
                     var rng5 = mod5Enabled ? (float)info.Random.Range(item.Weight.Start * item.End5WeightMod, item.Weight.End * item.End5WeightMod) : float.MinValue;
-
                     if (mod1Enabled || mod2Enabled || mod3Enabled || mod4Enabled || mod5Enabled)
                         rng = Math.Max(rng, Math.Max(rng1, Math.Max(rng2, Math.Max(rng3, Math.Max(rng4, rng5)))));
 
@@ -2139,7 +2140,6 @@ namespace CoreSystems.Support
                 rngSelectedId = Definition.OnRestartRevertTo;
 
             var selected = !MyUtils.IsZero(highestRoll) ? rngSelectedId : runsSelectedId;
-
             return selected;
         }
 

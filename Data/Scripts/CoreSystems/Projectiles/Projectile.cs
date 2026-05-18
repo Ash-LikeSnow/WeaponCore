@@ -74,6 +74,7 @@ namespace CoreSystems.Projectiles
             Depleted,
             Destroy,
             Dead,
+            Docking
         }
 
         public enum HadTargetState
@@ -428,8 +429,9 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var session = Session.I;
-            var normalfragSpawn = aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
-            var eolFragSpawn = aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
+            var docking = State == ProjectileState.Docking;
+            var normalfragSpawn = !docking && aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
+            var eolFragSpawn = !docking && aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
             
             if ((normalfragSpawn || eolFragSpawn) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
@@ -449,12 +451,12 @@ namespace CoreSystems.Projectiles
             }
             Seekers.Clear();
 
-            if (EnableAv && Info.AvShot.ForceHitParticle)
+            if (!docking && EnableAv && Info.AvShot.ForceHitParticle)
                 Info.AvShot.HitEffects(true);
 
             State = ProjectileState.Dead;
 
-            var detExp = aConst.EndOfLifeAv && (!aConst.ArmOnlyOnEolHit || Info.ObjectsHit > 0);
+            var detExp = !docking && aConst.EndOfLifeAv && (!aConst.ArmOnlyOnEolHit || Info.ObjectsHit > 0);
 
             if (EnableAv)
             {
@@ -1517,12 +1519,16 @@ namespace CoreSystems.Projectiles
             switch (endEvent)
             {
                 case StageEvents.EndProjectile:
+                    if (def.DockOnEnd)
+                        State = ProjectileState.Docking;
                     EndState = EndStates.EarlyEnd;
                     DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     break;
                 case StageEvents.DoNothing:
                     break;
                 case StageEvents.Refund:
+                    if (def.DockOnEnd)
+                        State = ProjectileState.Docking;
                     Info.Weapon.Comp.HeatLoss += def.HeatRefund;
                     if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
                         --Info.Weapon.Reload.LifetimeLoads;
@@ -1584,6 +1590,8 @@ namespace CoreSystems.Projectiles
 
             if (endEvent == StageEvents.EndProjectile || endEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep))
             {
+                if (def.DockOnEnd)
+                    State = ProjectileState.Docking;
                 EndState = EndStates.EarlyEnd;
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
             }
@@ -1626,6 +1634,8 @@ namespace CoreSystems.Projectiles
             }
             else if (endEvent == StageEvents.Refund)
             {
+                if (def.DockOnEnd)
+                    State = ProjectileState.Docking;
                 Info.Weapon.Comp.HeatLoss += def.HeatRefund;
 
                 if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
@@ -3355,19 +3365,19 @@ namespace CoreSystems.Projectiles
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
             }
 
-            // why is this necessary
-            if (timedSpawn && aConst.GridsTargetSeekersTargetingThis)
-            {
-                Session.I.Projectiles.AddTargets.Add(this);
-            }
-
             if (!spawn)
                 return;
 
             ++Info.SpawnDepth;
 
             if (timedSpawn && ++Info.Frags == aConst.MaxFrags && aConst.FragParentDies)
+            {
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+            }
+            else if (timedSpawn && aConst.GridsTargetSeekersTargetingThis && aConst.Health > 0)
+            {
+                Session.I.Projectiles.AddTargets.Add(this);
+            }
             Info.LastFragTime = (int) Info.RelativeAge;
         }
 
