@@ -785,7 +785,7 @@ namespace CoreSystems
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
                         var needsHeat = w.ActiveAmmoDef.AmmoDef.HeatNeededToFire > 0 && w.PartState.Heat < w.ActiveAmmoDef.AmmoDef.HeatNeededToFire;
 
-                        var canShoot = !overHeat && !reloadingGuard && !w.System.DesignatorWeapon && sequenceReady && !needsHeat;
+                        var canShoot = !overHeat && !reloadingGuard && !w.System.DesignatorWeapon && sequenceReady && !needsHeat && !w.Charging && !w.InCharger;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
