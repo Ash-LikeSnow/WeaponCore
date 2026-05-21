@@ -1609,16 +1609,12 @@ namespace CoreSystems.Projectiles
             switch (endEvent)
             {
                 case StageEvents.EndProjectile:
-                    if (def.DockOnEnd)
-                        State = ProjectileState.Docking;
                     EndState = EndStates.EarlyEnd;
                     DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     break;
                 case StageEvents.DoNothing:
                     break;
                 case StageEvents.Refund:
-                    if (def.DockOnEnd)
-                        State = ProjectileState.Docking;
                     Info.Weapon.Comp.HeatLoss += def.HeatRefund;
                     if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
                         --Info.Weapon.Reload.LifetimeLoads;
