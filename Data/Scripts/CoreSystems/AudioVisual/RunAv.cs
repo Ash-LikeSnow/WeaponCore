@@ -12,6 +12,9 @@ using VRageRender;
 using static VRageRender.MyBillboard;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 using static CoreSystems.Support.WeaponDefinition;
+using VRage.Collections;
+using VRage.ModAPI;
+using System;
 namespace CoreSystems.Support
 {
     class RunAv
@@ -28,6 +31,15 @@ namespace CoreSystems.Support
         internal readonly Stack<QuadCache> QuadCachePool = new Stack<QuadCache>(128);
         internal readonly Stack<List<Vector3D>> OffSetLists = new Stack<List<Vector3D>>(128);
 
+        internal readonly Stack<AvAdvBillboards> AvAdvBillboardsEffectPool = new Stack<AvAdvBillboards>(512);
+        internal readonly List<AvAdvBillboards> AdvBillboards = new List<AvAdvBillboards>(512);
+        internal readonly Stack<AdvBLineCache> AdvBLinesPool = new Stack<AdvBLineCache>(512);
+        internal readonly List<AdvBLineCache>[] AdvBLineCacheCooldown = new List<AdvBLineCache>[5];
+        internal readonly Stack<MyQueue<AdvBLineCache>> AdvBLongTrailCacheLists = new Stack<MyQueue<AdvBLineCache>>(32);
+        internal readonly Stack<MyQueue<AdvBLineCache>> AdvBTrailCacheLists = new Stack<MyQueue<AdvBLineCache>>(128);
+        internal readonly List<AdvBLineCache> AdvBLines = new List<AdvBLineCache>(512);
+        internal readonly Dictionary<float, MatrixD> ComputedRotationMatricies = new Dictionary<float, MatrixD>();
+        internal readonly Stack<MyBillboard> BillboardCache = new Stack<MyBillboard>(512);
 
         internal readonly Stack<MyEntity3DSoundEmitter> FireEmitters = new Stack<MyEntity3DSoundEmitter>();
         internal readonly Stack<MyEntity3DSoundEmitter> TravelEmitters = new Stack<MyEntity3DSoundEmitter>();
@@ -73,6 +85,9 @@ namespace CoreSystems.Support
 
             for (int i = 0; i < QuadCacheCoolDown.Length; i++)
                 QuadCacheCoolDown[i] = new List<QuadCache>();
+
+            for (int i = 0; i < AdvBLineCacheCooldown.Length; i++)
+                AdvBLineCacheCooldown[i] = new List<AdvBLineCache>();
         }
 
         private int _onScreens;
@@ -270,36 +285,36 @@ namespace CoreSystems.Support
         {
             UpdateOneFrameQuads();
 
-                if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
+            if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
                 MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
 
-                if (Session.I.Tick10 && Session.I.DebugMod && false)
+            if (Session.I.Tick10 && Session.I.DebugMod && false)
+            {
+                var os = 0;
+                var m = 0;
+                var d = 0;
+                var p = 0;
+                var t = 0;
+                foreach (var a in AvShots)
                 {
-                    var os = 0;
-                    var m = 0;
-                    var d = 0;
-                    var p = 0;
-                    var t = 0;
-                    foreach (var a in AvShots)
-                    {
-                        if (a.OnScreen == AvShot.Screen.None)
-                            os++;
+                    if (a.OnScreen == AvShot.Screen.None)
+                        os++;
 
-                        if (a.MarkForClose)
-                            m++;
+                    if (a.MarkForClose)
+                        m++;
 
-                        if (a.EndState.Dirty)
-                            d++;
+                    if (a.EndState.Dirty)
+                        d++;
 
-                        if (a.OnScreen == AvShot.Screen.ProxyDraw)
-                            p++;
+                    if (a.OnScreen == AvShot.Screen.ProxyDraw)
+                        p++;
 
-                        if (a.TrailSteps.Count > 0)
-                            t++;
-                    }
-                    Session.I.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
-
+                    if (a.TrailSteps.Count > 0)
+                        t++;
                 }
+                Session.I.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+
+            }
         }
 
         internal void Run()
@@ -310,6 +325,316 @@ namespace CoreSystems.Support
                 _previousTrailCount = 0;
                 _shrinks = 0;
             }
+            
+            
+            uint tick = Session.I.Tick;
+            var advBLineCooldown = AdvBLineCacheCooldown[Session.I.Tick % AdvBLineCacheCooldown.Length];
+
+
+            for (int j = AdvBLines.Count - 1; j >= 0; j--)
+            {
+                if (AdvBLines[j].EndTick <= tick)
+                {
+                    advBLineCooldown.Add(AdvBLines[j]);
+                    AdvBLines.RemoveAtFast(j);
+                }
+            }
+
+            int advBillboardsAdded = AdvBLines.Count;
+            var camPos = Session.I.CameraPos;
+            for (int i = AdvBillboards.Count - 1; i >= 0; i--)
+            {
+                var av = AdvBillboards[i];
+                var rnd = av?.Av?.AmmoDef?.Const?.Random;
+
+                if (rnd == null || av.Av.MarkForClose)
+                {
+                    AdvBillboards.RemoveAtFast(i);
+                    av.Av.AdvBillboards = null;
+                    av.Clean();
+                    continue;
+                }
+
+                advBillboardsAdded += av.Billboards.Count;
+                bool calculatedAccel = false;
+                Vector3 accel = Vector3D.Zero;
+
+                for (int j = av.DrawnLines.Count - 1; j >= 0; j--)
+                {
+                    if (av.DrawnLines[j].EndTick <= tick)
+                    {
+                        advBLineCooldown.Add(av.DrawnLines[j]);
+                        av.DrawnLines.RemoveAtFast(j);
+                    }
+                }
+
+                for (int j = 0; j < av.LineDefs.Length; j++)
+                {
+                    var def = av.LineDefs[j];
+
+                    if (def.DelayBetweenSpawns != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1) != 0)
+                        continue;
+
+                    if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        continue;
+
+                    var mat = av.ProjectileMatrix;
+                    mat.Translation = Vector3D.Zero;
+
+                    var P0 = def.P0;
+                    var P1 = def.P1;
+                    var width = def.Width;
+                    if (def.HasRotateSpeed)
+                    {
+                        MatrixD rotationMat;
+                        if (!ComputedRotationMatricies.TryGetValue(def.RotateSpeed, out rotationMat))
+                        {
+                            rotationMat = MatrixD.CreateFromAxisAngle(mat.Forward, def.RotateSpeed * av.CurrentLifetime);
+                            ComputedRotationMatricies[def.RotateSpeed] = rotationMat;
+                        }
+
+                        mat = MatrixD.CreateWorld(Vector3D.Zero, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
+                    }
+                    if (def.OnlyDrawIfAccelerationAligned)
+                    {
+                        if (!calculatedAccel)
+                        {
+                            accel = Vector3D.TransformNormal((av.Velocity - av.PrevVelocity) * 0.5f - (def.AccelAccountForGrav ? av.Grav : Vector3.Zero), MatrixD.Transpose(mat));
+                            calculatedAccel = true;
+                        }
+
+                        var dir = P1 - P0;
+                        float dotProduct;
+                        if (def.LengthAffectedByAccelAlignment)
+                        {
+                            var len = dir.Normalize();
+                            dotProduct = Vector3.Dot(accel * def.AccelerationSizeMultiplier, dir);
+
+                            var len2 = Math.Min(len, Math.Abs(dotProduct));
+                            P1 = P0 + dir * len2;
+                            width *= len2 / len;
+                        }
+                        else
+                        {
+                            dotProduct = Vector3.Dot(accel * def.AccelerationSizeMultiplier, dir);
+                        }
+
+                        if (dotProduct >= def.AccelerationDotReq)
+                            continue;
+                    }
+                    
+
+                    var line = AdvBLinesPool.Count > 0 ? AdvBLinesPool.Pop() : new AdvBLineCache();
+
+                    line.LerpColor = def.ColorFade;
+                    line.LerpWidth = def.WidthFade;
+                    line.AlwaysDraw = def.AlwaysDraw;
+                    line.StartTick = tick;
+                    line.EndTick = tick + def.TimeRendered;
+
+                    // pov mod profiler
+                    Vector3 P0RndOffset = Vector3.Zero, P1RndOffset = Vector3.Zero;
+                    if (def.P0RandomOffset > 0)
+                    {
+                        // gross inlined random
+                        var tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        var tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle1 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.Pi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle2 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.TwoPi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var r = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * 2 * def.P0RandomOffset - def.P0RandomOffset;
+
+                        var a1sin = MyMath.FastSin(angle1);
+                        var a2sin = MyMath.FastSin(angle2);
+                        var a1cos = MyMath.FastCos(angle1);
+                        var a2cos = MyMath.FastCos(angle2);
+
+                        P0RndOffset = new Vector3(a1sin * a2cos * r, a1sin * a2sin * r, a1cos * r);
+                    }
+                    if (def.P1RandomOffset > 0)
+                    {
+                        // gross inlined random
+                        var tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        var tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle1 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.Pi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle2 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.TwoPi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var r = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * 2 * def.P1RandomOffset - def.P1RandomOffset;
+
+                        var a1sin = MyMath.FastSin(angle1);
+                        var a2sin = MyMath.FastSin(angle2);
+                        var a1cos = MyMath.FastCos(angle1);
+                        var a2cos = MyMath.FastCos(angle2);
+
+                        P1RndOffset = new Vector3(a1sin * a2cos * r, a1sin * a2sin * r, a1cos * r);
+                    }
+
+
+                    line.Start = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(P0 + P0RndOffset, mat);
+                    line.End = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(P1 + P1RndOffset, mat);
+
+                    line.StartWidth = width;
+                    line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
+                        def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
+
+                    line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+                    line.Material = def.Material;
+
+                    av.DrawnLines.Add(line);
+                }
+                advBillboardsAdded += av.DrawnLines.Count;
+
+                for (int j = 0; j < av.TrailDefs.Length; j++)
+                {
+                    var def = av.TrailDefs[j];
+                    var trails = av.Trails[j];
+
+                    if (MyUtils.IsZero(av.PrevPosition)) // first tick
+                        continue;
+
+                    if (trails.Count > 0 && trails.Peek().EndTick <= tick)
+                    {
+                        advBLineCooldown.Add(trails.Dequeue());
+                    }
+
+                    if (def.DelayBetweenSpawns + av.ClientAVLevel != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1 + av.ClientAVLevel) != 0
+                        || def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                    {
+                        if (trails.Count > 0)
+                        {
+                            var prevTrail = trails.Last();
+                            prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick 60 billboard trails can go to like 10 if the modder optimizes
+                        }
+                        continue;
+                    }
+
+                    var line = AdvBLinesPool.Count > 0 ? AdvBLinesPool.Pop() : new AdvBLineCache();
+
+                    line.LerpColor = def.ColorFade;
+                    line.LerpWidth = def.WidthFade;
+                    line.AlwaysDraw = def.AlwaysDraw;
+                    line.StartTick = tick;
+                    line.EndTick = tick + def.TimeRendered;
+
+                    var mat = av.ProjectileMatrix;
+                    if (def.HasRotateSpeed)
+                    {
+                        MatrixD rotationMat;
+                        if (!ComputedRotationMatricies.TryGetValue(def.RotateSpeed, out rotationMat))
+                        {
+                            rotationMat = MatrixD.CreateFromAxisAngle(mat.Forward, def.RotateSpeed * av.CurrentLifetime);
+                            ComputedRotationMatricies[def.RotateSpeed] = rotationMat;
+                        }
+
+                        mat = MatrixD.CreateWorld(mat.Translation, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
+                    }
+
+                    // pov mod profiler
+                    Vector3 P0RndOffset = Vector3.Zero;
+                    if (def.P0RandomOffset > 0)
+                    {
+                        // gross inlined random
+                        var tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        var tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle1 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.Pi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var angle2 = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * MathHelper.TwoPi;
+
+                        // gross inlined random
+                        tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var r = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * 2 * def.P0RandomOffset - def.P0RandomOffset;
+
+                        var a1sin = MyMath.FastSin(angle1);
+                        var a2sin = MyMath.FastSin(angle2);
+                        var a1cos = MyMath.FastCos(angle1);
+                        var a2cos = MyMath.FastCos(angle2);
+
+                        P0RndOffset = new Vector3(a1sin * a2cos * r, a1sin * a2sin * r, a1cos * r);
+                    }
+
+
+                    line.Start = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
+                    line.End = trails.Count > 0 ? trails.Last().Start : av.PrevPosition + Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
+
+                    line.StartWidth = def.Width;
+                    line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
+                        def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
+
+                    line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+                    line.Material = def.Material;
+
+                    trails.Enqueue(line);
+                    advBillboardsAdded += trails.Count;
+                }
+
+                av.CurrentLifetime++;
+                
+                ComputedRotationMatricies.Clear();
+            }
+
             _onScreens = 0;
             _models = 0;
             for (int i = AvShots.Count - 1; i >= 0; i--)
@@ -318,11 +643,9 @@ namespace CoreSystems.Support
                 if (av.OnScreen != AvShot.Screen.None && av.OnScreen != AvShot.Screen.ProxyDraw) _onScreens++;
                 var refreshed = av.LastTick == Session.I.Tick;
                 var aConst = av.AmmoDef.Const;
-                var overDrawLimit = PreAddOneFrame.Count > 32000;
+                var overDrawLimit = PreAddOneFrame.Count + advBillboardsAdded > 32000;
                 if (overDrawLimit && av.Offsets?.Count > 0)
                     av.Offsets.Clear();
-
-
 
                 if (refreshed && av.Tracer != AvShot.TracerState.Off && av.OnScreen != AvShot.Screen.None && !overDrawLimit)
                 {
@@ -603,15 +926,206 @@ namespace CoreSystems.Support
             if (av.TracerShrinks.Count == 0) av.ResetHit();
         }
 
+        internal int AddAdvLineBillboards(List<MyBillboard> BillBoardsToAdd, IEnumerable<AdvBLineCache> lines, ref BoundingSphereD testSphere, uint tick, IMyCamera cam)
+        {
+            int ret = 0;
+            foreach (var line in lines)
+            {
+                var midpoint = (line.End + line.Start) * 0.5f;
+                testSphere = new BoundingSphereD(midpoint, 1); // just want to test a point
+                if (cam.IsInFrustum(ref testSphere))
+                {
+                    var b = line.Billboard;
+                    float oneMinust = 1;
+                    if (line.LerpColor || line.LerpWidth)
+                    {
+                        oneMinust = 1 - (float)(tick - line.StartTick) / (line.EndTick - line.StartTick);
+                    }
+                    var color = line.StartColor * oneMinust;
+                    var width = line.StartWidth * oneMinust;
+
+                    var d = cam.Position - midpoint;
+                    var dist = d.Normalize();
+                    var up = Vector3D.Cross(line.Start - line.End, d).Normalized() * width;
+
+                    b.Material = line.Material;
+                    b.LocalType = LocalTypeEnum.Custom;
+                    b.Position0 = line.Start - up;
+                    b.Position1 = line.End   - up;
+                    b.Position2 = line.End   + up;
+                    b.Position3 = line.Start + up;
+                    b.UVOffset = Vector2.Zero;
+                    b.UVSize = Vector2.One;
+                    b.DistanceSquared = (float)(dist * dist);
+                    b.Color = color;
+                    b.Reflectivity = 0;
+                    b.CustomViewProjection = -1;
+                    b.ParentID = uint.MaxValue;
+                    b.ColorIntensity = 1f;
+                    b.SoftParticleDistanceScale = 1f;
+                    b.BlendType = BlendTypeEnum.Standard;
+
+                    BillBoardsToAdd.Add(b);
+                    ret++;
+                }
+
+                line.Start += line.Velocity;
+                line.End += line.Velocity;
+            }
+            return ret;
+        }
+        
         internal void UpdateOneFrameQuads()
         {
+            BoundingSphereD testSphere = new BoundingSphereD();
+            
+            var cam = Session.I.Camera;
+            var tick = Session.I.Tick;
+            int advBillboardsDrawn = 0;
+            int advBillboardsLines = 0;
+            int advBillboardsTrails = 0;
+            int advBillboardsOrphans = AddAdvLineBillboards(BillBoardsToAdd, AdvBLines, ref testSphere, tick, cam);
+            // manually test every line as these may be far from the actual projectile
+            // and frustum check is relatively quick compared to how slow rendering a billboard is (thanks keen)
+            for (int n = 0; n < AdvBillboards.Count; n++)
+            {
+                var av = AdvBillboards[n];
+
+                advBillboardsLines += AddAdvLineBillboards(BillBoardsToAdd, av.DrawnLines, ref testSphere, tick, cam);
+
+                foreach (var trail in av.Trails)
+                {
+                    advBillboardsTrails += AddAdvLineBillboards(BillBoardsToAdd, trail, ref testSphere, tick, cam);
+                }
+
+                if (av.BillboardDefs.Length > 0)
+                {
+                    for (int i = 0; i < av.BillboardDefs.Length; i++)
+                    {
+                        var def = av.BillboardDefs[i];
+
+                        if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position))
+                            continue;
+
+                        var mat = av.ProjectileMatrix;
+                        if (def.HasRotateSpeed)
+                        {
+                            MatrixD rotationMat;
+                            if (!ComputedRotationMatricies.TryGetValue(def.RotateSpeed, out rotationMat))
+                            {
+                                rotationMat = MatrixD.CreateFromAxisAngle(mat.Forward, def.RotateSpeed * av.CurrentLifetime);
+                                ComputedRotationMatricies[def.RotateSpeed] = rotationMat;
+                            }
+
+                            mat = MatrixD.CreateWorld(mat.Translation, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
+                        }
+
+                        bool isTri = def.P2 == def.P3;
+                        var P0 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0, mat);
+                        var P1 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P1, mat);
+                        var P2 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P2, mat);
+                        var P3 = isTri ? P2 : av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P3, mat);
+
+                        var midpoint = isTri ? (P0 + P1 + P2) / 3 : (P0 + P1 + P2 + P3) / 4;
+
+                        testSphere = new BoundingSphereD(midpoint, 1); // just want to test a point
+
+                        if (cam.IsInFrustum(ref testSphere))
+                        {
+                            var b = av.Billboards[i];
+                            b.Material = def.Material;
+                            b.LocalType = LocalTypeEnum.Custom;
+                            b.Position0 = P0;
+                            b.Position1 = P1;
+                            b.Position2 = P2;
+                            b.Position3 = P3;
+                            b.UVOffset = Vector2.Zero;
+                            b.UVSize = Vector2.One;
+                            b.DistanceSquared = Vector3.DistanceSquared(cam.Position, midpoint);
+                            b.Color = def.FactionColor == FactionColor.DontUse ? def.Color :
+                                def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor : av.Av.BgFactionColor;
+                            b.Reflectivity = 0;
+                            b.CustomViewProjection = -1;
+                            b.ParentID = uint.MaxValue;
+                            b.ColorIntensity = 1f;
+                            b.SoftParticleDistanceScale = 1f;
+                            b.BlendType = BlendTypeEnum.Standard;
+
+                            BillBoardsToAdd.Add(b);
+                            advBillboardsDrawn++;
+                        }
+                    }
+                    ComputedRotationMatricies.Clear();
+                }
+            }
+            if (Session.I.Tick180)
+            {
+                Log.LineShortDate($"(ADV DRAWS) --------------- O:{advBillboardsOrphans} L:{advBillboardsLines} T:{advBillboardsTrails} B:{advBillboardsDrawn}", "stats");
+                _previousTrailCount = 0;
+                _shrinks = 0;
+            }
+            advBillboardsDrawn += advBillboardsLines + advBillboardsTrails + advBillboardsOrphans;
+            
             var requestCount = PreAddOneFrame.Count;
             if (requestCount > 0)
             {
-                if (requestCount > NearBillBoardLimit)
-                    NearBillBoardLimit = requestCount;
-                
-                BillBoardOneFrameQuads();
+                var coolDown = QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length];
+                for (int i = PreAddOneFrame.Count - 1; i >= 0; i--)
+                {
+                    var q = PreAddOneFrame[i];
+                    coolDown.Add(q);
+
+                    var b = q.BillBoard;
+
+                    if (q.Shot != null)
+                    {
+                        --q.Shot.ActiveBillBoards;
+                        q.Shot = null;
+                    }
+
+                    var cameraPosition = Session.I.CameraPos;
+                    if (!Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
+                    {
+                        var polyLine = new MyPolyLineD
+                        {
+                            LineDirectionNormalized = (Vector3)q.Direction,
+                            Point0 = q.StartPos,
+                            Point1 = q.StartPos + q.Direction * q.Length,
+                            Thickness = q.Width
+                        };
+
+                        MyQuadD retQuad;
+                        MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
+
+                        b.Material = q.Material;
+                        b.LocalType = LocalTypeEnum.Custom;
+                        b.Position0 = retQuad.Point0;
+                        b.Position1 = retQuad.Point1;
+                        b.Position2 = retQuad.Point2;
+                        b.Position3 = retQuad.Point3;
+                        b.UVOffset = Vector2.Zero;
+                        b.UVSize = Vector2.One;
+                        b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
+                        b.Color = q.Color;
+                        b.Reflectivity = 0;
+                        b.CustomViewProjection = -1;
+                        b.ParentID = uint.MaxValue;
+                        b.ColorIntensity = 1f;
+                        b.SoftParticleDistanceScale = 1f;
+                        b.BlendType = BlendTypeEnum.Standard;
+
+                        BillBoardsToAdd.Add(b);
+                    }
+                }
+                PreAddOneFrame.Clear();
+            }
+            if (requestCount + advBillboardsDrawn > NearBillBoardLimit)
+                NearBillBoardLimit = requestCount + advBillboardsDrawn;
+
+            if (BillBoardsToAdd.Count > 0)
+            {
+                MyTransparentGeometry.AddBillboards(BillBoardsToAdd, false);
+                BillBoardsToAdd.Clear();
             }
         }
 
@@ -628,60 +1142,6 @@ namespace CoreSystems.Support
             Add,
             Update,
             Purge
-        }
-
-        internal void BillBoardOneFrameQuads()
-        {
-            var coolDown = QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length];
-            for (int i = PreAddOneFrame.Count - 1; i >= 0; i--)
-            {
-                var q = PreAddOneFrame[i];
-                coolDown.Add(q);
-
-                var b = q.BillBoard;
-
-                if (q.Shot != null) {
-                    --q.Shot.ActiveBillBoards;
-                    q.Shot = null;
-                }
-
-                var cameraPosition = Session.I.CameraPos;
-                if (!Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
-                {
-                    var polyLine = new MyPolyLineD {
-                        LineDirectionNormalized = (Vector3)q.Direction,
-                        Point0 = q.StartPos,
-                        Point1 = q.StartPos + q.Direction * q.Length,
-                        Thickness = q.Width
-                    };
-
-                    MyQuadD retQuad;
-                    MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
-
-                    b.Material = q.Material;
-                    b.LocalType = LocalTypeEnum.Custom;
-                    b.Position0 = retQuad.Point0;
-                    b.Position1 = retQuad.Point1;
-                    b.Position2 = retQuad.Point2;
-                    b.Position3 = retQuad.Point3;
-                    b.UVOffset = Vector2.Zero;
-                    b.UVSize = Vector2.One;
-                    b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
-                    b.Color = q.Color;
-                    b.Reflectivity = 0;
-                    b.CustomViewProjection = -1;
-                    b.ParentID = uint.MaxValue;
-                    b.ColorIntensity = 1f;
-                    b.SoftParticleDistanceScale = 1f;
-                    b.BlendType = BlendTypeEnum.Standard;
-                    
-                    BillBoardsToAdd.Add(b);
-                }
-            }
-
-            MyTransparentGeometry.AddBillboards(BillBoardsToAdd, false);
-            BillBoardsToAdd.Clear();
-            PreAddOneFrame.Clear();
         }
 
 
@@ -1008,6 +1468,12 @@ namespace CoreSystems.Support
             for (int i = 0; i < quadCacheCollection.Count; i++)
                 QuadCachePool.Push(quadCacheCollection[i]);
             quadCacheCollection.Clear();
+
+            var lineCacheCollection = AdvBLineCacheCooldown[Session.I.Tick % AdvBLineCacheCooldown.Length];
+
+            for (int i = 0; i < lineCacheCollection.Count; i++)
+                AdvBLinesPool.Push(lineCacheCollection[i]);
+            lineCacheCollection.Clear();
         }
 
         internal void Clean()

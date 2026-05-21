@@ -227,6 +227,7 @@ namespace CoreSystems.Support
         internal bool Sleep;
         internal bool PickTarget;
         internal bool ManualMode;
+        internal bool NewTarget; // only used with approaches and model rotation, assume this isn't useful outside of it w/o modifications
         internal int ChaseAge;
         internal int LastOffsetTime;
         internal int SmartSlot;
@@ -254,6 +255,7 @@ namespace CoreSystems.Support
             WasTracking = false;
             PickTarget = false;
             ManualMode = false;
+            NewTarget = false;
 
             Sleep = false;
             
@@ -299,6 +301,10 @@ namespace CoreSystems.Support
         internal Vector3D PositionB;
         internal Vector3D OffsetUpDir;
         internal Vector3D OffsetFwdDir;
+        internal Vector3 ModelUpDir;
+        internal Vector3 ModelUpDirStart;
+        internal Vector3 ModelFwdDir;
+        internal Vector3 ModelFwdDirStart;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
         internal double StartHealth;
@@ -322,6 +328,10 @@ namespace CoreSystems.Support
             PositionB = Vector3D.Zero;
             OffsetUpDir = Vector3D.Zero;
             OffsetFwdDir = Vector3D.Zero;
+            ModelUpDir = Vector3.Zero;
+            ModelUpDirStart = Vector3.Zero;
+            ModelFwdDir = Vector3.Zero;
+            ModelFwdDirStart = Vector3.Zero;
             StartDistanceTraveled = 0;
             RelativeAgeStart = 0;
             RelativeSpawnsStart = 0;

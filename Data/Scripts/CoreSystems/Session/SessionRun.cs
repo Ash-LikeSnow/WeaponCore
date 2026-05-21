@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
+using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static Sandbox.Definitions.MyDefinitionManager;
 
@@ -349,6 +350,7 @@ namespace CoreSystems
 
         public override void LoadData()
         {
+            MyMath.InitializeFastSin();
             AllDefinitions = Static.GetAllDefinitions();
             foreach (var t in AllDefinitions)
             {

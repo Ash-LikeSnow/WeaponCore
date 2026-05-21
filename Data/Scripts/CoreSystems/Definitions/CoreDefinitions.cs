@@ -896,6 +896,7 @@ namespace CoreSystems.Support
                 [ProtoMember(4)] internal AmmoParticleDef Particles;
                 [ProtoMember(5)] internal LineDef Lines;
                 [ProtoMember(6)] internal DecalDef Decals;
+                [ProtoMember(7)] internal AdvBillboardsDef AdvancedLines;
 
                 [ProtoContract]
                 public struct AmmoParticleDef
@@ -1007,6 +1008,77 @@ namespace CoreSystems.Support
                     {
                         [ProtoMember(1)] internal string HitMaterial; 
                         [ProtoMember(2)] internal string DecalMaterial;
+                    }
+                }
+
+                [ProtoContract]
+                public struct AdvBillboardsDef
+                {
+                    [ProtoMember(1)] internal bool Enable;
+                    [ProtoMember(2)] internal bool UseModelRotation;
+                    [ProtoMember(3)] internal Line[] AdvLines;
+                    [ProtoMember(4)] internal Trail[] AdvTrails;
+                    [ProtoMember(5)] internal Billboard[] Billboards;
+                    [ProtoContract]
+                    public struct Line
+                    {
+                        [ProtoMember(1)] public bool AlwaysDraw;
+                        [ProtoMember(2)] public bool OnlyDrawIfAccelerationAligned;
+                        [ProtoMember(3)] public bool WidthFade;
+                        [ProtoMember(4)] public bool ColorFade;
+                        [ProtoMember(5)] public bool LengthAffectedByAccelAlignment;
+                        [ProtoMember(6)] public bool AccelAccountForGrav;
+                        [ProtoMember(7)] public float AccelerationDotReq;
+                        [ProtoMember(8)] public float VelocityInheritence;
+                        [ProtoMember(9)] public uint TimeRendered;
+                        [ProtoMember(10)] public uint DelayBetweenSpawns;
+                        [ProtoMember(11)] public float P0RandomOffset;
+                        [ProtoMember(12)] public float P1RandomOffset;
+                        [ProtoMember(13)] public float Width;
+                        [ProtoMember(14)] public float RotateSpeed;
+                        [ProtoMember(15)] public float MaxViewDistance;
+                        [ProtoMember(16)] public float AccelerationSizeMultiplier;
+                        [ProtoMember(17)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+                        [ProtoMember(18)] public LineDef.FactionColor FactionColor;
+                        [ProtoMember(19)] public string Material;
+                        [ProtoMember(20)] public Vector3 P0;
+                        [ProtoMember(21)] public Vector3 P1;
+                        [ProtoMember(22)] public Vector4 Color;
+                    }
+                    [ProtoContract]
+                    public struct Trail
+                    {
+                        [ProtoMember(1)] public bool WidthFade;
+                        [ProtoMember(2)] public bool ColorFade;
+                        [ProtoMember(3)] public bool AlwaysDraw;
+                        [ProtoMember(4)] public float VelocityInheritence;
+                        [ProtoMember(5)] public uint TimeRendered;
+                        [ProtoMember(6)] public uint DelayBetweenSpawns;
+                        [ProtoMember(7)] public float RotateSpeed;
+                        [ProtoMember(8)] public float P0RandomOffset;
+                        [ProtoMember(9)] public float Width;
+                        [ProtoMember(10)] public float MaxViewDistance;
+                        [ProtoMember(11)] public LineDef.FactionColor FactionColor;
+                        [ProtoMember(12)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+                        [ProtoMember(13)] public string Material;
+                        [ProtoMember(14)] public Vector3 P0;
+                        [ProtoMember(15)] public Vector4 Color;
+                    }
+                    [ProtoContract]
+                    public struct Billboard
+                    {
+                        [ProtoMember(1)] public bool AlwaysDraw;
+                        [ProtoMember(2)] public bool ColorFade;
+                        [ProtoMember(3)] public float RotateSpeed;
+                        [ProtoMember(4)] public float MaxViewDistance;
+                        [ProtoMember(5)] public LineDef.FactionColor FactionColor;
+                        [ProtoMember(6)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+                        [ProtoMember(7)] public string Material;
+                        [ProtoMember(8)] public Vector3 P0;
+                        [ProtoMember(9)] public Vector3 P1;
+                        [ProtoMember(10)] public Vector3 P2;
+                        [ProtoMember(11)] public Vector3 P3; // P2 == P3 for triangle
+                        [ProtoMember(12)] public Vector4 Color;
                     }
                 }
             }
@@ -1504,7 +1576,24 @@ namespace CoreSystems.Support
                         ForwardRelativeToShooter,
                         ForwardOriginDirection,
                     }
-
+                    public enum ModelRelativeTo
+                    {
+                        ModelNone = 0,
+                        ModelRelativeToGravity,
+                        ModelTargetDirection,
+                        ModelTargetPredictedDirection,
+                        ModelTargetVelocity,
+                        ModelStoredStartPosition,
+                        ModelStoredEndPosition,
+                        ModelStoredStartLocalPosition,
+                        ModelStoredEndLocalPosition,
+                        ModelRelativeToShooterForwards,
+                        ModelRelativeToShooterUp,
+                        ModelRelativeToShooterDirection,
+                        ModelOriginForwards,
+                        ModelOriginUp,
+                        ModelRelativeToOriginDirection,
+                    }
                     public enum RelativeTo
                     {
                         Origin,
@@ -1630,6 +1719,10 @@ namespace CoreSystems.Support
                     [ProtoMember(70)] internal Conditions EndCondition5;
                     [ProtoMember(71)] internal double End5Value;
                     [ProtoMember(72)] internal bool DockOnEnd;
+                    [ProtoMember(73)] internal bool AlternateModelForwardUp;
+                    [ProtoMember(74)] internal ModelRelativeTo ModelForwards;
+                    [ProtoMember(75)] internal ModelRelativeTo ModelUp;
+                    [ProtoMember(76)] internal bool ResetModelRotTimeOnTargetReset;
                 }
 
                 [ProtoContract]

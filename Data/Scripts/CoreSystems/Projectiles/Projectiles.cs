@@ -378,13 +378,35 @@ namespace CoreSystems.Projectiles
                     if (primeModelUpdate) {
 
                         Vector3D modelDir;
+                        Vector3D ModelUp;
                         var aInfo = storage.ApproachInfo;
-                        if (aConst.HasApproaches && aInfo.Active && aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge > 0 && !MyUtils.IsZero(aInfo.TargetPos)) 
-                            modelDir =  Vector3D.Lerp(p.Direction, Vector3D.Normalize(aInfo.TargetPos - p.Position), aInfo.ModelRotateAge / (double)aInfo.ModelRotateMaxAge);
-                        else
-                            modelDir = p.Direction;
+                        if (aConst.HasApproaches && aInfo.Active && aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge > 0)
+                        {
+                            if (MyUtils.IsZero(aInfo.ModelFwdDir))
+                            {
+                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDirStart, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                            }
+                            else
+                            {
+                                modelDir = Vector3.Lerp(aInfo.ModelFwdDirStart, aInfo.ModelFwdDir, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                            }
 
-                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref info.OriginUp, out info.AvShot.PrimeMatrix);
+                            if (MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir)
+                            {
+                                ModelUp = info.OriginUp;
+                            }
+                            else
+                            {
+                                ModelUp = Vector3.Lerp(aInfo.ModelUpDirStart, aInfo.ModelUpDir, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                            }
+                        }
+                        else
+                        {
+                            modelDir = p.Direction;
+                            ModelUp = info.OriginUp;
+                        }
+
+                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
                     }
 
                     if (aConst.TriggerModel)
@@ -517,6 +539,33 @@ namespace CoreSystems.Projectiles
                 }
 
                 if (!p.EnableAv) continue;
+
+                if (aConst.DrawAdvBillboards)
+                {
+                    var advav = info.AvShot.AdvBillboards;
+
+                    advav.PrevPosition = advav.ProjectileMatrix.Translation;
+                    advav.PrevVelocity = advav.Velocity;
+                    advav.Velocity = p.Velocity;
+
+                    if (advav.ModelRotation && advav.Av.HasModel && advav.Av.PrimeEntity != null && advav.Av.PrimeMatrix != MatrixD.Identity)
+                    {
+                        advav.ProjectileMatrix = advav.Av.PrimeMatrix;
+                    }
+                    else
+                    {
+                        var forward = (MyUtils.IsZero(p.Velocity, 0.01f) ? p.Direction : p.Velocity).Normalized();
+                        
+                        if (!MyUtils.IsZero(advav.ProjectileMatrix.Left))
+                        {
+                            advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, advav.ProjectileMatrix.Up);
+                        }
+                        else
+                        {
+                            advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, p.Info.OriginUp);
+                        }
+                    }
+                }
 
                 if (p.Intersecting) {
 

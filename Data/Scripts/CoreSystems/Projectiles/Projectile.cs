@@ -311,7 +311,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), MaxSpeed, ref Direction);
+                Info.AvShot.Init(this, Info, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), MaxSpeed, ref Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -533,7 +533,7 @@ namespace CoreSystems.Projectiles
             var session = Session.I;
             var speedCapMulti = 1d;
 
-            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
+            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags && State <= ProjectileState.Detonate)
             {
                 if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
                     TimedSpawns(aConst);
@@ -938,23 +938,34 @@ namespace CoreSystems.Projectiles
 
                 var approach = aConst.Approaches[storage.RequestedStage];
 
-                // unneeded branch
-                //if (approach.StartCon1 == approach.StartCon2 || approach.EndCon1 == approach.EndCon2)
-                //    return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
-
                 disableAvoidance = approach.DisableAvoidance;
 
                 if (approach.SwapNavigationType)
                     zeroEffortNav = !zeroEffortNav;
 
-                if (approach.ModelRotateTime > 0 || aInfo.ModelRotateAge > 0)
+                if (EnableAv && (approach.ModelRotate || aInfo.ModelRotateAge > 0))
                 {
-                    if (targetLock && approach.ModelRotateTime > aInfo.ModelRotateAge)
+                    if (approach.AlternateModelForwardUp)
+                    {
+                        aInfo.ModelFwdDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelFwds, targetLock, false);
+                        aInfo.ModelUpDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelUp, targetLock, true);
+
+                    }
+
+                    if (stageChange || (approach.ResetModelRotTimeOnTargetReset && Info.Storage.NewTarget))
+                    {
+                        aInfo.ModelFwdDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Direction : Info.AvShot.PrimeMatrix.Forward;
+                        aInfo.ModelUpDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Info.OriginUp : Info.AvShot.PrimeMatrix.Up;
+                        aInfo.ModelRotateAge = 0;
+                        Info.Storage.NewTarget = false;
+                    }
+
+                    if ((targetLock || approach.AlternateModelForwardUp) && approach.ModelRotateTime > aInfo.ModelRotateAge)
                     {
                         aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
                         ++aInfo.ModelRotateAge;
                     }
-                    else if (aInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --aInfo.ModelRotateAge == 0)
+                    else if (aInfo.ModelRotateAge > 0 && ((!targetLock && !(approach.AlternateModelForwardUp && aInfo.ModelFwdDir != Vector3.Zero)) || !approach.ModelRotate) && --aInfo.ModelRotateAge == 0)
                         aInfo.ModelRotateMaxAge = 0;
                 }
                 #endregion
@@ -1376,6 +1387,85 @@ namespace CoreSystems.Projectiles
                 if (s.DebugMod && s.HandlesInput)
                     ApproachDebug(approach, ref positionC, ref positionB, ref elOffset, ref heightOffset, ref targetPos, start1, start2, end1, end2, end3, end4, end5, nextSpawn, timeSinceSpawn, stageChange);
             }
+        }
+
+        private Vector3 GetModelRotateDirection(AmmoConstants aConst, ApproachInfo aInfo, ApproachConstants approach, ModelRelativeTo val, bool hasTarget, bool up)
+        {
+            Vector3 vec;
+            switch (val)
+            {
+                case ModelRelativeTo.ModelRelativeToGravity:
+                    vec = Info.MyPlanet == null ? (up ? Info.OriginUp : Info.OriginFwd) : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                    break;
+                case ModelRelativeTo.ModelTargetDirection:
+                    if (hasTarget)
+                        vec = Vector3D.Normalize(aInfo.TargetPos - Position);
+                    else
+                        vec = Vector3.Zero;
+                    break;
+                case ModelRelativeTo.ModelTargetPredictedDirection:
+                    if (hasTarget)
+                    {
+                        var fragAmmoDef = Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
+                        Vector3D pointDir;
+                        Vector3D estimatedTargetPos;
+                        TrajectoryEstimation(fragAmmoDef, ref Position, out pointDir, out estimatedTargetPos, true);
+                        vec = (Vector3)pointDir;
+                    }
+                    else
+                        vec = Vector3.Zero;
+                    break;
+                case ModelRelativeTo.ModelTargetVelocity:
+                    vec = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Vector3D.Zero;
+                    break;
+                case ModelRelativeTo.ModelStoredStartPosition:
+                case ModelRelativeTo.ModelStoredStartLocalPosition:
+
+                    var storedStartDest = aInfo.Storage[approach.StoredStartId].StoredPosition;
+                    Vector3D destStart;
+                    if (approach.ModelFwds == ModelRelativeTo.ModelStoredStartLocalPosition)
+                        destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
+                    else
+                        destStart = storedStartDest != Vector3D.Zero ? storedStartDest : aInfo.TargetPos;
+                    vec = Vector3D.Normalize(destStart - Position);
+                    break;
+                case ModelRelativeTo.ModelStoredEndPosition:
+                case ModelRelativeTo.ModelStoredEndLocalPosition:
+
+                    var storedEndDest = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                    Vector3D destEnd;
+                    if (approach.ModelFwds == ModelRelativeTo.ModelStoredEndLocalPosition)
+                        destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
+                    else
+                        destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : aInfo.TargetPos;
+
+                    vec = Vector3D.Normalize(destEnd - Position);
+                    break;
+
+                case ModelRelativeTo.ModelRelativeToShooterForwards:
+                    vec = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Forward;
+                    break;
+                case ModelRelativeTo.ModelRelativeToShooterUp:
+                    vec = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;  
+                    break;
+                case ModelRelativeTo.ModelRelativeToShooterDirection:
+                    vec = Vector3D.Normalize(Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Translation - Position);
+                    break;
+                case ModelRelativeTo.ModelOriginForwards:
+                    vec = Info.OriginFwd;
+                    break;
+                case ModelRelativeTo.ModelOriginUp:
+                    vec = Info.OriginUp;
+                    break;
+                case ModelRelativeTo.ModelRelativeToOriginDirection:
+                    vec = Vector3D.Normalize(Info.Origin - Position);
+                    break;
+                default:
+                    vec = Vector3D.Zero;
+                    break;
+            }
+
+            return vec;
         }
 
         // this does NOT need to be inlined and there was a ton of errors with the copied end3 already
@@ -2789,6 +2879,12 @@ namespace CoreSystems.Projectiles
             {
                 Info.LastTarget = Info.Target.TargetObject;
                 Info.LastTopTargetId = Info.Target.TopEntityId;
+            }
+
+            if (targetChanged && storage != null && storage.RequestedStage >= 0 && (aConst?.Approaches?.Length ?? int.MaxValue) < storage.RequestedStage && 
+                (aConst.Approaches[storage.RequestedStage]?.ResetModelRotTimeOnTargetReset ?? false))
+            {
+                Info.Storage.NewTarget = true;
             }
             
             if (session.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && targetChanged)

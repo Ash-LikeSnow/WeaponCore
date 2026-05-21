@@ -160,6 +160,9 @@
     <Compile Include="Data\Scripts\CoreSystems\Api\ApiBackend.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\AudioVisual\AvAdvBillboards.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Data\Scripts\CoreSystems\AudioVisual\RunAv.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
