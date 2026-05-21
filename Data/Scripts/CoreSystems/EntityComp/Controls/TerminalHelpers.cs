@@ -78,7 +78,7 @@ namespace CoreSystems.Control
             Separator<T>(session, "WC_sep5", IsTrue);
 
             AddOnOffSwitchNoAction<T>(session, "ShowPTags", Localization.GetText("TerminalPTagSettingsToggleTitle"), Localization.GetText("TerminalPTagSettingsToggleTooltip"), BlockUi.GetEnableProjectileTagsOverride, BlockUi.RequestSetEnableProjectileTagsOverride, true, AllowProjectileTags);
-            AddComboboxNoAction<T>(session, "PTagsWhitelistToggle", Localization.GetText("TerminalPTagWhitelistToggleTitle"), Localization.GetText("TerminalPTagWhitelistToggleTooltip"), BlockUi.GetWhitelistMode, BlockUi.RequestSetPTagWhitelist, BlockUi.ListPTagsWhitelistSettings, ProjectileTagsVisible);
+            AddComboboxNoAction<T>(session, "PTagsWhitelistToggle", Localization.GetText("TerminalPTagWhitelistToggleTitle"), Localization.GetText("TerminalPTagWhitelistToggleTooltip"), BlockUi.GetWhitelistMode, BlockUi.RequestSetPTagWhitelist, BlockUi.ListPTagsWhitelistSettings, WhitelistToggleVisible);
             AddListBoxNoAction<T>(session, "PTagsList", Localization.GetText("TerminalPTagListTitle"), "", BlockUi.ProjectileTagsFill, BlockUi.ProjectileTagsSelect, ProjectileTagsVisible, 10, true);
         }
 
@@ -571,9 +571,21 @@ namespace CoreSystems.Control
                 return false;
             return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.Enable && !comp.HasAlternateUi;
         }
+        internal static bool AllowWhitelistToggle(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+            return (comp.HasTracking || comp.HasGuidance) && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.Enable && comp.PrimaryWeapon.System.Values.HardPoint.Ui.UiSetTags.AllowUserWhitelistChange && !comp.HasAlternateUi;
+        }
         internal static bool ProjectileTagsVisible(IMyTerminalBlock block)
         {
             return AllowProjectileTags(block) && BlockUi.GetEnableProjectileTagsOverride(block);
+        }
+        internal static bool WhitelistToggleVisible(IMyTerminalBlock block)
+        {
+            return AllowWhitelistToggle(block) && BlockUi.GetEnableProjectileTagsOverride(block);
         }
         internal static void SliderWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
