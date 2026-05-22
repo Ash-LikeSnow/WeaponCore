@@ -338,6 +338,12 @@ namespace CoreSystems.Support
                     advBLineCooldown.Add(AdvBLines[j]);
                     AdvBLines.RemoveAtFast(j);
                 }
+                else
+                {
+                    var vel = AdvBLines[j].Velocity;
+                    AdvBLines[j].Start += vel;
+                    AdvBLines[j].End += vel;
+                }
             }
 
             int advBillboardsAdded = AdvBLines.Count;
@@ -365,6 +371,12 @@ namespace CoreSystems.Support
                     {
                         advBLineCooldown.Add(av.DrawnLines[j]);
                         av.DrawnLines.RemoveAtFast(j);
+                    }
+                    else
+                    {
+                        var vel = av.DrawnLines[j].Velocity;
+                        av.DrawnLines[j].Start += vel;
+                        av.DrawnLines[j].End += vel;
                     }
                 }
 
@@ -522,7 +534,7 @@ namespace CoreSystems.Support
                         def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
 
                     line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-                    line.Material = def.Material;
+                    line.Material = def.Materials[(tick  / (def.DelayBetweenSpawns + 1)) % def.Materials.Length];
 
                     av.DrawnLines.Add(line);
                 }
@@ -540,8 +552,8 @@ namespace CoreSystems.Support
                     {
                         advBLineCooldown.Add(trails.Dequeue());
                     }
-
-                    if (def.DelayBetweenSpawns + av.ClientAVLevel != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1 + av.ClientAVLevel) != 0
+                    uint divisor = (uint)av.ClientAVLevel + def.DelayBetweenSpawns + 1;
+                    if (def.DelayBetweenSpawns + av.ClientAVLevel != 0 && av.CurrentLifetime % divisor != 0
                         || def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
                     {
                         if (trails.Count > 0)
@@ -623,8 +635,8 @@ namespace CoreSystems.Support
                     line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
                         def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
 
-                    line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-                    line.Material = def.Material;
+                    line.Velocity = Vector3.Zero;
+                    line.Material = def.Materials[(tick / divisor) % def.Materials.Length];
 
                     trails.Enqueue(line);
                     advBillboardsAdded += trails.Count;
@@ -1033,7 +1045,7 @@ namespace CoreSystems.Support
                         if (cam.IsInFrustum(ref testSphere))
                         {
                             var b = av.Billboards[i];
-                            b.Material = def.Material;
+                            b.Material = def.Materials[tick % def.Materials.Length];
                             b.LocalType = LocalTypeEnum.Custom;
                             b.Position0 = P0;
                             b.Position1 = P1;

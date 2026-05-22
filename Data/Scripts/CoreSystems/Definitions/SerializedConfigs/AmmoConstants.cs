@@ -641,7 +641,7 @@ namespace CoreSystems.Support
                         Width = n.Width,
                         BlendType = n.BlendType,
                         FactionColor = n.FactionColor,
-                        Material = MyStringId.GetOrCompute(n.Material),
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
                         P0 = n.P0,
                         P1 = n.P1,
                         Color = n.Color.ToLinearRGB(),
@@ -653,6 +653,9 @@ namespace CoreSystems.Support
                         LengthAffectedByAccelAlignment = n.LengthAffectedByAccelAlignment,
                         AccelAccountForGrav = n.AccelAccountForGrav,
                     };
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Lines[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
                 }
             }
 
@@ -666,7 +669,6 @@ namespace CoreSystems.Support
                     billboards.Trails[i] = new AdvBillboards.TrailConstants
                     {
                         AlwaysDraw = n.AlwaysDraw,
-                        VelocityInheritence = n.VelocityInheritence,
                         WidthFade = n.WidthFade && t > 1,
                         ColorFade = n.ColorFade && t > 1,
                         TimeRendered = t,
@@ -675,13 +677,16 @@ namespace CoreSystems.Support
                         Width = n.Width,
                         BlendType = n.BlendType,
                         FactionColor = n.FactionColor,
-                        Material = MyStringId.GetOrCompute(n.Material),
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
                         P0 = n.P0,
                         Color = n.Color.ToLinearRGB(),
                         HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0), // if theres nothing to rotate then don't
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
                     };
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Trails[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
                 }
             }
 
@@ -697,7 +702,7 @@ namespace CoreSystems.Support
                         ColorFade = n.ColorFade,
                         BlendType = n.BlendType,
                         FactionColor = n.FactionColor,
-                        Material = MyStringId.GetOrCompute(n.Material),
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
                         P0 = n.P0,
                         P1 = n.P1,
                         P2 = n.P2,
@@ -707,6 +712,10 @@ namespace CoreSystems.Support
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
                     };
+
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Billboards[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
                 }
             }
 
@@ -2332,7 +2341,7 @@ namespace CoreSystems.Support
             public float AccelerationSizeMultiplier;
             public VRageRender.MyBillboard.BlendTypeEnum BlendType;
             public FactionColor FactionColor;
-            public MyStringId Material;
+            public MyStringId[] Materials;
             public Vector3 P0;
             public Vector3 P1;
             public Vector4 Color;
@@ -2350,9 +2359,8 @@ namespace CoreSystems.Support
             public float P0RandomOffset;
             public float Width;
             public float RotateSpeed;
-            public float VelocityInheritence;
             public float MaxViewDistanceSq;
-            public MyStringId Material;
+            public MyStringId[] Materials;
             public FactionColor FactionColor;
             public VRageRender.MyBillboard.BlendTypeEnum BlendType;
             public Vector3 P0;
@@ -2368,7 +2376,7 @@ namespace CoreSystems.Support
             public float MaxViewDistanceSq;
             public FactionColor FactionColor;
             public VRageRender.MyBillboard.BlendTypeEnum BlendType;
-            public MyStringId Material;
+            public MyStringId[] Materials;
             public Vector3 P0;
             public Vector3 P1;
             public Vector3 P2;

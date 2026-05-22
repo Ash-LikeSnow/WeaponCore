@@ -1040,7 +1040,7 @@ namespace CoreSystems.Support
                         [ProtoMember(16)] public float AccelerationSizeMultiplier;
                         [ProtoMember(17)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
                         [ProtoMember(18)] public LineDef.FactionColor FactionColor;
-                        [ProtoMember(19)] public string Material;
+                        [ProtoMember(19)] public string[] Materials;
                         [ProtoMember(20)] public Vector3 P0;
                         [ProtoMember(21)] public Vector3 P1;
                         [ProtoMember(22)] public Vector4 Color;
@@ -1051,18 +1051,17 @@ namespace CoreSystems.Support
                         [ProtoMember(1)] public bool WidthFade;
                         [ProtoMember(2)] public bool ColorFade;
                         [ProtoMember(3)] public bool AlwaysDraw;
-                        [ProtoMember(4)] public float VelocityInheritence;
-                        [ProtoMember(5)] public uint TimeRendered;
-                        [ProtoMember(6)] public uint DelayBetweenSpawns;
-                        [ProtoMember(7)] public float RotateSpeed;
-                        [ProtoMember(8)] public float P0RandomOffset;
-                        [ProtoMember(9)] public float Width;
-                        [ProtoMember(10)] public float MaxViewDistance;
-                        [ProtoMember(11)] public LineDef.FactionColor FactionColor;
-                        [ProtoMember(12)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
-                        [ProtoMember(13)] public string Material;
-                        [ProtoMember(14)] public Vector3 P0;
-                        [ProtoMember(15)] public Vector4 Color;
+                        [ProtoMember(4)] public uint TimeRendered;
+                        [ProtoMember(5)] public uint DelayBetweenSpawns;
+                        [ProtoMember(6)] public float RotateSpeed;
+                        [ProtoMember(7)] public float P0RandomOffset;
+                        [ProtoMember(8)] public float Width;
+                        [ProtoMember(9)] public float MaxViewDistance;
+                        [ProtoMember(10)] public LineDef.FactionColor FactionColor;
+                        [ProtoMember(11)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+                        [ProtoMember(12)] public string[] Materials;
+                        [ProtoMember(13)] public Vector3 P0;
+                        [ProtoMember(14)] public Vector4 Color;
                     }
                     [ProtoContract]
                     public struct Billboard
@@ -1073,7 +1072,7 @@ namespace CoreSystems.Support
                         [ProtoMember(4)] public float MaxViewDistance;
                         [ProtoMember(5)] public LineDef.FactionColor FactionColor;
                         [ProtoMember(6)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
-                        [ProtoMember(7)] public string Material;
+                        [ProtoMember(7)] public string[] Materials;
                         [ProtoMember(8)] public Vector3 P0;
                         [ProtoMember(9)] public Vector3 P1;
                         [ProtoMember(10)] public Vector3 P2;
