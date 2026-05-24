@@ -156,10 +156,10 @@ namespace CoreSystems.Support
         public Vector3D Start;
         public Vector3D End;
     }
-    // if only this could be value type
+    // if only this could be value type :(
     internal class BillboardInfo
     {
-        public MyBillboard Billboard;
+        public MyBillboard Billboard = new MyBillboard();
         public bool Render;
         public bool IsTri;
     }

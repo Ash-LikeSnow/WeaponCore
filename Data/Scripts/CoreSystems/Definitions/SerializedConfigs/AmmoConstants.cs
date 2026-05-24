@@ -648,6 +648,7 @@ namespace CoreSystems.Support
                         HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0 || n.P1.X != 0 || n.P1.Y != 0), // if theres nothing to rotate then don't
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
                         AccelerationDotReq = n.AccelerationDotReq,
                         AccelerationSizeMultiplier = n.AccelerationSizeMultiplier,
                         LengthAffectedByAccelAlignment = n.LengthAffectedByAccelAlignment,
@@ -683,6 +684,7 @@ namespace CoreSystems.Support
                         HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0), // if theres nothing to rotate then don't
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
                     };
                     if (n.Materials != null)
                         for (int j = 0; j < n.Materials.Length; j++)
@@ -710,6 +712,7 @@ namespace CoreSystems.Support
                         HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0 || n.P1.X != 0 || n.P1.Y != 0 || n.P2.X != 0 || n.P2.Y != 0 || n.P3.X != 0 || n.P3.Y != 0), // if theres nothing to rotate then don't
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
                     };
 
                     if (n.Materials != null)

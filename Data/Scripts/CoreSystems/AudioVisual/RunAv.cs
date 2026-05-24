@@ -387,8 +387,8 @@ namespace CoreSystems.Support
                     if (def.DelayBetweenSpawns != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1) != 0)
                         continue;
 
-                    if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)
-                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
+                    if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                         continue;
 
                     var mat = av.ProjectileMatrix;
@@ -554,14 +554,16 @@ namespace CoreSystems.Support
                         advBLineCooldown.Add(trails.Dequeue());
                     }
                     uint divisor = (uint)av.ClientAVLevel + def.DelayBetweenSpawns + 1;
-                    if (def.DelayBetweenSpawns + av.ClientAVLevel != 0 && av.CurrentLifetime % divisor != 0
-                        || (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
-                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
+                    if ((divisor > 1 && av.CurrentLifetime % divisor != 0)
+                        || (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                     {
+                        
                         if (trails.Count > 0)
                         {
                             var prevTrail = trails.Last();
-                            prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick I sawed the billboard count in half!
+                            if (tick - prevTrail.StartTick <= divisor) // only extend trail up to divisor ticks so it doesn't bug out when rapidly traversing min/max view dists
+                                prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick I sawed the billboard count in half!
                         }
                         continue;
                     }
@@ -631,11 +633,18 @@ namespace CoreSystems.Support
 
                     var p0Transformed = Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
                     line.Start = av.ProjectileMatrix.Translation + p0Transformed;
-                    line.End = trails.Count > 0 ? trails.Last().Start : av.PrevPosition + p0Transformed;
+
+                    if (trails.Count > 0)
+                    {
+                        var lastTrail = trails.Last();
+                        line.End = divisor <= 1 || tick - lastTrail.StartTick <= divisor ? lastTrail.Start : av.PrevPosition + p0Transformed;
+                    }
+                    else
+                        line.End = av.PrevPosition + p0Transformed;
 
                     line.StartWidth = def.Width;
                     line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
-                        def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
+                    def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
 
                     line.Velocity = Vector3.Zero;
                     line.Material = def.Materials[(av.CurrentLifetime / divisor) % def.Materials.Length];
@@ -649,8 +658,8 @@ namespace CoreSystems.Support
                     av.Billboards[j].Render = false;
 
                     var def = av.BillboardDefs[j];
-                    if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
-                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
+                    if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                     {
                         continue;
                     }
