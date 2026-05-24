@@ -1721,7 +1721,7 @@ namespace CoreSystems.Support
                     [ProtoMember(73)] internal bool AlternateModelForwardUp;
                     [ProtoMember(74)] internal ModelRelativeTo ModelForwards;
                     [ProtoMember(75)] internal ModelRelativeTo ModelUp;
-                    [ProtoMember(76)] internal bool ResetModelRotTimeOnTargetReset;
+                    [ProtoMember(76)] internal float ModelMaximumAngleToRotate;
                 }
 
                 [ProtoContract]

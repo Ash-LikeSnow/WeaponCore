@@ -227,7 +227,6 @@ namespace CoreSystems.Support
         internal bool Sleep;
         internal bool PickTarget;
         internal bool ManualMode;
-        internal bool NewTarget; // only used with approaches and model rotation, assume this isn't useful outside of it w/o modifications
         internal int ChaseAge;
         internal int LastOffsetTime;
         internal int SmartSlot;
@@ -255,7 +254,6 @@ namespace CoreSystems.Support
             WasTracking = false;
             PickTarget = false;
             ManualMode = false;
-            NewTarget = false;
 
             Sleep = false;
             
@@ -313,6 +311,7 @@ namespace CoreSystems.Support
         internal double AngleVariance;
         internal int ModelRotateAge;
         internal int ModelRotateMaxAge;
+        internal float ModelMaxRotateSpeed;
         internal bool Active;
         internal void Clean(ProInfo info)
         {
@@ -340,6 +339,7 @@ namespace CoreSystems.Support
             ModelRotateMaxAge = 0;
             ModelRotateAge = 0;
             StartHealth = 0;
+            ModelMaxRotateSpeed = 0;
             Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
             info.AmmoDef.Const.ApproachInfoPool.Push(this);

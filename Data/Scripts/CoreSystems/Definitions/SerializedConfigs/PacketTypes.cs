@@ -123,8 +123,8 @@ namespace CoreSystems
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;
-        [ProtoMember(2)] internal ulong SenderId;
-        [ProtoMember(3)] internal PacketType PType;
+        [ProtoIgnore] internal ulong SenderId;
+        [ProtoMember(2)] internal PacketType PType;
 
         public virtual void CleanUp()
         {
@@ -181,30 +181,30 @@ namespace CoreSystems
         /// <summary>
         ///     The EntityId of the grid (directly taken from the <see cref="Target.TargetObject"/> when it is an entity.
         /// </summary>
-        [ProtoMember(2)] public long EntityId;
+        [ProtoMember(2)] public long? EntityId;
         /// <summary>
         ///     The NetId of the projectile (directly taken from the <see cref="Target.TargetObject"/> when it is an AdvSync projectile.
         /// </summary>
-        [ProtoMember(3)] public ulong ProjectileNetId;
+        [ProtoMember(3)] public ulong? ProjectileNetId;
         /// <summary>
         ///     The grid (actually, mik painted a suit once?) the fake target is attached to:
         /// </summary>
-        [ProtoMember(4)] public long FakeEntityId;
+        [ProtoMember(4)] public long? FakeEntityId;
         /// <summary>
         ///     The targeted point in the entity's local frame:
         /// </summary>
-        [ProtoMember(5)] public Vector3D FakeLocalPos;
+        [ProtoMember(5)] public Vector3? FakeLocalPos;
         /// <summary>
         ///     The current position of the target in the world frame:
         /// </summary>
-        [ProtoMember(6)] public Vector3D FakeWorldPos;
+        [ProtoMember(6)] public Vector3D? FakeWorldPos;
         /// <summary>
         ///     The fake target type. Must be <see cref="AdvSyncFakeType.Manual"/> or <see cref="AdvSyncFakeType.Painted"/>.
         /// </summary>
-        [ProtoMember(7)] public AdvSyncFakeType FakeType;
+        [ProtoMember(7)] public AdvSyncFakeType? FakeType;
         
-        [ProtoMember(8)] public Vector3D LinearVelocity;
-        [ProtoMember(9)] public Vector3D Acceleration;
+        [ProtoMember(8)] public Vector3? LinearVelocity;
+        [ProtoMember(9)] public Vector3? Acceleration;
 
         /// <summary>
         ///     Extracts target info from a projectile's current state.
@@ -300,11 +300,11 @@ namespace CoreSystems
                 case AdvTargetType.Entity:
                 {
                     MyEntity targetEnt;
-                    if (MyEntities.TryGetEntityById(EntityId, out targetEnt))
+                    if (MyEntities.TryGetEntityById(EntityId ?? 0, out targetEnt))
                     {
                         target.TargetObject = targetEnt;
                         target.TargetState = Target.TargetStates.IsEntity;
-                        target.TargetPos = FakeWorldPos;
+                        target.TargetPos = FakeWorldPos ?? Vector3D.Zero;
                         return true;
                     }
 
@@ -314,7 +314,7 @@ namespace CoreSystems
                 case AdvTargetType.Projectile:
                 {
                     Projectile targetPro;
-                    if (Session.I.ProjectilesByNetId.TryGetValue(ProjectileNetId, out targetPro))
+                    if (Session.I.ProjectilesByNetId.TryGetValue(ProjectileNetId ?? 0, out targetPro))
                     {
                         target.TargetObject = targetPro;
                         target.TargetState = Target.TargetStates.IsProjectile;
@@ -330,14 +330,14 @@ namespace CoreSystems
                 {
                     target.TargetObject = null;
                     target.TargetState = Target.TargetStates.IsFake;
-                    target.TargetPos = FakeWorldPos;
+                    target.TargetPos = FakeWorldPos ?? Vector3D.Zero;
 
                     if (storage.DummyTargets == null)
                     {
                         storage.DummyTargets = new Ai.FakeTargets();
                     }
 
-                    if (FakeType == AdvSyncFakeType.Invalid || (byte)FakeType > (byte)AdvSyncFakeType.Painted)
+                    if (FakeType == null || FakeType == AdvSyncFakeType.Invalid || (byte)FakeType > (byte)AdvSyncFakeType.Painted)
                     {
                         DebugLog.Critical("AdvSyncTargetInfo$ApplyTo got Invalid FakeType");
                         return false;
@@ -347,17 +347,17 @@ namespace CoreSystems
                         ? storage.DummyTargets.PaintedTarget
                         : storage.DummyTargets.ManualTarget;
 
-                    fakeTarget.EntityId = FakeEntityId;
-                    fakeTarget.LocalPosition = FakeLocalPos;
-                    fakeTarget.FakeInfo.WorldPosition = FakeWorldPos;
-                    fakeTarget.FakeInfo.LinearVelocity = LinearVelocity;
-                    fakeTarget.FakeInfo.Acceleration = Acceleration;
+                    fakeTarget.EntityId = FakeEntityId ?? 0;
+                    fakeTarget.LocalPosition = FakeLocalPos ?? Vector3.Zero;
+                    fakeTarget.FakeInfo.WorldPosition = FakeWorldPos ?? Vector3D.Zero;
+                    fakeTarget.FakeInfo.LinearVelocity = LinearVelocity ?? Vector3.Zero;
+                    fakeTarget.FakeInfo.Acceleration = Acceleration ?? Vector3.Zero;
 
                     storage.ManualMode = FakeType == AdvSyncFakeType.Invalid;
                     
                     if (FakeEntityId != 0)
                     {
-                        MyEntities.TryGetEntityById(FakeEntityId, out fakeTarget.TmpEntity);
+                        MyEntities.TryGetEntityById(FakeEntityId ?? 0, out fakeTarget.TmpEntity);
 
                         if (fakeTarget.TmpEntity == null)
                         {

@@ -372,23 +372,23 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-                var primeModelUpdate = aConst.PrimeModel && p.EnableAv;
-                if (primeModelUpdate || aConst.TriggerModel)
+                if (aConst.PrimeModel && p.EnableAv)
                 {
-                    if (primeModelUpdate) {
-
-                        Vector3D modelDir;
-                        Vector3D ModelUp;
-                        var aInfo = storage.ApproachInfo;
-                        if (aConst.HasApproaches && aInfo.Active && aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge > 0)
+                    Vector3D modelDir;
+                    Vector3D ModelUp;
+                    var aInfo = storage.ApproachInfo;
+                    if (aConst.HasApproaches && aInfo.Active)
+                    {
+                        if (aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge >= 0)
                         {
+                            var t = MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1);
                             if (MyUtils.IsZero(aInfo.ModelFwdDir))
                             {
-                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDirStart, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDirStart, t);
                             }
                             else
                             {
-                                modelDir = Vector3.Lerp(aInfo.ModelFwdDirStart, aInfo.ModelFwdDir, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                                modelDir = Vector3.Lerp(aInfo.ModelFwdDirStart, aInfo.ModelFwdDir, t);
                             }
 
                             if (MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir)
@@ -397,7 +397,38 @@ namespace CoreSystems.Projectiles
                             }
                             else
                             {
-                                ModelUp = Vector3.Lerp(aInfo.ModelUpDirStart, aInfo.ModelUpDir, MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1));
+                                ModelUp = Vector3.Lerp(aInfo.ModelUpDirStart, aInfo.ModelUpDir, t);
+                            }
+                        }
+                        else if (aInfo.ModelMaxRotateSpeed > 0)
+                        {
+                            var desiredFor = MyUtils.IsZero(aInfo.ModelFwdDir) ? (Vector3)p.Direction : aInfo.ModelFwdDir;
+                            var desiredUp = MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir ? (Vector3)info.OriginUp : aInfo.ModelUpDir;
+
+                            var currentDir = (Vector3)info.AvShot.PrimeMatrix.Forward;
+                            var currentUp = (Vector3)info.AvShot.PrimeMatrix.Up;
+
+                            var forAngle = MyUtils.GetAngleBetweenVectors(currentDir, desiredFor);
+                            var upAngle = MyUtils.GetAngleBetweenVectors(desiredUp, currentUp);
+
+                            if (Math.Abs(forAngle) < aInfo.ModelMaxRotateSpeed)
+                            {
+                                modelDir = desiredFor;
+                            }
+                            else
+                            {
+                                MatrixD forMat = Matrix.CreateFromAxisAngle(Vector3.Cross(currentDir, desiredFor).Normalized(), forAngle > 0 ? aInfo.ModelMaxRotateSpeed : -aInfo.ModelMaxRotateSpeed);
+                                Vector3D.Transform(ref currentDir, ref forMat, out modelDir);
+                            }
+
+                            if (Math.Abs(upAngle) < aInfo.ModelMaxRotateSpeed)
+                            {
+                                ModelUp = desiredUp;
+                            }
+                            else
+                            {
+                                MatrixD upMat = Matrix.CreateFromAxisAngle(Vector3.Cross(currentUp, desiredUp).Normalized(), upAngle > 0 ? aInfo.ModelMaxRotateSpeed : -aInfo.ModelMaxRotateSpeed);
+                                Vector3D.Transform(ref currentUp, ref upMat, out ModelUp);
                             }
                         }
                         else
@@ -405,13 +436,19 @@ namespace CoreSystems.Projectiles
                             modelDir = p.Direction;
                             ModelUp = info.OriginUp;
                         }
-
-                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
                     }
-
-                    if (aConst.TriggerModel)
-                        info.TriggerMatrix.Translation = p.Position;
+                    else
+                    {
+                        modelDir = p.Direction;
+                        ModelUp = info.OriginUp;
+                    }
+                    
+                    MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
+                    MyLog.Default.WriteLineAndConsole(info.AvShot.PrimeMatrix.ToString());
                 }
+
+                if (aConst.TriggerModel)
+                    info.TriggerMatrix.Translation = p.Position;
 
                 if (aConst.IsBeamWeapon)
                     ++_beamCount;

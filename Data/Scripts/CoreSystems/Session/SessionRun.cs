@@ -418,11 +418,11 @@ namespace CoreSystems
                 ITask.Wait();
 
             if (IsServer || DedicatedServer)
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(ServerPacketId, ProccessServerPacket);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(ServerPacketId, ProccessServerPacket);
             else
             {
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(ClientPacketId, ClientReceivedPacket);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(StringPacketId, StringReceived);
 
                 if (DebugSupport.DebugWeaponSync)
                 {

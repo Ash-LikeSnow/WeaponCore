@@ -943,30 +943,26 @@ namespace CoreSystems.Projectiles
                 if (approach.SwapNavigationType)
                     zeroEffortNav = !zeroEffortNav;
 
-                if (EnableAv && (approach.ModelRotate || aInfo.ModelRotateAge > 0))
+                if (EnableAv)
                 {
-                    if (approach.AlternateModelForwardUp)
+                    if (approach.AlternateModelForwardUp && approach.ModelRotate) // don't update if no longer rotating so it rotates back properly
                     {
                         aInfo.ModelFwdDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelFwds, targetLock, false);
                         aInfo.ModelUpDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelUp, targetLock, true);
-
                     }
 
-                    if (stageChange || (approach.ResetModelRotTimeOnTargetReset && Info.Storage.NewTarget))
+                    if ((approach.ModelRotate || aInfo.ModelRotateAge > 0) && approach.ModelMaximumAngleToRotate <= 0)
                     {
-                        aInfo.ModelFwdDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Direction : Info.AvShot.PrimeMatrix.Forward;
-                        aInfo.ModelUpDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Info.OriginUp : Info.AvShot.PrimeMatrix.Up;
-                        aInfo.ModelRotateAge = 0;
-                        Info.Storage.NewTarget = false;
+                        if ((targetLock || approach.AlternateModelForwardUp) && approach.ModelRotateTime > aInfo.ModelRotateAge)
+                        {
+                            aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
+                            ++aInfo.ModelRotateAge;
+                        }
+                        else if (aInfo.ModelRotateAge > 0 && (!approach.ModelRotate || (approach.AlternateModelForwardUp ? MyUtils.IsZero(aInfo.ModelFwdDir) : !targetLock)) && --aInfo.ModelRotateAge == 0)
+                            aInfo.ModelRotateMaxAge = 0;
                     }
 
-                    if ((targetLock || approach.AlternateModelForwardUp) && approach.ModelRotateTime > aInfo.ModelRotateAge)
-                    {
-                        aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
-                        ++aInfo.ModelRotateAge;
-                    }
-                    else if (aInfo.ModelRotateAge > 0 && ((!targetLock && !(approach.AlternateModelForwardUp && aInfo.ModelFwdDir != Vector3.Zero)) || !approach.ModelRotate) && --aInfo.ModelRotateAge == 0)
-                        aInfo.ModelRotateMaxAge = 0;
+                    aInfo.ModelMaxRotateSpeed = approach.ModelMaximumAngleToRotate;
                 }
                 #endregion
 
@@ -2876,12 +2872,6 @@ namespace CoreSystems.Projectiles
                 Info.LastTarget = Info.Target.TargetObject;
                 Info.LastTopTargetId = Info.Target.TopEntityId;
             }
-
-            if (targetChanged && storage != null && storage.RequestedStage >= 0 && (aConst?.Approaches?.Length ?? int.MaxValue) < storage.RequestedStage && 
-                (aConst.Approaches[storage.RequestedStage]?.ResetModelRotTimeOnTargetReset ?? false))
-            {
-                Info.Storage.NewTarget = true;
-            }
             
             if (session.AdvSyncServer && aConst.FullSync && Info.AdvSyncId != 0 && targetChanged)
             {
@@ -3368,7 +3358,7 @@ namespace CoreSystems.Projectiles
             }
 
             var fireOnTarget = timedSpawn && aConst.HasFragProximity && aConst.FragPointAtTarget;
-            var pos = !Vector3D.IsZero(Info.ProHit.LastHit) ? Info.ProHit.LastHit : Position;
+            var pos = !Vector3D.IsZero(Info.ProHit.LastHit) && !timedSpawn ? Info.ProHit.LastHit : Position;
 
             Vector3D newOrigin;
             if (aConst.HasFragmentOffset)

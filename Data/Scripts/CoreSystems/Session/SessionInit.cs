@@ -33,11 +33,11 @@ namespace CoreSystems
             PlayerId = DedicatedServer ? 0 : Session.Player?.IdentityId ?? -1;
 
             if (IsServer || DedicatedServer)
-                MyAPIGateway.Multiplayer.RegisterMessageHandler(ServerPacketId, ProccessServerPacket);
+                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(ServerPacketId, ProccessServerPacket);
             else
             {
-                MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPacketId, ClientReceivedPacket);
-                MyAPIGateway.Multiplayer.RegisterMessageHandler(StringPacketId, StringReceived);
+                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(ClientPacketId, ClientReceivedPacket);
+                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(StringPacketId, StringReceived);
 
                 if (DebugSupport.DebugWeaponSync)
                 {

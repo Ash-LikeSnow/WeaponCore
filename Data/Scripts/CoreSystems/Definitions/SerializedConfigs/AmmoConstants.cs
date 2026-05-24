@@ -2071,7 +2071,6 @@ namespace CoreSystems.Support
         public readonly bool SelfPhasing;
         public readonly bool SwapNavigationType;
         public readonly bool AlternateModelForwardUp;
-        public readonly bool ResetModelRotTimeOnTargetReset;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -2096,6 +2095,8 @@ namespace CoreSystems.Support
         public readonly int StoredStartId;
         public readonly int StoredEndId;
         public readonly int ModelRotateTime;
+
+        public readonly float ModelMaximumAngleToRotate;
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
             var def = ammo.AmmoDef.Trajectory.Approaches[index];
@@ -2112,7 +2113,7 @@ namespace CoreSystems.Support
             LeadRotateElevatePositionC = def.LeadRotateElevatePositionC;
             NoElevationLead = def.NoElevationLead;
             IgnoreAntiSmart = def.IgnoreAntiSmart;
-            ModelRotate = def.ModelRotateTime > 0;
+            ModelRotate = def.ModelRotateTime > 0 || def.ModelMaximumAngleToRotate > 0;
             ToggleIngoreVoxels = def.ToggleIngoreVoxels;
             SelfAvoidance = def.SelfAvoidance;
             TargetAvoidance = def.TargetAvoidance;
@@ -2165,7 +2166,7 @@ namespace CoreSystems.Support
             SpeedCapMulti = def.SpeedCapMulti;
 
             AlternateModelForwardUp = def.AlternateModelForwardUp;
-            ResetModelRotTimeOnTargetReset = def.ResetModelRotTimeOnTargetReset;
+            ModelMaximumAngleToRotate = def.ModelMaximumAngleToRotate <= 0 ? 0 : MathHelper.ToRadians(def.ModelMaximumAngleToRotate) / 60f;
 
             ElevationTolerance = def.ElevationTolerance;
             if (AlternateModel)
