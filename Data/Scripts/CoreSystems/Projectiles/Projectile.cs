@@ -3358,7 +3358,7 @@ namespace CoreSystems.Projectiles
             }
 
             var fireOnTarget = timedSpawn && aConst.HasFragProximity && aConst.FragPointAtTarget;
-            var pos = !Vector3D.IsZero(Info.ProHit.LastHit) && !timedSpawn ? Info.ProHit.LastHit : Position;
+            var pos = timedSpawn || Vector3D.IsZero(Info.ProHit.LastHit) ? Position : Info.ProHit.LastHit;
 
             Vector3D newOrigin;
             if (aConst.HasFragmentOffset)
