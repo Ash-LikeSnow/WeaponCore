@@ -707,6 +707,7 @@ namespace CoreSystems.Support
                         P1 = n.P1,
                         P2 = n.P2,
                         P3 = n.P3,
+                        IsTri = n.P2 == n.P3,
                         Color = n.Color.ToLinearRGB(),
                         HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0 || n.P1.X != 0 || n.P1.Y != 0 || n.P2.X != 0 || n.P2.Y != 0 || n.P3.X != 0 || n.P3.Y != 0), // if theres nothing to rotate then don't
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
@@ -2337,6 +2338,7 @@ namespace CoreSystems.Support
             public float Width;
             public float RotateSpeed;
             public float VelocityInheritence;
+            public float MinViewDistanceSq;
             public float MaxViewDistanceSq;
             public float AccelerationDotReq;
             public float AccelerationSizeMultiplier;
@@ -2360,6 +2362,7 @@ namespace CoreSystems.Support
             public float P0RandomOffset;
             public float Width;
             public float RotateSpeed;
+            public float MinViewDistanceSq;
             public float MaxViewDistanceSq;
             public MyStringId[] Materials;
             public FactionColor FactionColor;
@@ -2373,7 +2376,9 @@ namespace CoreSystems.Support
             public bool AlwaysDraw;
             public bool ColorFade;
             public bool HasRotateSpeed;
+            public bool IsTri;
             public float RotateSpeed;
+            public float MinViewDistanceSq;
             public float MaxViewDistanceSq;
             public FactionColor FactionColor;
             public VRageRender.MyBillboard.BlendTypeEnum BlendType;

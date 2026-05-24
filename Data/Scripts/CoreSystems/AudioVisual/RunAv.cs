@@ -387,7 +387,8 @@ namespace CoreSystems.Support
                     if (def.DelayBetweenSpawns != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1) != 0)
                         continue;
 
-                    if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                    if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)
+                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                         continue;
 
                     var mat = av.ProjectileMatrix;
@@ -554,12 +555,13 @@ namespace CoreSystems.Support
                     }
                     uint divisor = (uint)av.ClientAVLevel + def.DelayBetweenSpawns + 1;
                     if (def.DelayBetweenSpawns + av.ClientAVLevel != 0 && av.CurrentLifetime % divisor != 0
-                        || def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                     {
                         if (trails.Count > 0)
                         {
                             var prevTrail = trails.Last();
-                            prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick 60 billboard trails can go to like 10 if the modder optimizes
+                            prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick I sawed the billboard count in half!
                         }
                         continue;
                     }
@@ -1015,8 +1017,8 @@ namespace CoreSystems.Support
                     for (int i = 0; i < av.BillboardDefs.Length; i++)
                     {
                         var def = av.BillboardDefs[i];
-
-                        if (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position))
+                        if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position))
+                            || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position)))
                             continue;
 
                         var mat = av.ProjectileMatrix;
@@ -1032,7 +1034,7 @@ namespace CoreSystems.Support
                             mat = MatrixD.CreateWorld(mat.Translation, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
                         }
 
-                        bool isTri = def.P2 == def.P3;
+                        bool isTri = def.IsTri;
                         var P0 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0, mat);
                         var P1 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P1, mat);
                         var P2 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P2, mat);
