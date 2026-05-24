@@ -534,7 +534,7 @@ namespace CoreSystems.Support
                         def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
 
                     line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-                    line.Material = def.Materials[(tick  / (def.DelayBetweenSpawns + 1)) % def.Materials.Length];
+                    line.Material = def.Materials[(av.CurrentLifetime / (def.DelayBetweenSpawns + 1)) % def.Materials.Length];
 
                     av.DrawnLines.Add(line);
                 }
@@ -636,7 +636,7 @@ namespace CoreSystems.Support
                         def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor * def.Color : av.Av.BgFactionColor * def.Color;
 
                     line.Velocity = Vector3.Zero;
-                    line.Material = def.Materials[(tick / divisor) % def.Materials.Length];
+                    line.Material = def.Materials[(av.CurrentLifetime / divisor) % def.Materials.Length];
 
                     trails.Enqueue(line);
                     advBillboardsAdded += trails.Count;
@@ -1045,7 +1045,7 @@ namespace CoreSystems.Support
                         if (cam.IsInFrustum(ref testSphere))
                         {
                             var b = av.Billboards[i];
-                            b.Material = def.Materials[tick % def.Materials.Length];
+                            b.Material = def.Materials[av.CurrentLifetime % def.Materials.Length];
                             b.LocalType = LocalTypeEnum.Custom;
                             b.Position0 = P0;
                             b.Position1 = P1;
