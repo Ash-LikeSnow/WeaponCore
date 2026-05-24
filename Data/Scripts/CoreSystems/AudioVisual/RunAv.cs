@@ -527,8 +527,8 @@ namespace CoreSystems.Support
                     }
 
 
-                    line.Start = av.ProjectileMatrix.Translation + (def.TransformP0 ? (Vector3D)P0RndOffset : Vector3D.TransformNormal(P0 + P0RndOffset, mat));
-                    line.End = av.ProjectileMatrix.Translation + (def.TransformP1 ? (Vector3D)P1RndOffset : Vector3D.TransformNormal(P1 + P1RndOffset, mat));
+                    line.Start = av.ProjectileMatrix.Translation + (!def.TransformP0 ? (Vector3D)P0RndOffset : Vector3D.TransformNormal(P0 + P0RndOffset, mat));
+                    line.End = av.ProjectileMatrix.Translation + (!def.TransformP1 ? (Vector3D)P1RndOffset : Vector3D.TransformNormal(P1 + P1RndOffset, mat));
 
                     line.StartWidth = width;
                     line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
