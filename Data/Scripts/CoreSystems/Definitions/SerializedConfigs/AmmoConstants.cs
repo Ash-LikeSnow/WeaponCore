@@ -653,6 +653,8 @@ namespace CoreSystems.Support
                         AccelerationSizeMultiplier = n.AccelerationSizeMultiplier,
                         LengthAffectedByAccelAlignment = n.LengthAffectedByAccelAlignment,
                         AccelAccountForGrav = n.AccelAccountForGrav,
+                        TransformP0 = !MyUtils.IsZero(n.P0),
+                        TransformP1 = !MyUtils.IsZero(n.P1),
                     };
                     if (n.Materials != null)
                         for (int j = 0; j < n.Materials.Length; j++)
@@ -685,6 +687,7 @@ namespace CoreSystems.Support
                         RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
                         MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
                         MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
+                        TransformP0 = !MyUtils.IsZero(n.P0),
                     };
                     if (n.Materials != null)
                         for (int j = 0; j < n.Materials.Length; j++)
@@ -2332,6 +2335,8 @@ namespace CoreSystems.Support
             public bool OnlyDrawIfAccelerationAligned;
             public bool LengthAffectedByAccelAlignment;
             public bool AccelAccountForGrav;
+            public bool TransformP0;
+            public bool TransformP1;
             public uint TimeRendered;
             public uint DelayBetweenSpawns;
             public float P0RandomOffset;
@@ -2357,6 +2362,7 @@ namespace CoreSystems.Support
             public bool ColorFade;
             public bool AlwaysDraw;
             public bool HasRotateSpeed;
+            public bool TransformP0;
             public uint TimeRendered;
             public uint DelayBetweenSpawns;
             public uint NumberOfTimesToRepeat;
