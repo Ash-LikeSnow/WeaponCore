@@ -637,7 +637,7 @@ namespace CoreSystems.Support
                     if (trails.Count > 0)
                     {
                         var lastTrail = trails.Last();
-                        line.End = divisor <= 1 || tick - lastTrail.StartTick <= divisor ? lastTrail.Start : av.PrevPosition + p0Transformed;
+                        line.End = tick - lastTrail.StartTick <= divisor ? lastTrail.Start : av.PrevPosition + p0Transformed;
                     }
                     else
                         line.End = av.PrevPosition + p0Transformed;

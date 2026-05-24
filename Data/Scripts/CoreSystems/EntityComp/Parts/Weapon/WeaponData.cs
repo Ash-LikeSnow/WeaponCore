@@ -138,7 +138,8 @@ namespace CoreSystems.Platform
                 foreach (var str in Repo.Values.Set.Overrides.UserProjectileTags)
                 {
                     uint val;
-                    if (Session.I.InternalTagToInt.TryGetValue(str, out val))
+                    if (Session.I.InternalTagToInt.TryGetValue(str, out val)
+                        && Comp.PrimaryWeapon.System.WConst.ValidUserProjectileTags.Contains(val))
                     {
                         Repo.Values.Set.Overrides.UserProjectileTagsInternal.Add(val);
                     }
