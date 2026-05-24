@@ -627,9 +627,9 @@ namespace CoreSystems.Support
                         P0RndOffset = new Vector3(a1sin * a2cos * r, a1sin * a2sin * r, a1cos * r);
                     }
 
-
-                    line.Start = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
-                    line.End = trails.Count > 0 ? trails.Last().Start : av.PrevPosition + Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
+                    var p0Transformed = Vector3D.TransformNormal(def.P0 + P0RndOffset, mat);
+                    line.Start = av.ProjectileMatrix.Translation + p0Transformed;
+                    line.End = trails.Count > 0 ? trails.Last().Start : av.PrevPosition + p0Transformed;
 
                     line.StartWidth = def.Width;
                     line.StartColor = def.FactionColor == FactionColor.DontUse ? def.Color :
