@@ -39,7 +39,7 @@ namespace CoreSystems.Support
         internal readonly Stack<MyQueue<AdvBLineCache>> AdvBTrailCacheLists = new Stack<MyQueue<AdvBLineCache>>(128);
         internal readonly List<AdvBLineCache> AdvBLines = new List<AdvBLineCache>(512);
         internal readonly Dictionary<float, MatrixD> ComputedRotationMatricies = new Dictionary<float, MatrixD>();
-        internal readonly Stack<MyBillboard> BillboardCache = new Stack<MyBillboard>(512);
+        internal readonly Stack<BillboardInfo> BillboardCache = new Stack<BillboardInfo>(512);
 
         internal readonly Stack<MyEntity3DSoundEmitter> FireEmitters = new Stack<MyEntity3DSoundEmitter>();
         internal readonly Stack<MyEntity3DSoundEmitter> TravelEmitters = new Stack<MyEntity3DSoundEmitter>();
@@ -644,6 +644,57 @@ namespace CoreSystems.Support
                     advBillboardsAdded += trails.Count;
                 }
 
+                for (int j = 0; j < av.BillboardDefs.Length; j++)
+                {
+                    av.Billboards[j].Render = false;
+
+                    var def = av.BillboardDefs[j];
+                    if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
+                        || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
+                    {
+                        continue;
+                    }
+
+                    var mat = av.ProjectileMatrix;
+                    if (def.HasRotateSpeed)
+                    {
+                        MatrixD rotationMat;
+                        if (!ComputedRotationMatricies.TryGetValue(def.RotateSpeed, out rotationMat))
+                        {
+                            rotationMat = MatrixD.CreateFromAxisAngle(mat.Forward, def.RotateSpeed * av.CurrentLifetime);
+                            ComputedRotationMatricies[def.RotateSpeed] = rotationMat;
+                        }
+
+                        mat = MatrixD.CreateWorld(mat.Translation, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
+                    }
+
+                    bool isTri = def.IsTri;
+                    var P0 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0, mat);
+                    var P1 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P1, mat);
+                    var P2 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P2, mat);
+                    var P3 = isTri ? P2 : av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P3, mat);
+
+                    var b = av.Billboards[j].Billboard;
+                    b.Material = def.Materials[av.CurrentLifetime % def.Materials.Length];
+                    b.LocalType = LocalTypeEnum.Custom;
+                    b.Position0 = P0;
+                    b.Position1 = P1;
+                    b.Position2 = P2;
+                    b.Position3 = P3;
+                    b.UVOffset = Vector2.Zero;
+                    b.UVSize = Vector2.One;
+                    b.DistanceSquared = 0;
+                    b.Color = def.FactionColor == FactionColor.DontUse ? def.Color :
+                        def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor : av.Av.BgFactionColor;
+                    b.Reflectivity = 0;
+                    b.CustomViewProjection = -1;
+                    b.ParentID = uint.MaxValue;
+                    b.ColorIntensity = 1f;
+                    b.SoftParticleDistanceScale = 1f;
+                    b.BlendType = BlendTypeEnum.Standard;
+
+                    av.Billboards[j].Render = true;
+                }
                 av.CurrentLifetime++;
                 
                 ComputedRotationMatricies.Clear();
@@ -1012,64 +1063,21 @@ namespace CoreSystems.Support
                     advBillboardsTrails += AddAdvLineBillboards(BillBoardsToAdd, trail, ref testSphere, tick, cam);
                 }
 
-                if (av.BillboardDefs.Length > 0)
+                foreach (var b in av.Billboards)
                 {
-                    for (int i = 0; i < av.BillboardDefs.Length; i++)
+                    if (!b.Render)
+                        continue;
+
+                    var midpoint = b.IsTri ?
+                        (b.Billboard.Position0 + b.Billboard.Position1 + b.Billboard.Position2) / 3 : 
+                        (b.Billboard.Position0 + b.Billboard.Position1 + b.Billboard.Position2 + b.Billboard.Position3) / 4;
+                    testSphere = new BoundingSphereD(midpoint, 1); // just want to test a point
+                    if (cam.IsInFrustum(ref testSphere))
                     {
-                        var def = av.BillboardDefs[i];
-                        if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position))
-                            || (def.MinViewDistanceSq > 0 && def.MinViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, cam.Position)))
-                            continue;
-
-                        var mat = av.ProjectileMatrix;
-                        if (def.HasRotateSpeed)
-                        {
-                            MatrixD rotationMat;
-                            if (!ComputedRotationMatricies.TryGetValue(def.RotateSpeed, out rotationMat))
-                            {
-                                rotationMat = MatrixD.CreateFromAxisAngle(mat.Forward, def.RotateSpeed * av.CurrentLifetime);
-                                ComputedRotationMatricies[def.RotateSpeed] = rotationMat;
-                            }
-
-                            mat = MatrixD.CreateWorld(mat.Translation, mat.Forward, Vector3D.TransformNormal(mat.Up, rotationMat));
-                        }
-
-                        bool isTri = def.IsTri;
-                        var P0 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P0, mat);
-                        var P1 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P1, mat);
-                        var P2 = av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P2, mat);
-                        var P3 = isTri ? P2 : av.ProjectileMatrix.Translation + Vector3D.TransformNormal(def.P3, mat);
-
-                        var midpoint = isTri ? (P0 + P1 + P2) / 3 : (P0 + P1 + P2 + P3) / 4;
-
-                        testSphere = new BoundingSphereD(midpoint, 1); // just want to test a point
-
-                        if (cam.IsInFrustum(ref testSphere))
-                        {
-                            var b = av.Billboards[i];
-                            b.Material = def.Materials[av.CurrentLifetime % def.Materials.Length];
-                            b.LocalType = LocalTypeEnum.Custom;
-                            b.Position0 = P0;
-                            b.Position1 = P1;
-                            b.Position2 = P2;
-                            b.Position3 = P3;
-                            b.UVOffset = Vector2.Zero;
-                            b.UVSize = Vector2.One;
-                            b.DistanceSquared = Vector3.DistanceSquared(cam.Position, midpoint);
-                            b.Color = def.FactionColor == FactionColor.DontUse ? def.Color :
-                                def.FactionColor == FactionColor.Foreground ? av.Av.FgFactionColor : av.Av.BgFactionColor;
-                            b.Reflectivity = 0;
-                            b.CustomViewProjection = -1;
-                            b.ParentID = uint.MaxValue;
-                            b.ColorIntensity = 1f;
-                            b.SoftParticleDistanceScale = 1f;
-                            b.BlendType = BlendTypeEnum.Standard;
-
-                            BillBoardsToAdd.Add(b);
-                            advBillboardsDrawn++;
-                        }
+                        b.Billboard.DistanceSquared = (float)Vector3D.DistanceSquared(cam.Position, midpoint);
+                        BillBoardsToAdd.Add(b.Billboard);
+                        advBillboardsDrawn++;
                     }
-                    ComputedRotationMatricies.Clear();
                 }
             }
             if (Session.I.Tick180)

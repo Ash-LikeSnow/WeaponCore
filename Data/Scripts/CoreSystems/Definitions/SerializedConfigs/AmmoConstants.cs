@@ -698,8 +698,6 @@ namespace CoreSystems.Support
                     var n = advLines.Billboards[i];
                     billboards.Billboards[i] = new AdvBillboards.BillboardConstants
                     {
-                        AlwaysDraw = n.AlwaysDraw,
-                        ColorFade = n.ColorFade,
                         BlendType = n.BlendType,
                         FactionColor = n.FactionColor,
                         Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
@@ -2373,8 +2371,6 @@ namespace CoreSystems.Support
 
         public struct BillboardConstants
         {
-            public bool AlwaysDraw;
-            public bool ColorFade;
             public bool HasRotateSpeed;
             public bool IsTri;
             public float RotateSpeed;

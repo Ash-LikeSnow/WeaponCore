@@ -1065,19 +1065,17 @@ namespace CoreSystems.Api
                         [ProtoContract]
                         public struct Billboard
                         {
-                            [ProtoMember(1)] public bool AlwaysDraw;
-                            [ProtoMember(2)] public bool ColorFade;
-                            [ProtoMember(3)] public float RotateSpeed;
-                            [ProtoMember(4)] public float MinViewDistance;
-                            [ProtoMember(5)] public float MaxViewDistance;
-                            [ProtoMember(6)] public LineDef.FactionColor FactionColor;
-                            [ProtoMember(7)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
-                            [ProtoMember(8)] public string[] Materials;
-                            [ProtoMember(9)] public Vector3 P0;
-                            [ProtoMember(10)] public Vector3 P1;
-                            [ProtoMember(11)] public Vector3 P2;
-                            [ProtoMember(12)] public Vector3 P3; // P2 == P3 for triangle
-                            [ProtoMember(13)] public Vector4 Color;
+                            [ProtoMember(1)] public float RotateSpeed;
+                            [ProtoMember(2)] public float MinViewDistance;
+                            [ProtoMember(3)] public float MaxViewDistance;
+                            [ProtoMember(4)] public LineDef.FactionColor FactionColor;
+                            [ProtoMember(5)] public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+                            [ProtoMember(6)] public string[] Materials;
+                            [ProtoMember(7)] public Vector3 P0;
+                            [ProtoMember(8)] public Vector3 P1;
+                            [ProtoMember(9)] public Vector3 P2;
+                            [ProtoMember(10)] public Vector3 P3; // P2 == P3 for triangle
+                            [ProtoMember(11)] public Vector4 Color;
                         }
                     }
                 }

@@ -444,7 +444,6 @@ namespace CoreSystems.Projectiles
                     }
                     
                     MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
-                    MyLog.Default.WriteLineAndConsole(info.AvShot.PrimeMatrix.ToString());
                 }
 
                 if (aConst.TriggerModel)

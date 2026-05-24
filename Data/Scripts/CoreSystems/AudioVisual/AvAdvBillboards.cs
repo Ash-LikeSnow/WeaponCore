@@ -27,7 +27,7 @@ namespace CoreSystems.Support
 
         public List<AdvBLineCache> DrawnLines = new List<AdvBLineCache>();
         public List<MyQueue<AdvBLineCache>> Trails = new List<MyQueue<AdvBLineCache>>();
-        public List<MyBillboard> Billboards = new List<MyBillboard>();
+        public List<BillboardInfo> Billboards = new List<BillboardInfo>();
         public AvShot Av;
         public MatrixD ProjectileMatrix;
         public Vector3 Velocity;
@@ -83,7 +83,10 @@ namespace CoreSystems.Support
                 Billboards.EnsureCapacity(BillboardDefs.Length);
                 for (int i = 0; i < BillboardDefs.Length; i++)
                 {
-                    Billboards.Add(avr.BillboardCache.Count > 0 ? avr.BillboardCache.Pop() : new MyBillboard());
+                    var binfo = avr.BillboardCache.Count > 0 ? avr.BillboardCache.Pop() : new BillboardInfo();
+                    binfo.IsTri = BillboardDefs[i].IsTri;
+                    binfo.Render = false;
+                    Billboards.Add(binfo);
                 }
             }
         }
@@ -116,6 +119,8 @@ namespace CoreSystems.Support
 
             foreach (var billboard in Billboards)
             {
+                billboard.IsTri = false;
+                billboard.Render = false;
                 avr.BillboardCache.Push(billboard);
             }
             Billboards.Clear();
@@ -150,5 +155,12 @@ namespace CoreSystems.Support
         public Vector4 StartColor;
         public Vector3D Start;
         public Vector3D End;
+    }
+    // if only this could be value type
+    internal class BillboardInfo
+    {
+        public MyBillboard Billboard;
+        public bool Render;
+        public bool IsTri;
     }
 }
