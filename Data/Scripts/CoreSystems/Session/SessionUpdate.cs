@@ -625,20 +625,13 @@ namespace CoreSystems
                             {
 
                                 if (w.ClientReloading && w.Reload.EndId > w.ClientEndId && w.Reload.StartId == w.ClientStartId)
-                                {
-                                    Log.Line($"WepUpdate2");
-
                                     w.Reloaded(5);
-                                }
                                 else
                                     w.ClientReload();
                             }
                         }
                         else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
-                        {
-                            Log.Line($"WepUpdate1 {IsServer} && {Tick} >= {w.ReloadEndTick} || {IsClient} && {!w.Charging} && {w.Reload.EndId} > {w.ClientEndId})");
                             w.Reloaded(1);
-                        }
                         
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
@@ -806,7 +799,6 @@ namespace CoreSystems
                         var shotReady = canShoot && shootRequest;
                         var noFireTarget = w.System.Values.HardPoint.Other.AllowNoTargetFiring;
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || noFireTarget || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
-                        Log.Line($"Shoot: {shoot}  Loading:  {w.Loading} Ammo: {w.ProtoWeaponAmmo.CurrentAmmo} )");
 
                         if (shoot) {
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
