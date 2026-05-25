@@ -52,7 +52,7 @@ namespace CoreSystems.Support
             TrailDefs = info.AmmoDef.Const.AdvBillboardSettings.Trails;
             BillboardDefs = info.AmmoDef.Const.AdvBillboardSettings.Billboards;
 
-            Grav = p.Gravity;
+            Grav = p.Gravity * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
 
             if (LineDefs.Length > 0)
             {

@@ -1456,6 +1456,10 @@ namespace CoreSystems.Projectiles
                 case ModelRelativeTo.ModelRelativeToOriginDirection:
                     vec = Vector3D.Normalize(Info.Origin - Position);
                     break;
+                case ModelRelativeTo.ModelAcceleration:
+                    var accel = (Velocity - PrevVelocity0) * (60 / 2) - (aConst.FeelsGravity ? Gravity : Vector3.Zero);
+                    vec = Vector3D.Normalize(accel);
+                    break;
                 default:
                     vec = Vector3D.Zero;
                     break;

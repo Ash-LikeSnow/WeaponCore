@@ -1586,6 +1586,7 @@ namespace CoreSystems.Api
                             ModelRelativeToOriginDirection,
                             ModelOriginForwards,
                             ModelOriginUp,
+                            ModelAcceleration,
                         }
                         public enum RelativeTo
                         {

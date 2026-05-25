@@ -1593,6 +1593,7 @@ namespace CoreSystems.Support
                         ModelOriginForwards,
                         ModelOriginUp,
                         ModelRelativeToOriginDirection,
+                        ModelAcceleration,
                     }
                     public enum RelativeTo
                     {
