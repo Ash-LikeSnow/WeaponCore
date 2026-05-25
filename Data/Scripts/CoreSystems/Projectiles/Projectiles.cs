@@ -372,7 +372,7 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-                if (aConst.PrimeModel && p.EnableAv)
+                if ((aConst.PrimeModel && p.EnableAv) || aConst.TriggerModel)
                 {
                     Vector3D modelDir;
                     Vector3D ModelUp;
@@ -384,11 +384,11 @@ namespace CoreSystems.Projectiles
                             var t = MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1);
                             if (MyUtils.IsZero(aInfo.ModelFwdDir))
                             {
-                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDirStart, t);
+                                modelDir = p.Direction;
                             }
                             else
                             {
-                                modelDir = Vector3.Lerp(aInfo.ModelFwdDirStart, aInfo.ModelFwdDir, t);
+                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDir, t);
                             }
 
                             if (MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir)
@@ -444,10 +444,12 @@ namespace CoreSystems.Projectiles
                     }
                     
                     MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
+
+                    if (aConst.TriggerModel)
+                        info.TriggerMatrix.Translation = p.Position;
                 }
 
-                if (aConst.TriggerModel)
-                    info.TriggerMatrix.Translation = p.Position;
+                
 
                 if (aConst.IsBeamWeapon)
                     ++_beamCount;

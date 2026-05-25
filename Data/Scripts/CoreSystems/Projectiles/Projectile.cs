@@ -953,9 +953,18 @@ namespace CoreSystems.Projectiles
 
                     if ((approach.ModelRotate || aInfo.ModelRotateAge > 0) && approach.ModelMaximumAngleToRotate <= 0)
                     {
+                        if (!approach.AlternateModelForwardUp)
+                        {
+                            aInfo.ModelFwdDir = Vector3D.Normalize(aInfo.TargetPos - Position);
+                        }
+
                         if ((targetLock || approach.AlternateModelForwardUp) && approach.ModelRotateTime > aInfo.ModelRotateAge)
                         {
                             aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
+                            if (aInfo.ModelRotateAge == 0)
+                            {
+                                aInfo.ModelUpDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Info.OriginUp : Info.AvShot.PrimeMatrix.Up;
+                            }
                             ++aInfo.ModelRotateAge;
                         }
                         else if (aInfo.ModelRotateAge > 0 && (!approach.ModelRotate || (approach.AlternateModelForwardUp ? MyUtils.IsZero(aInfo.ModelFwdDir) : !targetLock)) && --aInfo.ModelRotateAge == 0)

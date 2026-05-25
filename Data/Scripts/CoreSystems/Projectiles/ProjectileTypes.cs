@@ -302,7 +302,6 @@ namespace CoreSystems.Support
         internal Vector3 ModelUpDir;
         internal Vector3 ModelUpDirStart;
         internal Vector3 ModelFwdDir;
-        internal Vector3 ModelFwdDirStart;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
         internal double StartHealth;
@@ -330,7 +329,6 @@ namespace CoreSystems.Support
             ModelUpDir = Vector3.Zero;
             ModelUpDirStart = Vector3.Zero;
             ModelFwdDir = Vector3.Zero;
-            ModelFwdDirStart = Vector3.Zero;
             StartDistanceTraveled = 0;
             RelativeAgeStart = 0;
             RelativeSpawnsStart = 0;
