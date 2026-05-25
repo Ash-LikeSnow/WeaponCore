@@ -1465,6 +1465,8 @@ namespace CoreSystems.Projectiles
                     break;
             }
 
+            if (!MyUtils.IsValid(vec))
+                return Vector3D.Zero;
             return vec;
         }
 
