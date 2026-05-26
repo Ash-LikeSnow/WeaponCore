@@ -1486,6 +1486,8 @@ namespace CoreSystems.Projectiles
             switch (con)
             {
                 case Conditions.Spawn:
+                    condition = true;
+                    break;
                 case Conditions.Ignore:
                     condition = conditionAnd; // if and, return true so it doesn't block real condition, if or return false so it doesn't false positive
                     break;
