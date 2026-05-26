@@ -34,7 +34,7 @@ namespace CoreSystems.Support
         public Vector3 PrevVelocity;
         public Vector3D PrevPosition;
         public Vector3 Grav;
-        public int ClientAVLevel;
+        public uint ClientAVLevel;
         public int CurrentLifetime;
         public bool ModelRotation;
 
@@ -45,7 +45,7 @@ namespace CoreSystems.Support
             var avr = session.Av;
             Av = av;
 
-            ClientAVLevel = session.ClientAvLevel;
+            ClientAVLevel = (uint)session.ClientAvLevel;
 
             ModelRotation = info.AmmoDef.Const.AdvBillboardSettings.UseModelRotation;
             LineDefs = info.AmmoDef.Const.AdvBillboardSettings.Lines;
@@ -53,6 +53,9 @@ namespace CoreSystems.Support
             BillboardDefs = info.AmmoDef.Const.AdvBillboardSettings.Billboards;
 
             Grav = p.Gravity * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+
+            ProjectileMatrix = MatrixD.CreateWorld(p.Position, (MyUtils.IsZero(p.Velocity, 0.01f) ? p.Direction : p.Velocity).Normalized(), p.Info.OriginUp);
+            PrevPosition = p.Info.Origin;
 
             if (LineDefs.Length > 0)
             {
@@ -115,7 +118,6 @@ namespace CoreSystems.Support
             }
             Trails.Clear();
             ClientAVLevel = 0;
-            CurrentLifetime = 0;
 
             foreach (var billboard in Billboards)
             {
@@ -149,6 +151,7 @@ namespace CoreSystems.Support
         public uint StartTick;
         public float StartWidth;
         public float MaxDistSq;
+        public float SphereDist;
         public MyStringId Material;
         public MyBillboard Billboard = new MyBillboard();
         public Vector3 Velocity;

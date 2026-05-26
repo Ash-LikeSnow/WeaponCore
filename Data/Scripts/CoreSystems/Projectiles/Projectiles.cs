@@ -593,15 +593,7 @@ namespace CoreSystems.Projectiles
                     else
                     {
                         var forward = (MyUtils.IsZero(p.Velocity, 0.01f) ? p.Direction : p.Velocity).Normalized();
-                        
-                        if (!MyUtils.IsZero(advav.ProjectileMatrix.Left))
-                        {
-                            advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, advav.ProjectileMatrix.Up);
-                        }
-                        else
-                        {
-                            advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, p.Info.OriginUp);
-                        }
+                        advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, advav.ProjectileMatrix.Up);
                     }
                 }
 

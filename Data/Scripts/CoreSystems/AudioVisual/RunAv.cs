@@ -379,11 +379,11 @@ namespace CoreSystems.Support
                         av.DrawnLines[j].End += vel;
                     }
                 }
-
+                
                 for (int j = 0; j < av.LineDefs.Length; j++)
                 {
                     var def = av.LineDefs[j];
-
+                    
                     if (def.DelayBetweenSpawns != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1) != 0)
                         continue;
 
@@ -536,6 +536,7 @@ namespace CoreSystems.Support
 
                     line.Velocity = av.Velocity * def.VelocityInheritence * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
                     line.Material = def.Materials[(av.CurrentLifetime / (def.DelayBetweenSpawns + 1)) % def.Materials.Length];
+                    line.SphereDist = (float)Vector3D.Distance(line.Start, line.End) / 2;
 
                     av.DrawnLines.Add(line);
                 }
@@ -546,14 +547,11 @@ namespace CoreSystems.Support
                     var def = av.TrailDefs[j];
                     var trails = av.Trails[j];
 
-                    if (MyUtils.IsZero(av.PrevPosition)) // first tick
-                        continue;
-
                     if (trails.Count > 0 && trails.Peek().EndTick <= tick)
                     {
                         advBLineCooldown.Add(trails.Dequeue());
                     }
-                    uint divisor = (uint)av.ClientAVLevel + def.DelayBetweenSpawns + 1;
+                    uint divisor = av.ClientAVLevel + def.DelayBetweenSpawns + 1;
                     if ((divisor > 1 && av.CurrentLifetime % divisor != 0)
                         || (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
                         || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
@@ -563,7 +561,10 @@ namespace CoreSystems.Support
                         {
                             var prevTrail = trails.Last();
                             if (tick - prevTrail.StartTick <= divisor) // only extend trail up to divisor ticks so it doesn't bug out when rapidly traversing min/max view dists
+                            {
                                 prevTrail.Start = prevTrail.Start - av.PrevPosition + av.ProjectileMatrix.Translation; // with this simple trick I sawed the billboard count in half!
+                                prevTrail.SphereDist = (float)Vector3D.Distance(prevTrail.Start, prevTrail.End) / 2;
+                            }
                         }
                         continue;
                     }
@@ -648,6 +649,7 @@ namespace CoreSystems.Support
 
                     line.Velocity = Vector3.Zero;
                     line.Material = def.Materials[(av.CurrentLifetime / divisor) % def.Materials.Length];
+                    line.SphereDist = (float)Vector3D.Distance(line.Start, line.End) / 2;
 
                     trails.Enqueue(line);
                     advBillboardsAdded += trails.Count;
@@ -1006,7 +1008,7 @@ namespace CoreSystems.Support
             foreach (var line in lines)
             {
                 var midpoint = (line.End + line.Start) * 0.5f;
-                testSphere = new BoundingSphereD(midpoint, 1); // just want to test a point
+                testSphere = new BoundingSphereD(midpoint, line.SphereDist); // just want to test a point
                 if (cam.IsInFrustum(ref testSphere))
                 {
                     var b = line.Billboard;
@@ -1018,9 +1020,9 @@ namespace CoreSystems.Support
                     var color = line.StartColor * oneMinust;
                     var width = line.StartWidth * oneMinust;
 
-                    var d = cam.Position - midpoint;
-                    var dist = d.Normalize();
-                    var up = Vector3D.Cross(line.Start - line.End, d).Normalized() * width;
+                    var delta = cam.Position - line.Start;
+                    var dist = delta.Normalize();
+                    var up = MyUtils.GetVector3Scaled(Vector3D.Cross(line.Start - line.End, delta), width);
 
                     b.Material = line.Material;
                     b.LocalType = LocalTypeEnum.Custom;
