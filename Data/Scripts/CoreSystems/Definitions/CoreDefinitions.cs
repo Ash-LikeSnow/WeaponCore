@@ -1045,6 +1045,7 @@ namespace CoreSystems.Support
                         [ProtoMember(21)] public Vector3 P0;
                         [ProtoMember(22)] public Vector3 P1;
                         [ProtoMember(23)] public Vector4 Color;
+                        [ProtoMember(24)] public uint DelayBetweenSpawnsOffset;
                     }
                     [ProtoContract]
                     public struct Trail
@@ -1064,6 +1065,7 @@ namespace CoreSystems.Support
                         [ProtoMember(13)] public string[] Materials;
                         [ProtoMember(14)] public Vector3 P0;
                         [ProtoMember(15)] public Vector4 Color;
+                        [ProtoMember(16)] public uint DelayBetweenSpawnsOffset;
                     }
                     [ProtoContract]
                     public struct Billboard
@@ -1079,6 +1081,8 @@ namespace CoreSystems.Support
                         [ProtoMember(9)] public Vector3 P2;
                         [ProtoMember(10)] public Vector3 P3; // P2 == P3 for triangle
                         [ProtoMember(11)] public Vector4 Color;
+                        [ProtoMember(12)] public uint DelayBetweenSpawns;
+                        [ProtoMember(13)] public uint DelayBetweenSpawnsOffset;
                     }
                 }
             }

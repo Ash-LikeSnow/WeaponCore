@@ -384,7 +384,7 @@ namespace CoreSystems.Support
                 {
                     var def = av.LineDefs[j];
                     
-                    if (def.DelayBetweenSpawns != 0 && av.CurrentLifetime % (def.DelayBetweenSpawns + 1) != 0)
+                    if (def.DelayBetweenSpawns != 0 && (av.CurrentLifetime + def.DelayBetweenSpawnsOffset) % (def.DelayBetweenSpawns + 1) != 0)
                         continue;
 
                     if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
@@ -552,7 +552,7 @@ namespace CoreSystems.Support
                         advBLineCooldown.Add(trails.Dequeue());
                     }
                     uint divisor = av.ClientAVLevel + def.DelayBetweenSpawns + 1;
-                    if ((divisor > 1 && av.CurrentLifetime % divisor != 0)
+                    if ((divisor > 1 && (av.CurrentLifetime + def.DelayBetweenSpawnsOffset) % divisor != 0)
                         || (def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
                         || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                     {
@@ -660,6 +660,10 @@ namespace CoreSystems.Support
                     av.Billboards[j].Render = false;
 
                     var def = av.BillboardDefs[j];
+
+                    if (def.DelayBetweenSpawns != 0 && (av.CurrentLifetime + def.DelayBetweenSpawnsOffset) % (def.DelayBetweenSpawns + 1) != 0)
+                        continue;
+
                     if ((def.MaxViewDistanceSq > 0 && def.MaxViewDistanceSq < Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos))
                         || (def.MinViewDistanceSq > Vector3D.DistanceSquared(av.ProjectileMatrix.Translation, camPos)))
                     {
