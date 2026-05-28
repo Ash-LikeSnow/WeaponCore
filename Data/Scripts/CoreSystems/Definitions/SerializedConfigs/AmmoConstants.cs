@@ -17,6 +17,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef.FactionColor;
 using static CoreSystems.Settings.CoreSettings.ServerSettings;
 using static CoreSystems.Session;
 
@@ -57,6 +58,7 @@ namespace CoreSystems.Support
         public readonly XorShiftRandom Random;
         public readonly AmmoOverride Overrides;
         public readonly HashSet<uint> ProjectileTags;
+        public readonly AdvBillboards AdvBillboardSettings;
 
         public readonly MyStringId[] TracerTextures;
         public readonly MyStringId[] TrailTextures;
@@ -170,6 +172,7 @@ namespace CoreSystems.Support
         public readonly bool WaterHitParticleNoCull;
         public readonly bool VoxelHitParticleNoCull;
         public readonly bool DrawLine;
+        public readonly bool DrawAdvBillboards;
         public readonly bool Ewar;
         public readonly bool NonAntiSmartEwar;
         public readonly bool TargetOffSet;
@@ -595,8 +598,149 @@ namespace CoreSystems.Support
             ProjectilesFirst = system.ProjectilesFirst;
 
             PFlags(ammo, out ProjectileTags);
-
+            ComputeAdvBillboards(ammo.AmmoDef, out AdvBillboardSettings, out DrawAdvBillboards);
             PreComputedMath = new PreComputedMath(ammo, this);
+        }
+
+        internal void ComputeAdvBillboards(AmmoDef ammo, out AdvBillboards billboards, out bool DrawAdvBillboards)
+        {
+            const double DEG_PER_SEC_TO_RAD_PER_TICK = (Math.PI / 180d) / 60d;
+
+            billboards = null;
+            var advLines = ammo.AmmoGraphics.AdvancedLines;
+            DrawAdvBillboards = advLines.Enable && !ammo.Beams.Enable;
+
+            if (!DrawAdvBillboards)
+                return;
+
+            
+
+            billboards = new AdvBillboards()
+            {
+                UseModelRotation = ammo.AmmoGraphics.AdvancedLines.UseModelRotation,
+            };
+
+            if (advLines.AdvLines != null && advLines.AdvLines.Length > 0)
+            {
+                billboards.Lines = new AdvBillboards.LineConstants[advLines.AdvLines.Length];
+                for (int i = 0; i < advLines.AdvLines.Length; i++)
+                {
+                    var n = advLines.AdvLines[i];
+                    var t = n.TimeRendered <= 0 ? 1 : n.TimeRendered;
+                    billboards.Lines[i] = new AdvBillboards.LineConstants
+                    {
+                        AlwaysDraw = n.AlwaysDraw,
+                        VelocityInheritence = n.VelocityInheritence,
+                        OnlyDrawIfAccelerationAligned = n.OnlyDrawIfAccelerationAligned,
+                        WidthFade = n.WidthFade && t > 1,
+                        ColorFade = n.ColorFade && t > 1,
+                        TimeRendered = t,
+                        DelayBetweenSpawns = n.DelayBetweenSpawns,
+                        P0RandomOffset = n.P0RandomOffset,
+                        P1RandomOffset = n.P1RandomOffset,
+                        Width = n.Width,
+                        BlendType = n.BlendType,
+                        FactionColor = n.FactionColor,
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
+                        P0 = n.P0,
+                        P1 = n.P1,
+                        Color = n.Color.ToLinearRGB(),
+                        HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0 || n.P1.X != 0 || n.P1.Y != 0), // if theres nothing to rotate then don't
+                        RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
+                        MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
+                        AccelerationDotReq = n.AccelerationDotReq,
+                        AccelerationSizeMultiplier = n.AccelerationSizeMultiplier,
+                        LengthAffectedByAccelAlignment = n.LengthAffectedByAccelAlignment,
+                        AccelAccountForGrav = n.AccelAccountForGrav,
+                        TransformP0 = !MyUtils.IsZero(n.P0),
+                        TransformP1 = !MyUtils.IsZero(n.P1),
+                        DelayBetweenSpawnsOffset = n.DelayBetweenSpawnsOffset,
+                    };
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Lines[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
+                }
+            }
+
+            if (advLines.AdvTrails != null && advLines.AdvTrails.Length > 0)
+            {
+                billboards.Trails = new AdvBillboards.TrailConstants[advLines.AdvTrails.Length];
+                for (int i = 0; i < advLines.AdvTrails.Length; i++)
+                {
+                    var n = advLines.AdvTrails[i];
+                    var t = n.TimeRendered == 0 ? 1 : n.TimeRendered;
+                    billboards.Trails[i] = new AdvBillboards.TrailConstants
+                    {
+                        AlwaysDraw = n.AlwaysDraw,
+                        WidthFade = n.WidthFade && t > 1,
+                        ColorFade = n.ColorFade && t > 1,
+                        TimeRendered = t,
+                        DelayBetweenSpawns = n.DelayBetweenSpawns,
+                        P0RandomOffset = n.P0RandomOffset,
+                        Width = n.Width,
+                        BlendType = n.BlendType,
+                        FactionColor = n.FactionColor,
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
+                        P0 = n.P0,
+                        Color = n.Color.ToLinearRGB(),
+                        HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0), // if theres nothing to rotate then don't
+                        RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
+                        MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
+                        TransformP0 = !MyUtils.IsZero(n.P0),
+                        DelayBetweenSpawnsOffset = n.DelayBetweenSpawnsOffset,
+                    };
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Trails[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
+                }
+            }
+
+            if (advLines.Billboards != null && advLines.Billboards.Length > 0)
+            {
+                billboards.Billboards = new AdvBillboards.BillboardConstants[advLines.Billboards.Length];
+                for (int i = 0; i < advLines.Billboards.Length; i++)
+                {
+                    var n = advLines.Billboards[i];
+                    billboards.Billboards[i] = new AdvBillboards.BillboardConstants
+                    {
+                        BlendType = n.BlendType,
+                        FactionColor = n.FactionColor,
+                        Materials = new MyStringId[n.Materials == null ? 0 : n.Materials.Length],
+                        P0 = n.P0,
+                        P1 = n.P1,
+                        P2 = n.P2,
+                        P3 = n.P3,
+                        IsTri = n.P2 == n.P3,
+                        Color = n.Color.ToLinearRGB(),
+                        HasRotateSpeed = n.RotateSpeed != 0 && (n.P0.X != 0 || n.P0.Y != 0 || n.P1.X != 0 || n.P1.Y != 0 || n.P2.X != 0 || n.P2.Y != 0 || n.P3.X != 0 || n.P3.Y != 0), // if theres nothing to rotate then don't
+                        RotateSpeed = (float)(n.RotateSpeed * DEG_PER_SEC_TO_RAD_PER_TICK),
+                        MaxViewDistanceSq = n.MaxViewDistance * n.MaxViewDistance,
+                        MinViewDistanceSq = n.MinViewDistance * n.MinViewDistance,
+                        DelayBetweenSpawns = n.DelayBetweenSpawns,
+                        DelayBetweenSpawnsOffset = n .DelayBetweenSpawnsOffset,
+                    };
+
+
+                    if (n.Materials != null)
+                        for (int j = 0; j < n.Materials.Length; j++)
+                            billboards.Billboards[i].Materials[j] = MyStringId.GetOrCompute(n.Materials[j]);
+                }
+            }
+
+            if (billboards.Lines == null)
+            {
+                billboards.Lines = new AdvBillboards.LineConstants[0];
+            }
+            if (billboards.Trails == null)
+            {
+                billboards.Trails = new AdvBillboards.TrailConstants[0];
+            }
+            if (billboards.Billboards == null)
+            {
+                billboards.Billboards = new AdvBillboards.BillboardConstants[0];
+            }
         }
 
         internal void Purge()
@@ -1915,6 +2059,8 @@ namespace CoreSystems.Support
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon3;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon4;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon5;
+        public readonly TrajectoryDef.ApproachDef.ModelRelativeTo ModelUp;
+        public readonly TrajectoryDef.ApproachDef.ModelRelativeTo ModelFwds;
         public readonly bool AdjustForward;
         public readonly bool AdjustUp;
         public readonly bool DisableAvoidance;
@@ -1934,6 +2080,7 @@ namespace CoreSystems.Support
         public readonly bool TargetAvoidance;
         public readonly bool SelfPhasing;
         public readonly bool SwapNavigationType;
+        public readonly bool AlternateModelForwardUp;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1944,6 +2091,8 @@ namespace CoreSystems.Support
         public readonly double LeadDistance;
         public readonly double AccelMulti;
         public readonly double SpeedCapMulti;
+        public readonly double TotalAccelMultiSq;
+        public readonly double DeAccelMulti;
 
         public readonly double Start1Value;
         public readonly double Start2Value;
@@ -1958,6 +2107,8 @@ namespace CoreSystems.Support
         public readonly int StoredStartId;
         public readonly int StoredEndId;
         public readonly int ModelRotateTime;
+
+        public readonly float ModelMaximumAngleToRotate;
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
             var def = ammo.AmmoDef.Trajectory.Approaches[index];
@@ -1974,7 +2125,7 @@ namespace CoreSystems.Support
             LeadRotateElevatePositionC = def.LeadRotateElevatePositionC;
             NoElevationLead = def.NoElevationLead;
             IgnoreAntiSmart = def.IgnoreAntiSmart;
-            ModelRotate = def.ModelRotateTime > 0;
+            ModelRotate = def.ModelRotateTime > 0 || def.ModelMaximumAngleToRotate > 0;
             ToggleIngoreVoxels = def.ToggleIngoreVoxels;
             SelfAvoidance = def.SelfAvoidance;
             TargetAvoidance = def.TargetAvoidance;
@@ -1984,6 +2135,8 @@ namespace CoreSystems.Support
             ElevationRelatveToC = def.ElevationRelativeToC;
             Forward = def.Forward;
             Up = def.Up;
+            ModelFwds = def.ModelForwards;
+            ModelUp = def.ModelUp;
             PositionB = def.PositionB;
             PositionC = def.PositionC;
             Elevation = def.Elevation;
@@ -2024,6 +2177,9 @@ namespace CoreSystems.Support
             AccelMulti = def.AccelMulti;
             SpeedCapMulti = def.SpeedCapMulti;
 
+            AlternateModelForwardUp = def.AlternateModelForwardUp;
+            ModelMaximumAngleToRotate = def.ModelMaximumAngleToRotate <= 0 ? 0 : MathHelper.ToRadians(def.ModelMaximumAngleToRotate) / 60f;
+
             ElevationTolerance = def.ElevationTolerance;
             if (AlternateModel)
             {
@@ -2048,6 +2204,9 @@ namespace CoreSystems.Support
 
             ModFutureStep = futureStepLimit;
             GetOperators(def, out StartAnd, out EndAnd);
+
+            DeAccelMulti = def.DeAccelMulti != 0 ? def.DeAccelMulti : 1d;
+            TotalAccelMultiSq = def.TotalAccelMulti > 0 ? def.TotalAccelMulti * def.TotalAccelMulti : 1d;
         }
 
         private static void GetOperators(TrajectoryDef.ApproachDef def, out bool startAnd, out bool endAnd)
@@ -2168,7 +2327,87 @@ namespace CoreSystems.Support
             myEntity.InScene = false;
             myEntity.Render.RemoveRenderObjects();
         }
+    }
 
+    public class AdvBillboards
+    {
+        public bool UseModelRotation;
+        public LineConstants[] Lines;
+        public TrailConstants[] Trails;
+        public BillboardConstants[] Billboards;
+
+        public struct LineConstants
+        {
+            public bool AlwaysDraw;
+            public bool WidthFade;
+            public bool ColorFade;
+            public bool HasRotateSpeed;
+            public bool OnlyDrawIfAccelerationAligned;
+            public bool LengthAffectedByAccelAlignment;
+            public bool AccelAccountForGrav;
+            public bool TransformP0;
+            public bool TransformP1;
+            public uint TimeRendered;
+            public uint DelayBetweenSpawns;
+            public uint DelayBetweenSpawnsOffset;
+            public float P0RandomOffset;
+            public float P1RandomOffset;
+            public float Width;
+            public float RotateSpeed;
+            public float VelocityInheritence;
+            public float MinViewDistanceSq;
+            public float MaxViewDistanceSq;
+            public float AccelerationDotReq;
+            public float AccelerationSizeMultiplier;
+            public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+            public FactionColor FactionColor;
+            public MyStringId[] Materials;
+            public Vector3 P0;
+            public Vector3 P1;
+            public Vector4 Color;
+        }
+
+        public struct TrailConstants
+        {
+            public bool WidthFade;
+            public bool ColorFade;
+            public bool AlwaysDraw;
+            public bool HasRotateSpeed;
+            public bool TransformP0;
+            public uint TimeRendered;
+            public uint DelayBetweenSpawns;
+            public uint DelayBetweenSpawnsOffset;
+            public uint NumberOfTimesToRepeat;
+            public float P0RandomOffset;
+            public float Width;
+            public float RotateSpeed;
+            public float MinViewDistanceSq;
+            public float MaxViewDistanceSq;
+            public MyStringId[] Materials;
+            public FactionColor FactionColor;
+            public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+            public Vector3 P0;
+            public Vector4 Color;
+        }
+
+        public struct BillboardConstants
+        {
+            public bool HasRotateSpeed;
+            public bool IsTri;
+            public uint DelayBetweenSpawns;
+            public uint DelayBetweenSpawnsOffset;
+            public float RotateSpeed;
+            public float MinViewDistanceSq;
+            public float MaxViewDistanceSq;
+            public FactionColor FactionColor;
+            public VRageRender.MyBillboard.BlendTypeEnum BlendType;
+            public MyStringId[] Materials;
+            public Vector3 P0;
+            public Vector3 P1;
+            public Vector3 P2;
+            public Vector3 P3;
+            public Vector4 Color;
+        }
     }
 
     public class PreComputedMath
