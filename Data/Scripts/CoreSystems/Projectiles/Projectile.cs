@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
+using System;
+using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -532,6 +531,8 @@ namespace CoreSystems.Projectiles
             var ai = Info.Ai;
             var session = Session.I;
             var speedCapMulti = 1d;
+            var totalAccelSq = aConst.MaxAccelerationSqr;
+            var deAccelMulti = 1d;
 
             if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags && State <= ProjectileState.Detonate)
             {
@@ -686,9 +687,10 @@ namespace CoreSystems.Projectiles
                 var accelMpsMulti = speedLimitPerTick;
                 bool disableAvoidance = false;
                 bool zeroEffortNav = aConst.ZeroEffortNav;
+                
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock, ref totalAccelSq, ref deAccelMulti);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
@@ -696,7 +698,7 @@ namespace CoreSystems.Projectiles
                 Vector3D commandedAccel;
                 Vector3D missileToTargetNorm = Vector3D.Zero;
                 var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
-                if (!aConst.NoSteering && fastEnoughToTurn)
+                if (!aConst.NoSteering && fastEnoughToTurn && Info.TotalAcceleration <= totalAccelSq)
                 {
                     Vector3D targetAcceleration = Vector3D.Zero;
                     if (s.LastVelocity.HasValue)
@@ -842,7 +844,7 @@ namespace CoreSystems.Projectiles
             var speedCap = speedCapMulti * MaxSpeed;
             if (aConst.AmmoUseDrag)
             {
-                speedCap -= Info.Age * aConst.DragPerTick;
+                speedCap -= Info.Age * aConst.DragPerTick * deAccelMulti;
                 if (speedCap < aConst.DragMinSpeed)
                     speedCap = aConst.DragMinSpeed;
                 else if (speedCap < 0)
@@ -853,11 +855,11 @@ namespace CoreSystems.Projectiles
                 proposedVel = Direction * speedCap;
             }
             else
-                Info.TotalAcceleration += (proposedVel - PrevVelocity1);
+                Info.TotalAcceleration += (proposedVel - PrevVelocity1).LengthSquared();
 
             PrevVelocity0 = PrevVelocity1;
             PrevVelocity1 = Velocity;
-            if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+            if (Info.TotalAcceleration > totalAccelSq)
                 proposedVel = Velocity;
 
             Velocity = proposedVel;
@@ -908,7 +910,7 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, ref bool zeroEffortNav, Vector3D targetPos, int lastActiveStage, bool targetLock)
+        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, ref bool zeroEffortNav, Vector3D targetPos, int lastActiveStage, bool targetLock, ref double totalAccelSq, ref double deAccelMulti)
         {
             var s = Session.I;
             var aConst = Info.AmmoDef.Const;
@@ -1268,6 +1270,8 @@ namespace CoreSystems.Projectiles
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
+                    totalAccelSq *= approach.TotalAccelMultiSq;
+                    deAccelMulti = approach.DeAccelMulti;
 
                     var fwdDestDir = approach.Forward == FwdRelativeTo.ForwardElevationDirection;
                     var upDestDir = approach.Up == UpRelativeTo.UpElevationDirection;

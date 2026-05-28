@@ -34,7 +34,6 @@ namespace CoreSystems.Support
         internal Vector3D Origin;
         internal Vector3D OriginUp;
         internal Vector3D OriginFwd;
-        internal Vector3D TotalAcceleration;
         internal XorShiftRandomStruct Random;
         internal XorShiftRandomStruct ShieldProc;
         internal int Age = -1;
@@ -61,6 +60,7 @@ namespace CoreSystems.Support
         internal double ShotFade;
         internal double RelativeAge = -1;
         internal double PrevRelativeAge = -1;
+        internal double TotalAcceleration;
         internal long DamageDonePri;
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
@@ -210,7 +210,7 @@ namespace CoreSystems.Support
             OriginFwd = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
-            TotalAcceleration = Vector3D.Zero;
+            TotalAcceleration = 0;
         }
     }
 

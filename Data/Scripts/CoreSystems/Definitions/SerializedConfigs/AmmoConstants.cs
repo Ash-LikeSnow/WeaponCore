@@ -2086,6 +2086,8 @@ namespace CoreSystems.Support
         public readonly double LeadDistance;
         public readonly double AccelMulti;
         public readonly double SpeedCapMulti;
+        public readonly double TotalAccelMultiSq;
+        public readonly double DeAccelMulti;
 
         public readonly double Start1Value;
         public readonly double Start2Value;
@@ -2197,6 +2199,9 @@ namespace CoreSystems.Support
 
             ModFutureStep = futureStepLimit;
             GetOperators(def, out StartAnd, out EndAnd);
+
+            DeAccelMulti = def.DeAccelMulti != 0 ? def.DeAccelMulti : 1d;
+            TotalAccelMultiSq = def.TotalAccelMulti > 0 ? def.TotalAccelMulti * def.TotalAccelMulti : 1d;
         }
 
         private static void GetOperators(TrajectoryDef.ApproachDef def, out bool startAnd, out bool endAnd)
