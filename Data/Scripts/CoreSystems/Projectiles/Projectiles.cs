@@ -372,7 +372,7 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-                if ((aConst.PrimeModel && p.EnableAv) || aConst.TriggerModel)
+                if (aConst.PrimeModel && p.EnableAv)
                 {
                     Vector3D modelDir;
                     Vector3D ModelUp;
@@ -444,12 +444,10 @@ namespace CoreSystems.Projectiles
                     }
                     
                     MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
-
-                    if (aConst.TriggerModel)
-                        info.TriggerMatrix.Translation = p.Position;
                 }
 
-                
+                if (aConst.TriggerModel)
+                    info.TriggerMatrix.Translation = p.Position;
 
                 if (aConst.IsBeamWeapon)
                     ++_beamCount;
