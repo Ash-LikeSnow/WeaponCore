@@ -146,13 +146,13 @@ namespace CoreSystems
                             else if (IsClient)
                             {
                                 if (p.ClientReloading && p.Reload.EndId > p.ClientEndId && p.Reload.StartId == p.ClientStartId)
-                                    p.Reloaded();
+                                    p.Reloaded(Weapon.ReloadedState.Default);
                                 else
                                     p.ClientReload();
                             }
                         }
                         else if (p.Loading && Tick >= p.ReloadEndTick)
-                            p.Reloaded(1);
+                            p.Reloaded(Weapon.ReloadedState.Callback);
 
                         var reloadingGuard = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.ClientReloadWaitingForServer);
                         var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
@@ -625,13 +625,13 @@ namespace CoreSystems
                             {
 
                                 if (w.ClientReloading && w.Reload.EndId > w.ClientEndId && w.Reload.StartId == w.ClientStartId)
-                                    w.Reloaded(5);
+                                    w.Reloaded(Weapon.ReloadedState.Other5);
                                 else
                                     w.ClientReload();
                             }
                         }
                         else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
-                            w.Reloaded(1);
+                            w.Reloaded(Weapon.ReloadedState.Callback);
                         
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
