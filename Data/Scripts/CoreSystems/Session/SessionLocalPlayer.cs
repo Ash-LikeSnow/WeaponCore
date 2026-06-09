@@ -338,7 +338,7 @@ namespace CoreSystems
 
         private void UpdatePlacer()
         {
-            if (!Placer.Visible) Placer = null;
+            if (Placer.Render?.Visible == false) Placer = null;
             if (!MyCubeBuilder.Static.DynamicMode && MyCubeBuilder.Static.HitInfo.HasValue)
             {
                 var hit = MyCubeBuilder.Static.HitInfo.Value as IHitInfo;
