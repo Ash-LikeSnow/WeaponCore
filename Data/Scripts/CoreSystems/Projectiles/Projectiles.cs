@@ -614,7 +614,7 @@ namespace CoreSystems.Projectiles
                 if ((int)p.State > 3)
                     continue;
 
-                if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)
+                if (aConst.DrawLine || (!info.AvShot.HasModel && aConst.AmmoParticle) || info.AvShot.HasTravelSound || aConst.HitSound || aConst.HitParticle)
                 {
                     if (aConst.IsBeamWeapon)
                     {
@@ -623,7 +623,7 @@ namespace CoreSystems.Projectiles
 
                         DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = p.Direction });
                     }
-                    else if (!info.AvShot.HasModel && aConst.AmmoParticle && !aConst.DrawLine)
+                    else if (!aConst.DrawLine && ((!info.AvShot.HasModel && aConst.AmmoParticle) || info.AvShot.HasTravelSound || aConst.HitSound || aConst.HitParticle))
                     {
                         if (p.EndState != EndStates.None)
                         {
