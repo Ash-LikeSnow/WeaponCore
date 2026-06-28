@@ -332,6 +332,9 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+# MDK local machine paths
+*.mdk.local.ini
 Models/Cubes/AmmoOrb.blockdef.xml
 Models/Cubes/AmmoOrb.fbx
 Models/Cubes/AmmoOrb.xml
