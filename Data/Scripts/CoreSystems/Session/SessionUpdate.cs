@@ -785,6 +785,7 @@ namespace CoreSystems
                             !wComp.UserControlled 
                             && !w.System.SuppressFire 
                             && (w.TargetLock
+                             || (w.Target.TargetState == TargetStates.IsProjectile && (aConst.IsSmart || aConst.IsDrone) && w.Target.IsAligned)
                              || ai.ControlComp != null 
                                 && ai.ControlComp.Platform.Control.IsAimed 
                                 && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
