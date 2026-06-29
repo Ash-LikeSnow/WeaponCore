@@ -246,9 +246,9 @@ namespace CoreSystems.Projectiles
                                 if (p.VelocityLengthSqr > maxSpeedSqr)
                                     newVel = p.Direction * curMaxSpeed;
                                 else
-                                    info.TotalAcceleration += (newVel - p.PrevVelocity1);
+                                    info.TotalAcceleration += (newVel - p.PrevVelocity1).LengthSquared();
 
-                                if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+                                if (info.TotalAcceleration > aConst.MaxAccelerationSqr)
                                     newVel = p.Velocity;
                             }
 
@@ -372,24 +372,82 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-                var primeModelUpdate = aConst.PrimeModel && p.EnableAv;
-                if (primeModelUpdate || aConst.TriggerModel)
+                if (aConst.PrimeModel && p.EnableAv)
                 {
-                    if (primeModelUpdate) {
+                    Vector3D modelDir;
+                    Vector3D ModelUp;
+                    var aInfo = storage.ApproachInfo;
+                    if (aConst.HasApproaches && aInfo.Active)
+                    {
+                        if (aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge >= 0)
+                        {
+                            var t = MathHelper.Clamp(aInfo.ModelRotateAge / (float)aInfo.ModelRotateMaxAge, 0, 1);
+                            if (MyUtils.IsZero(aInfo.ModelFwdDir))
+                            {
+                                modelDir = p.Direction;
+                            }
+                            else
+                            {
+                                modelDir = Vector3.Lerp(p.Direction, aInfo.ModelFwdDir, t);
+                            }
 
-                        Vector3D modelDir;
-                        var aInfo = storage.ApproachInfo;
-                        if (aConst.HasApproaches && aInfo.Active && aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge > 0 && !MyUtils.IsZero(aInfo.TargetPos)) 
-                            modelDir =  Vector3D.Lerp(p.Direction, Vector3D.Normalize(aInfo.TargetPos - p.Position), aInfo.ModelRotateAge / (double)aInfo.ModelRotateMaxAge);
+                            if (MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir)
+                            {
+                                ModelUp = info.OriginUp;
+                            }
+                            else
+                            {
+                                ModelUp = Vector3.Lerp(aInfo.ModelUpDirStart, aInfo.ModelUpDir, t);
+                            }
+                        }
+                        else if (aInfo.ModelMaxRotateSpeed > 0)
+                        {
+                            var desiredFor = MyUtils.IsZero(aInfo.ModelFwdDir) ? (Vector3)p.Direction : aInfo.ModelFwdDir;
+                            var desiredUp = MyUtils.IsZero(aInfo.ModelUpDir) || aInfo.ModelUpDir == aInfo.ModelFwdDir ? (Vector3)info.OriginUp : aInfo.ModelUpDir;
+
+                            var currentDir = (Vector3)info.AvShot.PrimeMatrix.Forward;
+                            var currentUp = (Vector3)info.AvShot.PrimeMatrix.Up;
+
+                            var forAngle = MyUtils.GetAngleBetweenVectors(currentDir, desiredFor);
+                            var upAngle = MyUtils.GetAngleBetweenVectors(desiredUp, currentUp);
+
+                            if (Math.Abs(forAngle) < aInfo.ModelMaxRotateSpeed)
+                            {
+                                modelDir = desiredFor;
+                            }
+                            else
+                            {
+                                MatrixD forMat = Matrix.CreateFromAxisAngle(Vector3.Cross(currentDir, desiredFor).Normalized(), forAngle > 0 ? aInfo.ModelMaxRotateSpeed : -aInfo.ModelMaxRotateSpeed);
+                                Vector3D.Transform(ref currentDir, ref forMat, out modelDir);
+                            }
+
+                            if (Math.Abs(upAngle) < aInfo.ModelMaxRotateSpeed)
+                            {
+                                ModelUp = desiredUp;
+                            }
+                            else
+                            {
+                                MatrixD upMat = Matrix.CreateFromAxisAngle(Vector3.Cross(currentUp, desiredUp).Normalized(), upAngle > 0 ? aInfo.ModelMaxRotateSpeed : -aInfo.ModelMaxRotateSpeed);
+                                Vector3D.Transform(ref currentUp, ref upMat, out ModelUp);
+                            }
+                        }
                         else
+                        {
                             modelDir = p.Direction;
-
-                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref info.OriginUp, out info.AvShot.PrimeMatrix);
+                            ModelUp = info.OriginUp;
+                        }
                     }
-
-                    if (aConst.TriggerModel)
-                        info.TriggerMatrix.Translation = p.Position;
+                    else
+                    {
+                        modelDir = p.Direction;
+                        ModelUp = info.OriginUp;
+                    }
+                    
+                    MatrixD.CreateWorld(ref p.Position, ref modelDir, ref ModelUp, out info.AvShot.PrimeMatrix);
                 }
+
+                if (aConst.TriggerModel)
+                    info.TriggerMatrix.Translation = p.Position;
 
                 if (aConst.IsBeamWeapon)
                     ++_beamCount;
@@ -518,6 +576,25 @@ namespace CoreSystems.Projectiles
 
                 if (!p.EnableAv) continue;
 
+                if (aConst.DrawAdvBillboards)
+                {
+                    var advav = info.AvShot.AdvBillboards;
+
+                    advav.PrevPosition = advav.ProjectileMatrix.Translation;
+                    advav.PrevVelocity = advav.Velocity;
+                    advav.Velocity = p.Velocity;
+
+                    if (advav.ModelRotation && advav.Av.HasModel && advav.Av.PrimeEntity != null && advav.Av.PrimeMatrix != MatrixD.Identity)
+                    {
+                        advav.ProjectileMatrix = advav.Av.PrimeMatrix;
+                    }
+                    else
+                    {
+                        var forward = (MyUtils.IsZero(p.Velocity, 0.01f) ? p.Direction : p.Velocity).Normalized();
+                        advav.ProjectileMatrix = MatrixD.CreateWorld(p.Position, forward, advav.ProjectileMatrix.Up);
+                    }
+                }
+
                 if (p.Intersecting) {
 
                     if (aConst.DrawLine || aConst.PrimeModel || aConst.TriggerModel)
@@ -537,7 +614,7 @@ namespace CoreSystems.Projectiles
                 if ((int)p.State > 3)
                     continue;
 
-                if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)
+                if (aConst.DrawLine || (!info.AvShot.HasModel && aConst.AmmoParticle) || info.AvShot.HasTravelSound || aConst.HitSound || aConst.HitParticle)
                 {
                     if (aConst.IsBeamWeapon)
                     {
@@ -546,7 +623,7 @@ namespace CoreSystems.Projectiles
 
                         DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = p.Direction });
                     }
-                    else if (!info.AvShot.HasModel && aConst.AmmoParticle && !aConst.DrawLine)
+                    else if (!aConst.DrawLine && ((!info.AvShot.HasModel && aConst.AmmoParticle) || info.AvShot.HasTravelSound || aConst.HitSound || aConst.HitParticle))
                     {
                         if (p.EndState != EndStates.None)
                         {

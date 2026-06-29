@@ -4,6 +4,7 @@ using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using VRage;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -87,12 +88,19 @@ namespace CoreSystems.Support
                     CoreInventory.MaxVolume = fixedInvSize ? (MyFixedPoint)wepDef.InventoryMaxVolume : (MyFixedPoint)wepDef.InventoryMaxVolume * MyAPIGateway.Session.BlocksInventorySizeMultiplier;
                 else if (sorterDef != null)
                     CoreInventory.MaxVolume = fixedInvSize ? (MyFixedPoint)Math.Pow(sorterDef.InventorySize.X, 3) : (MyFixedPoint)Math.Pow(sorterDef.InventorySize.X, 3) * MyAPIGateway.Session.BlocksInventorySizeMultiplier;
-                CoreInventory.Constraint.m_useDefaultIcon = false;
+                CoreInventory.Constraint.m_useDefaultIcon = string.IsNullOrEmpty(CustomIcon);
                 CoreInventory.Refresh();
                 CoreInventory.Constraint.Clear();
 
                 if (!string.IsNullOrEmpty(CustomIcon)) {
-                    var iconPath = Platform.Structure.ModPath + "\\Textures\\GUI\\Icons\\" + CustomIcon;
+                    string iconPath;
+                    if (Path.GetFileName(CustomIcon) == CustomIcon) // idk if theres a better way to do this
+                        iconPath = Path.Combine(Path.Combine(Platform.Structure.ModPath, $"Textures\\GUI\\Icons\\"), CustomIcon);
+                    else if (CustomIcon.StartsWith("\\"))
+                        iconPath = Path.Combine(Platform.Structure.ModPath, CustomIcon.Substring(1));
+                    else
+                        iconPath = CustomIcon;
+
                     CoreInventory.Constraint.Icon = iconPath;
                     CoreInventory.Constraint.UpdateIcon();
                 }

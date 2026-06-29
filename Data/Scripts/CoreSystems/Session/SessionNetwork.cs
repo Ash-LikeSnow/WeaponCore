@@ -8,18 +8,26 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Support;
 // ReSharper disable ForCanBeConvertedToForeach
 
 namespace CoreSystems
 {
     public partial class Session
     {
-        private void StringReceived(byte[] rawData)
+        private void StringReceived(ushort channelId, byte[] rawData, ulong senderId, bool fromServer)
         {
             try
             {
                 var message = Encoding.UTF8.GetString(rawData, 0, rawData.Length); 
                 if (string.IsNullOrEmpty(message)) return;
+
+                if (!fromServer)
+                {
+                    DebugLog.Warning($"Error: message {message} from sender {senderId} was not server!");
+                    return;
+                }
+
                 var firstChar = message[0];
                 int logId;
                 if (!int.TryParse(firstChar.ToString(), out logId))
@@ -57,7 +65,7 @@ namespace CoreSystems
 
         #region NewClientSwitch
 
-        private void ClientReceivedPacket(byte[] rawData)
+        private void ClientReceivedPacket(ushort channelId, byte[] rawData, ulong senderId, bool fromServer)
         {
             try
             {
@@ -67,6 +75,8 @@ namespace CoreSystems
                     Log.Line("ClientReceivedPacket null packet");
                     return;
                 }
+
+                packet.SenderId = senderId;
 
                 if (packet.PType == PacketType.PingPong)
                 {
@@ -313,10 +323,12 @@ namespace CoreSystems
             PacketsToServer.Clear();
         }
 
-        private void ProccessServerPacket(byte[] rawData)
+        private void ProccessServerPacket(ushort channelId, byte[] rawData, ulong senderId, bool fromServer)
         {
             var packet = MyAPIGateway.Utilities.SerializeFromBinary<Packet>(rawData);
             if (packet == null) return;
+
+            packet.SenderId = senderId;
 
             if (packet.PType == PacketType.PingPong)
             {
@@ -451,8 +463,6 @@ namespace CoreSystems
                         {
                             Packet = new ShootingChangedPacket
                             {
-                                EntityId = 0,
-                                SenderId = MyAPIGateway.Multiplayer.MyId,
                                 PType = PacketType.ShootingChanged,
                                 Value = Settings.Enforcement.ProhibitShooting,
                             },

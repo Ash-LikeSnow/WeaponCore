@@ -34,7 +34,6 @@ namespace CoreSystems.Support
         internal Vector3D Origin;
         internal Vector3D OriginUp;
         internal Vector3D OriginFwd;
-        internal Vector3D TotalAcceleration;
         internal XorShiftRandomStruct Random;
         internal XorShiftRandomStruct ShieldProc;
         internal int Age = -1;
@@ -61,6 +60,7 @@ namespace CoreSystems.Support
         internal double ShotFade;
         internal double RelativeAge = -1;
         internal double PrevRelativeAge = -1;
+        internal double TotalAcceleration;
         internal long DamageDonePri;
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
@@ -210,7 +210,7 @@ namespace CoreSystems.Support
             OriginFwd = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
-            TotalAcceleration = Vector3D.Zero;
+            TotalAcceleration = 0;
         }
     }
 
@@ -299,6 +299,9 @@ namespace CoreSystems.Support
         internal Vector3D PositionB;
         internal Vector3D OffsetUpDir;
         internal Vector3D OffsetFwdDir;
+        internal Vector3 ModelUpDir;
+        internal Vector3 ModelUpDirStart;
+        internal Vector3 ModelFwdDir;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
         internal double StartHealth;
@@ -307,6 +310,7 @@ namespace CoreSystems.Support
         internal double AngleVariance;
         internal int ModelRotateAge;
         internal int ModelRotateMaxAge;
+        internal float ModelMaxRotateSpeed;
         internal bool Active;
         internal void Clean(ProInfo info)
         {
@@ -322,6 +326,9 @@ namespace CoreSystems.Support
             PositionB = Vector3D.Zero;
             OffsetUpDir = Vector3D.Zero;
             OffsetFwdDir = Vector3D.Zero;
+            ModelUpDir = Vector3.Zero;
+            ModelUpDirStart = Vector3.Zero;
+            ModelFwdDir = Vector3.Zero;
             StartDistanceTraveled = 0;
             RelativeAgeStart = 0;
             RelativeSpawnsStart = 0;
@@ -330,6 +337,7 @@ namespace CoreSystems.Support
             ModelRotateMaxAge = 0;
             ModelRotateAge = 0;
             StartHealth = 0;
+            ModelMaxRotateSpeed = 0;
             Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
             info.AmmoDef.Const.ApproachInfoPool.Push(this);

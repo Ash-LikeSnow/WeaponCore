@@ -222,7 +222,7 @@ namespace CoreSystems
                 var newReload = StartId != sync.StartId && EndId == sync.EndId;
 
                 if (newReload && w.ClientReloading && !w.Charging)
-                    w.Reloaded(6);
+                    w.Reloaded(Weapon.ReloadedState.Other6);
 
                 StartId = sync.StartId;
                 EndId = sync.EndId;

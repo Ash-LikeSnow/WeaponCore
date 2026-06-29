@@ -10,6 +10,16 @@ namespace CoreSystems.Platform
 {
     public partial class Weapon 
     {
+        public enum ReloadedState
+        {
+            Default = 0,
+            Callback = 1,
+            EarlyExit = 2,
+            Hybrid = 3, // ???
+            ChargedOnly = 4,
+            Other5 = 5, // ???
+            Other6 = 6, // ???
+        }
         internal void ChangeActiveAmmoServer()
         {
             var proposed = ProposedAmmoId != -1;
@@ -169,7 +179,7 @@ namespace CoreSystems.Platform
                 
                 if (Loading && ClientMakeUpShots < 1 && LoadingWait && Reload.EndId > ClientEndId)
                 {
-                    Reloaded(1);
+                    Reloaded(ReloadedState.Default);
                 }
 
                 return false;
@@ -317,7 +327,7 @@ namespace CoreSystems.Platform
                 {
                     ReloadEndTick = (uint)(Session.I.Tick + (!delay || System.WConst.ReloadTime > delayTime ? System.WConst.ReloadTime : delayTime));
                 }
-                else Reloaded(3);
+                else Reloaded(ReloadedState.Hybrid);
             }
 
             if (Session.I.MpActive && Session.I.IsServer)
@@ -331,12 +341,11 @@ namespace CoreSystems.Platform
             if (ReloadEmitter == null || ReloadEmitter.IsPlaying) return;
             ReloadEmitter.PlaySound(System.ReloadSoundPairs, true, false, false, false, false, false);
         }
-
-        internal void Reloaded(object o = null)
+        
+        internal void Reloaded(ReloadedState state) // why tf was this a nullable object where half the inputs weren't even used lol
         {
-            var input = o as int? ?? 0;
-            var callBack = input == 1;
-            var earlyExit = input == 2;
+            var callBack = state == ReloadedState.Callback;
+            var earlyExit = state == ReloadedState.EarlyExit;
             using (Comp.CoreEntity.Pin()) {
 
                 if (PartState == null || Comp.Data.Repo == null || Comp.Ai == null || Comp.CoreEntity.MarkedForClose) {
@@ -344,7 +353,7 @@ namespace CoreSystems.Platform
                     return;
                 }
 
-                if (input == 4) {
+                if (state == ReloadedState.ChargedOnly) {
                     ProtoWeaponAmmo.CurrentCharge = MaxCharge;
                     EstimatedCharge = MaxCharge;
                     return;
