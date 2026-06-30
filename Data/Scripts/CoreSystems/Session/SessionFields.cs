@@ -556,6 +556,7 @@ namespace CoreSystems
             "LargeFlareLauncher",
             "SmallFlareLauncher",
             "GrappleHookTurretLarge",
+            "SolarSailLauncherLarge",
         };
 
         internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()

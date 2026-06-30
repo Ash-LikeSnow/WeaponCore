@@ -37,6 +37,7 @@ namespace CoreSystems.Support
         internal MyParticleEffect AmmoEffect;
         internal MyParticleEffect FieldEffect;
         internal Weapon Weapon;
+        internal AvAdvBillboards AdvBillboards;
         internal bool TravelSound;
         internal bool HasTravelSound;
         internal bool HitSoundActive;
@@ -169,7 +170,7 @@ namespace CoreSystems.Support
         }
 
         #region Run
-        internal void Init(ProInfo info, double firstStepSize, double maxSpeed, ref Vector3D originDir)
+        internal void Init(Projectile p, ProInfo info, double firstStepSize, double maxSpeed, ref Vector3D originDir)
         {
             AmmoDef = info.AmmoDef;
             IsFragment = info.IsFragment;
@@ -215,7 +216,7 @@ namespace CoreSystems.Support
                 else
                     DecayTime = defaultDecayTime;
             }
-            else 
+            else
                 DecayTime = defaultDecayTime;
 
             if (AmmoDef.Const.DrawLine) Tracer = !AmmoDef.Const.IsBeamWeapon && firstStepSize < MaxTracerLength && !MyUtils.IsZero(firstStepSize - MaxTracerLength, 1E-01F) ? TracerState.Grow : TracerState.Full;
@@ -234,6 +235,13 @@ namespace CoreSystems.Support
             AvInfoCache infoCache;
             if (AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && Session.AvShotCache.TryGetValue(info.UniqueMuzzleId, out infoCache))
                 UpdateCache(infoCache);
+
+            if (AmmoDef.Const.DrawAdvBillboards)
+            {
+                AdvBillboards = Session.Av.AvAdvBillboardsEffectPool.Count > 0 ? Session.Av.AvAdvBillboardsEffectPool.Pop() : new AvAdvBillboards();
+                AdvBillboards.Init(p, info, this);
+                Session.Av.AdvBillboards.Add(AdvBillboards);
+            }
         }
 
         internal static void DeferedAvStateUpdates()
@@ -1236,7 +1244,7 @@ namespace CoreSystems.Support
 
                 vp.TracerLength = info.TracerLength;
                 var visDir = aConst.ConvergeBeams ? p.Direction : vp.OriginFwd;
-                vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), p.MaxSpeed, ref visDir);
+                vs.Init(p, vp, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), p.MaxSpeed, ref visDir);
                 if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                     vs.ProEnded = true;
 

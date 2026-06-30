@@ -127,7 +127,7 @@ namespace CoreSystems
                 var clientCharged = IsClient && allCharged && w.ActiveAmmoDef.AmmoDef.HybridRound;
 
                 if (complete && (IsServer && !serverFullyLoaded || IsClient) && w.Loading)
-                    w.Reloaded(IsClient && clientAllDone ? 2 : IsClient && !clientCharged ? 4 : 0);
+                    w.Reloaded(IsClient && clientAllDone ? Weapon.ReloadedState.EarlyExit : IsClient && !clientCharged ? Weapon.ReloadedState.ChargedOnly : Weapon.ReloadedState.Default);
 
                 w.StopPowerDraw(failed, ai);
                 return !failed;

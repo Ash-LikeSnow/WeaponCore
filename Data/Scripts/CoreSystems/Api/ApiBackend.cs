@@ -1215,10 +1215,13 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
+                if (comp.Data.Repo.Values.State.TrackingReticle)
+                    return new MyTuple<bool, Vector3D?>(false, null);
+
                 var w = comp.Platform.Weapons[weaponId];
 
                 w.NewTarget.TargetObject = targetEnt;
-
+                
                 Vector3D targetPos;
                 var targetAligned = Weapon.TargetAligned(w, w.NewTarget, out targetPos);
                 
@@ -1232,6 +1235,9 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
+                if (comp.Data.Repo.Values.State.TrackingReticle)
+                    return new MyTuple<bool, Vector3D?>(false, null);
+
                 var w = comp.Platform.Weapons[weaponId];
 
                 w.NewTarget.TargetObject = targetEnt;

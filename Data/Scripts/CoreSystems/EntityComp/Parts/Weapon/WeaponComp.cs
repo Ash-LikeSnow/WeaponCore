@@ -159,7 +159,8 @@ namespace CoreSystems.Platform
 
             internal void WHCallback(IMyEntity entity, bool hit)
             {
-                if (entity == Cube.CubeGrid || entity is IMyCharacter)
+                MyEntity ent = (MyEntity)entity;
+                if (entity == Cube.CubeGrid || entity is IMyCharacter || ent.IsPreview)
                     return;
 
                 var cubeVelo = Cube.CubeGrid.Physics?.LinearVelocity ?? Vector3.Zero;

@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
+using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static Sandbox.Definitions.MyDefinitionManager;
 
@@ -349,6 +350,7 @@ namespace CoreSystems
 
         public override void LoadData()
         {
+            MyMath.InitializeFastSin();
             AllDefinitions = Static.GetAllDefinitions();
             foreach (var t in AllDefinitions)
             {
@@ -416,11 +418,11 @@ namespace CoreSystems
                 ITask.Wait();
 
             if (IsServer || DedicatedServer)
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(ServerPacketId, ProccessServerPacket);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(ServerPacketId, ProccessServerPacket);
             else
             {
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(ClientPacketId, ClientReceivedPacket);
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(StringPacketId, StringReceived);
 
                 if (DebugSupport.DebugWeaponSync)
                 {

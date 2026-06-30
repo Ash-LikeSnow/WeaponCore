@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
+using System;
+using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -311,7 +310,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), MaxSpeed, ref Direction);
+                Info.AvShot.Init(this, Info, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), MaxSpeed, ref Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -532,8 +531,10 @@ namespace CoreSystems.Projectiles
             var ai = Info.Ai;
             var session = Session.I;
             var speedCapMulti = 1d;
+            var totalAccelSq = aConst.MaxAccelerationSqr;
+            var deAccelMulti = 1d;
 
-            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
+            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags && State <= ProjectileState.Detonate)
             {
                 if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
                     TimedSpawns(aConst);
@@ -686,9 +687,10 @@ namespace CoreSystems.Projectiles
                 var accelMpsMulti = speedLimitPerTick;
                 bool disableAvoidance = false;
                 bool zeroEffortNav = aConst.ZeroEffortNav;
+                
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock, ref totalAccelSq, ref deAccelMulti);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
@@ -696,7 +698,7 @@ namespace CoreSystems.Projectiles
                 Vector3D commandedAccel;
                 Vector3D missileToTargetNorm = Vector3D.Zero;
                 var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
-                if (!aConst.NoSteering && fastEnoughToTurn)
+                if (!aConst.NoSteering && fastEnoughToTurn && Info.TotalAcceleration <= totalAccelSq)
                 {
                     Vector3D targetAcceleration = Vector3D.Zero;
                     if (s.LastVelocity.HasValue)
@@ -842,7 +844,7 @@ namespace CoreSystems.Projectiles
             var speedCap = speedCapMulti * MaxSpeed;
             if (aConst.AmmoUseDrag)
             {
-                speedCap -= Info.Age * aConst.DragPerTick;
+                speedCap -= Info.Age * aConst.DragPerTick * deAccelMulti;
                 if (speedCap < aConst.DragMinSpeed)
                     speedCap = aConst.DragMinSpeed;
                 else if (speedCap < 0)
@@ -853,11 +855,11 @@ namespace CoreSystems.Projectiles
                 proposedVel = Direction * speedCap;
             }
             else
-                Info.TotalAcceleration += (proposedVel - PrevVelocity1);
+                Info.TotalAcceleration += (proposedVel - PrevVelocity1).LengthSquared();
 
             PrevVelocity0 = PrevVelocity1;
             PrevVelocity1 = Velocity;
-            if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+            if (Info.TotalAcceleration > totalAccelSq)
                 proposedVel = Velocity;
 
             Velocity = proposedVel;
@@ -908,7 +910,7 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, ref bool zeroEffortNav, Vector3D targetPos, int lastActiveStage, bool targetLock)
+        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, ref bool zeroEffortNav, Vector3D targetPos, int lastActiveStage, bool targetLock, ref double totalAccelSq, ref double deAccelMulti)
         {
             var s = Session.I;
             var aConst = Info.AmmoDef.Const;
@@ -938,24 +940,40 @@ namespace CoreSystems.Projectiles
 
                 var approach = aConst.Approaches[storage.RequestedStage];
 
-                // unneeded branch
-                //if (approach.StartCon1 == approach.StartCon2 || approach.EndCon1 == approach.EndCon2)
-                //    return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
-
                 disableAvoidance = approach.DisableAvoidance;
 
                 if (approach.SwapNavigationType)
                     zeroEffortNav = !zeroEffortNav;
 
-                if (approach.ModelRotateTime > 0 || aInfo.ModelRotateAge > 0)
+                if (EnableAv)
                 {
-                    if (targetLock && approach.ModelRotateTime > aInfo.ModelRotateAge)
+                    if (approach.AlternateModelForwardUp && approach.ModelRotate) // don't update if no longer rotating so it rotates back properly
                     {
-                        aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
-                        ++aInfo.ModelRotateAge;
+                        aInfo.ModelFwdDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelFwds, targetLock, false);
+                        aInfo.ModelUpDir = GetModelRotateDirection(aConst, aInfo, approach, approach.ModelUp, targetLock, true);
                     }
-                    else if (aInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --aInfo.ModelRotateAge == 0)
-                        aInfo.ModelRotateMaxAge = 0;
+
+                    if ((approach.ModelRotate || aInfo.ModelRotateAge > 0) && approach.ModelMaximumAngleToRotate <= 0)
+                    {
+                        if (!approach.AlternateModelForwardUp)
+                        {
+                            aInfo.ModelFwdDir = Vector3D.Normalize(aInfo.TargetPos - Position);
+                        }
+
+                        if ((targetLock || approach.AlternateModelForwardUp) && approach.ModelRotateTime > aInfo.ModelRotateAge)
+                        {
+                            aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
+                            if (aInfo.ModelRotateAge == 0)
+                            {
+                                aInfo.ModelUpDirStart = Info.AvShot.PrimeMatrix == MatrixD.Identity ? Info.OriginUp : Info.AvShot.PrimeMatrix.Up;
+                            }
+                            ++aInfo.ModelRotateAge;
+                        }
+                        else if (aInfo.ModelRotateAge > 0 && (!approach.ModelRotate || (approach.AlternateModelForwardUp ? MyUtils.IsZero(aInfo.ModelFwdDir) : !targetLock)) && --aInfo.ModelRotateAge == 0)
+                            aInfo.ModelRotateMaxAge = 0;
+                    }
+
+                    aInfo.ModelMaxRotateSpeed = approach.ModelMaximumAngleToRotate;
                 }
                 #endregion
 
@@ -1252,6 +1270,8 @@ namespace CoreSystems.Projectiles
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
+                    totalAccelSq *= approach.TotalAccelMultiSq;
+                    deAccelMulti = approach.DeAccelMulti;
 
                     var fwdDestDir = approach.Forward == FwdRelativeTo.ForwardElevationDirection;
                     var upDestDir = approach.Up == UpRelativeTo.UpElevationDirection;
@@ -1378,6 +1398,91 @@ namespace CoreSystems.Projectiles
             }
         }
 
+        private Vector3 GetModelRotateDirection(AmmoConstants aConst, ApproachInfo aInfo, ApproachConstants approach, ModelRelativeTo val, bool hasTarget, bool up)
+        {
+            Vector3 vec;
+            switch (val)
+            {
+                case ModelRelativeTo.ModelRelativeToGravity:
+                    vec = Info.MyPlanet == null ? (up ? Info.OriginUp : Info.OriginFwd) : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                    break;
+                case ModelRelativeTo.ModelTargetDirection:
+                    if (hasTarget)
+                        vec = Vector3D.Normalize(aInfo.TargetPos - Position);
+                    else
+                        vec = Vector3.Zero;
+                    break;
+                case ModelRelativeTo.ModelTargetPredictedDirection:
+                    if (hasTarget)
+                    {
+                        var fragAmmoDef = Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
+                        Vector3D pointDir;
+                        Vector3D estimatedTargetPos;
+                        TrajectoryEstimation(fragAmmoDef, ref Position, out pointDir, out estimatedTargetPos, true);
+                        vec = (Vector3)pointDir;
+                    }
+                    else
+                        vec = Vector3.Zero;
+                    break;
+                case ModelRelativeTo.ModelTargetVelocity:
+                    vec = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Vector3D.Zero;
+                    break;
+                case ModelRelativeTo.ModelStoredStartPosition:
+                case ModelRelativeTo.ModelStoredStartLocalPosition:
+
+                    var storedStartDest = aInfo.Storage[approach.StoredStartId].StoredPosition;
+                    Vector3D destStart;
+                    if (approach.ModelFwds == ModelRelativeTo.ModelStoredStartLocalPosition)
+                        destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
+                    else
+                        destStart = storedStartDest != Vector3D.Zero ? storedStartDest : aInfo.TargetPos;
+                    vec = Vector3D.Normalize(destStart - Position);
+                    break;
+                case ModelRelativeTo.ModelStoredEndPosition:
+                case ModelRelativeTo.ModelStoredEndLocalPosition:
+
+                    var storedEndDest = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                    Vector3D destEnd;
+                    if (approach.ModelFwds == ModelRelativeTo.ModelStoredEndLocalPosition)
+                        destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
+                    else
+                        destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : aInfo.TargetPos;
+
+                    vec = Vector3D.Normalize(destEnd - Position);
+                    break;
+
+                case ModelRelativeTo.ModelRelativeToShooterForwards:
+                    vec = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Forward;
+                    break;
+                case ModelRelativeTo.ModelRelativeToShooterUp:
+                    vec = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;  
+                    break;
+                case ModelRelativeTo.ModelRelativeToShooterDirection:
+                    vec = Vector3D.Normalize(Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Translation - Position);
+                    break;
+                case ModelRelativeTo.ModelOriginForwards:
+                    vec = Info.OriginFwd;
+                    break;
+                case ModelRelativeTo.ModelOriginUp:
+                    vec = Info.OriginUp;
+                    break;
+                case ModelRelativeTo.ModelRelativeToOriginDirection:
+                    vec = Vector3D.Normalize(Info.Origin - Position);
+                    break;
+                case ModelRelativeTo.ModelAcceleration:
+                    var accel = (Velocity - PrevVelocity0) * (60 / 2) - (aConst.FeelsGravity ? Gravity : Vector3.Zero);
+                    vec = Vector3D.Normalize(accel);
+                    break;
+                default:
+                    vec = Vector3D.Zero;
+                    break;
+            }
+
+            if (!MyUtils.IsValid(vec))
+                return Vector3D.Zero;
+            return vec;
+        }
+
         // this does NOT need to be inlined and there was a ton of errors with the copied end3 already
         private bool CheckApproachCondition(Conditions con, double conVal, bool conditionAnd, ref Vector3D targetPos, AmmoConstants aConst, ApproachInfo aInfo, ApproachConstants appConst, ref Vector3D surfacePos, ref Vector3D positionB, ref Vector3D positionC, ref double timeSinceSpawn, ref double nextSpawn, ref Vector3D lineC, ref Vector3D lineB)
         {
@@ -1385,6 +1490,8 @@ namespace CoreSystems.Projectiles
             switch (con)
             {
                 case Conditions.Spawn:
+                    condition = true;
+                    break;
                 case Conditions.Ignore:
                     condition = conditionAnd; // if and, return true so it doesn't block real condition, if or return false so it doesn't false positive
                     break;
@@ -1519,16 +1626,12 @@ namespace CoreSystems.Projectiles
             switch (endEvent)
             {
                 case StageEvents.EndProjectile:
-                    if (def.DockOnEnd)
-                        State = ProjectileState.Docking;
                     EndState = EndStates.EarlyEnd;
                     DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     break;
                 case StageEvents.DoNothing:
                     break;
                 case StageEvents.Refund:
-                    if (def.DockOnEnd)
-                        State = ProjectileState.Docking;
                     Info.Weapon.Comp.HeatLoss += def.HeatRefund;
                     if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
                         --Info.Weapon.Reload.LifetimeLoads;
@@ -3276,7 +3379,7 @@ namespace CoreSystems.Projectiles
             }
 
             var fireOnTarget = timedSpawn && aConst.HasFragProximity && aConst.FragPointAtTarget;
-            var pos = !Vector3D.IsZero(Info.ProHit.LastHit) ? Info.ProHit.LastHit : Position;
+            var pos = timedSpawn || Vector3D.IsZero(Info.ProHit.LastHit) ? Position : Info.ProHit.LastHit;
 
             Vector3D newOrigin;
             if (aConst.HasFragmentOffset)

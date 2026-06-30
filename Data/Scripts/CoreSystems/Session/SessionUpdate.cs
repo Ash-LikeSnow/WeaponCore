@@ -146,13 +146,13 @@ namespace CoreSystems
                             else if (IsClient)
                             {
                                 if (p.ClientReloading && p.Reload.EndId > p.ClientEndId && p.Reload.StartId == p.ClientStartId)
-                                    p.Reloaded();
+                                    p.Reloaded(Weapon.ReloadedState.Default);
                                 else
                                     p.ClientReload();
                             }
                         }
                         else if (p.Loading && Tick >= p.ReloadEndTick)
-                            p.Reloaded(1);
+                            p.Reloaded(Weapon.ReloadedState.Callback);
 
                         var reloadingGuard = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.ClientReloadWaitingForServer);
                         var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
@@ -480,8 +480,10 @@ namespace CoreSystems
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                     {
-                        if ((!wComp.IsWorking || wComp.IsDisabled) && wComp.PrimaryWeapon.Loading)
+                        if ((!wComp.IsWorking || wComp.IsDisabled) && wComp.PrimaryWeapon.Loading && wComp.PrimaryWeapon.ReloadEndTick < uint.MaxValue -1)
+                        {
                             wComp.PrimaryWeapon.ReloadEndTick++;
+                        }
                         continue;
                     }
 
@@ -623,13 +625,13 @@ namespace CoreSystems
                             {
 
                                 if (w.ClientReloading && w.Reload.EndId > w.ClientEndId && w.Reload.StartId == w.ClientStartId)
-                                    w.Reloaded(5);
+                                    w.Reloaded(Weapon.ReloadedState.Other5);
                                 else
                                     w.ClientReload();
                             }
                         }
                         else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
-                            w.Reloaded(1);
+                            w.Reloaded(Weapon.ReloadedState.Callback);
                         
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))
                             SendWeaponReload(w, true);
@@ -779,7 +781,14 @@ namespace CoreSystems
                         /// Determine if its time to shoot
                         ///
                         ///
-                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || w.Target.TargetState == TargetStates.IsProjectile && (aConst.IsSmart || aConst.IsDrone) || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
+                        w.AiShooting = 
+                            !wComp.UserControlled 
+                            && !w.System.SuppressFire 
+                            && (w.TargetLock
+                             || (w.Target.TargetState == TargetStates.IsProjectile && (aConst.IsSmart || aConst.IsDrone) && w.Target.IsAligned)
+                             || ai.ControlComp != null 
+                                && ai.ControlComp.Platform.Control.IsAimed 
+                                && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloadingGuard = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient || w.ClientReloadWaitingForServer);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);

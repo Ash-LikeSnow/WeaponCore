@@ -686,7 +686,7 @@ namespace CoreSystems.Platform
             var collection = Comp.TypeSpecific != Phantom ? Comp.Platform.Weapons : Comp.Platform.Phantoms;
             foreach (var w in collection)
             {
-                if (w.MuzzlePart.Entity == null) continue;
+                if (w.MuzzlePart.Entity?.PositionComp == null) continue;
                 w.MuzzlePart.Entity.PositionComp.OnPositionChanged -= w.PositionChanged;
             }
             Parts.Clean(Comp.Entity as MyEntity);
