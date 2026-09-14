@@ -22,7 +22,7 @@ namespace CoreSystems.Support
 
         private float GetRequiredInput()
         {
-            if (!FunctionalBlock.Enabled || !Cube.IsFunctional)
+            if (!FunctionalBlock.Enabled || !Cube.IsFunctional || ModOverride)
                 return 0;
 
             return SinkPower;

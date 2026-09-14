@@ -69,7 +69,7 @@ namespace CoreSystems.Support
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget1))
                 {
                     w.Target.SetFake(Session.I.Tick, predictedPos, w.MyPivotPos, fakeInfo.EntityID);
-                    if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
+                    if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None)
                         foundTarget = true;
                 }
             }
@@ -338,7 +338,7 @@ namespace CoreSystems.Support
                 
                 session.TopRayCasts++;
 
-                if (w.LastHitInfo?.HitEntity != null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
+                if (w.LastHitInfo?.HitEntity != null)
                 {
                     TargetInfo hitInfo;
                     var targMatch = w.LastHitInfo.HitEntity == info.Target;
@@ -768,85 +768,14 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
                 {
-                    var needsCast = false;
-                    if (!aConst.CheckFutureIntersection)
+                    IHitInfo hitInfo;
+                    var oneHalfKmSqr = 2250000;
+                    var lowFiVoxels = distSqr > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+
+                    physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
+                    if (hitInfo?.HitEntity == null)
                     {
-                        for (int i = 0; i < ai.Obstructions.Count; i++)
-                        {
-                            var ent = ai.Obstructions[i].Target;
-
-                            if (ent == null)
-                            {
-                                Log.Line($"AcquireProjectile had null obstruction entity");
-                                
-                                if (isFromManager)
-                                {
-                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
-                                }
-                                
-                                continue;
-                            }
-
-                            if (ent is MyPlanet || ent.MarkedForClose || ent.Closed)
-                            {
-                                if (isFromManager)
-                                {
-                                    fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
-                                }
-                                
-                                continue;
-                            }
-                            var obsSphere = ent.PositionComp.WorldVolume;
-
-                            var dir = lp.Position - weaponPos;
-                            var beam = new RayD(ref weaponPos, ref dir);
-
-                            if (beam.Intersects(obsSphere) != null)
-                            {
-                                var transform = ent.PositionComp.WorldMatrixRef;
-                                var box = ent.PositionComp.LocalAABB;
-                                var obb = new MyOrientedBoundingBoxD(box, transform);
-                                if (obb.Intersects(ref beam) != null)
-                                {
-                                    needsCast = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (needsCast)
-                    {
-                        IHitInfo hitInfo;
-                        var oneHalfKmSqr = 2250000;
-                        var lowFiVoxels = distSqr > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
-                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
-                       
-                        physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
-                        if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
-                        {
-                            double hitDist;
-                            Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
-                            var shortDist = hitDist;
-                            var origDist = hitDist;
-                            target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
-                            target.TransferTo(w.Target, Session.I.Tick);
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        Vector3D? hitInfo;
-                        if (ai.AiType == AiTypes.Grid && !w.System.Values.HardPoint.Other.DisableOwnGridLosCheck && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, ai))
-                        {
-                            if (isFromManager)
-                            {
-                                fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
-                            }
-                            
-                            continue;
-                        }
-
                         double hitDist;
                         Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                         var shortDist = hitDist;
@@ -855,6 +784,11 @@ namespace CoreSystems.Support
                         target.TransferTo(w.Target, Session.I.Tick);
                         return true;
                     }
+                    else if (isFromManager)
+                    {
+                        fireDistributionAccessor.MarkCannotShootAndRecompute(lp);
+                    }
+
                 }
                 else
                 {

@@ -54,6 +54,8 @@ namespace CoreSystems.Api
 
         private Func<MyEntity, bool> _toggoleInfiniteResources;
         private Action<MyEntity> _disableRequiredPower;
+        private Action<MyEntity> _enableRequiredPower;
+
 
         private Func<MyEntity, long> _getPlayerController;
         private Func<MyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
@@ -173,6 +175,8 @@ namespace CoreSystems.Api
         public bool SetWeaponHeatLevel(MyEntity weapon, int weaponId, float heat) => _setWeaponHeatLevel?.Invoke(weapon, weaponId, heat) ?? false;
         public float GetCurrentPower(MyEntity weapon) => _currentPowerConsumption?.Invoke(weapon) ?? 0f;
         public void DisableRequiredPower(MyEntity weapon) => _disableRequiredPower?.Invoke(weapon);
+        public void EnableRequiredPower(MyEntity weapon) => _enableRequiredPower?.Invoke(weapon);
+
         public bool HasCoreWeapon(MyEntity weapon) => _hasCoreWeapon?.Invoke(weapon) ?? false;
 
         public string GetActiveAmmo(MyEntity weapon, int weaponId) =>
@@ -724,6 +728,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "SetWeaponHeatLevel", ref _setWeaponHeatLevel);
             AssignMethod(delegates, "GetCurrentPowerBase", ref _currentPowerConsumption);
             AssignMethod(delegates, "DisableRequiredPowerBase", ref _disableRequiredPower);
+            AssignMethod(delegates, "EnableRequiredPowerBase", ref _enableRequiredPower);
             AssignMethod(delegates, "HasCoreWeaponBase", ref _hasCoreWeapon);
             AssignMethod(delegates, "GetActiveAmmoBase", ref _getActiveAmmo);
             AssignMethod(delegates, "SetActiveAmmoBase", ref _setActiveAmmo);

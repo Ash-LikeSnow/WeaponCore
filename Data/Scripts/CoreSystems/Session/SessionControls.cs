@@ -361,24 +361,27 @@ namespace CoreSystems
                     }
 
                     //Dumb keen ammo list timing
-                    var wComp = comp as Weapon.WeaponComponent;                  
-                    if (wComp != null && comp.ConsumableSelectionPartIds.Count > 0)
-                        wComp.UpdateAmmoList();
+                    var wComp = comp as Weapon.WeaponComponent;
+                    if (wComp != null)
+                    { 
+                        if (comp.ConsumableSelectionPartIds.Count > 0)
+                            wComp.UpdateAmmoList();
 
-                    BlockUi.ControlList.Clear();
+                        BlockUi.ControlList.Clear();
 
-                    if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Automatic)
-                        || Settings.Enforcement.ProhibitHUDPainter && wComp.PrimaryWeapon.System.WConst.ValidControlModes == WeaponDefinition.TargetingDef.ControlModes.Painter) // fallback to auto if painter only and painter is disabled to avoid issues
-                    {
-                        BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("ControlAuto")) });
-                    }
-                    if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Manual))
-                    {
-                        BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("ControlManual")) });
-                    }
-                    if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Painter) && !Settings.Enforcement.ProhibitHUDPainter)
-                    {
-                        BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("ControlPainter")) });
+                        if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Automatic)
+                            || Settings.Enforcement.ProhibitHUDPainter && wComp.PrimaryWeapon.System.WConst.ValidControlModes == WeaponDefinition.TargetingDef.ControlModes.Painter) // fallback to auto if painter only and painter is disabled to avoid issues
+                        {
+                            BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute(Localization.GetText("ControlAuto")) });
+                        }
+                        if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Manual))
+                        {
+                            BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute(Localization.GetText("ControlManual")) });
+                        }
+                        if (wComp.PrimaryWeapon.System.WConst.ValidControlModes.HasFlag(WeaponDefinition.TargetingDef.ControlModes.Painter) && !Settings.Enforcement.ProhibitHUDPainter)
+                        {
+                            BlockUi.ControlList.Add(new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute(Localization.GetText("ControlPainter")) });
+                        }
                     }
                 }
             }

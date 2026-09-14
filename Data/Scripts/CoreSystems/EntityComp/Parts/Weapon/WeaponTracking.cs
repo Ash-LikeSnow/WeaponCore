@@ -455,7 +455,7 @@ namespace CoreSystems.Platform
             if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera || w.Comp.ManualMode || painterInRange || session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
                 return true;
 
-            var rayCheckTest = isTracking && (isAligned || locked) && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && !w.System.DisableLosCheck && (session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
+            var rayCheckTest = isTracking && (isAligned || locked) && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && !w.System.DisableLosCheck && session.Tick - w.Comp.LastRayCastTick > 29;
             
             var trackingTimeLimit = w.System.MaxTrackingTime && session.Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks;
             if (session.IsServer && (rayCheckTest && !w.RayCheckTest(rangeToTargetSqr) || trackingTimeLimit))
@@ -1487,30 +1487,6 @@ namespace CoreSystems.Platform
             return result.Item1 && result.Item2 > 0;
         }
 
-        public bool MuzzleHitSelf()
-        {
-            if (ActiveAmmoDef.AmmoDef.IgnoreGrids || System.Values.HardPoint.Other.DisableOwnGridLosCheck)
-                return false;
-
-            for (int i = 0; i < Muzzles.Length; i++)
-            {
-                var m = Muzzles[i];
-                var grid = Comp.Ai.GridEntity;
-                var dummy = Dummies[i];
-                var newInfo = dummy.Info;
-                m.Direction = newInfo.Direction;
-                m.Position = newInfo.Position;
-                m.LastUpdateTick = Session.I.Tick;
-
-                var start = m.Position;
-                var end = m.Position + (m.Direction * grid.PositionComp.LocalVolume.Radius);
-
-                Vector3D? hit;
-                if (GridIntersection.BresenhamGridIntersection(grid, ref start, ref end, out hit, Comp.Cube, Comp.Ai))
-                    return true;
-            }
-            return false;
-        }
         private bool RayCheckTest(double rangeToTargetSqr)
         {
             if (PosChangedTick != Session.I.SimulationCount)
@@ -1549,18 +1525,6 @@ namespace CoreSystems.Platform
 
             var tick = Session.I.Tick;
             var masterWeapon = System.TrackTargets || Comp.PrimaryWeapon == null ? this : Comp.PrimaryWeapon;
-
-            if (System.Values.HardPoint.Other.MuzzleCheck)
-            {
-                LastMuzzleCheck = tick;
-                if (MuzzleHitSelf())
-                {
-                    masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit, !Comp.FakeMode);
-                    if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit, !Comp.FakeMode);
-                    return false;
-                }
-                if (tick - Comp.LastRayCastTick <= 29) return true;
-            }
 
             if (Target.TargetObject is IMyCharacter && !overrides.Biologicals || Target.TargetObject is MyCubeBlock && !overrides.Grids)
             {

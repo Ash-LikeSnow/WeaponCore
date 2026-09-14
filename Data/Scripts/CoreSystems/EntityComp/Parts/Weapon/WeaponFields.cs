@@ -133,7 +133,6 @@ namespace CoreSystems.Platform
         internal uint CeaseFireDelayTick = uint.MaxValue / 2;
         internal uint LastTargetTick;
         internal uint LastTrackedTick;
-        internal uint LastMuzzleCheck;
         internal uint LastSmartLosCheck;
         internal uint LastLoadedTick;
         internal uint OffDelay;
