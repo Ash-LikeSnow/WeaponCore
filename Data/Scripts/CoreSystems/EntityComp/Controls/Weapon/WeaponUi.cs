@@ -539,6 +539,9 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
 
+            if (comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo)
+                return -2;
+
             for (int i = 0; i < comp.Collection.Count; i++)
             {
                 var wep = comp.Collection[i];
@@ -565,15 +568,21 @@ namespace CoreSystems
         internal static void RequestSetAmmo(IMyTerminalBlock block, long newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;            
 
             for (int i = 0; i < comp.Collection.Count; i++)
             {
                 var wep = comp.Collection[i];
-                if (!wep.System.HasAmmoSelection || newValue >= wep.System.AmmoTypes.Length || !wep.System.AmmoTypes[newValue].AmmoDef.Const.IsTurretSelectable)
+                if (!wep.System.HasAmmoSelection || newValue >= wep.System.AmmoTypes.Length || (newValue != -2 && !wep.System.AmmoTypes[newValue].AmmoDef.Const.IsTurretSelectable))
                     continue;
-
-                wep.QueueAmmoChange((int)newValue);
+                if (wep.System.AllowAnyAmmo)
+                {
+                    var enabled = newValue == -2;
+                    if (comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo != enabled)
+                        Weapon.WeaponComponent.RequestSetValue(comp, WeaponOverrideSetting.UseAnyAmmo, enabled ? 1 : 0, Session.I.PlayerId);
+                }
+                if (newValue != -2)
+                    wep.QueueAmmoChange((int)newValue);
             }
             block.ShowInToolbarConfig = !block.ShowInToolbarConfig; //#keen
             block.ShowInToolbarConfig = !block.ShowInToolbarConfig;

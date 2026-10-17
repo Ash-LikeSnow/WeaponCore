@@ -86,6 +86,7 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 180, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 1, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
                 },
                 Audio = new HardPointAudioDef
                 {
@@ -111,7 +112,8 @@ namespace Scripts {
             },
             Ammos = new[] {
                 InteriorAmmo,
-                InteriorAmmoOld // Must list all primary, shrapnel, and pattern ammos.
+                InteriorAmmoOld,
+                InteriorAmmoNew,
             },
         };
 

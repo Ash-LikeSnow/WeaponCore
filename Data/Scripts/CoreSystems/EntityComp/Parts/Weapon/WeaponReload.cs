@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Components;
 using VRage.Game.Entity;
+using VRage.ModAPI;
 using VRage.Utils;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
 using static CoreSystems.Support.CoreComponent;
@@ -173,7 +176,7 @@ namespace CoreSystems.Platform
             }
 
             Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : Reload.CurrentMags;
-
+            
             var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
             var nothingToLoad = Reload.CurrentMags <= 0 && !energyDrainable;
 
@@ -294,7 +297,10 @@ if (Session.I.DebugMod)
             var outOfAmmo = ProtoWeaponAmmo.CurrentAmmo == 0;
             var sendHome = System.GoHomeToReload && !IsHome;
 
-            if (outOfAmmo) {
+
+
+            if (outOfAmmo) 
+            {
                 if (sendHome && !ReturingHome)
                     ScheduleWeaponHome(true);
 
@@ -310,6 +316,27 @@ if (Session.I.DebugMod)
         {
             if (DelayedCycleId >= 0)
                 ChangeAmmo(DelayedCycleId);
+
+             if (Comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo && Reload.CurrentMags <= 0 && Comp.CoreInventory.ItemCount > 0)
+            {
+                var ammos = Comp.Collection[0].System.AmmoTypes;
+                var item = Comp.CoreInventory.GetItemAt(0);
+                if (item != null)
+                {
+                    for (int j = 0; j < ammos.Length; j++)
+                    {
+                        var ammo = ammos[j];
+                        if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
+                        
+                        if (item.Value.Type.SubtypeId == ammo.AmmoDef.AmmoMagazine)
+                        {
+                            ProposedAmmoId = j;
+                            ScheduleAmmoChange = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             if (ScheduleAmmoChange) 
                 ChangeActiveAmmoServer();

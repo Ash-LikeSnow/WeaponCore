@@ -97,7 +97,7 @@ namespace Scripts {
                 },
             },
             Ammos = new[] {
-                MissileAmmo, // Must list all primary, shrapnel, and pattern ammos.
+                MissileAmmo, MissileHomingAmmo // Must list all primary, shrapnel, and pattern ammos.
             },
         };
         
@@ -197,7 +197,7 @@ namespace Scripts {
                 },
             },
             Ammos = new[] {
-                MissileAmmo, // Must list all primary, shrapnel, and pattern ammos.
+                MissileAmmo, MissileHomingAmmo // Must list all primary, shrapnel, and pattern ammos.
             },
         };
 
@@ -280,7 +280,7 @@ namespace Scripts {
                 },
             },
             Ammos = new[] {
-                MissileAmmo, // Must list all primary, shrapnel, and pattern ammos.
+                MissileAmmo, MissileHomingAmmo // Must list all primary, shrapnel, and pattern ammos.
             },
         };
 
@@ -355,7 +355,7 @@ namespace Scripts {
                 },
             },
             Ammos = new[] {
-                MissileAmmo, // Must list all primary, shrapnel, and pattern ammos.
+                MissileAmmo, MissileHomingAmmo // Must list all primary, shrapnel, and pattern ammos.
             },
         };
         
@@ -452,7 +452,7 @@ namespace Scripts {
                 },
             },
             Ammos = new[] {
-                MissileAmmo, // Must list all primary, shrapnel, and pattern ammos.
+                MissileAmmo, MissileHomingAmmo // Must list all primary, shrapnel, and pattern ammos.
             },
         };
         // Don't edit below this line.

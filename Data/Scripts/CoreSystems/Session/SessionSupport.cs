@@ -1668,10 +1668,25 @@ namespace CoreSystems
             VanillaIds[largeMissileMedCalId] = largeMissileMedCal;
             VanillaCoreIds[largeMissileMedCal] = largeMissileMedCalId;
 
+            var largeMissileMedCal2 = MyStringHash.GetOrCompute("LargeBlockMediumCalibreTurretType2");
+            var largeMissileMedCalId2 = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeBlockMediumCalibreTurretType2");
+            VanillaIds[largeMissileMedCalId2] = largeMissileMedCal2;
+            VanillaCoreIds[largeMissileMedCal2] = largeMissileMedCalId2;
+
             var smallLargeMissile = MyStringHash.GetOrCompute("LargeMissileLauncher");
             var smallLargeMissileId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeMissileLauncher");
             VanillaIds[smallLargeMissileId] = smallLargeMissile;
             VanillaCoreIds[smallLargeMissile] = smallLargeMissileId;
+
+            var smallTorpedo = MyStringHash.GetOrCompute("SmallBlockTorpedoLauncher");
+            var smallTorpedoId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "SmallBlockTorpedoLauncher");
+            VanillaIds[smallTorpedoId] = smallTorpedo;
+            VanillaCoreIds[smallTorpedo] = smallTorpedoId;
+
+            var largeTorpedo = MyStringHash.GetOrCompute("LargeBlockTorpedoLauncher");
+            var largeTorpedoId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeBlockTorpedoLauncher");
+            VanillaIds[largeTorpedoId] = largeTorpedo;
+            VanillaCoreIds[largeTorpedo] = largeTorpedoId;
 
             var largeRailgun = MyStringHash.GetOrCompute("LargeRailgun");
             var largeRailgunId = new MyDefinitionId(typeof(MyObjectBuilder_ConveyorSorter), "LargeRailgun");
@@ -1688,10 +1703,20 @@ namespace CoreSystems
             VanillaIds[smallLargeMissileLargeCalId] = smallLargeMissileLargeCal;
             VanillaCoreIds[smallLargeMissileLargeCal] = smallLargeMissileLargeCalId;
 
+            var smallLargeMissileLargeCal2 = MyStringHash.GetOrCompute("LargeBlockLargeCalibreGunType2");
+            var smallLargeMissileLargeCalId2 = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeBlockLargeCalibreGunType2");
+            VanillaIds[smallLargeMissileLargeCalId2] = smallLargeMissileLargeCal2;
+            VanillaCoreIds[smallLargeMissileLargeCal2] = smallLargeMissileLargeCalId2;
+
             var largeCalTurret = MyStringHash.GetOrCompute("LargeCalibreTurret");
             var largeCalTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeCalibreTurret");
             VanillaIds[largeCalTurretId] = largeCalTurret;
             VanillaCoreIds[largeCalTurret] = largeCalTurretId;
+
+            var largeCalTurret2 = MyStringHash.GetOrCompute("LargeCalibreTurretType2");
+            var largeCalTurretId2 = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeCalibreTurretType2");
+            VanillaIds[largeCalTurretId2] = largeCalTurret2;
+            VanillaCoreIds[largeCalTurret2] = largeCalTurretId2;
 
             var smallLargeMissile2 = MyStringHash.GetOrCompute("SmallMissileLauncherWarfare2");
             var smallLargeMissile2Id = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "SmallMissileLauncherWarfare2");
@@ -1703,6 +1728,11 @@ namespace CoreSystems
             VanillaIds[smallAutoTurretId] = smallAutoTurret;
             VanillaCoreIds[smallAutoTurret] = smallAutoTurretId;
 
+            var smallAutoTurret2 = MyStringHash.GetOrCompute("AutoCannonTurretType2");
+            var smallAutoTurretId2 = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "AutoCannonTurretType2");
+            VanillaIds[smallAutoTurretId2] = smallAutoTurret2;
+            VanillaCoreIds[smallAutoTurret2] = smallAutoTurretId2;
+
             var smallMissileTurret = MyStringHash.GetOrCompute("SmallMissileTurret");
             var smallMissileTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallMissileTurret");
             VanillaIds[smallMissileTurretId] = smallMissileTurret;
@@ -1713,15 +1743,30 @@ namespace CoreSystems
             VanillaIds[smallMedCalGunId] = smallMedCalGun;
             VanillaCoreIds[smallMedCalGun] = smallMedCalGunId;
 
+            var smallMedCalGun2 = MyStringHash.GetOrCompute("SmallBlockMediumCalibreGunType2");
+            var smallMedCalGunId2 = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "SmallBlockMediumCalibreGunType2");
+            VanillaIds[smallMedCalGunId2] = smallMedCalGun2;
+            VanillaCoreIds[smallMedCalGun2] = smallMedCalGunId2;
+
             var smallMedCalTurret = MyStringHash.GetOrCompute("SmallBlockMediumCalibreTurret");
             var smallMedCalTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallBlockMediumCalibreTurret");
             VanillaIds[smallMedCalTurretId] = smallMedCalTurret;
             VanillaCoreIds[smallMedCalTurret] = smallMedCalTurretId;
 
+            var smallMedCalTurret2 = MyStringHash.GetOrCompute("SmallBlockMediumCalibreTurretType2");
+            var smallMedCalTurretId2 = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "SmallBlockMediumCalibreTurretType2");
+            VanillaIds[smallMedCalTurretId2] = smallMedCalTurret2;
+            VanillaCoreIds[smallMedCalTurret2] = smallMedCalTurretId2;
+
             var smallGatAuto = MyStringHash.GetOrCompute("SmallBlockAutocannon");
             var smallGatAutoId = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallBlockAutocannon");
             VanillaIds[smallGatAutoId] = smallGatAuto;
             VanillaCoreIds[smallGatAuto] = smallGatAutoId;
+
+            var smallGatAuto2 = MyStringHash.GetOrCompute("SmallBlockAutocannonType2");
+            var smallGatAutoId2 = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallBlockAutocannonType2");
+            VanillaIds[smallGatAutoId2] = smallGatAuto2;
+            VanillaCoreIds[smallGatAuto2] = smallGatAutoId2;
 
             var smallGatReskin = MyStringHash.GetOrCompute("SmallGatlingTurretReskin");
             var smallGatReskinId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "SmallGatlingTurretReskin");

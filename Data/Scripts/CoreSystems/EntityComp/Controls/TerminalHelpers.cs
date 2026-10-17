@@ -289,7 +289,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
-            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip() || comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo)
                 return false;
             bool enable = false;
             for (int i = 0; i < comp.Collection.Count; i++)

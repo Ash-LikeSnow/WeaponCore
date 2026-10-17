@@ -59,6 +59,7 @@ namespace CoreSystems.Platform
         MinLockTime = 35,
         EnableProjectileTagOverrides = 36,
         UserPTagWhitelistSys = 37,
+        UseAnyAmmo = 38,
     }
 
     public partial class Weapon
@@ -795,6 +796,11 @@ namespace CoreSystems.Platform
                     case WeaponOverrideSetting.UserPTagWhitelistSys:
                         o.UserPTagWhitelistSys = (TargetingDef.WhitelistSystem)v;
                         break;
+                    case WeaponOverrideSetting.UseAnyAmmo:
+                        o.UseAnyAmmo = enabled;
+                        if (enabled)
+                            comp.UpdateCycle();
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);
@@ -884,6 +890,15 @@ namespace CoreSystems.Platform
                 }
 
                 Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
+            }
+
+            internal void UpdateCycle()
+            {
+                for (int i = 0; i < Collection.Count; i++)
+                {
+                    var w = Collection[i];
+                    w.DelayedCycleId = -1;
+                }
             }
 
             internal void ChangeSequenceId()
@@ -1351,18 +1366,24 @@ namespace CoreSystems.Platform
 
                     while (!(currActive.Equals(currDef)))
                     {
+                        if (w.System.AllowAnyAmmo && !w.Comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo && aId + 1 == availAmmo)
+                        {
+                            RequestSetValue(w.Comp, WeaponOverrideSetting.UseAnyAmmo, 1, Session.I.PlayerId);
+                            break;
+                        }
                         if (currDef.AmmoDef.Const.IsTurretSelectable)
                         {
                             change = true;
                             break;
                         }
-
                         next = (next + 1) % availAmmo;
                         currDef = w.System.AmmoTypes[next];
                     }
 
                     if (change)
                     {
+                        if (w.System.AllowAnyAmmo && w.Comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo)
+                            RequestSetValue(w.Comp, WeaponOverrideSetting.UseAnyAmmo, 0, Session.I.PlayerId);
                         w.QueueAmmoChange(next);
                     }
                 }
@@ -1378,6 +1399,8 @@ namespace CoreSystems.Platform
                         continue;
 
                     BlockUi.AmmoList.Clear();
+                    if (wep.System.AllowAnyAmmo)
+                        BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = -2, Value = MyStringId.GetOrCompute("Any") });
                     var ammos = wep.System.AmmoTypes;
                     for (int j = 0; j < ammos.Length; j++)
                     {

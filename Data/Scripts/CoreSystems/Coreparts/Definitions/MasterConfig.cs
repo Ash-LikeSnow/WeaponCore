@@ -16,6 +16,7 @@ namespace Scripts
                             LargeInteriorTurret,
                             SmallBlockAutocannon,
                             AutoCannonTurret,
+                            AutoCannonTurretType2,
                             LargeBlockAssaultCannonTurret,
                             SmallBlockAssaultCannon,
                             SmallBlockAssaultCannonTurret,
@@ -26,7 +27,9 @@ namespace Scripts
                             LargeSearchlight,
                             SmallSearchlight,
                             LargeGatlingTurretReskin,
-                            SmallGatlingTurretReskin
+                            SmallGatlingTurretReskin,
+                            SmallTorpedoLauncher,
+                            LargeTorpedoLauncher
                             );
 
             ProjectileTags(WCAutoAssignedTags);
