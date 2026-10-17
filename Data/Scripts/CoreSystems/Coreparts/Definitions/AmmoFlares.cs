@@ -2,6 +2,7 @@
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 
 namespace Scripts
 { // Don't edit above this line
@@ -20,7 +21,7 @@ namespace Scripts
                     Enable = true,
                     ParticleScale = 1,
                     CustomParticle = "Explosion_Flare",
-                    CustomSound = ""
+                    CustomSound = "None"
                 },
             },
             Trajectory = new TrajectoryDef
@@ -33,6 +34,20 @@ namespace Scripts
                 MaxTrajectory = 480,
                 GravityMultiplier = 1,
             },
+            Ewar = new EwarDef
+            {
+                Enable = true, 
+                Type = EwarType.AntiSmartv2, 
+                Mode = EwarMode.Field, // Effect , Field
+                Strength = 2,
+                Radius = 100f, // Meters
+                Field = new FieldDef
+                {
+                    Interval = 30, // Time between each pulse, in game ticks (60 == 1 second), starts at 0 (59 == tick 60).
+                    PulseChance = 25, // Chance from 0 - 100 that an entity in the field will be hit by any given pulse.
+                    HideModel = true, // Hide the default bubble, or other model if specified.
+                },
+            },
             AmmoGraphics = new GraphicDef
             {
                 ModelName = "Models\\Weapons\\FlareAmmo.mwm",
@@ -43,6 +58,7 @@ namespace Scripts
                     Ammo = new ParticleDef
                     {
                         Name = "Smoke_Flare",
+                        Offset = Vector(x: 0, y: 0, z: -2),
                         Extras = new ParticleOptionDef
                         {
                             Scale = 1,
@@ -73,6 +89,7 @@ namespace Scripts
                 Ammo = new ParticleDef
                 {
                     Name = "Smoke_Firework",
+                    Offset = Vector(x: 0, y: 0, z: -2),
                     Extras = new ParticleOptionDef
                     {
                         Scale = 1,
