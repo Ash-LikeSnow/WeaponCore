@@ -581,6 +581,7 @@ namespace CoreSystems.Support
                 [ProtoMember(30)] internal DegradeSettingsDef DegradeRofSettings;
                 [ProtoMember(31)] internal float HeatSinkRateOverheatMult;
                 [ProtoMember(32)] internal bool AllowAnyAmmmo;
+                [ProtoMember(33)] internal bool AllowAnyAmmmoDefault;
 
                 [ProtoContract]
                 public struct DegradeSettingsDef

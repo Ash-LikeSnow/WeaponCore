@@ -1813,6 +1813,26 @@ namespace CoreSystems
             VanillaIds[smallMissileReskinId] = smallMissileReskin;
             VanillaCoreIds[smallMissileReskin] = smallMissileReskinId;
 
+            var smallFlareLauncher = MyStringHash.GetOrCompute("SmallFlareLauncher");
+            var smallFlareLauncherId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "SmallFlareLauncher");
+            VanillaIds[smallFlareLauncherId] = smallFlareLauncher;
+            VanillaCoreIds[smallFlareLauncher] = smallFlareLauncherId;
+
+            var smallInsetFlareLauncher = MyStringHash.GetOrCompute("SmallInsetFlareLauncher");
+            var smallInsetFlareLauncherId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "SmallInsetFlareLauncher");
+            VanillaIds[smallInsetFlareLauncherId] = smallInsetFlareLauncher;
+            VanillaCoreIds[smallInsetFlareLauncher] = smallInsetFlareLauncherId;
+
+            var largeFlareLauncher = MyStringHash.GetOrCompute("LargeFlareLauncher");
+            var largeFlareLauncherId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeFlareLauncher");
+            VanillaIds[largeFlareLauncherId] = largeFlareLauncher;
+            VanillaCoreIds[largeFlareLauncher] = largeFlareLauncherId;
+
+            var largeInsetFlareLauncher = MyStringHash.GetOrCompute("LargeInsetFlareLauncher");
+            var largeInsetFlareLauncherId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeInsetFlareLauncher");
+            VanillaIds[largeInsetFlareLauncherId] = largeInsetFlareLauncher;
+            VanillaCoreIds[largeInsetFlareLauncher] = largeInsetFlareLauncherId;
+
             foreach (var pair in VanillaCoreIds)
                 VanillaSubtypes.Add(pair.Key.String);
 

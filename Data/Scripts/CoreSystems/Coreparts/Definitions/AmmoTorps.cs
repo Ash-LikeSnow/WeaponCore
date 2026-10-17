@@ -75,7 +75,7 @@ namespace Scripts
             },
             AmmoAudio = new AmmoAudioDef
             {
-                TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
+                TravelSound = "TorpedoFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
             },
         };
         private AmmoDef TorpedoHeavyAmmo => new AmmoDef // Your ID, for slotting into the Weapon CS
@@ -143,7 +143,7 @@ namespace Scripts
             },
             AmmoAudio = new AmmoAudioDef
             {
-                TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
+                TravelSound = "TorpedoFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
             },
         };
         private AmmoDef TorpedoSeekingAmmo => new AmmoDef // Your ID, for slotting into the Weapon CS
@@ -211,7 +211,7 @@ namespace Scripts
             },
             AmmoAudio = new AmmoAudioDef
             {
-                TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
+                TravelSound = "TorpedoFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
             },
         };
         private AmmoDef TorpedoPiercingAmmo => new AmmoDef // Your ID, for slotting into the Weapon CS
@@ -278,7 +278,7 @@ namespace Scripts
             },
             AmmoAudio = new AmmoAudioDef
             {
-                TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
+                TravelSound = "TorpedoFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
             },
         };
     }

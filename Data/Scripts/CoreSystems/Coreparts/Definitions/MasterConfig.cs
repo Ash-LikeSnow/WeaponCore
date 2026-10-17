@@ -29,7 +29,9 @@ namespace Scripts
                             LargeGatlingTurretReskin,
                             SmallGatlingTurretReskin,
                             SmallTorpedoLauncher,
-                            LargeTorpedoLauncher
+                            LargeTorpedoLauncher,
+                            LargeFlareLauncher,
+                            SmallFlareLauncher
                             );
 
             ProjectileTags(WCAutoAssignedTags);

@@ -86,6 +86,7 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 240, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 19, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
                 },
                 Audio = new HardPointAudioDef
                 {
@@ -186,6 +187,7 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 240, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 6, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
                 },
                 Audio = new HardPointAudioDef
                 {
@@ -269,6 +271,8 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 60, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 4, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
+                    AllowAnyAmmmoDefault = true,
                 },
                 Audio = new HardPointAudioDef
                 {
@@ -344,6 +348,7 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 60, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 4, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
                 },
                 Audio = new HardPointAudioDef
                 {
@@ -441,6 +446,7 @@ namespace Scripts {
                     TrajectilesPerBarrel = 1, // Number of projectiles per muzzle per fire event.
                     ReloadTime = 360, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 2, // Number of physical magazines to consume on reload.
+                    AllowAnyAmmmo = true,
                 },
                 Audio = new HardPointAudioDef
                 {

@@ -169,6 +169,7 @@ namespace CoreSystems.Support
         public readonly bool HasAntiSmart;
         public readonly bool HasAmmoSelection;
         public readonly bool AllowAnyAmmo;
+        public readonly bool AllowAnyAmmoDefault;
         public readonly bool HasEjector;
         public readonly bool HasScope;
         public readonly bool HasBarrelRotation;
@@ -451,6 +452,7 @@ namespace CoreSystems.Support
 
             HasRequiresTarget = requiresTarget;
             AllowAnyAmmo = Values.HardPoint.Loading.AllowAnyAmmmo;
+            AllowAnyAmmoDefault = AllowAnyAmmo && values.HardPoint.Loading.AllowAnyAmmmoDefault;
             HasAmmoSelection = ammoSelections > 1;
             HardPointSoundSetup(out WeaponReloadSound, out ReloadSoundPairs, out HardPointRotationSound, out HardPointSoundPair, out BarrelRotateSound, out BarrelRotateSoundPair, out NoAmmoSound, out NoSoundPair, out PreFireSound, out PreFireSoundPair, out HardPointAvMaxDistSqr, out FiringSound);
             HardPointSoundDistMaxSqr(AmmoTypes, out FiringSoundDistSqr, out ReloadSoundDistSqr, out BarrelSoundDistSqr, out HardPointSoundDistSqr, out NoAmmoSoundDistSqr, out HardPointAvMaxDistSqr);
