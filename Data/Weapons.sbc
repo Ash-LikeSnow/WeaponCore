@@ -200,6 +200,72 @@
             </AmmoMagazines>
         </Weapon>
 
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>SmallInsetFlareLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>SmallFlareLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>LargeFlareLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>LargeInsetFlareLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>LargeTorpedoLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
+		<Weapon>
+			<Id>
+				<TypeId>WeaponDefinition</TypeId>
+				<SubtypeId>SmallTorpedoLauncher</SubtypeId>
+			</Id>
+			<ProjectileAmmoData />
+			<AmmoMagazines>
+				<AmmoMagazine Subtype="Energy" />
+			</AmmoMagazines>
+		</Weapon>
+
     </Weapons>
 
 </Definitions>

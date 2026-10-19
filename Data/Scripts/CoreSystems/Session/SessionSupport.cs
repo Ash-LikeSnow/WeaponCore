@@ -1844,6 +1844,8 @@ namespace CoreSystems
             VanillaSubpartNames.Add("GatlingTurretBase2");
             VanillaSubpartNames.Add("GatlingBarrel");
             VanillaSubpartNames.Add("GatlingTurretReskinBarrel");
+            VanillaSubpartNames.Add("AutocannonTurret_Barrel");
+            VanillaSubpartNames.Add("AutocannonTUrret_Base1");
         }
 
         internal void UpdateEnforcement()
