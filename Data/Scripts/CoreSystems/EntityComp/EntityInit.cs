@@ -57,6 +57,7 @@ namespace CoreSystems.Support
                 var constraintList = new List<MyDefinitionId>();
                 var constraintNames = new List<string>();
                 var fixedInvSize = false;
+                var allowAny = false;
                 if (Type == CompType.Weapon)
                 {
                     var collect = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
@@ -70,6 +71,8 @@ namespace CoreSystems.Support
                         }
                         if (w.System.Values.HardPoint.HardWare.FixedInventorySize)
                             fixedInvSize = true;
+                        if (w.System.AllowAnyAmmo)
+                            allowAny = true;
                         for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                         {
                             var ammo = w.System.AmmoTypes[j];
@@ -83,10 +86,12 @@ namespace CoreSystems.Support
                     }
                 }
                 
-                var constraintName = "Ammo:";
+                var constraintName = "Accepted Ammo:";
                 constraintNames.Sort();
                 foreach (var name in constraintNames)
                     constraintName += "\n  - " + name;
+                if (allowAny)
+                    constraintName += "\nOptionally choose 'Any' in terminal to consume ammo from block \ninventory in order from left to right regardless of type";
 
                 CoreInventory.Constraint = new MyInventoryConstraint(constraintName);
                 var wepDef = ((IMyCubeBlock)Cube)?.SlimBlock?.BlockDefinition as MyWeaponBlockDefinition;

@@ -1400,7 +1400,7 @@ namespace CoreSystems.Platform
 
                     BlockUi.AmmoList.Clear();
                     if (wep.System.AllowAnyAmmo)
-                        BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = -2, Value = MyStringId.GetOrCompute("Any") });
+                        BlockUi.AmmoList.Add(new MyTerminalControlComboBoxItem { Key = -2, Value = MyStringId.GetOrCompute(Localization.GetText("AnyAmmo")) });
                     var ammos = wep.System.AmmoTypes;
                     for (int j = 0; j < ammos.Length; j++)
                     {

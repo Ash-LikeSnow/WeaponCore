@@ -926,7 +926,7 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.ConsumableSelectionPartIds.Count == 0) return;
             if (comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo)
-                sb.Append("Any");
+                sb.Append(Localization.GetText("AnyAmmoShort"));
             else
             {
                 var w = comp.Collection[comp.ConsumableSelectionPartIds[0]];
