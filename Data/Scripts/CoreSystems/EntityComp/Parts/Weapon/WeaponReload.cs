@@ -152,8 +152,12 @@ namespace CoreSystems.Platform
                 var proposedAmmo = System.AmmoTypes[ProposedAmmoId];
 
                 if (instantChange)
+                {
+                    if (IsShooting && !ActiveAmmoDef.AmmoDef.Const.Reloadable)
+                        StopShooting(); //Forces a stop for AV purposes
                     ChangeActiveAmmoServer();
-                else 
+                }
+                else
                     ScheduleAmmoChange = true;
 
                 if (proposedAmmo.AmmoDef.Const.Reloadable && canReload)
