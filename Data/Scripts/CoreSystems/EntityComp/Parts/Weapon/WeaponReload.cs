@@ -135,7 +135,7 @@ namespace CoreSystems.Platform
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
                 AmmoNameTerminal = "*" + System.AmmoTypes[newAmmoId].AmmoDef.Const.TerminalName;
 
-                if (Session.I.IsClient && !System.DesignatorWeapon)
+                if (Session.I.HandlesInput && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
             }
         }

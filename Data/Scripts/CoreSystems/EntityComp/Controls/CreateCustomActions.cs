@@ -109,7 +109,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ForceReload"));
             action.Action = CustomActions.TerminalRequestReload;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.AmmoSelection;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
