@@ -140,6 +140,7 @@ namespace Scripts {
                     ReloadTime = 1200, // Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..).
                     MagsToLoad = 1, // Number of physical magazines to consume on reload.
                     AllowAnyAmmmo = true,
+                    AllowAnyAmmmoDefault = true,
                 },
                 Audio = new HardPointAudioDef
                 {
