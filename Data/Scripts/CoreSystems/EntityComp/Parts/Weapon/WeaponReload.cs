@@ -146,14 +146,13 @@ namespace CoreSystems.Platform
             {
                 DelayedCycleId = -1;
                 ProposedAmmoId = newAmmoId;
-                var instantChange = Session.I.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable;
                 var canReload = ProtoWeaponAmmo.CurrentAmmo == 0;
 
                 var proposedAmmo = System.AmmoTypes[ProposedAmmoId];
 
-                if (instantChange)
+                if (!ActiveAmmoDef.AmmoDef.Const.Reloadable)
                 {
-                    if (IsShooting && !ActiveAmmoDef.AmmoDef.Const.Reloadable)
+                    if (IsShooting)
                         StopShooting(); //Forces a stop for AV purposes
                     ChangeActiveAmmoServer();
                 }

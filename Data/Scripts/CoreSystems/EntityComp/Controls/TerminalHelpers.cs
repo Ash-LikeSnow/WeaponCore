@@ -33,7 +33,7 @@ namespace CoreSystems.Control
             AddComboboxNoAction<T>(session, "ObjectiveMode", Localization.GetText("TerminalObjectiveTitle"), Localization.GetText("TerminalObjectiveTooltip"), BlockUi.GetObjectiveMode, BlockUi.RequestObjectiveMode, BlockUi.ListObjectiveModes, TrackGrids);
             AddComboboxNoAction<T>(session, "TrackingMode", Localization.GetText("TerminalTrackingModeTitle"), Localization.GetText("TerminalTrackingModeTooltip"), BlockUi.GetMovementMode, BlockUi.RequestMovementMode, BlockUi.ListMovementModes, TrackGrids);
             AddComboboxNoAction<T>(session, "PickAmmo", Localization.GetText("TerminalPickAmmoTitle"), Localization.GetText("TerminalPickAmmoTooltip"), BlockUi.GetAmmos, BlockUi.RequestSetAmmo, BlockUi.ListAmmos, AmmoSelection);
-            AddButtonNoAction<T>(session, "ForceReload", Localization.GetText("ForceReload"), Localization.GetText("TerminalForceReloadTooltip"), BlockUi.ForceReload, EnableForceReload, AmmoSelection);
+            AddButtonNoAction<T>(session, "ForceReload", Localization.GetText("ForceReload"), Localization.GetText("TerminalForceReloadTooltip"), BlockUi.ForceReload, EnableForceReload, ForceReload);
             AddWeaponRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRange, BlockUi.RequestSetRange, BlockUi.ShowRange, BlockUi.GetMinRange, BlockUi.GetMaxRange, true, false);
 
             Separator<T>(session, "WC_sep2", HasTracking);
@@ -255,6 +255,18 @@ namespace CoreSystems.Control
 
             return comp.ConsumableSelectionPartIds.Count > 0;
         }
+
+        internal static bool ForceReload(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.ConsumableSelectionPartIds.Count > 0 && !comp.PrimaryWeapon.ActiveAmmoDef.AmmoDef.Const.Reloadable;
+        }
+
         internal static bool ControlSelectionEnabled(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
