@@ -395,8 +395,8 @@ namespace CoreSystems
                         var largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
 
                         var gridMult = largeGrid
-                                            ? t.AmmoDef.DamageScales.Grids.Large > 0 ? t.AmmoDef.DamageScales.Grids.Large : 1
-                                            : t.AmmoDef.DamageScales.Grids.Small > 0 ? t.AmmoDef.DamageScales.Grids.Small : 1;
+                                        ? t.AmmoDef.Const.LargeGridDmgScale >= 0 ? t.AmmoDef.Const.LargeGridDmgScale : 1
+                                        : t.AmmoDef.Const.SmallGridDmgScale >= 0 ? t.AmmoDef.Const.SmallGridDmgScale : 1;
 
                         var nerdShieldModifier2 = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridMult;
                         var nerdShieldPassthroughModifier2 = t.AmmoDef.DamageScales.Shields.BypassModifier;
@@ -413,7 +413,10 @@ namespace CoreSystems
             //Global & modifiers
             IMySlimBlock rootBlock = null;
             var d = t.AmmoDef.DamageScales;
-            var armor = t.AmmoDef.DamageScales.Armor;
+            var armor = t.AmmoDef.Const.ArmorDmgScale;
+            var lightArmor = t.AmmoDef.Const.LightArmorDmgScale;
+            var heavyArmor = t.AmmoDef.Const.HeavyArmorDmgScale;
+            var nonArmor = t.AmmoDef.Const.NonArmorDmgScale;
             var cutoffArmor = t.AmmoDef.DamageScales.ArmorForCutoff;
             //Target/targeting Info
             var attackerId = t.Weapon.Comp.CoreEntity.EntityId;
@@ -533,8 +536,9 @@ namespace CoreSystems
                                 {
                                     case ShieldDef.ShieldType.Default:
                                         var gridMult = largeGrid
-                                            ? t.AmmoDef.DamageScales.Grids.Large > 0 ? t.AmmoDef.DamageScales.Grids.Large : 1
-                                            : t.AmmoDef.DamageScales.Grids.Small > 0 ? t.AmmoDef.DamageScales.Grids.Small : 1;
+                                            ? t.AmmoDef.Const.LargeGridDmgScale >= 0 ? t.AmmoDef.Const.LargeGridDmgScale : 1
+                                            : t.AmmoDef.Const.SmallGridDmgScale >= 0 ? t.AmmoDef.Const.SmallGridDmgScale : 1;
+
 
                                         nerdShieldModifier = t.AmmoDef.DamageScales.Shields.Modifier * gridDamageModifier * gridSizeBuff * gridMult;
                                         nerdShieldPassthroughModifier = t.AmmoDef.DamageScales.Shields.BypassModifier;
@@ -708,17 +712,20 @@ namespace CoreSystems
                             {
                                 blockDef = block.BlockDefinition;
                                 var isArmor = AllArmorBaseDefinitions.Contains(blockDef) || CustomArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                if (isArmor && armor.Armor >= 0)
-                                    damageScale *= armor.Armor;
-                                else if (!isArmor && armor.NonArmor >= 0)
-                                    damageScale *= armor.NonArmor;
-                                if (isArmor && (armor.Light >= 0 || armor.Heavy >= 0))
+
+                                if (isArmor && armor >= 0)
+                                    damageScale *= armor;
+                                else if (!isArmor && nonArmor >= 0)
+                                    damageScale *= nonArmor;
+
+                                if (isArmor && (lightArmor >= 0 || heavyArmor >= 0))
                                 {
                                     var isHeavy = HeavyArmorBaseDefinitions.Contains(blockDef) || CustomHeavyArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                    if (isHeavy && armor.Heavy >= 0)
-                                        damageScale *= armor.Heavy;
-                                    else if (!isHeavy && armor.Light >= 0)
-                                        damageScale *= armor.Light;
+
+                                    if (isHeavy && heavyArmor >= 0)
+                                        damageScale *= heavyArmor;
+                                    else if (!isHeavy && lightArmor >= 0)
+                                        damageScale *= lightArmor;
                                 }
                             }
 

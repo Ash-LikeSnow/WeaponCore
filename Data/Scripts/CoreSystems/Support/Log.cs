@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
@@ -16,6 +16,7 @@ namespace CoreSystems.Support
         public const string ReportLog = "report";
         public const string CombatLog = "combat";
         public const string AmmoStatsLog = "ammostats";
+        public const string OverridesLog = "overrides";
         public const string WepStatsLog = "wepstats";
         public const string DmgStatsLog = "dmgstats";
         public const string GridDmgStatsLog = "griddmgstats";

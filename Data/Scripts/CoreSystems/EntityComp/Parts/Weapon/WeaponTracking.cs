@@ -1602,10 +1602,10 @@ namespace CoreSystems.Platform
                 return false;
             }
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !(ActiveAmmoDef.AmmoDef.IgnoreWater || Comp.TargetSubmerged) && Comp.Ai.InPlanetGravity && Comp.Ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(Comp.Ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && (ActiveAmmoDef.AmmoDef.UnderwaterOnly ? Comp.TargetSubmerged : !(ActiveAmmoDef.AmmoDef.IgnoreWater || Comp.TargetSubmerged)) && Comp.Ai.InPlanetGravity && Comp.Ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(Comp.Ai.MyPlanet.EntityId, out water))
             {
                 var waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
-                if (waterSphere.Contains(targetPos) != ContainmentType.Disjoint)
+                if ((waterSphere.Contains(targetPos) == ContainmentType.Disjoint) == ActiveAmmoDef.AmmoDef.UnderwaterOnly)
                 {
                     masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFailed);
                     if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckFailed);

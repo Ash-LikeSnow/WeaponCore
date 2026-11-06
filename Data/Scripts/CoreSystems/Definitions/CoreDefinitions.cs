@@ -757,6 +757,7 @@ namespace CoreSystems.Support
             [ProtoMember(35)] internal bool AllowNegativeHeatModifier;
             [ProtoMember(36)] internal int HeatNeededToFire;
             [ProtoMember(37)] internal bool GridsTargetSeekersTargetingThis;
+            [ProtoMember(38)] internal bool UnderwaterOnly;
 
             [ProtoContract]
             public struct SynchronizeDef

@@ -128,6 +128,18 @@ namespace CoreSystems.Settings
                 [ProtoMember(24)] public float? EndOfLifeMaxAbsorb;
                 public bool ShouldSerializeBackKickForce() => BackKickForce.HasValue;
                 [ProtoMember(25)] public float? BackKickForce;
+                public bool ShouldSerializeGridSizeLarge() => GridSizeLarge.HasValue;
+                [ProtoMember(26)] public float? GridSizeLarge;
+                public bool ShouldSerializeGridSizeSmall() => GridSizeSmall.HasValue;
+                [ProtoMember(27)] public float? GridSizeSmall;
+                public bool ShouldSerializeArmor() => Armor.HasValue;
+                [ProtoMember(28)] public float? Armor;
+                public bool ShouldSerializeArmorLight() => ArmorLight.HasValue;
+                [ProtoMember(29)] public float? ArmorLight;
+                public bool ShouldSerializeArmorHeavy() => ArmorHeavy.HasValue;
+                [ProtoMember(30)] public float? ArmorHeavy;
+                public bool ShouldSerializeArmorNonArmor() => ArmorNonArmor.HasValue;
+                [ProtoMember(31)] public float? ArmorNonArmor;
             }
 
             [ProtoContract]

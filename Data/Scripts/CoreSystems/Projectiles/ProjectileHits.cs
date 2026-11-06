@@ -305,7 +305,7 @@ namespace CoreSystems.Projectiles
                                     var waterOuterSphere = new BoundingSphereD(water.Center, water.MaxRadius);
                                     if (ray.Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(beamFrom) == ContainmentType.Contains || waterOuterSphere.Contains(beamTo) == ContainmentType.Contains)
                                     {
-                                        if (WaterModAPI.LineIntersectsWater(p.Beam, water.Planet) != 0)
+                                        if ((aDef.UnderwaterOnly ? 3 : 0) != WaterModAPI.LineIntersectsWater(p.Beam, water.Planet))
                                         {
                                             voxelHit = WaterModAPI.GetClosestSurfacePoint(beamTo, water.Planet);
                                             voxelState = VoxelIntersectBranch.PseudoHit2;

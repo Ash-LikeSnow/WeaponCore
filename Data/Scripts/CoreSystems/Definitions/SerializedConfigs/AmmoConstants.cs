@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Sandbox.Definitions;
 using Sandbox.Game;
@@ -269,6 +269,10 @@ namespace CoreSystems.Support
         public readonly bool ArmorCutoffScaling;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
+        public readonly float ArmorDmgScale;
+        public readonly float LightArmorDmgScale;
+        public readonly float HeavyArmorDmgScale;
+        public readonly float NonArmorDmgScale;
         public readonly float LargeGridCutoffDmgScale;
         public readonly float SmallGridCutoffDmgScale;
         public readonly float CharacterDmgScale;
@@ -534,7 +538,21 @@ namespace CoreSystems.Support
             ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool, out HasApproaches, out HasRefund);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
-            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale, out CharacterDmgScale, out ArmorCutoffScaling, out GridCutoffScaling, out LargeGridCutoffDmgScale, out SmallGridCutoffDmgScale);
+            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale, out ArmorDmgScale, out LightArmorDmgScale, out HeavyArmorDmgScale, out NonArmorDmgScale, out CharacterDmgScale, out ArmorCutoffScaling, out GridCutoffScaling, out LargeGridCutoffDmgScale, out SmallGridCutoffDmgScale);
+
+            if (AmmoModsFound && Overrides != null)
+            {
+                var definitionScales = ammo.AmmoDef.DamageScales;
+                Log.Line($"Ammo override applied: ammo='{ammo.AmmoDef.AmmoRound}', weapon='{wDef.HardPoint.PartName}', overrideFound={AmmoModsFound}, noGridOrArmorScaling={ammo.AmmoDef.NoGridOrArmorScaling}; " +
+                    $"GridLarge[definition={definitionScales.Grids.Large}, configured={(Overrides.GridSizeLarge.HasValue ? Overrides.GridSizeLarge.Value.ToString() : "<unset>")}, effective={LargeGridDmgScale}], " +
+                    $"GridSmall[definition={definitionScales.Grids.Small}, configured={(Overrides.GridSizeSmall.HasValue ? Overrides.GridSizeSmall.Value.ToString() : "<unset>")}, effective={SmallGridDmgScale}], " +
+                    $"Armor[definition={definitionScales.Armor.Armor}, configured={(Overrides.Armor.HasValue ? Overrides.Armor.Value.ToString() : "<unset>")}, effective={ArmorDmgScale}], " +
+                    $"ArmorLight[definition={definitionScales.Armor.Light}, configured={(Overrides.ArmorLight.HasValue ? Overrides.ArmorLight.Value.ToString() : "<unset>")}, effective={LightArmorDmgScale}], " +
+                    $"ArmorHeavy[definition={definitionScales.Armor.Heavy}, configured={(Overrides.ArmorHeavy.HasValue ? Overrides.ArmorHeavy.Value.ToString() : "<unset>")}, effective={HeavyArmorDmgScale}], " +
+                    $"ArmorNonArmor[definition={definitionScales.Armor.NonArmor}, configured={(Overrides.ArmorNonArmor.HasValue ? Overrides.ArmorNonArmor.Value.ToString() : "<unset>")}, effective={NonArmorDmgScale}], " +
+                    $"gridScaling={GridScaling}, armorScaling={ArmorScaling}", Log.OverridesLog);
+            }
+
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
             
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
@@ -1268,20 +1286,28 @@ namespace CoreSystems.Support
             collisionSize = size;
         }
 
-        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool gridScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, MyTuple<float, float>> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale, out float characterDmgScale, out bool armorCutoffScaling, out bool gridCutoffScaling, out float LargeGridCutoffDmgScale, out float SmallGridCutoffDmgScale)
-        {
-            var d = ammoDef.DamageScales;
-            customBlockDef = null;
-            customDamageScales = false;
-            armorScaling = false;
-            gridScaling = false;
-            fallOffScaling = false;
-            gridCutoffScaling = false;
-            armorCutoffScaling = false;
-            largeGridDmgScale = 0;
-            smallGridDmgScale = 0;
-            LargeGridCutoffDmgScale = 0;
-            SmallGridCutoffDmgScale = 0;
+            private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool gridScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, MyTuple<float, float>> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale, out float armorDmgScale, out float lightArmorDmgScale, out float heavyArmorDmgScale, out float nonArmorDmgScale, out float characterDmgScale, out bool armorCutoffScaling, out bool gridCutoffScaling, out float LargeGridCutoffDmgScale, out float SmallGridCutoffDmgScale)
+            {
+                var d = ammoDef.DamageScales;
+
+                armorDmgScale = AmmoModsFound && Overrides.Armor.HasValue ? Overrides.Armor.Value : d.Armor.Armor;
+                lightArmorDmgScale = AmmoModsFound && Overrides.ArmorLight.HasValue ? Overrides.ArmorLight.Value : d.Armor.Light;
+                heavyArmorDmgScale = AmmoModsFound && Overrides.ArmorHeavy.HasValue ? Overrides.ArmorHeavy.Value : d.Armor.Heavy;
+                nonArmorDmgScale = AmmoModsFound && Overrides.ArmorNonArmor.HasValue ? Overrides.ArmorNonArmor.Value : d.Armor.NonArmor;
+
+                customBlockDef = null;
+                customDamageScales = false;
+                armorScaling = false;
+                gridScaling = false;
+                fallOffScaling = false;
+                gridCutoffScaling = false;
+                armorCutoffScaling = false;
+
+                largeGridDmgScale = AmmoModsFound && Overrides.GridSizeLarge.HasValue ? Overrides.GridSizeLarge.Value : d.Grids.Large;
+                smallGridDmgScale = AmmoModsFound && Overrides.GridSizeSmall.HasValue ? Overrides.GridSizeSmall.Value : d.Grids.Small;
+
+                LargeGridCutoffDmgScale = 0;
+                SmallGridCutoffDmgScale = 0;
 
             if (d.Custom.Types != null && d.Custom.Types.Length > 0)
             {
@@ -1299,16 +1325,29 @@ namespace CoreSystems.Support
                         }
             }
 
-            damageScaling = FallOffMinMultiplier > 0 && !MyUtils.IsZero(FallOffMinMultiplier - 1) || d.MaxIntegrity > 0 || d.Armor.Armor >= 0 || d.Armor.NonArmor >= 0 || d.Armor.Heavy >= 0 || d.Armor.Light >= 0 || d.Grids.Large >= 0 || d.Grids.Small >= 0 || customDamageScales || ArmorCoreActive
+            damageScaling = FallOffMinMultiplier > 0 && !MyUtils.IsZero(FallOffMinMultiplier - 1) ||
+                d.MaxIntegrity > 0 ||
+                ArmorDmgScale >= 0 ||
+                NonArmorDmgScale >= 0 ||
+                HeavyArmorDmgScale >= 0 ||
+                LightArmorDmgScale >= 0 ||
+                largeGridDmgScale >= 0 ||
+                smallGridDmgScale >= 0 ||
+                customDamageScales ||
+                ArmorCoreActive
+
                 || (ammoDef.BaseDamageCutoff > 0 && (d.GridSizeForCutoff.Large > 0 || d.GridSizeForCutoff.Small > 0 || d.ArmorForCutoff.Armor > 0 || d.ArmorForCutoff.NonArmor > 0 || d.ArmorForCutoff.Heavy > 0 || d.ArmorForCutoff.Light > 0));
 
             if (damageScaling)
             {
-                armorScaling = !ammoDef.NoGridOrArmorScaling && (d.Armor.Armor >= 0 || d.Armor.NonArmor >= 0 || d.Armor.Heavy >= 0 || d.Armor.Light >= 0);
+                armorScaling = !ammoDef.NoGridOrArmorScaling &&
+                    (ArmorDmgScale >= 0 ||
+                    NonArmorDmgScale >= 0 ||
+                    HeavyArmorDmgScale >= 0 ||
+                    LightArmorDmgScale >= 0);
                 fallOffScaling = FallOffMinMultiplier > 0 && !MyUtils.IsZero(FallOffMinMultiplier - 1);
-                gridScaling = !ammoDef.NoGridOrArmorScaling && (d.Grids.Large >= 0 || d.Grids.Small >= 0);
-                largeGridDmgScale = d.Grids.Large;
-                smallGridDmgScale = d.Grids.Small;
+                gridScaling = !ammoDef.NoGridOrArmorScaling &&
+                    (largeGridDmgScale >= 0 || smallGridDmgScale >= 0);
 
                 if (ammoDef.BaseDamageCutoff > 0)
                 {
@@ -1494,6 +1533,18 @@ namespace CoreSystems.Support
 
             modsFound = true;
 
+            // Grid/armor scale overrides must be allowed to work even when the ammo definition
+            // disables those scaling paths by default. Do not enable scaling for unrelated
+            // overrides such as Health or DesiredSpeed alone.
+            if (ammoDef.NoGridOrArmorScaling &&
+                (overrides.GridSizeLarge.HasValue || overrides.GridSizeSmall.HasValue ||
+                 overrides.Armor.HasValue || overrides.ArmorLight.HasValue ||
+                 overrides.ArmorHeavy.HasValue || overrides.ArmorNonArmor.HasValue))
+            {
+                ammoDef.NoGridOrArmorScaling = false;
+                Log.Line($"Ammo override enabled grid/armor scaling: ammo='{ammoDef.AmmoRound}' (NoGridOrArmorScaling changed from true to false).", Log.OverridesLog);
+            }
+
             if (overrides.BaseDamage.HasValue) baseDamage = Math.Max(overrides.BaseDamage.Value, 0.000001f);
             if (overrides.Health.HasValue) health = Math.Max(overrides.Health.Value, 0);
             if (overrides.GravityMultiplier.HasValue) gravityMultiplier = Math.Max(overrides.GravityMultiplier.Value, 0f);
@@ -1654,7 +1705,13 @@ namespace CoreSystems.Support
                     }
                 }
             }
-            var avgArmorModifier = a.NoGridOrArmorScaling ? 1 : GetAverageArmorModifier(a.DamageScales.Armor);
+            var avgArmorModifier = a.NoGridOrArmorScaling
+                ? 1
+                : GetAverageArmorModifier(
+                    ArmorDmgScale,
+                    LightArmorDmgScale,
+                    HeavyArmorDmgScale,
+                    NonArmorDmgScale);
 
             realShotsPerMin = (realShotsPerSec * 60);
             baseDps = BaseDamage * realShotsPerSec * avgArmorModifier;
@@ -1817,24 +1874,38 @@ namespace CoreSystems.Support
             fragDmg.X += (fAmmo.BaseDamage * frags) * sps;
             //fragDmg += 0;
             fragDmg.Y += (GetDetDmg(fAmmo) * frags) * sps;
-            float avgArmorModifier = fAmmo.NoGridOrArmorScaling ? 1 : GetAverageArmorModifier(fAmmo.DamageScales.Armor);
+            float avgArmorModifier = fAmmo.NoGridOrArmorScaling
+                ? 1
+                : GetAverageArmorModifier(
+                    fAmmo.DamageScales.Armor.Armor,
+                    fAmmo.DamageScales.Armor.Light,
+                    fAmmo.DamageScales.Armor.Heavy,
+                    fAmmo.DamageScales.Armor.NonArmor);
 
             fragDmg *= avgArmorModifier;
 
             return fragDmg;
         }
 
-        private static float GetAverageArmorModifier(AmmoDef.DamageScaleDef.ArmorDef armor)
+        private static float GetAverageArmorModifier(
+            float armor,
+            float lightArmor,
+            float heavyArmor,
+            float nonArmor)
         {
             var avgArmorModifier = 0.0f;
-            if (armor.Heavy < 0) { avgArmorModifier += 1.0f; }
-            else { avgArmorModifier += armor.Heavy; }
-            if (armor.Light < 0) { avgArmorModifier += 1.0f; }
-            else { avgArmorModifier += armor.Light; }
-            if (armor.Armor < 0) { avgArmorModifier += 1.0f; }
-            else { avgArmorModifier += armor.Armor; }
-            if (armor.NonArmor < 0) { avgArmorModifier += 1.0f; }
-            else { avgArmorModifier += armor.NonArmor; }
+
+            if (heavyArmor < 0) { avgArmorModifier += 1.0f; }
+            else { avgArmorModifier += heavyArmor; }
+
+            if (lightArmor < 0) { avgArmorModifier += 1.0f; }
+            else { avgArmorModifier += lightArmor; }
+
+            if (armor < 0) { avgArmorModifier += 1.0f; }
+            else { avgArmorModifier += armor; }
+
+            if (nonArmor < 0) { avgArmorModifier += 1.0f; }
+            else { avgArmorModifier += nonArmor; }
 
             avgArmorModifier *= 0.25f;
             return avgArmorModifier;

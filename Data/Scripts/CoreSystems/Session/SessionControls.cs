@@ -715,7 +715,6 @@ namespace CoreSystems
 
                     if (w.IsShooting) {
                         w.StopShooting();
-                        Log.Line("StopShooting OnOffAnimations");
                     }
                 }
                 else {

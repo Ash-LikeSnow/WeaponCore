@@ -923,12 +923,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal Vector3 Pos;
         [ProtoMember(2)] internal long TargetId;
+        [ProtoMember(3)] internal ulong? PlayerSteamId; // null client -> server, client steam ID server -> other clients
 
         public override void CleanUp()
         {
             base.CleanUp();
             Pos = new Vector3();
             TargetId = 0;
+            PlayerSteamId = null;
         }
     }
 
@@ -938,12 +940,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal Vector3 Pos;
         [ProtoMember(2)] internal long TargetId;
+        [ProtoMember(3)] internal ulong? PlayerSteamId; // null client -> server, client steam ID server -> other clients
 
         public override void CleanUp()
         {
             base.CleanUp();
             Pos = new Vector3();
             TargetId = 0;
+            PlayerSteamId = null;
         }
     }
 

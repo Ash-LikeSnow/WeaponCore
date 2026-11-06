@@ -69,8 +69,7 @@ namespace CoreSystems.Support
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget1))
                 {
                     w.Target.SetFake(Session.I.Tick, predictedPos, w.MyPivotPos, fakeInfo.EntityID);
-                    if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None)
-                        foundTarget = true;
+                    foundTarget = true;
                 }
             }
 
@@ -138,7 +137,7 @@ namespace CoreSystems.Support
             var shipOnly = moveMode == ProtoWeaponOverrides.MoveModes.ShipAny;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (session.WaterApiLoaded && (ammoDef.UnderwaterOnly ? comp.TargetSubmerged : !(ammoDef.IgnoreWater || comp.TargetSubmerged)) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
 
             var rootConstruct = ai.Construct.RootAi.Construct;
@@ -535,7 +534,7 @@ namespace CoreSystems.Support
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !(w.ActiveAmmoDef.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && (w.ActiveAmmoDef.AmmoDef.UnderwaterOnly ? w.Comp.TargetSubmerged : !(w.ActiveAmmoDef.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged)) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
 
             var wepAiOwnerFactionId = w.Comp.MasterAi.AiOwnerFactionId;
@@ -641,7 +640,7 @@ namespace CoreSystems.Support
                     isFromManager = false;
                 }
                 
-                if (water != null && waterSphere.Contains(lp.Position) == ContainmentType.Contains)
+                if (water != null && (waterSphere.Contains(lp.Position) == ContainmentType.Disjoint) == w.ActiveAmmoDef.AmmoDef.UnderwaterOnly)
                 {
                     if (isFromManager)
                     {
@@ -851,7 +850,7 @@ namespace CoreSystems.Support
             var previousEntity = info.AcquiredEntity;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (Session.I.WaterApiLoaded && !(info.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && (info.AmmoDef.UnderwaterOnly ? w.Comp.TargetSubmerged : !(info.AmmoDef.IgnoreWater || w.Comp.TargetSubmerged)) && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
             TargetInfo alphaInfo = null;
             int offset = 0;
@@ -1336,7 +1335,7 @@ namespace CoreSystems.Support
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking, null, MathFuncs.DebugCaller.CanShootTarget6)) continue;
 
-                    if (s.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(predictedPos) != ContainmentType.Disjoint)
+                    if (s.WaterApiLoaded && waterSphere.Radius > 2 && (waterSphere.Contains(predictedPos) == ContainmentType.Disjoint) == (p?.Info.AmmoDef ?? w.ActiveAmmoDef.AmmoDef).UnderwaterOnly)
                         continue;
 
                     blocksSighted++;
@@ -1616,7 +1615,7 @@ namespace CoreSystems.Support
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
                 double distSqr;
                 Vector3D.DistanceSquared(ref cubePos, ref weaponPos, out distSqr);
-                if (distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceSqr || (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint))
+                if (distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceSqr || (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && (waterSphere.Contains(cubePos) == ContainmentType.Disjoint) == (p?.Info.AmmoDef ?? w.ActiveAmmoDef.AmmoDef).UnderwaterOnly))
                     continue;
 
                 if (test < minValue3)
@@ -2000,7 +1999,7 @@ namespace CoreSystems.Support
             var stationOnly = moveMode == ProtoWeaponOverrides.MoveModes.Moored;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (session.WaterApiLoaded && !(ammoDef.IgnoreWater || w.Comp.TargetSubmerged) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (session.WaterApiLoaded && (ammoDef.UnderwaterOnly ? w.Comp.TargetSubmerged : !(ammoDef.IgnoreWater || w.Comp.TargetSubmerged)) && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(water.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
 

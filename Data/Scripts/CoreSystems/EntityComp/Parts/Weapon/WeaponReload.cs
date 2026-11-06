@@ -1,5 +1,7 @@
 ﻿using System;
 using CoreSystems.Support;
+using Sandbox.Game.Entities;
+using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
 using WeaponCore.Data.Scripts.CoreSystems.Support;
@@ -36,7 +38,36 @@ namespace CoreSystems.Platform
                 Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? 0 : int.MaxValue;
             }
 
+            var prevAmmoCharge = ActiveAmmoDef != null ? ActiveAmmoDef.AmmoDef.Const.MustCharge : false;
+            var firstRun = ActiveAmmoDef == null;
             ActiveAmmoDef = System.AmmoTypes[Reload.AmmoTypeId];
+
+            if (Comp.IsBlock)
+            {
+
+                var useCharging = !prevAmmoCharge && ActiveAmmoDef.AmmoDef.Const.MustCharge;
+                var useDefense = prevAmmoCharge && !ActiveAmmoDef.AmmoDef.Const.MustCharge;
+
+                if (useCharging || useDefense)
+                {
+                    var sinkInfo = new MyResourceSinkInfo
+                    {
+                        ResourceTypeId = Comp.GId,
+                        MaxRequiredInput = Comp.SinkPower,
+                        RequiredInputFunc = Comp.GetRequiredInput,
+                    };
+                    Comp.Cube.ResourceSink.RemoveType(ref Comp.GId);
+                    Comp.Cube.ResourceSink.Init(useCharging ? MyStringHash.GetOrCompute("Charging") : MyStringHash.GetOrCompute("Defense"), sinkInfo, Comp.Cube);
+                    Comp.Cube.ResourceSink.Update();
+                    
+                    if (firstRun)
+                        Session.I.FutureEvents.Schedule(DelayedUpdateSink, Comp.Cube, 2);
+                    else
+                        Comp.Cube.UpdateIsWorking();
+                    //Log.Line($"Switched {Comp.TerminalBlock.CustomName}sink to {(useCharging ? "Charging" : "Defense")} First run: {firstRun}");
+                }
+            }
+
             if (string.IsNullOrEmpty(AmmoName)) 
                 AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
             PrepAmmoShuffle();
@@ -55,6 +86,16 @@ namespace CoreSystems.Platform
             UpdateRof();
             SetWeaponDps();
             UpdateWeaponRange();
+        }
+
+        private void DelayedUpdateSink(object obj)
+        {
+            var cube = obj as MyCubeBlock;
+            if (cube != null)
+            {
+                cube.ResourceSink.Update();
+                cube.UpdateIsWorking();
+            }
         }
 
         internal void ChangeActiveAmmoClient()
@@ -94,7 +135,7 @@ namespace CoreSystems.Platform
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
                 AmmoNameTerminal = "*" + System.AmmoTypes[newAmmoId].AmmoDef.Const.TerminalName;
 
-                if (Session.I.IsClient && !System.DesignatorWeapon)
+                if (Session.I.HandlesInput && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
             }
         }
@@ -105,14 +146,17 @@ namespace CoreSystems.Platform
             {
                 DelayedCycleId = -1;
                 ProposedAmmoId = newAmmoId;
-                var instantChange = Session.I.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable;
                 var canReload = ProtoWeaponAmmo.CurrentAmmo == 0;
 
                 var proposedAmmo = System.AmmoTypes[ProposedAmmoId];
 
-                if (instantChange)
+                if (!ActiveAmmoDef.AmmoDef.Const.Reloadable)
+                {
+                    if (IsShooting)
+                        StopShooting(); //Forces a stop for AV purposes
                     ChangeActiveAmmoServer();
-                else 
+                }
+                else
                     ScheduleAmmoChange = true;
 
                 if (proposedAmmo.AmmoDef.Const.Reloadable && canReload)
@@ -231,7 +275,7 @@ if (Session.I.DebugMod)
                     CurrentAmmoVolume = Reload.CurrentMags * ActiveAmmoDef.AmmoDef.Const.MagVolume;
 
                     var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume + .0001f);
-                    var magsGranted = magsRequested > spotsFree ? spotsFree : magsRequested;
+                    var magsGranted = magsRequested > spotsFree ? spotsFree : magsRequested == 0 && spotsFree > 0 ? spotsFree : magsRequested;                    
                     var requestedVolume = ActiveAmmoDef.AmmoDef.Const.MagVolume * magsGranted;
                     var spaceAvailable = freeVolume >= requestedVolume || MyUtils.IsEqual(freeVolume, requestedVolume);
                     var pullAmmo = magsGranted > 0 && CurrentAmmoVolume < System.LowAmmoVolume && spaceAvailable;

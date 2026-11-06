@@ -501,7 +501,7 @@ namespace CoreSystems.Api
             if (shooterGrid != null && topTarget != null && Session.I.EntityToMasterAi.TryGetValue(shooterGrid, out ai) && ai.Construct.GetConstructTargetInfo(topTarget, out info)) {
                 relation = info.EntInfo.Relationship;
                 type = info.EntInfo.Type;
-                var maxDist = ai.MaxTargetingRange + shooterGrid.PositionComp.WorldAABB.Extents.Max();
+                var maxDist = ai.Construct.MaxLockRange + shooterGrid.PositionComp.WorldAABB.Extents.Max();
                 if (Vector3D.DistanceSquared(e.PositionComp.WorldMatrixRef.Translation, shooterGrid.PositionComp.WorldMatrixRef.Translation) > (maxDist * maxDist))
                 {
                     return new MyDetectedEntityInfo();
@@ -1614,7 +1614,7 @@ namespace CoreSystems.Api
         private MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId)
         {
             Projectile p;
-            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p))
+            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p) && p.Info?.AmmoDef != null)
                 return new MyTuple<Vector3D, Vector3D, float, float, long, string>(p.Position, p.Velocity, p.Info.BaseDamagePool, p.Info.BaseHealthPool, p.Info.Target.TargetId, p.Info.AmmoDef.AmmoRound);
 
             return new MyTuple<Vector3D, Vector3D, float, float, long, string>();

@@ -250,6 +250,17 @@ namespace CoreSystems.Projectiles
             }
             else DistanceToTravelSqr = Info.MaxTrajectory * Info.MaxTrajectory;
 
+            if (ammoDef.UnderwaterOnly && !ammoDef.IgnoreWater)
+            {
+                WaterData water;
+                var underwater = session.WaterApiLoaded && Info.MyPlanet != null && session.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water) && WaterModAPI.IsUnderwater(Info.Origin, water.Planet);
+                if (!underwater)
+                {
+                    DistanceToTravelSqr = 0;
+                    EndState = EndStates.EarlyEnd;
+                }
+            }
+
             PrevTargetVel = Vector3.Zero;
 
             var targetSpeed = (float)(!aConst.IsBeamWeapon ? aConst.DesiredProjectileSpeed : Info.MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND);

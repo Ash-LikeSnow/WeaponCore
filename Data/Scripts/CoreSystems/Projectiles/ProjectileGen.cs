@@ -320,17 +320,19 @@ namespace CoreSystems.Projectiles
                         // Manual only
                         var condition4 = ptarget.TargetState == Target.TargetStates.IsFake && ptarget.TopEntityId == 0;
 
-                        // ScanRange limitation, appears to be non functional
-                        //var condition5 = !notSmart && ammoDef.Const.ScanRange > 0 && targetSphereReal.Contains(new BoundingSphereD(p.Position, ammoDef.Const.ScanRange)) != ContainmentType.Disjoint;
-
                         // TargetGridCenter only for subgrids/support, position within grid center + MaxTargetingRange of the grid being checked
-                        var condition6 = !notSmart && ptarget.TargetObject is MyCubeGrid && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
+                        var condition6 = false;
+                        var condition5 = !notSmart && ptarget.TargetObject is MyCubeGrid && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
+
+                        // TargetGridCenter only for subgrids/support, position within grid center + worldvolume of the grid being checked (IE locked on)
+                        if (condition5)
+                            condition6 = targetSphereReal.Contains(ptarget.TargetPos) == ContainmentType.Contains;
 
                         // Projectile is targeting a projectile that wants any targets it has to be added
-                        var condition7 = !condition1 && !condition2 && !condition3 && !condition4 && !condition6 && !notSmart && ptarget.TargetObject != null && ptarget.TargetState == Target.TargetStates.IsProjectile // why is HasTarget false when it has targets???
+                        var condition7 = !condition1 && !condition2 && !condition3 && !condition4 && !condition5 && !condition6 && !notSmart && ptarget.TargetObject != null && ptarget.TargetState == Target.TargetStates.IsProjectile // why is HasTarget false when it has targets???
                             && (((Projectile)ptarget.TargetObject)?.Info?.AmmoDef?.Const.GridsTargetSeekersTargetingThis ?? false) && targetSphere.Contains(ptarget.TargetPos) == ContainmentType.Contains;
 
-                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition6 || condition7);
+                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition5 || condition4 || condition6 || condition7);
 
                         if (dumbAdd || validAi)
                         {

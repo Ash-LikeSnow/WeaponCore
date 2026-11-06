@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -294,18 +294,34 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
         private void GenerateAmmoValuesMap()
         {
             if (Core.Enforcement.DefinitionOverrides?.AmmoOverrides == null)
+            {
+                Log.Line("No ammo override entries were found in DefinitionOverrides.", Log.OverridesLog);
                 return;
+            }
 
+            var configIndex = 0;
             foreach (var ammoOverride in Core.Enforcement.DefinitionOverrides.AmmoOverrides)
             {
+                configIndex++;
+                var matchingDefinitions = 0;
+                var mappedDefinitions = 0;
+
                 foreach (var ammoDef in Core.Session.AmmoValuesMap.Keys)
                 {
                     if (!ammoOverride.AmmoName.Equals(ammoDef.AmmoRound))
                         continue;
 
+                    matchingDefinitions++;
                     if (!_tmpAmmoModiferMap.ContainsKey(ammoDef))
+                    {
                         _tmpAmmoModiferMap[ammoDef] = ammoOverride;
+                        mappedDefinitions++;
+                    }
                 }
+
+                var mappingStatus = matchingDefinitions == 0 ? "UNMATCHED" :
+                    mappedDefinitions == 0 ? "SHADOWED (an earlier entry with this ammo name already won)" : "MAPPED";
+                Log.Line($"Ammo override config #{configIndex}: name='{ammoOverride.AmmoName}', status={mappingStatus}, matching definitions={matchingDefinitions}, newly mapped definitions={mappedDefinitions}; configured values: {DescribeAmmoOverride(ammoOverride)}", Log.OverridesLog);
             }
 
             foreach (var pair in _tmpAmmoModiferMap)
@@ -313,6 +329,42 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                 Core.Session.AmmoValuesMap[pair.Key] = pair.Value;
             }
             _tmpAmmoModiferMap.Clear();
+        }
+
+        private static string DescribeAmmoOverride(CoreSettings.ServerSettings.AmmoOverride o)
+        {
+            var values = new List<string>();
+            if (o.BaseDamage.HasValue) values.Add($"BaseDamage={o.BaseDamage.Value}");
+            if (o.AreaEffectDamage.HasValue) values.Add($"AreaEffectDamage={o.AreaEffectDamage.Value}");
+            if (o.AreaEffectRadius.HasValue) values.Add($"AreaEffectRadius={o.AreaEffectRadius.Value}");
+            if (o.DetonationDamage.HasValue) values.Add($"DetonationDamage={o.DetonationDamage.Value}");
+            if (o.DetonationRadius.HasValue) values.Add($"DetonationRadius={o.DetonationRadius.Value}");
+            if (o.Health.HasValue) values.Add($"Health={o.Health.Value}");
+            if (o.MaxTrajectory.HasValue) values.Add($"MaxTrajectory={o.MaxTrajectory.Value}");
+            if (o.DesiredSpeed.HasValue) values.Add($"DesiredSpeed={o.DesiredSpeed.Value}");
+            if (o.EnergyCost.HasValue) values.Add($"EnergyCost={o.EnergyCost.Value}");
+            if (o.GravityMultiplier.HasValue) values.Add($"GravityMultiplier={o.GravityMultiplier.Value}");
+            if (o.ShieldModifier.HasValue) values.Add($"ShieldModifier={o.ShieldModifier.Value}");
+            if (o.EnergyBaseDamage.HasValue) values.Add($"EnergyBaseDamage={o.EnergyBaseDamage.Value}");
+            if (o.EnergyAreaEffectDamage.HasValue) values.Add($"EnergyAreaEffectDamage={o.EnergyAreaEffectDamage.Value}");
+            if (o.EnergyDetonationDamage.HasValue) values.Add($"EnergyDetonationDamage={o.EnergyDetonationDamage.Value}");
+            if (o.EnergyShieldDamage.HasValue) values.Add($"EnergyShieldDamage={o.EnergyShieldDamage.Value}");
+            if (o.DisableClientPredictedAmmo.HasValue) values.Add($"DisableClientPredictedAmmo={o.DisableClientPredictedAmmo.Value}");
+            if (o.FallOffDistance.HasValue) values.Add($"FallOffDistance={o.FallOffDistance.Value}");
+            if (o.FallOffMinMultipler.HasValue) values.Add($"FallOffMinMultipler={o.FallOffMinMultipler.Value}");
+            if (o.ShieldBypass.HasValue) values.Add($"ShieldBypass={o.ShieldBypass.Value}");
+            if (o.Mass.HasValue) values.Add($"Mass={o.Mass.Value}");
+            if (o.HealthHitModifier.HasValue) values.Add($"HealthHitModifier={o.HealthHitModifier.Value}");
+            if (o.ByBlockHitMaxAbsorb.HasValue) values.Add($"ByBlockHitMaxAbsorb={o.ByBlockHitMaxAbsorb.Value}");
+            if (o.EndOfLifeMaxAbsorb.HasValue) values.Add($"EndOfLifeMaxAbsorb={o.EndOfLifeMaxAbsorb.Value}");
+            if (o.BackKickForce.HasValue) values.Add($"BackKickForce={o.BackKickForce.Value}");
+            if (o.GridSizeLarge.HasValue) values.Add($"GridSizeLarge={o.GridSizeLarge.Value}");
+            if (o.GridSizeSmall.HasValue) values.Add($"GridSizeSmall={o.GridSizeSmall.Value}");
+            if (o.Armor.HasValue) values.Add($"Armor={o.Armor.Value}");
+            if (o.ArmorLight.HasValue) values.Add($"ArmorLight={o.ArmorLight.Value}");
+            if (o.ArmorHeavy.HasValue) values.Add($"ArmorHeavy={o.ArmorHeavy.Value}");
+            if (o.ArmorNonArmor.HasValue) values.Add($"ArmorNonArmor={o.ArmorNonArmor.Value}");
+            return values.Count == 0 ? "<no fields set>" : string.Join(", ", values);
         }
 
         private void RemapLegacyAmmoValues(CoreSettings.ServerSettings.AmmoMod[] modifiers)
@@ -428,6 +480,34 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     case "BackKickForce":
                         if (float.TryParse(modifier.Value, out floatValue))
                             ammoOverride.BackKickForce = floatValue;
+                        break;
+                    case "GridSizeLarge":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.GridSizeLarge = floatValue;
+                        break;
+                    case "GridSizeSmall":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.GridSizeSmall = floatValue;
+                        break;
+
+                    case "Armor":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.Armor = floatValue;
+                        break;
+
+                    case "ArmorLight":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ArmorLight = floatValue;
+                        break;
+
+                    case "ArmorHeavy":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ArmorHeavy = floatValue;
+                        break;
+
+                    case "ArmorNonArmor":
+                        if (float.TryParse(modifier.Value, out floatValue))
+                            ammoOverride.ArmorNonArmor = floatValue;
                         break;
                 }
             }

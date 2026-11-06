@@ -90,6 +90,7 @@ namespace CoreSystems
                 if (PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
                 {
                     fakeTargets.ManualTarget.Sync(targetPacket, ai);
+                    targetPacket.PlayerSteamId = targetPacket.SenderId; // no I don't care that this mutates the packet
                     PacketsToClient.Add(new PacketInfo { Entity = entity, Packet = targetPacket });
 
                     data.Report.PacketValid = true;
@@ -116,6 +117,7 @@ namespace CoreSystems
             if (EntityAIs.TryGetValue(entity, out ai) && SteamToPlayer.TryGetValue(packet.SenderId, out playerId) && PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
             {
                 fakeTargets.PaintedTarget.Sync(targetPacket, ai);
+                targetPacket.PlayerSteamId = targetPacket.SenderId; // no I don't care that this mutates the packet
                 PacketsToClient.Add(new PacketInfo { Entity = entity, Packet = targetPacket });
                 data.Report.PacketValid = true;
             }

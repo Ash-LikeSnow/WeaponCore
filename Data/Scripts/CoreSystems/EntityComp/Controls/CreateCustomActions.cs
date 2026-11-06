@@ -109,7 +109,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ForceReload"));
             action.Action = CustomActions.TerminalRequestReload;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.ForceReload;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -248,7 +248,7 @@ namespace CoreSystems.Control
             action1.Name = new StringBuilder(Localization.GetText("ActionPreviousCameraChannel"));
             action1.Action = CustomActions.TerminalActionCameraDecrease;
             action1.Writer = CustomActions.CameraWriter;
-            action1.Enabled = TerminalHelpers.IsReady;
+            action1.Enabled = TerminalHelpers.IsTrue;
             action1.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action1);

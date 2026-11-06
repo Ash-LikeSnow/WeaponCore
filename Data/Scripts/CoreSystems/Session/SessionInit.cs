@@ -345,7 +345,7 @@ namespace CoreSystems
                         {
                             prevDefs.Remove(prevDef);
                             int prevIndex = 0;
-                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            for (; prevIndex < prevDef.Assignments.MountPoints.Length; prevIndex++)
                             {
                                 if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
                                     break;
@@ -674,7 +674,7 @@ namespace CoreSystems
                         {
                             prevDefs.Remove(prevDef);
                             int prevIndex = 0;
-                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            for (; prevIndex < prevDef.Assignments.MountPoints.Length; prevIndex++)
                             {
                                 if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
                                     break;
@@ -835,7 +835,7 @@ namespace CoreSystems
                         {
                             prevDefs.Remove(prevDef);
                             int prevIndex = 0;
-                            for (; i < prevDef.Assignments.MountPoints.Length; prevIndex++)
+                            for (; prevIndex < prevDef.Assignments.MountPoints.Length; prevIndex++)
                             {
                                 if (prevDef.Assignments.MountPoints[prevIndex].SubtypeId == subTypeId)
                                     break;

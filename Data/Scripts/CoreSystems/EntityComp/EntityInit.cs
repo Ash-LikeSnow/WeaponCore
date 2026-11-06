@@ -20,7 +20,7 @@ namespace CoreSystems.Support
             Cube.ResourceSink.Update();
         }
 
-        private float GetRequiredInput()
+        public float GetRequiredInput()
         {
             if (!FunctionalBlock.Enabled || !Cube.IsFunctional || ModOverride)
                 return 0;

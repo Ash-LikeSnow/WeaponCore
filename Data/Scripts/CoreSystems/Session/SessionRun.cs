@@ -383,6 +383,7 @@ namespace CoreSystems
                 Log.Init(Log.ReportLog, this, false);
                 Log.Init(Log.CombatLog, this, false);
                 Log.Init(Log.AmmoStatsLog, this, false);
+                Log.Init(Log.OverridesLog, this, false);
                 Log.Init(Log.WepStatsLog, this, false);
                 Log.Init(Log.DmgStatsLog, this, false);
                 Log.Init(Log.GridDmgStatsLog, this, false);

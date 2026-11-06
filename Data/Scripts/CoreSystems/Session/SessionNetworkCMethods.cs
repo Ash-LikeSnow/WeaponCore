@@ -309,6 +309,14 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready ) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[targetPacket.Target.PartId];
+            if (unchecked((int)(targetPacket.Target.Revision - w.TargetData.Revision)) < 0)
+            {
+                if (DebugMod)
+                    Log.Line($"{packet.EntityId}\t{targetPacket.Target.PartId}\t{Tick}\tclient-target-stale\tpktRev:{targetPacket.Target.Revision}\tlocalRev:{w.TargetData.Revision}", Log.TargetSyncLog, tab: true);
+                data.Report.PacketValid = true;
+                return true;
+            }
+
             targetPacket.Target.SyncTarget(w);
 
             if (DebugMod)
@@ -387,7 +395,7 @@ namespace CoreSystems
             if (entity != null && EntityAIs.TryGetValue(entity, out ai)) {
 
                 long playerId;
-                if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId)) {
+                if (SteamToPlayer.TryGetValue(targetPacket.PlayerSteamId ?? 0 /* should never happen */, out playerId)) {
 
                     FakeTargets dummyTargets;
                     if (PlayerDummyTargets.TryGetValue(playerId, out dummyTargets)) {
@@ -418,7 +426,7 @@ namespace CoreSystems
             if (entity != null && EntityAIs.TryGetValue(entity, out ai))
             {
                 long playerId;
-                if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
+                if (SteamToPlayer.TryGetValue(targetPacket.PlayerSteamId ?? 0 /* should never happen */, out playerId))
                 {
                     FakeTargets dummyTargets;
                     if (PlayerDummyTargets.TryGetValue(playerId, out dummyTargets))

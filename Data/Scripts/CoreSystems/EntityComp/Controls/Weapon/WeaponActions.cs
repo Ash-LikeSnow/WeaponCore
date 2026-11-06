@@ -627,7 +627,7 @@ namespace CoreSystems.Control
         {
             long valueLong;
             long.TryParse(blk.CustomData, out valueLong);
-            var value = valueLong + 1 <= 7 ? valueLong + 1 : 1;
+            var value = valueLong + 1 <= 24 ? valueLong + 1 : 1;
             blk.CustomData = value.ToString();
             blk.RefreshCustomInfo();
         }
@@ -636,7 +636,7 @@ namespace CoreSystems.Control
         {
             long valueLong;
             long.TryParse(blk.CustomData, out valueLong);
-            var value = valueLong + 1 <= 7 ? valueLong + 1 : 1;
+            var value = valueLong - 1 >= 1 ? valueLong - 1 : 24;
             blk.CustomData = value.ToString();
             blk.RefreshCustomInfo();
         }
@@ -900,7 +900,7 @@ namespace CoreSystems.Control
             long value;
             if (long.TryParse(blk.CustomData, out value))
             {
-                var group = $"{Localization.GetText("TerminalCameraCameraChannelTitle")} {value}";
+                var group = $"{value}";
                 sb.Append(group);
             }
         }
