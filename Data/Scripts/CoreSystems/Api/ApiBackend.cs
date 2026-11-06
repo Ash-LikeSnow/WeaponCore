@@ -1614,7 +1614,7 @@ namespace CoreSystems.Api
         private MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId)
         {
             Projectile p;
-            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p))
+            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p) && p.Info?.AmmoDef != null)
                 return new MyTuple<Vector3D, Vector3D, float, float, long, string>(p.Position, p.Velocity, p.Info.BaseDamagePool, p.Info.BaseHealthPool, p.Info.Target.TargetId, p.Info.AmmoDef.AmmoRound);
 
             return new MyTuple<Vector3D, Vector3D, float, float, long, string>();

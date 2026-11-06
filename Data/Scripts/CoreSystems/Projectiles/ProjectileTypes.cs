@@ -119,9 +119,9 @@ namespace CoreSystems.Support
             if (monitor?.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
                     monitor[i].Invoke(Weapon.Comp.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, ProHit.LastHit, false);
-
-                Session.I.MonitoredProjectiles.Remove(Id);
             }
+
+            Session.I.MonitoredProjectiles.Remove(Id);
 
             if (ProHits != null) {
                 ProHits.Clear();
