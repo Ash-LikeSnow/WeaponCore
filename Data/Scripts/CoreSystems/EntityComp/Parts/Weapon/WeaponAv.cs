@@ -483,7 +483,7 @@ namespace CoreSystems.Platform
             if (FiringEmitter == null || ActiveAmmoDef?.AmmoDef.Const.ShotSoundPair == null)
                 return;
 
-            FiringEmitter.PlaySound(ActiveAmmoDef.AmmoDef.Const.ShotSoundPair, stopPrevious: FiringEmitter.Loop, force2D: true);
+            FiringEmitter.PlaySound(ActiveAmmoDef.AmmoDef.Const.ShotSoundPair, stopPrevious: FiringEmitter.Loop);
         }
 
         public void StartHardPointSound()
@@ -534,7 +534,7 @@ namespace CoreSystems.Platform
 
             if (FiringEmitter.Loop)
 			{
-                if (!IsShooting)
+                if ((System.WConst.FireSoundEndDelay != 0 && !IsShooting) || (System.WConst.FireSoundEndDelay == 0 && IsShooting))
                 {
                     FiringEmitter.StopSound(true);
                     FiringEmitter.PlaySound(ActiveAmmoDef.AmmoDef.Const.ShotSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
