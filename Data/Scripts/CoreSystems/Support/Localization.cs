@@ -98,7 +98,7 @@ namespace CoreSystems.Support
                         { "TerminalEnableFireDistributionTitle", "Enable PD Fire Distribution" },
                         { "TerminalEnableFireDistributionTooltip", "Enables distribution of point defense targets (PD targeting computer)" },
                         { "TerminalTurnCostTitle", "PD Turn Cost" },
-                        { "TerminalTurnCostTooltip", "How expensive turning to lock a torpedo is based on the angle" },
+                        { "TerminalTurnCostTooltip", "Higher values make PD weapons prefer targets in front of them\nLower values let them turn to engage threats from any direction" },
                         { "TerminalMinLockTimeTitle", "PD Minimum Lock Time" },
                         { "TerminalMinLockTimeTooltip", "How many ticks minimum a weapon should spend locked on a projectile before the PD targeting computer can reassign it" },
                         { "ActionStateOn", "On" },
