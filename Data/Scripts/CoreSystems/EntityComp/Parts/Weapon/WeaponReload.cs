@@ -147,8 +147,6 @@ namespace CoreSystems.Platform
                 DelayedCycleId = -1;
                 ProposedAmmoId = newAmmoId;
                 var canReload = ProtoWeaponAmmo.CurrentAmmo == 0;
-                try
-                {
                 var proposedAmmo = System.AmmoTypes[ProposedAmmoId];
 
                 if (!ActiveAmmoDef.AmmoDef.Const.Reloadable)
@@ -162,15 +160,6 @@ namespace CoreSystems.Platform
 
                 if (proposedAmmo.AmmoDef.Const.Reloadable && canReload)
                     ComputeServerStorage(true);
-                }
-                catch (Exception e)
-                {
-                    var msg = $"Error in ChangeAmmo - {System.PartName}  {Comp.SubtypeName} Proposed ID: {ProposedAmmoId} - AmmoTypes Len: {System.AmmoTypes.Length}";
-                    MyLog.Default.WriteLine(msg);
-                    Log.Line(msg);
-                    throw e;
-                }
-
             }
             else 
                 Session.I.SendAmmoCycleRequest(this, newAmmoId);

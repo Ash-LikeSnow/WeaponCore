@@ -1093,7 +1093,7 @@ namespace CoreSystems.Api
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             WeaponSystem.AmmoType ammoType;
-            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && Session.I.AmmoDefIds.TryGetValue(id, out ammoType))
+            if (id.SubtypeId.String != "Energy" && comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && Session.I.AmmoDefIds.TryGetValue(id, out ammoType))
             {
 
                 var weapon = comp.Platform.Weapons[weaponId];
