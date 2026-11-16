@@ -65,8 +65,6 @@ namespace CoreSystems
                     }
 
                     var validVanilla = cube != null && VanillaIds.ContainsKey(cube.BlockDefinition.Id);
-                    if (validVanilla && cube.BlockDefinition.Id.SubtypeId.String == "AutoCannonTurret" && ((IMyModel)cube.Model).AssetName.StartsWith("Models"))
-                        return;
 
                     var validType = cube != null && (validVanilla || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
 

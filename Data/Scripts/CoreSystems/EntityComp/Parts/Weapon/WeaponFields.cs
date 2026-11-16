@@ -231,7 +231,7 @@ namespace CoreSystems.Platform
         internal bool VanillaTracking;
         internal bool RotorTurretTracking;
         internal bool RotorTurretSlaving;
-        
+
         internal bool ShotReady
         {
             get

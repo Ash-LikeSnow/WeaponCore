@@ -26,7 +26,13 @@ namespace Scripts
                             LargeSearchlight,
                             SmallSearchlight,
                             LargeGatlingTurretReskin,
-                            SmallGatlingTurretReskin
+                            SmallGatlingTurretReskin,
+                            SmallTorpedoLauncher,
+                            LargeTorpedoLauncher,
+                            LargeFlareLauncher,
+                            SmallFlareLauncher,
+                            LargeInsetFlareLauncher,
+                            SmallInsetFlareLauncher
                             );
 
             ProjectileTags(WCAutoAssignedTags);
