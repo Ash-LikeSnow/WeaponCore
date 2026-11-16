@@ -630,6 +630,8 @@ namespace CoreSystems
         [ProtoIgnore] public HashSet<uint> UserProjectileTagsInternal = new HashSet<uint>();
         [ProtoMember(43)] public HashSet<string> UserProjectileTags = new HashSet<string>(); // serializing needs to use the string variant because the can change
         [ProtoMember(44)] public WhitelistSystem UserPTagWhitelistSys = WhitelistSystem.BlacklistOr;
+        [ProtoMember(45)] public bool UseAnyAmmo;
+
         public void Sync(ProtoWeaponOverrides syncFrom)
         {
             MoveMode = syncFrom.MoveMode;
@@ -685,6 +687,7 @@ namespace CoreSystems
                 // else uhh idk fail silently
             }
             UserPTagWhitelistSys = syncFrom.UserPTagWhitelistSys;
+            UseAnyAmmo = syncFrom.UseAnyAmmo;
         }
     }
 }

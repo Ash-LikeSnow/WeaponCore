@@ -522,7 +522,7 @@ namespace CoreSystems.Support
             CustomDetParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle);
             DetParticleStr = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle) ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle : "Explosion_Missile";
             CustomExplosionSound = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomSound);
-            DetSoundStr = CustomExplosionSound ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomSound : !ammo.IsShrapnel ? "WepSmallMissileExpl" : string.Empty;
+            DetSoundStr = CustomExplosionSound ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomSound == "None" ? string.Empty : ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomSound : !ammo.IsShrapnel ? "WepSmallMissileExpl" : string.Empty;
             FieldParticle = !string.IsNullOrEmpty(ammo.AmmoDef.Ewar.Field.Particle.Name);
 
             Fields(ammo.AmmoDef, out PulseInterval, out PulseChance, out EwarField, out FieldGrowTime, out ExpandingField);

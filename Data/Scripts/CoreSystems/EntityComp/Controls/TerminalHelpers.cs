@@ -264,7 +264,7 @@ namespace CoreSystems.Control
             if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.ConsumableSelectionPartIds.Count > 0 && !comp.PrimaryWeapon.ActiveAmmoDef.AmmoDef.Const.Reloadable;
+            return comp.PrimaryWeapon.ActiveAmmoDef.AmmoDef.Const.Reloadable && (comp.ConsumableSelectionPartIds.Count > 0 || comp.PrimaryWeapon.ActiveAmmoDef.AmmoDef.Const.MagazineSize > 1);
         }
 
         internal static bool ControlSelectionEnabled(IMyTerminalBlock block)
@@ -289,16 +289,15 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
-            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip() || comp.Data.Repo.Values.Set.Overrides.UseAnyAmmo)
                 return false;
             bool enable = false;
             for (int i = 0; i < comp.Collection.Count; i++)
             {
                 var wep = comp.Collection[i];
-                if (!wep.System.HasAmmoSelection)
-                    continue;
-                if (wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId])
-                    enable = true;
+                var aConst = wep.ActiveAmmoDef.AmmoDef.Const;
+                if ((wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId]) || (!aConst.EnergyAmmo && aConst.MagazineSize > 1))
+                    enable = true;             
             }
             return enable;
         }

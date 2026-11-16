@@ -93,6 +93,7 @@ namespace CoreSystems.Platform
                     {
                         Repo.Values.Set.Overrides.Biologicals = Comp.PrimaryWeapon.System.TrackCharacters;
                         Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
+                        Repo.Values.Set.Overrides.UseAnyAmmo = Comp.PrimaryWeapon.System.AllowAnyAmmoDefault;
                     }
 
                     for (int i = 0; i < collection.Count; i++)
@@ -211,15 +212,26 @@ namespace CoreSystems.Platform
                 else if (Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom && Comp.Cube != null && Session.I.IsServer && !Session.I.IsCreative && Comp.Cube.BlockDefinition.Id.SubtypeName == "LargeInteriorTurret") //"NPCLargeInteriorTurret"
                 {
                     var wep = collection[0];
-                    if (wep.System.AmmoTypes.Length == 2)
+                    if (wep.System.AmmoTypes.Length == 3)
                         foreach (var item in wep.BaseComp.CoreInventory.GetItems())
                         {
                             if (wep.System.AmmoTypes[wep.Reload.AmmoTypeId].AmmoDef.AmmoMagazine == item.Content.SubtypeName)
                                 break;
+                            else if (item.Content.SubtypeName == "AntiPersonnelTurret_Mag")
+                            {
+                                wep.ProposedAmmoId = 2;
+                                break;
+                            }
                             else if (item.Content.SubtypeName == "NATO_5p56x45mm")
+                            {
                                 wep.ProposedAmmoId = 1;
+                                break;
+                            }
                             else if (item.Content.SubtypeName == "RapidFireAutomaticRifleGun_Mag_50rd")
+                            {
                                 wep.ProposedAmmoId = 0;
+                                break;
+                            }
                         }
                 }
             }

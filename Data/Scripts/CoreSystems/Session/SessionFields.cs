@@ -562,8 +562,6 @@ namespace CoreSystems
         public readonly HashSet<string> VanillaWeaponCompatible = new HashSet<string>()
         {
             "Large_SC_LaserDrillTurret",
-            "LargeFlareLauncher",
-            "SmallFlareLauncher",
             "GrappleHookTurretLarge",
             "SolarSailLauncherLarge",
         };

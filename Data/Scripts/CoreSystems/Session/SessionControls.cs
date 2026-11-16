@@ -398,7 +398,7 @@ namespace CoreSystems
             for (int i = 0; i < actions.Count; i++)
             {                    
                 var a = actions[i];
-                if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
+                if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control") && !a.Id.Contains("InvertCamera"))
                 {
                     a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive
                     session.AlteredActions.Add(a);
@@ -570,7 +570,8 @@ namespace CoreSystems
                 "Blink Interval",
                 "Blink Lenght", //Spelling error is on the Keen side
                 "Blink Offset",
-                "SunTracking"
+                "SunTracking",
+                "InvertCamera"
 
         };
 

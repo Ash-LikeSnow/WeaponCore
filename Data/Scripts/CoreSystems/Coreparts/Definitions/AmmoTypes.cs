@@ -14,6 +14,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef.AoeSha
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef.Texture;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.DamageTypes.Damage;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
+
 namespace Scripts
 { // Don't edit above this line
     partial class Parts
@@ -131,6 +133,113 @@ namespace Scripts
                         Length = 2.5f, //
                         Width = 0.1f, //
                         Color = Color(red: 12.5f, green: 10, blue: 8f, alpha: 1), // RBG 255 is Neon Glowing, 100 is Quite Bright.
+                        VisualFadeStart = 0, // Number of ticks the weapon has been firing before projectiles begin to fade their color
+                        VisualFadeEnd = 240, // How many ticks after fade began before it will be invisible.
+                        Textures = new[] {// WeaponLaser, ProjectileTrailLine, WarpBubble, etc..
+                            "ProjectileTrailLine", // Please always have this Line set, if this Section is enabled.
+                        },
+                        TextureMode = Normal, // Normal, Cycle, Chaos, Wave
+                    },
+                    OffsetEffect = new OffsetEffectDef
+                    {
+                        MaxOffset = 0,// 0 offset value disables this effect
+                        MinLength = 0.2f,
+                        MaxLength = 3,
+                    },
+                },
+            },
+            AmmoAudio = new AmmoAudioDef
+            {
+                HitSound = "ImpMetalMetalCat0",
+                VoxelHitSound = "ImpMetalRockCat0",
+                HitPlayChance = 0.5f,
+                HitPlayShield = true,
+            },
+        };
+
+        private AmmoDef InteriorAmmoNew => new AmmoDef // Your ID, for slotting into the Weapon CS
+        {
+            AmmoMagazine = "AntiPersonnelTurret_Mag", // SubtypeId of physical ammo magazine. Use "Energy" for weapons without physical ammo.
+            AmmoRound = "AntiPersonnelTurretMunition", // Name of ammo in terminal, should be different for each ammo type used by the same weapon. Is used by Shrapnel.
+            BaseDamage = 30f, // Direct damage; one steel plate is worth 100.
+            Mass = 0.5f, // In kilograms; how much force the impact will apply to the target.
+            BackKickForce = 1f, // Recoil. This is applied to the Parent Grid.
+            HardPointUsable = true, // Whether this is a primary ammo type fired directly by the turret. Set to false if this is a shrapnel ammoType and you don't want the turret to be able to select it directly.
+            DamageScales = new DamageScaleDef
+            {
+                HealthHitModifier = 0.5, // How much Health to subtract from another projectile on hit; defaults to 1 if zero or less.
+                VoxelHitModifier = 1, // Voxel damage multiplier; defaults to 1 if zero or less.
+                Characters = -1f, // Character damage multiplier; defaults to 1 if zero or less.
+                Grids = new GridSizeDef
+                {
+                    Large = -1f, // Multiplier for damage against large grids.
+                    Small = -1f, // Multiplier for damage against small grids.
+                },
+                Armor = new ArmorDef
+                {
+                    Armor = -1f, // Multiplier for damage against all armor. This is multiplied with the specific armor type multiplier (light, heavy).
+                    Light = 0.3f, // Multiplier for damage against light armor.
+                    Heavy = 0.1f, // Multiplier for damage against heavy armor.
+                    NonArmor = -1f, // Multiplier for damage against every else.
+                },
+                Shields = new ShieldDef
+                {
+                    Modifier = 0.2f, // Multiplier for damage against shields.
+                    Type = Default, // Damage vs healing against shields; Default, Heal
+                    BypassModifier = -1f, // If greater than zero, the percentage of damage that will penetrate the shield.
+                },
+            },
+            Trajectory = new TrajectoryDef
+            {
+                MaxLifeTime = 100, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
+                DesiredSpeed = 600, // voxel phasing if you go above 5100
+                MaxTrajectory = 600f, // Max Distance the projectile or beam can Travel.
+            },
+            AmmoGraphics = new GraphicDef
+            {
+                VisualProbability = 1f, // %
+                ShieldHitDraw = false,
+                Decals = new DecalDef
+                {
+                    MaxAge = 3600,
+                    Map = new[]
+            {
+                        new TextureMapDef
+                        {
+                            HitMaterial = "Metal",
+                            DecalMaterial = "GunBullet",
+                        },
+                        new TextureMapDef
+                        {
+                            HitMaterial = "Glass",
+                            DecalMaterial = "GunBullet",
+                        },
+                    },
+                },
+                Particles = new AmmoParticleDef
+                {
+                    Hit = new ParticleDef
+                    {
+                        Name = "MaterialHit_Metal",
+                        ApplyToShield = true,
+                        Offset = Vector(x: 0, y: 0, z: 0),
+                        Extras = new ParticleOptionDef
+                        {
+                            Scale = 1,
+                            HitPlayChance = 0.5f,
+                        },
+                    },
+                },
+                Lines = new LineDef
+                {
+                    ColorVariance = Random(start: 2.5f, end: 5f), // multiply the color by random values within range.
+                    WidthVariance = Random(start: 0f, end: 0.05f), // adds random value to default width (negatives shrinks width)
+                    Tracer = new TracerBaseDef
+                    {
+                        Enable = true,
+                        Length = 1f, //
+                        Width = 0.05f, //
+                        Color = Color(red: 1.8f, green: 1.4f, blue: 1f, alpha: 1), // RBG 255 is Neon Glowing, 100 is Quite Bright.
                         VisualFadeStart = 0, // Number of ticks the weapon has been firing before projectiles begin to fade their color
                         VisualFadeEnd = 240, // How many ticks after fade began before it will be invisible.
                         Textures = new[] {// WeaponLaser, ProjectileTrailLine, WarpBubble, etc..
@@ -490,9 +599,8 @@ namespace Scripts
             Trajectory = new TrajectoryDef
             {
                 Guidance = None, // None, Remote, TravelTo, Smart, DetectTravelTo, DetectSmart, DetectFixed
-                TargetLossDegree = 15, // Degrees, Is pointed forward
                 MaxLifeTime = 1200, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
-                AccelPerSec = 0, // Meters Per Second. This is the spawning Speed of the Projectile, and used by turning.
+                AccelPerSec = 100, // Meters Per Second. This is the spawning Speed of the Projectile, and used by turning.
                 DesiredSpeed = 200, // voxel phasing if you go above 5100
                 MaxTrajectory = 800f, // Max Distance the projectile or beam can Travel.
             },
@@ -519,7 +627,142 @@ namespace Scripts
                 TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
             },
         };
-	  
+
+        private AmmoDef MissileHomingAmmo => new AmmoDef // Your ID, for slotting into the Weapon CS
+        {
+            AmmoMagazine = "Missile200mmHoming", // SubtypeId of physical ammo magazine. Use "Energy" for weapons without physical ammo.
+            AmmoRound = "200mm Homing Missile", // Name of ammo in terminal, should be different for each ammo type used by the same weapon. Is used by Shrapnel.
+            HybridRound = false, // Use both a physical ammo magazine and energy per shot.
+            BaseDamage = 1f, // Direct damage; one steel plate is worth 100.
+            Mass = 45f, // In kilograms; how much force the impact will apply to the target.
+            Health = 2, // How much damage the projectile can take from other projectiles (base of 1 per hit) before dying; 0 disables this and makes the projectile untargetable.
+            HardPointUsable = true, // Whether this is a primary ammo type fired directly by the turret. Set to false if this is a shrapnel ammoType and you don't want the turret to be able to select it directly.
+            Shape = new ShapeDef // Defines the collision shape of the projectile, defaults to LineShape and uses the visual Line Length if set to 0.
+            {
+                Shape = LineShape, // LineShape or SphereShape. Do not use SphereShape for fast moving projectiles if you care about precision.
+                Diameter = 1, // Diameter is minimum length of LineShape or minimum diameter of SphereShape.
+            },
+            DamageScales = new DamageScaleDef
+            {
+                MaxIntegrity = 0f, // Blocks with integrity higher than this value will be immune to damage from this projectile; 0 = disabled.
+                DamageVoxels = false, // Whether to damage voxels.
+                SelfDamage = false, // Whether to damage the weapon's own grid.
+                HealthHitModifier = 2, // How much Health to subtract from another projectile on hit; defaults to 1 if zero or less.
+                VoxelHitModifier = 1, // Voxel damage multiplier; defaults to 1 if zero or less.
+                Characters = -1f, // Character damage multiplier; defaults to 1 if zero or less.
+                // For the following modifier values: -1 = disabled (higher performance), 0 = no damage, 0.01f = 1% damage, 2 = 200% damage.
+                FallOff = new FallOffDef
+                {
+                    Distance = 0f, // Distance at which damage begins falling off.
+                    MinMultipler = -1f, // Value from 0.0001f to 1f where 0.1f would be a min damage of 10% of base damage.
+                },
+                Grids = new GridSizeDef
+                {
+                    Large = -1f, // Multiplier for damage against large grids.
+                    Small = -1f, // Multiplier for damage against small grids.
+                },
+                Armor = new ArmorDef
+                {
+                    Armor = -1f, // Multiplier for damage against all armor. This is multiplied with the specific armor type multiplier (light, heavy).
+                    Light = -1f, // Multiplier for damage against light armor.
+                    Heavy = -1f, // Multiplier for damage against heavy armor.
+                    NonArmor = -1f, // Multiplier for damage against every else.
+                },
+                Shields = new ShieldDef
+                {
+                    Modifier = -1f, // Multiplier for damage against shields.
+                    Type = Default, // Damage vs healing against shields; Default, Heal
+                    BypassModifier = -1f, // If greater than zero, the percentage of damage that will penetrate the shield.
+                },
+                DamageType = new DamageTypes // Damage type of each element of the projectile's damage; Kinetic, Energy
+                {
+                    Base = Kinetic, // Base Damage uses this
+                    AreaEffect = Kinetic,
+                    Detonation = Kinetic,
+                    Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
+                },
+                Custom = new CustomScalesDef
+                {
+                    SkipOthers = NoSkip, // Controls how projectile interacts with other blocks in relation to those defined here, NoSkip, Exclusive, Inclusive.
+                    Types = new[] // List of blocks to apply custom damage multipliers to.
+            {
+                        new CustomBlocksDef
+                        {
+                            SubTypeId = "Test1",
+                            Modifier = -1f,
+                        },
+                        new CustomBlocksDef
+                        {
+                            SubTypeId = "Test2",
+                            Modifier = -1f,
+                        },
+                    },
+                },
+            },
+            AreaOfDamage = new AreaOfDamageDef
+            {
+                EndOfLife = new EndOfLifeDef
+                {
+                    Enable = true,
+                    Radius = 4f, // Radius of AOE effect, in meters.
+                    Damage = 300f,
+                    Depth = 1f, // Max depth of AOE effect, in meters. 0=disabled, and AOE effect will reach to a depth of the radius value
+                    MaxAbsorb = 0f, // Soft cutoff for damage, except for pooled falloff.  If pooled falloff, limits max damage per block.
+                    Falloff = Linear, //.NoFalloff applies the same damage to all blocks in radius
+                    MinArmingTime = 1, // In ticks, before the Ammo is allowed to explode, detonate or similar; This affects shrapnel spawning.
+                    ParticleScale = 1,
+                    Shape = Diamond, // Round or Diamond shape.  Diamond is more performance friendly.
+                },
+            },
+            Trajectory = new TrajectoryDef
+            {
+                Guidance = Smart, // None, Remote, TravelTo, Smart, DetectTravelTo, DetectSmart, DetectFixed
+                TargetLossDegree = 45, // Degrees, Is pointed forward
+                TargetLossTime = 30,
+                MaxLifeTime = 1200, // 0 is disabled, Measured in game ticks (6 = 100ms, 60 = 1 seconds, etc..). time begins at 0 and time must EXCEED this value to trigger "time > maxValue". Please have a value for this, It stops Bad things.
+                AccelPerSec = 75, // Meters Per Second. This is the spawning Speed of the Projectile, and used by turning.
+                DesiredSpeed = 150, // voxel phasing if you go above 5100
+                MaxTrajectory = 800f, // Max Distance the projectile or beam can Travel.
+                Smarts = new SmartsDef
+                {
+                    SteeringLimit = 15, // 0 means no limit, value is in degrees, good starting is 150.  This enable advanced smart "control", cost of 3 on a scale of 1-5, 0 being basic smart.
+                    Aggressiveness = 3f, // controls how responsive tracking is, recommended value 3-5.
+                    TrackingDelay = 15, // Measured in Shape diameter units traveled.
+                    MaxTargets = 1, // Number of targets allowed before ending, 0 = unlimited, 1 = stay with first target when fired
+                    KeepAliveAfterTargetLoss = true, // Whether to stop early death of projectile on target loss
+                    FocusOnly = true, // Only target the HUD or AI focused target (this includes changes to the hud-selected target.  Set MaxTargets = 1 to keep it from switching (aka fire and forget)
+                    MinTurnSpeed = 35, // set this to a reasonable value to avoid projectiles from spinning in place or being too aggressive turing at slow speeds 
+                },
+            },
+            AmmoGraphics = new GraphicDef
+            {
+                ModelName = "Models\\Weapons\\Projectile_Missile.mwm", // Model Path goes here.  
+                VisualProbability = 1f, // %
+                ShieldHitDraw = true,
+                Particles = new AmmoParticleDef
+                {
+                    Ammo = new ParticleDef
+                    {
+                        Name = "Smoke_Missile", //ShipWelderArc
+                        Offset = Vector(x: 0, y: 0, z: 0),
+                        Extras = new ParticleOptionDef
+                        {
+                            Scale = 1,
+                        },
+                    },
+                },
+            },
+            AmmoAudio = new AmmoAudioDef
+            {
+                TravelSound = "MissileFlightSound", // SubtypeID for your Sound File. Travel, is sound generated around your Projectile in flight
+            },
+        };
+
         private AmmoDef AutocannonShell => new AmmoDef // Your ID, for slotting into the Weapon CS
         {
             AmmoMagazine = "AutocannonClip", // SubtypeId of physical ammo magazine. Use "Energy" for weapons without physical ammo.
