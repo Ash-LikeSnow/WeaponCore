@@ -1117,7 +1117,7 @@ namespace CoreSystems.Platform
                 {
                     if (refundMags && !w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && w.ActiveAmmoDef.AmmoDef.Const.Reloadable)
                     {
-                        var refundableMags = w.ProtoWeaponAmmo.CurrentAmmo / w.ActiveAmmoDef.AmmoDef.Const.MagazineSize;
+                        var refundableMags = w.ProtoWeaponAmmo.CurrentAmmo / (w.ActiveAmmoDef.AmmoDef.Const.MagazineSize * w.ActiveAmmoDef.AmmoDef.Const.MagsToLoad);
                         if (refundableMags > 0 && Session.I.AmmoMaps.ContainsKey(w.Comp.Structure.SubtypeId) && Session.I.AmmoMaps[w.Comp.Structure.SubtypeId].ContainsKey(w.ActiveAmmoDef.AmmoDef.AmmoRound))
                         {
                             var ammoType = Session.I.AmmoMaps[w.Comp.Structure.SubtypeId][w.ActiveAmmoDef.AmmoDef.AmmoRound];

@@ -107,7 +107,7 @@ namespace CoreSystems.Support
                         { "ActionWCMouseToggle", "Toggle Mouse Control Trigger Mode" },
                         { "ActionFire", "Shoot      (Trigger Modes: Key Toggle & Key Fire)" },
                         { "ForceReload", "Force Reload" },
-                        { "TerminalForceReloadTooltip", "Forces weapon to swap to newly selected ammo type\nWill return ammo to weapon inventory if there is space" },
+                        { "TerminalForceReloadTooltip", "Forces weapon to refresh magazine OR change ammo type\nWill return changed ammo to weapon inventory if there is space" },
                         { "ActionShoot", "Shoot On/Off" },
                         { "ActionShoot_Off", "Shoot Off" },
                         { "ActionShoot_On", "Shoot On" },

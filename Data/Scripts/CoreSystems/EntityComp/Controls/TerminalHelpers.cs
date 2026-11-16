@@ -295,10 +295,9 @@ namespace CoreSystems.Control
             for (int i = 0; i < comp.Collection.Count; i++)
             {
                 var wep = comp.Collection[i];
-                if (!wep.System.HasAmmoSelection)
-                    continue;
-                if (wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId])
-                    enable = true;
+                var aConst = wep.ActiveAmmoDef.AmmoDef.Const;
+                if ((wep.DelayedCycleId != -1 && wep.ActiveAmmoDef != wep.System.AmmoTypes[wep.DelayedCycleId]) || (!aConst.EnergyAmmo && aConst.MagazineSize > 1))
+                    enable = true;             
             }
             return enable;
         }
